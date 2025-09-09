@@ -9,6 +9,7 @@ import UserManagementStudentAccounts from './Admin/UserManagement_StudentAccount
 import UserManagementStudentAccountDetails from './Admin/UserManagement_StudentAccountDetails.jsx';
 import AdminAccountArchive from './Admin/AdminAccountArchive.jsx';
 import Login from './Landing/Login.jsx';
+import Signup from './Landing/Signup.jsx';
 
 
 function Linking() {
@@ -17,6 +18,7 @@ function Linking() {
       <Routes>
         {/* Navigations for ADMIN */}
         <Route path ="/Login" element={<Login />} />
+        <Route path ="/Signup" element={<Signup />} />
 
         {/* Navigations for ADMIN */}
         <Route path="/" element={<UserManagement />} />  
