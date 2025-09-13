@@ -8,6 +8,7 @@ import UserManagementProfessorAccountsDetails from './Admin/UserManagement_Profe
 import UserManagementStudentAccounts from './Admin/UserManagement_StudentAccounts.jsx';
 import UserManagementStudentAccountDetails from './Admin/UserManagement_StudentAccountDetails.jsx';
 import AdminAccountArchive from './Admin/AdminAccountArchive.jsx';
+import Import from './Admin/AdminImport.jsx';
 import Login from './Landing/Login.jsx';
 import Signup from './Landing/Signup.jsx';
 
@@ -30,7 +31,7 @@ function Linking() {
         <Route path ="/Report" element={<Report />} />
         <Route path ="/AccountRequest" element={<AccountRequest />} />
         <Route path ="/AdminAccountArchive" element={<AdminAccountArchive />} />
-
+        <Route path ="/Import" element={<Import/>} />
       </Routes>
     </Router>
   );

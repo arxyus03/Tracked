@@ -9,6 +9,7 @@ import Announcement from '../assets/Announcement.svg';
 import Report from '../assets/Report.svg';
 import AccountRequest from '../assets/AccountRequest.svg';
 import Blank from '../assets/Blank.png';
+import Import from '../assets/Import.svg';
 import Notification from '../assets/Notification.svg';
 import Profile from '../assets/Profile.svg';
 import AccountSettings from '../assets/Settings.svg';
@@ -42,6 +43,7 @@ export default function Sidebar({ role, isOpen: isOpenProp, setIsOpen: setIsOpen
       { label: "User Management", icon: ClassManagement },
       { label: "Report", icon: Report },
       { label: "Account Request", icon: AccountRequest },
+      { label: "Import", icon: Import },
     ],
     
   };
@@ -59,7 +61,6 @@ export default function Sidebar({ role, isOpen: isOpenProp, setIsOpen: setIsOpen
           {/* SIDEBAR CLOSE BUTTON */}
           <div className="flex items-center justify-between">
             <img src={TextLogo} alt="TrackEDLogo" className="h-12 w-auto mx-auto mb-4 cursor-pointer"/>
-            <img src={Close} alt="CloseSidebar" className="mb-3 cursor-pointer" onClick={() => setIsOpen(false)} />
           </div>
 
           <hr className="border-[#DBDBDB] rounded border-1" />
@@ -82,9 +83,17 @@ export default function Sidebar({ role, isOpen: isOpenProp, setIsOpen: setIsOpen
 
           {/* SIDEBAR Array value 3 */}
           <Link to="/AccountRequest">
-            <div className="flex mt-3 mb-30 px-4 py-3 hover:bg-[#00A15D] hover:rounded-xl cursor-pointer">
+            <div className="flex mt-3 px-4 py-3 hover:bg-[#00A15D] hover:rounded-xl cursor-pointer">
               <img src={menus[role][3].icon} alt="Analytics" className="mr-5" />
               <p className="text-[#FFFFFF] text-[1.125rem]"> {menus[role][3].label} </p>
+            </div>
+          </Link>
+
+          {/* SIDEBAR Array value 4 */}
+          <Link to="/Import">
+            <div className="flex mt-3 mb-30 px-4 py-3 hover:bg-[#00A15D] hover:rounded-xl cursor-pointer">
+              <img src={menus[role][4].icon} alt="Imports" className="mr-5" />
+              <p className="text-[#FFFFFF] text-[1.125rem]"> {menus[role][4].label} </p>
             </div>
           </Link>
 
