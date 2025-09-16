@@ -4,53 +4,68 @@ import Notification from '../assets/NotificationIcon.svg';
 import ProfilePhoto from '../assets/ProfilePhoto.svg';
 import ArrowDown from '../assets/ArrowDown(Light).svg';
 
-function Header({ setIsOpen }) {
+function Header({ setIsOpen, userName = "User" }) {
   {/* Date Function*/}
   const [weekday, setWeekday] = useState("");
   const [fullDate, setFullDate] = useState("");
   const [year, setYear] = useState("");
 
   useEffect(() => {
-  const today = new Date();
-  const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
-  const formatted = today.toLocaleDateString("en-US", options);
-  const [dayName, monthDay, year] = formatted.split(","); 
-
-  setWeekday(dayName);         
-  setFullDate(monthDay.trim());  
-  setYear(year.trim());         
+    const today = new Date();
+    setWeekday(today.toLocaleDateString("en-US", { weekday: "long" }));
+    setFullDate(today.toLocaleDateString("en-US", { month: "long", day: "numeric" }));
+    setYear(today.getFullYear());
   }, []);
 
   return (
-    <div>
+    <div className='bg-white sticky top-0 z-30'>
       {/* HEADER content */}
       
-      <div className='flex'>
-        <div className='flex mt-2 px-4 py-3 cursor-pointer items-center'>
-          <img src={Menu} alt="Menu" className='h-10 w-10 mt-[-0.4rem] cursor-pointer'
-          onClick={() => setIsOpen(prev => !prev)}
+      <div className='flex items-center justify-between px-2 sm:px-4 py-3'>
+        {/* LEFT SIDE : menu and date */}
+        <div className='flex items-center'>
+          <img 
+            src={Menu}
+            alt="Menu"
+            className='h-8 w-8 sm:h-10 sm:w-10 mt-[-0.2rem] cursor-pointer flex-shrink-0'
+            onClick={() => setIsOpen(prev => !prev)}
           />
           
-          <p className="text-[#465746] text-[1.125rem] font-bold mr-2 ml-2">{weekday}</p>
-          <p className="text-[#465746] text-[1.125rem] mr-2"> | </p>
-          <p className="text-[#465746] text-[1.125rem] mr-2">{fullDate}</p>
-          <p className="text-[#465746] text-[1.125rem] mr-2">{year}</p>
+          <div className="flex flex-wrap items-center ml-2 sm:ml-4 mt-0">
+            <p className="text-[#465746] text-sm sm:text-base mr-1 sm:mr-1">{weekday}{","}</p>
+            <p className="text-[#465746] text-sm sm:text-base mr-1 sm:mr-1 hidden xs:block"> | </p>
+            <p className="text-[#465746] text-sm sm:text-base mr-1 sm:mr-1">{fullDate}{","}</p>
+            <p className="text-[#465746] text-sm sm:text-base mr-1 sm:mr-1">{year}</p>
+          </div>
         </div>
 
-        <div className='flex mt-2 px-4 py-3 cursor-pointer items-center ml-auto'>
-          <img src={Notification} alt="Notification" className='h-5 w-5' />
-          <p className="text-[#00874E] text-[1.125rem] font-bold ml-2 "> X </p>
-          <p className="text-[#465746] text-[1.125rem] font-bold mr-2 ml-2 ">New</p>
-          <img src={ProfilePhoto} alt="Profile Photo" className='h-7 w-7 mt-[-0.1rem] ml-5 mr-5' />
-          <p className="text-[#465746] text-[1.125rem] mr-2">ADMIN</p>
-          <p className="text-[#465746] text-[1.125rem] mr-2">(System Administrator)</p>
-          <img src={ArrowDown} alt="Arrow Down" className='h-6 w-6 mt-1 ml-10 mr-3' />
+        {/* RIGHT SIDE : notifs and profile */}
+        <div className='flex cursor-pointer items-center'>
+          {/* NOTIF */}
+          <div className="flex items-center mr-2 sm:mr-4">
+            <img 
+              src={Notification} 
+              alt="Notification"
+              className='h-4 w-4 sm:h-4 sm:w-4 flex-shrink-0' />
+            <p className="text-[#00874E] text-sm sm:text-base font-bold ml-1 sm:ml-2"> X </p>
+            <p className="text-[#465746] text-sm sm:text-base font-bold mr-1 sm:mr-2 ml-1 sm:ml-2 hidden sm:block">New</p>
+          </div>
+          
+          {/* PROFILE */}
+          <div className="flex items-center">
+            <img src={ProfilePhoto} 
+              alt="Profile Photo"
+              className='h-6 w-6 sm:h-7 sm:w-7 mt-[-0.1rem] ml-2 sm:ml-5 mr-1 sm:mr-3 flex-shrink-0'
+            />
+            <div className="hidden md:flex items-center">
+              <p className="text-[#465746] text-sm mr-1 sm:mr-2 hidden lg:block">{userName}</p>
+            </div>
+          </div>
         </div>
       </div>
-      <hr className="ml-5 mr-5 opacity-60 border-[#465746] rounded border-1" />
+      <hr className="mx-2 ml-0 mr-0 sm:ml-0 sm:mr-0 opacity-40 border-[#465746] rounded border-1" />
     </div>
   );
 }
 
 export default Header;
-

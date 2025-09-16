@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
+{/* Admin Links */}
 import UserManagement from './Admin/UserManagement.jsx';
 import Report from './Admin/Report.jsx';
 import AccountRequest from './Admin/AccountRequest.jsx';
@@ -9,20 +10,28 @@ import UserManagementStudentAccounts from './Admin/UserManagement_StudentAccount
 import UserManagementStudentAccountDetails from './Admin/UserManagement_StudentAccountDetails.jsx';
 import AdminAccountArchive from './Admin/AdminAccountArchive.jsx';
 import Import from './Admin/AdminImport.jsx';
+
+{/* Landing Links */}
 import Login from './Landing/Login.jsx';
 import Signup from './Landing/Signup.jsx';
+
+{/* Professor Links */}
+import DashboardProf from './Professor/DashboardProf.jsx';
 
 
 function Linking() {
   return (
     <Router>
       <Routes>
-        {/* Navigations for ADMIN */}
+
+        {/* Starting Flow */} 
+        <Route path="/" element={<DashboardProf />} />  
+
+        {/* Navigations for Landing */}
         <Route path ="/Login" element={<Login />} />
         <Route path ="/Signup" element={<Signup />} />
 
-        {/* Navigations for ADMIN */}
-        <Route path="/" element={<UserManagement />} />  
+        {/* Navigations for ADMIN */} 
         <Route path ="/UserManagement" element={<UserManagement />} />
         <Route path ="/UserManagementProfessorAccounts" element={<UserManagementProfessorAccounts />} />
         <Route path ="/UserManagementProfessorAccountsDetails" element={<UserManagementProfessorAccountsDetails />} />
@@ -32,6 +41,9 @@ function Linking() {
         <Route path ="/AccountRequest" element={<AccountRequest />} />
         <Route path ="/AdminAccountArchive" element={<AdminAccountArchive />} />
         <Route path ="/Import" element={<Import/>} />
+        
+        {/* Navigations for Professor  */} 
+        <Route path="DashboardProf" element={<DashboardProf />} />  
       </Routes>
     </Router>
   );
