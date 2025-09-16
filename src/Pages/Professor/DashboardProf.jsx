@@ -6,7 +6,9 @@ import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
 import Dashboard from '../../assets/DashboardProf(Light).svg';
-import Professor from '../../assets/Professor(Light).svg';
+import ClassHandled from '../../assets/ClassHandled.svg';
+import ActivitiesToGrade from '../../assets/ActivitiesToGrade.svg';
+import ID from '../../assets/ID(Light).svg';
 
 export default function DashboardProf() {
   const [isOpen, setIsOpen] = useState(true);
@@ -16,14 +18,14 @@ export default function DashboardProf() {
     <div>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'ml-[300px]' : 'ml-0'}`}>
-        <Header setIsOpen={() => {}} userName="Juan Dela Cruz" />
+        <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
 
         {/* content of PROFESSOR DASHBOARD*/}
         <div className="p-5">
 
           {/* "Header" of PROFESSOR DASHBOARD */}
           <div className="flex">
-            <img src={Dashboard} alt="ClassManagement" className='color-[#465746] h-7 w-7 mr-5 mt-1' />
+            <img src={Dashboard} alt="Dashboard" className='color-[#465746] h-7 w-7 mr-5 mt-1' />
             <p className="font-bold text-[1.5rem] text-[#465746]">Dashboard</p>
           </div>
 
@@ -37,6 +39,49 @@ export default function DashboardProf() {
 
           {/* main content of PROFESSOR ADMIN */}
 
+          <div className='flex items-center mt-5'>
+
+            <div className='flex gap-2 w-275 '>
+              {/* Widgets ACTIVE ACCOUNTS */}
+              <div className='bg-[#fff] h-40 w-90 rounded-xl p-5 text-[#465746] shadow-md'> 
+                <div className='font-bold text-[1.5rem]'>
+                  <p className='mb-2'> Class Handled </p>
+                  <div className='flex justify-between'>
+                    <div className='flex justify-center items-center bg-[#a7aef9] h-20 w-20 rounded-xl border-2 border-[#4951AA]'>
+                      <img src={ClassHandled} alt="ClassHandled" className="h-12 w-12" />
+                    </div>
+                    <p className=' pt-8 text-[2rem]'> X </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className='bg-[#fff] h-40 w-90 rounded-xl p-5 text-[#465746] shadow-md'> 
+                <div className='font-bold text-[1.5rem]'>
+                  <p className='mb-2'> Activities to Grade </p>
+                  <div className='flex justify-between'>
+                    <div className='flex justify-center items-center bg-[#ffb1b1] h-20 w-20 rounded-xl border-2 border-[#FF6666]'>
+                      <img src={ActivitiesToGrade} alt="ActivitiesToGrade" className="h-12 w-12" />
+                    </div>
+                    <p className=' pt-8 text-[2rem]'> X </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <div className="bg-[#FFFFFF] h-35 rounded-xl shadow-md mt-5 hover:border-2 hover:border-[#00874E]">
+            <div className="flex pt-5 pl-5">
+              <img src={ID} alt="ID" className='color-[#465746] h-7 w-7 mr-5 mt-1' />
+              <p className="font-bold text-[1.5rem] text-[#465746]">Prof. Jane!</p>
+            </div>
+
+            <div className="flex">
+              <p className="font-bold text-[1.125rem] text-[#465746] pl-17"> Total of Professor Account Created: </p>
+              <p className="font-bold text-[1.125rem] text-[#00874E] pl-2"> X </p>
+            </div>
+          </div>
 
         </div>
 

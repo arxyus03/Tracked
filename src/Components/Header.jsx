@@ -5,7 +5,7 @@ import Notification from '../assets/NotificationIcon.svg';
 import ProfilePhoto from '../assets/ProfilePhoto.svg';
 
 function Header({ setIsOpen, userName = "User" }) {
-  // Date state
+
   const [weekday, setWeekday] = useState("");
   const [fullDate, setFullDate] = useState("");
   const [year, setYear] = useState("");
