@@ -9,6 +9,9 @@ import Dashboard from '../../assets/DashboardProf(Light).svg';
 import ClassHandled from '../../assets/ClassHandled.svg';
 import ActivitiesToGrade from '../../assets/ActivitiesToGrade.svg';
 import ID from '../../assets/ID(Light).svg';
+import Pie from '../../assets/Pie(Light).svg';
+import Details from '../../assets/Details(Light).svg';
+import Archive from '../../assets/Archive(Light).svg';
 
 export default function DashboardProf() {
   const [isOpen, setIsOpen] = useState(true);
@@ -39,6 +42,7 @@ export default function DashboardProf() {
 
           {/* main content of PROFESSOR ADMIN */}
 
+          {/* WIDGETS */}
           <div className='flex items-center mt-5'>
 
             <div className='flex gap-2 w-275 '>
@@ -71,19 +75,59 @@ export default function DashboardProf() {
 
           </div>
 
-          <div className="bg-[#FFFFFF] h-35 rounded-xl shadow-md mt-5 hover:border-2 hover:border-[#00874E]">
-            <div className="flex pt-5 pl-5">
-              <img src={ID} alt="ID" className='color-[#465746] h-7 w-7 mr-5 mt-1' />
-              <p className="font-bold text-[1.5rem] text-[#465746]">Prof. Jane!</p>
-            </div>
-
-            <div className="flex">
-              <p className="font-bold text-[1.125rem] text-[#465746] pl-17"> Total of Professor Account Created: </p>
-              <p className="font-bold text-[1.125rem] text-[#00874E] pl-2"> X </p>
-            </div>
+        <div className="bg-[#FFFFFF] text-[#465746] text-[1.125rem] rounded-xl shadow-md mt-5 p-5">
+          {/* Header: Name */}
+          <div className="flex items-center">
+            <img src={ID} alt="ID" className="h-5 w-5 mr-3" />
+            <p className="font-bold">Prof. Jane</p>
           </div>
 
+          <hr className="opacity-60 border-[#465746] rounded border-1 my-2" />
+
+          {/* Info rows */}
+          <div className="pl-8 space-y-2">
+            <div className="flex">
+              <span className="font-bold w-40">Faculty Number:</span>
+              <span>202210715</span>
+            </div>
+            <div className="flex">
+              <span className="font-bold w-40">CvSU Email:</span>
+              <span>jane@cvsu.edu.ph</span>
+            </div>
+            <div className="flex">
+              <span className="font-bold w-40">Handled Subject:</span>
+              <span>ITEC110, ITEC111</span>
+            </div>
+            <div className="flex">
+              <span className="font-bold w-40">Department:</span>
+              <span>Information Technology</span>
+            </div>
+          </div>
         </div>
+
+        {/* Student Attendance Details Card */}
+        <Link to={"/AnalyticsProf"}>
+          <div className="bg-[#FFFFFF] text-[#465746] text-[1.125rem] rounded-xl shadow-md mt-5 p-3 hover:border-2 hover:border-[#00874E]">
+            <div className="flex items-center">
+              <img src={Pie} alt="Pie" className="h-8 w-8 mr-3" />
+              <p className="font-bold">Student Attendance Details</p>
+              <img src={Details} alt="Details" className="h-8 w-8 ml-auto mr-2" />
+            </div>
+          </div>
+        </Link>
+
+        {/* Archive Subjects Card */}
+        <Link to={"/AnalyticsProf"}>
+          <div className="bg-[#FFFFFF] text-[#465746] text-[1.125rem] rounded-xl shadow-md mt-5 p-3 hover:border-2 hover:border-[#00874E]">
+            <div className="flex items-center">
+              <img src={Archive} alt="Archive" className="h-8 w-8 mr-3" />
+              <p className="font-bold"> Archive Subjects </p>
+              <img src={Details} alt="Details" className="h-8 w-8 ml-auto mr-2" />
+            </div>
+          </div>
+        </Link>
+
+      </div>
 
       </div>
     </div>
