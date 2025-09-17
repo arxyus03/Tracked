@@ -1,21 +1,21 @@
-import { useState, useEffect } from "react"; 
-import { Link } from "react-router-dom"; 
+import { useState, useEffect } from "react";
+import { NavLink } from "react-router-dom";
 
-import Dashboard from "../assets/Dashboard.svg"; 
-import Subjects from "../assets/Subjects.svg"; 
-import Analytics from "../assets/Analytics.svg"; 
-import ClassManagement from "../assets/ClassManagement.svg"; 
-import Announcement from "../assets/Announcement.svg"; 
-import Report from "../assets/Report.svg"; 
-import AccountRequest from "../assets/AccountRequest.svg"; 
-import Import from "../assets/Import.svg"; 
-import Notification from "../assets/Notification.svg"; 
-import Profile from "../assets/Profile.svg"; 
-import AccountSettings from "../assets/Settings.svg"; 
-import LogOut from "../assets/LogOut.svg"; 
+import Dashboard from "../assets/Dashboard.svg";
+import Subjects from "../assets/Subjects.svg";
+import Analytics from "../assets/Analytics.svg";
+import ClassManagement from "../assets/ClassManagement.svg";
+import Announcement from "../assets/Announcement.svg";
+import Report from "../assets/Report.svg";
+import AccountRequest from "../assets/AccountRequest.svg";
+import Import from "../assets/Import.svg";
+import Notification from "../assets/Notification.svg";
+import Profile from "../assets/Profile.svg";
+import AccountSettings from "../assets/Settings.svg";
+import LogOut from "../assets/LogOut.svg";
 import TextLogo from "../assets/New-FullWhite-TrackEdLogo.svg";
 
-export default function Sidebar({ role, isOpen: isOpenProp, setIsOpen: setIsOpenProp }) {
+export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpen: setIsOpenProp }) {
   const [localOpen, setLocalOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -24,9 +24,7 @@ export default function Sidebar({ role, isOpen: isOpenProp, setIsOpen: setIsOpen
   const setIsOpen = isControlled ? setIsOpenProp : setLocalOpen;
 
   useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
+    const checkScreenSize = () => setIsMobile(window.innerWidth < 1024);
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
@@ -42,6 +40,14 @@ export default function Sidebar({ role, isOpen: isOpenProp, setIsOpen: setIsOpen
       document.addEventListener("mousedown", handleOutsideClick);
       return () => document.removeEventListener("mousedown", handleOutsideClick);
     }
+  }, [isMobile, isOpen, setIsOpen]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && isMobile && isOpen) setIsOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [isMobile, isOpen, setIsOpen]);
 
   // role menus
@@ -87,72 +93,79 @@ export default function Sidebar({ role, isOpen: isOpenProp, setIsOpen: setIsOpen
     if (isMobile) setIsOpen(false);
   };
 
+  const navItemBase =
+    "flex items-center px-4 py-4 rounded-lg hover:bg-[#00A15D] cursor-pointer select-none transition-colors duration-150";
+
   return (
     <>
       {isOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsOpen(false)}
+          aria-hidden
         />
       )}
 
       <aside
-        className={`fixed top-0 left-0 h-screen bg-[#00874E] border-r border-[#acacac] select-none z-50 
-        transform transition-transform duration-300 ease-in-out
+        className={`fixed top-0 left-0 h-screen bg-[#00874E] border-r border-[#acacac] select-none z-50 shadow-xl transform transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        w-[70%] sm:w-[280px] xl:w-[280px] 2xl:w-[300px]`}
+        w-[60%] sm:w-[200px] xl:w-[280px] 2xl:w-[300px]`}
+        role="navigation"
+        aria-label="Main sidebar"
       >
-        <div className="p-5 flex flex-col h-full">
-          {/* Logo */}
+        <div className="flex flex-col h-full p-4 safe-area pb-6">
           <div className="flex items-center justify-between">
-            <img
-              src={TextLogo}
-              alt="TrackEDLogo"
-              className="h-12 w-auto mx-auto mb-4 cursor-pointer"
-            />
+            <img src={TextLogo} alt="TrackED Logo" className="h-10 w-auto" />
           </div>
 
-          <hr className="border-[#DBDBDB] rounded border-1 opacity-50" />
+          <hr className="border-[#DBDBDB] rounded border-1 opacity-40 my-4" />
 
-          {/* Main Menus */}
-          <div className="flex flex-col mt-8">
+          {/* main menus */}
+          <nav className="flex-1 overflow-auto">
+            <div className="flex flex-col gap-1">
+              {menus[role]?.main?.map((item, index) => (
+                <NavLink
+                  key={`${item.label}-${index}`}
+                  to={item.path}
+                  onClick={handleLinkClick}
+                  className={({ isActive }) =>
+                    `${navItemBase} ${isActive ? "bg-[#00A15D]" : ""}`
+                  }
+                >
+                  <img src={item.icon} alt={item.label} className="h-5 w-5 flex-shrink-0 mr-4" />
 
-            {menus[role]?.main?.map((item, index) => (
-              <Link key={index} to={item.path} onClick={handleLinkClick}>
-                <div className="flex mt-3 px-4 py-3 hover:bg-[#00A15D] hover:rounded-xl cursor-pointer">
-                  <img src={item.icon} alt={item.label} className="mr-5" />
-                  <p className="text-[#FFFFFF] text-[1.125rem]">{item.label}</p>
-                </div>
-              </Link>
-            ))}
-
-          </div>
-
-          {/* Extras Section */}
-          {menus[role]?.extras?.length > 0 && (
-            <div className="pt-20 lg:pt-40">
-              <hr className="border-[#DBDBDB] rounded border-1 mt-6 opacity-50" />
-
-              {menus[role].extras.map((item, index) => (
-                <Link key={index} to={item.path} onClick={handleLinkClick}>
-                  <div className="flex mt-4 px-4 py-3 hover:bg-[#00A15D] hover:rounded-xl cursor-pointer">
-                    <img src={item.icon} alt={item.label} className="mr-5" />
-                    <p className="text-[#FFFFFF] text-[1.125rem]">{item.label}</p>
-                  </div>
-                </Link>
+                  <p className="text-white text-[1.05rem] truncate whitespace-nowrap">{item.label}</p>
+                </NavLink>
               ))}
-
             </div>
-          )}
 
-          {/* Log Out */}
-          <div className="mt-auto">
-            <Link to="/Login" onClick={handleLinkClick}>
-              <div className="flex px-4 py-3 hover:bg-[#00A15D] hover:rounded-xl cursor-pointer">
-                <img src={LogOut} alt="Logout" className="mr-5" />
-                <p className="text-[#FFFFFF] text-[1.125rem]">Log out</p>
+            {/* extras */}
+            {menus[role]?.extras?.length > 0 && (
+              <div className="mt-30 pt-4">
+                <hr className="border-[#DBDBDB] rounded border-1 opacity-40 my-4" />
+                {menus[role].extras.map((item, index) => (
+                  <NavLink
+                    key={`${item.label}-extra-${index}`}
+                    to={item.path}
+                    onClick={handleLinkClick}
+                    className={({ isActive }) =>
+                      `${navItemBase} mt-2 ${isActive ? "bg-[#00A15D]" : ""}`
+                    }
+                  >
+                    <img src={item.icon} alt={item.label} className="h-5 w-5 flex-shrink-0 mr-4" />
+                    <p className="text-white text-[1.05rem] truncate whitespace-nowrap">{item.label}</p>
+                  </NavLink>
+                ))}
               </div>
-            </Link>
+            )}
+          </nav>
+
+          {/* logout area */}
+          <div className="mt-4">
+            <NavLink to="/Login" onClick={handleLinkClick} className={navItemBase}>
+              <img src={LogOut} alt="Logout" className="h-5 w-5 flex-shrink-0 mr-4" />
+              <p className="text-white text-[1.05rem] truncate whitespace-nowrap">Log out</p>
+            </NavLink>
           </div>
         </div>
       </aside>

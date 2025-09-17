@@ -32,7 +32,7 @@ function Linking() {
       <Routes>
 
         {/* Starting Flow */} 
-        <Route path="/" element={<UserManagement />} />  
+        <Route path="/" element={<DashboardProf />} />  
         
         {/* Navigations for Landing */}
         <Route path ="/Login" element={<Login />} />
