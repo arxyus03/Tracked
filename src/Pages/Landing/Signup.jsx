@@ -94,7 +94,7 @@ export default function Signup() {
   
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-[#465746] px-6 sm:px-6 lg:px-8 py-10 sm:py-10">
+    <div className="min-h-screen flex flex-col items-center justify-center text-[#465746] px-5 sm:px-5 lg:px-5 py-5 sm:py-5">
       <div className="bg-white p-6 sm:p-8 md:p-10 rounded-lg shadow-md w-full max-w-200">
         <div className="flex justify-end mb-2">
           <img
