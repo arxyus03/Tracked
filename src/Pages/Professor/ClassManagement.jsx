@@ -54,7 +54,7 @@ export default function ClassManagement() {
 
                 {/* Filter Dropdown SELECTIONS */}
                 {open && (
-                  <div className="absolute top-full mt-1 bg-white rounded-md w-4 shadow-lg border border-gray-200 z-10">
+                  <div className="absolute top-full mt-1 bg-white rounded-md w-48 shadow-lg border border-gray-200 z-10">
 
                     <button 
                       className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm md:text-base transition-colors duration-200 cursor-pointer"
