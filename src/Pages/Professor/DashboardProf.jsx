@@ -14,7 +14,7 @@ import Details from '../../assets/Details(Light).svg';
 import Archive from '../../assets/Archive(Light).svg';
 
 export default function DashboardProf() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
 

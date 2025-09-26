@@ -12,7 +12,7 @@ import Add from "../../assets/Add(Light).svg";
 import Book from "../../assets/ClassManagementSubject(Light).svg";
 
 export default function ClassManagement() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [open, setOpen] = useState(false);
 
   // background colors
