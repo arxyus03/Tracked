@@ -23,6 +23,8 @@ export default function Signup() {
 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState(null); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,15 +32,19 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     // password checker
     if (formData.tracked_password !== confirmPassword) {
-      alert("Passwords do not match!");
+      setError("Passwords do not match!");
+      setIsLoading(false);
       return;
     }
 
     if (!captchaToken) {
-      alert("Please complete the CAPTCHA");
+      setError("Please complete the CAPTCHA");
+      setIsLoading(false);
       return;
     }
 
@@ -56,11 +62,47 @@ export default function Signup() {
         }
       );
 
+      // First, try to parse as JSON
       const text = await res.text();
-      alert(text);
+      let data;
+      
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        // If it's not JSON, show the raw text (for debugging)
+        console.error("JSON Parse Error:", err);
+        setError("Invalid response from server: " + text);
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.success) {
+        alert(data.message);
+        // Optional: Redirect to login page after successful registration
+        // window.location.href = "/Login";
+        
+        // Clear form
+        setFormData({
+          tracked_ID: "",
+          tracked_email: "",
+          tracked_password: "",
+          tracked_fname: "",
+          tracked_lname: "",
+          tracked_mi: "",
+          tracked_program: "BSIT",
+          tracked_bday: "",
+          tracked_phone: "",
+        });
+        setConfirmPassword("");
+        setCaptchaToken(null);
+      } else {
+        setError(data.message);
+      }
     } catch (err) {
       console.error("Error:", err);
-      alert("Something went wrong. Check console.");
+      setError("Something went wrong. Please check your connection.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -85,7 +127,6 @@ export default function Signup() {
       question: "Who do I contact for account issues or bugs?",
       answer: "- You can reach our support team at support@tracked.com or through the help section in the app."
     },
-
   ];
 
   const toggleFAQ = (index) => {
@@ -133,6 +174,13 @@ export default function Signup() {
           Make sure your Student Number is recorded in CVSU - Imus Campus.
         </p>
 
+        {/* Error message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           {/* ID & Program */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-2 sm:mb-2 md:mb-4">
@@ -150,6 +198,7 @@ export default function Signup() {
                 pattern="[0-9]*"
                 inputMode="numeric"
                 className="w-full px-2 sm:px-3 md:px-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -162,6 +211,7 @@ export default function Signup() {
                 value={formData.tracked_program}
                 readOnly
                 className="w-full px-2 sm:px-3 md:px-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 text-xs sm:text-sm"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -180,6 +230,7 @@ export default function Signup() {
                 placeholder="Firstname"
                 required
                 className="w-full px-2 sm:px-3 md:px-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+                disabled={isLoading}
               />
             </div>
 
@@ -195,6 +246,7 @@ export default function Signup() {
                 placeholder="Lastname"
                 required
                 className="w-full px-2 sm:px-3 md:px-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+                disabled={isLoading}
               />
             </div>
 
@@ -210,6 +262,7 @@ export default function Signup() {
                 placeholder="M.I"
                 maxLength="1"
                 className="w-full px-2 sm:px-3 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -227,6 +280,7 @@ export default function Signup() {
                 value={formData.tracked_bday}
                 onChange={handleChange}
                 className="w-full px-2 sm:px-3 md:px-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+                disabled={isLoading}
               />
             </div>
 
@@ -257,6 +311,7 @@ export default function Signup() {
                   required
                   maxLength="11"
                   className="w-full pl-12 sm:pl-14 md:pl-16 pr-2 sm:pr-3 md:pr-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -275,6 +330,7 @@ export default function Signup() {
               placeholder="JaneDoe@cvsu.edu.ph"
               required
               className="w-full px-2 sm:px-3 md:px-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+              disabled={isLoading}
             />
           </div>
 
@@ -292,6 +348,7 @@ export default function Signup() {
                 placeholder="Password"
                 required
                 className="w-full px-2 sm:px-3 md:px-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+                disabled={isLoading}
               />
             </div>
 
@@ -306,6 +363,7 @@ export default function Signup() {
                 placeholder="Re-enter password"
                 required
                 className="w-full px-2 sm:px-3 md:px-4 py-2 sm:py-2 md:py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
+                disabled={isLoading}
               />
             </div>
           </div>
@@ -326,9 +384,12 @@ export default function Signup() {
           {/* Register Button */}
           <button
             type="submit"
-            className="w-full h-9 sm:h-9 bg-[#00A15D] hover:bg-green-700 text-white py-1 rounded-md font-medium mt-2 sm:mt-2 text-sm sm:text-sm cursor-pointer transition-colors duration-200"
+            disabled={isLoading}
+            className={`w-full h-9 sm:h-9 bg-[#00A15D] text-white py-1 rounded-md font-medium mt-2 sm:mt-2 text-sm sm:text-sm cursor-pointer transition-colors duration-200 ${
+              isLoading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
+            }`}
           >
-            Register
+            {isLoading ? "Registering..." : "Register"}
           </button>
         </form>
 
@@ -382,9 +443,7 @@ export default function Signup() {
                   >
                     <span className="pr-2">{faq.question}</span>
                     <span className="text-xs sm:text-sm flex-shrink-0">{openIndex === index ? 
-                    // ( <img src={Collapse} alt="Arrow Down" className="w-full h-full" />) 
                     "▲" : "▼"
-                    // (<img src={Expand} alt="Arrow Up" className="w-full h-full" /> )
                      }
                     </span>
                   </button>
