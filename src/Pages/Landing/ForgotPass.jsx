@@ -5,7 +5,12 @@ import Guide from "../../assets/Guide(Light).svg";
 import FullLogo from "../../assets/New-FullBlack-TrackEdLogo.svg";
 import Close from "../../assets/BackButton(Light).svg";
 
-export default function VerifyAcc() {
+export default function ForgotPass() {
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+
   // for faqs
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [openIndex, setOpenIndex] = useState(null);
@@ -58,9 +63,9 @@ export default function VerifyAcc() {
 
         <hr className="opacity-20 border-[#465746] rounded border-1 mb-4" />
 
-        {/* Forgot Password Verififcation Title */}
+        {/* Change Password Title */}
         <h2 className="text-center text-sm sm:text-base md:text-base font-medium mb-4 sm:mb-8">
-          Forgot Password Verififcation
+          Change Password
         </h2>
 
         {/* Subtitle */}
@@ -68,40 +73,56 @@ export default function VerifyAcc() {
           Enter your <span className="text-[#465746] font-medium">Student Number</span>. We'll send a reset link to your registered <span className="text-[#465746] font-medium">CVSU Email</span> account.
         </p> */}
 
-        {/* CVSU Email Address */}
+        {/* error message */}
+        {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-600 text-sm"> {error} </p>
+            </div>
+        )}
+
+        {/* New Password */}
         <label className="block mb-1 sm:mb-2 text-sm sm:text-sm">
-          CVSU Email Address
+          New Password
         </label>
         <input
-          type="email"
-          placeholder="Enter your registered CVSU email"
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="Enter your new password"
           required
           className="w-full px-4 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-md mb-2 sm:mb-2 md:mb-4 focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
         />
 
-        {/* ID Number */}
+        {/* Confirm Password */}
         <label className="block mb-1 sm:mb-2 text-sm sm:text-sm">
-          ID Number
+          Confirm Password
         </label>
         <input
-          type="text"
-          placeholder="202284596"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Confirm you new password"
           required
-          inputMode="numeric"
-          maxLength="9"
-          onInput={(e) => {
-            const numericValue = e.target.value.replace(/\D/g, '');
-            e.target.value = numericValue;
-          }}
           className="w-full px-4 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-md mb-2 sm:mb-3 focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
         />
 
         {/* Verify Button */}
         <button
           type="submit"
+          onClick={(e) => {
+            setError("");
+
+            if (newPassword !== confirmPassword) {
+                setError("Passwords do not match!");
+                return;
+            }
+
+            // Add your verification logic here
+            console.log("Passwords match, proceeding with verification...");
+          }}
           className="w-full h-9 sm:h-9 bg-[#00A15D] hover:bg-green-700 text-white py-1 rounded-md font-medium mt-2 sm:mt-3 text-sm sm:text-sm cursor-pointer transition-colors duration-200"
         >
-          Verify
+          Change Password
         </button>
 
         {/* Sign in link */}
