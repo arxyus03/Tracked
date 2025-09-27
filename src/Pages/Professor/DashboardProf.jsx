@@ -55,7 +55,7 @@ export default function DashboardProf() {
           {/* main content of PROFESSOR ADMIN */}
 
           {/* WIDGETS */}
-          <div className='flex justify-center items-center mt-5'>
+          <div className='flex items-center mt-5'>
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-4 lg:gap-6 w-full max-w-7xl'>
 
               {/* Widgets ACTIVE ACCOUNTS */}

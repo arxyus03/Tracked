@@ -59,7 +59,7 @@ export default function ActivityCard({ title, description, status, deadline, stu
                       />
                     </td>
                     {/* Submitted */}
-                    <td className="p-2 text-center">
+                    <td className="p-2 text-center w-10">
                       <input
                         type="radio"
                         name={`status-${student.id}`}
@@ -67,7 +67,7 @@ export default function ActivityCard({ title, description, status, deadline, stu
                       />
                     </td>
                     {/* Late */}
-                    <td className="p-2 text-center">
+                    <td className="p-2 text-center w-10">
                       <input
                         type="radio"
                         name={`status-${student.id}`}
@@ -75,7 +75,7 @@ export default function ActivityCard({ title, description, status, deadline, stu
                       />
                     </td>
                     {/* Missed */}
-                    <td className="p-2 text-center">
+                    <td className="p-2 text-center w-10">
                       <input
                         type="radio"
                         name={`status-${student.id}`}

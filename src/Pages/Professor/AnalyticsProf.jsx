@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
@@ -15,6 +15,45 @@ export default function AnalyticsProf() {
   const [openSubject, setOpenSubject] = useState(false);
   const [openSection, setOpenSection] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("");
+
+  // ----- SAMPLE DATA (replace with backend data or props) -----
+  // The chart and Created Task panel will use the lengths of these arrays.
+  const quizzesList = [
+    { id: 1, title: 'Quiz 1' },
+    { id: 2, title: 'Quiz 2' },
+    { id: 3, title: 'Quiz 3' },
+    { id: 4, title: 'Quiz 4' }
+  ];
+  const assignmentsList = [
+    // add assignment items here
+    { id: 1, title: 'Assignment 1' }
+  ];
+  const activitiesList = [
+    { id: 1, title: 'Activity 1' },
+    { id: 2, title: 'Activity 2' }
+  ];
+  const projectsList = [
+    { id: 1, title: 'Project 1' }
+  ];
+  // ------------------------------------------------------------
+
+  const quizzesCount = quizzesList.length;
+  const assignmentsCount = assignmentsList.length;
+  const activitiesCount = activitiesList.length;
+  const projectsCount = projectsList.length;
+  const totalCount = quizzesCount + assignmentsCount + activitiesCount + projectsCount;
+
+  const segments = useMemo(() => ([
+    { label: 'Quizzes', value: quizzesCount, color: '#00A15D' },
+    { label: 'Assignment', value: assignmentsCount, color: '#F59E0B' },
+    { label: 'Activities', value: activitiesCount, color: '#3B82F6' },
+    { label: 'Projects', value: projectsCount, color: '#EF4444' },
+  ]), [quizzesCount, assignmentsCount, activitiesCount, projectsCount]);
+
+  const radius = 14;
+  const circumference = 2 * Math.PI * radius; 
+
+  let cumulative = 0;
 
   return (
     <div>
@@ -46,7 +85,7 @@ export default function AnalyticsProf() {
                 <button
                   onClick={() => {
                     setOpenSubject(!openSubject);
-                    setOpenSection(false); // close the other one
+                    setOpenSection(false); 
                   }}
                   className="flex w-80 items-center font-bold px-3 py-2 bg-[#fff] rounded-md cursor-pointer shadow-md">
                   Subject
@@ -158,62 +197,80 @@ export default function AnalyticsProf() {
 
                 <div className='flex justify-between'>
                   <span>Quizzes:</span>
-                  <span>X</span>
+                  <span>{quizzesCount}</span>
                 </div>
 
                 <div className='flex justify-between'>
                   <span>Assignment:</span>
-                  <span>X</span>
+                  <span>{assignmentsCount}</span>
                 </div>
 
                 <div className='flex justify-between'>
                   <span>Activities:</span>
-                  <span>X</span>
+                  <span>{activitiesCount}</span>
                 </div>
 
                 <div className='flex justify-between'>
                   <span>Projects:</span>
-                  <span>X</span>
+                  <span>{projectsCount}</span>
                 </div>
 
                 <hr className="my-2 border-[#465746] opacity-50" />
 
                 <div className='flex justify-between font-bold'>
                   <span>Total Created Task:</span>
-                  <span>X</span>
+                  <span>{totalCount}</span>
                 </div>
               </div>
 
+              {/* PIE CHART container - position & size unchanged */}
               <div className=" bg-[#D4D4D4] ml-5 rounded-md text-[1.125rem] items-center gap-6 w-295">
                 
                 {/* PIE CHART */}
                 <div className="flex flex-col items-center mt-5">
                   <div>
-                    <svg width="400" height="400" viewBox="0 0 32 32">  {/* className='bg-[#fff] */}
-                      {/* Circle base */}
-                      <circle r="16" cx="16" cy="16" fill="transparent" />
+                    {/* keep same SVG size/viewBox as before */}
+                    <svg width="400" height="400" viewBox="0 0 32 32">
+                      {/* optional grey ring background */}
+                      <circle
+                        r={radius}
+                        cx="16"
+                        cy="16"
+                        fill="transparent"
+                        stroke="#E5E7EB"
+                        strokeWidth="2.5"
+                      />
 
-                      {/* COMPLETED, PENDING, MISSED */}
-                      {[
-                        { value: 12, color: "#00A15D", offset: 25 },                      // Completed
-                        { value: 5, color: "#F59E0B", offset: 25 - (12 / 20) * 88 },      // Pending
-                        { value: 3, color: "#EF4444", offset: 25 - ((12 + 5) / 20) * 88 } // Missed
-                      ].map((seg, i) => (
-                        <circle
-                          key={i}
-                          r="14"
-                          cx="16"
-                          cy="16"
-                          fill="transparent"
-                          stroke={seg.color}
-                          strokeWidth="2.5"
-                          strokeDasharray={`${(seg.value / 20) * 88} ${88 - (seg.value / 20) * 88}`}
-                          strokeDashoffset={seg.offset}
-                        />
-                      ))}
+                      {/* handle zero total: show empty ring (no colored segments) */}
+                      {totalCount === 0 ? null : (
+                        segments.map((seg, i) => {
+                          const len = (seg.value / totalCount) * circumference;
+                          // draw only if value > 0
+                          const dash = `${len} ${Math.max(0, circumference - len)}`;
+                          const dashOffset = -cumulative;
+                          cumulative += len;
+                          return (
+                            seg.value > 0 && (
+                              <circle
+                                key={i}
+                                r={radius}
+                                cx="16"
+                                cy="16"
+                                fill="transparent"
+                                stroke={seg.color}
+                                strokeWidth="2.5"
+                                strokeDasharray={dash}
+                                strokeDashoffset={dashOffset}
+                                strokeLinecap="butt"
+                                transform="rotate(-90 16 16)"
+                              />
+                            )
+                          );
+                        })
+                      )}
 
                       {/* TEXT INSIDE PIE CHART */}
-                      <text x="16" y="15" textAnchor="middle" fontSize=".125rem" fontWeight="bold" color='#465746' fill="#465746">
+                      <text x="16" y="15" textAnchor="middle" fontSize=".125rem" fontWeight="bold" fill="#465746">
                         SECTION X:
                       </text>
 
@@ -224,15 +281,9 @@ export default function AnalyticsProf() {
                     </svg>
                   </div>
 
-                  {/* COMPLETED PENDING MISSED */}
+                  {/* LEGEND: Quizzes / Assignment / Activities / Projects */}
                   <div className="flex gap-6 mt-5">
-                    {[
-                      { label: "Completed", value: 12, color: "#00A15D" },
-                      { label: "Pending", value: 5, color: "#F59E0B" },
-                      { label: "Missed", value: 3, color: "#EF4444" }
-                    ]
-                    
-                    .map((item, i) => (
+                    {segments.map((item, i) => (
                       <div key={i} className="flex items-center gap-2">
                         <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: item.color }}> </span>
                         <span> {item.label}: </span>
@@ -241,8 +292,6 @@ export default function AnalyticsProf() {
                     ))}
                   </div>
                 </div>
-
-
 
               </div>
 

@@ -72,19 +72,13 @@ export default function SubjectDetails() {
             students={students}
           />
           <ActivityCard
-            title="ACTIVITY 2"
-            description="JavaScript Basics"
+            title="ACTIVITY 1"
+            description="HTML & CSS Design layout"
             status="Not Graded"
-            deadline="January 10, 2025"
+            deadline="January 5, 2025"
             students={students}
           />
-          <ActivityCard
-            title="PROJECT 1"
-            description="React Mini App"
-            status="Not Graded"
-            deadline="February 2, 2025"
-            students={students}
-          />
+          
         </div>
       </div>
     </div>

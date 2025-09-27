@@ -18,7 +18,7 @@ export default function Attendance() {
         <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen} userName="Jane Doe" />
 
         <div className="p-5 text-[#465746]">
-          {/* "Header" of SUBJECT DETAILS PROF */}
+          {/* "Header" of ATTENDANCE */}
           <div className="flex">
             <img src={ClassManagementLight} alt="ClassManagement" className='h-7 w-7 mr-5 mt-1' />
             <p className="font-bold text-[1.5rem]"> Class Management </p>
@@ -33,7 +33,7 @@ export default function Attendance() {
             <div className="flex items-center space-x-3 mr-5">
               <span>Section:</span>
               <span>A</span>
-              <Link to={"/ClassManagement"}>
+              <Link to={"/SubjectDetails"}>
                 <img src={BackButton} alt="ClassManagement" className="h-7 w-7 cursor-pointer" />
               </Link>
             </div>
@@ -64,13 +64,89 @@ export default function Attendance() {
               </button>
             </div>
 
-            {/* Import button aligned to the right */}
-            <button className="font-bold px-3 py-2 bg-white rounded-md shadow-md hover:border-[#00874E] hover:border-2 text-[1.125rem] whitespace-nowrap cursor-pointer ml-3">
-              History
+            <Link to={"/AttendanceHistory"}>
+              <button className="font-bold px-3 py-2 bg-white rounded-md shadow-md hover:border-[#00874E] hover:border-2 text-[1.125rem] whitespace-nowrap cursor-pointer ml-3">
+                History
+              </button>
+            </Link>
+          </div>
+
+          {/* ATTENDANCE TABLE */}
+          <div className="rounded-md overflow-hidden shadow-md p-5 mt-5 bg-[#fff] text-[1.125rem]">
+            <table className="table-auto w-full border-collapse text-left">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">No.</th>
+                  <th className="px-4 py-2">Student No.</th>
+                  <th className="px-4 py-2">Full Name</th>
+                  <th className="px-2 py-2 text-[#EF4444] text-center w-20">Absent</th>
+                  <th className="px-2 py-2 text-[#767EE0] text-center w-20">Late</th>
+                  <th className="px-2 py-2 text-[#00A15D] text-center w-20">Present</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { no: 1, studentNo: "2023001", name: "Alice Cruz" },
+                  { no: 2, studentNo: "2023002", name: "John Dela Cruz" },
+                  { no: 3, studentNo: "2023003", name: "Maria Santos" },
+                  { no: 4, studentNo: "2023004", name: "Mark Reyes" },
+                  { no: 5, studentNo: "2023005", name: "Sophia Lim" },
+                ]
+
+                .map((student) => (
+                  <tr key={student.no} className="hover:bg-gray-50">
+                    <td className="px-4 py-2">{student.no}</td>
+                    <td className="px-4 py-2">{student.studentNo}</td>
+                    <td className="px-4 py-2">{student.name}</td>
+
+                    {/* Absent */}
+                    <td className="px-2 py-2 w-20">
+                      <div className="flex justify-center items-center">
+                        <input
+                          type="radio"
+                          name={`attendance-${student.no}`}
+                          className="appearance-none w-7 h-7 border-2 border-[#EF4444] rounded-md checked:bg-[#EF4444]"
+                        />
+                      </div>
+                    </td>
+
+                    {/* Late */}
+                    <td className="px-2 py-2 w-20">
+                      <div className="flex justify-center items-center">
+                        <input
+                          type="radio"
+                          name={`attendance-${student.no}`}
+                          className="appearance-none w-7 h-7 border-2 border-[#767EE0] rounded-md checked:bg-[#767EE0]"
+                        />
+                      </div>
+                    </td>
+
+                    {/* Present */}
+                    <td className="px-2 py-2 w-20">
+                      <div className="flex justify-center items-center">
+                        <input
+                          type="radio"
+                          name={`attendance-${student.no}`}
+                          className="appearance-none w-7 h-7 border-2 border-[#00A15D] rounded-md checked:bg-[#00A15D]"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* EDIT, MARK ALL, SAVE Buttons */}
+          <div className="flex justify-end space-x-3 mt-5">
+            <button className="px-4 py-2 bg-[#979797] text-[#fff] font-bold rounded-md hover:border-2 hover:border-[#007846]">
+              Mark All as Present
+            </button>
+            <button className="px-4 py-2 bg-[#00A15D] text-[#fff] font-bold rounded-md hover:border-2 hover:border-[#007846]">
+              Save
             </button>
           </div>
 
-
+          </div>
 
 
         </div>

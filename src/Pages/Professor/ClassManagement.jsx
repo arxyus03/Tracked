@@ -117,7 +117,7 @@ export default function ClassManagement() {
                 </button>
               </Link>
               <Link to="/AdminAccountArchive">
-                <button className="font-bold py-2 bg-[#fff] rounded-md w-10 sm:w-12 h-10 sm:h-12 shadow-md flex items-center justify-center hover:border-[#00874E] hover:border-2 cursor-pointer transition-all duration-200">
+                <button className="font-bold py-2 bg-[#fff] rounded-md w-10 sm:w-12 h-10 sm:h-12 shadow-md flex items-center justify-center hover:border-[#00874E] hover:border-2 cursor-pointer">
                   <img
                     src={Add}
                     alt="Add"
