@@ -52,7 +52,7 @@ export default function Report() {
             </div>
           </div>
 
-          <div className='text-sm sm:text-base md:text-base lg:text-base text-[#465746] mb-4 sm:mb-5 ml-2'>
+          <div className="text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
             <span className="mb-0 sm:mb-0">
               TrackED reports
             </span>

@@ -45,13 +45,23 @@ export default function AdminAccountArchive() {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-sm md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
             <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
-              <span className="mb-0 sm:mb-0">Accounts Archived</span>
+              <span className="mb-0 sm:mb-0">
+                Accounts Archived
+              </span>
               <Link to="/UserManagement" className="sm:hidden">
-                <img src={BackButton} alt="BackButton" className="h-6 w-6" />
+                <img
+                  src={BackButton} 
+                  alt="BackButton"
+                  className="h-6 w-6"
+                />
               </Link>
             </div>
             <Link to="/UserManagementProfessorAccounts" className="hidden sm:block">
-              <img src={BackButton} alt="BackButton" className="h-6 w-6 sm:h-7 sm:w-7" />
+              <img 
+                src={BackButton} 
+                alt="BackButton" 
+                className="h-6 w-6 sm:h-7 sm:w-7"
+              />
             </Link>
           </div>
 

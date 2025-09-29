@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import Guide from "../../assets/Guide(Light).svg";
 import FullLogo from "../../assets/New-FullBlack-TrackEdLogo.svg";
 import Close from "../../assets/BackButton(Light).svg";
+import ArrowDown from "../../assets/ArrowDown(Light).svg";
 
 export default function VerifyAcc() {
   // for faqs
@@ -152,9 +153,13 @@ export default function VerifyAcc() {
                     onClick={() => toggleFAQ(index)}
                   >
                     <span className="pr-2">{faq.question}</span>
-                    <span className="text-xs sm:text-sm flex-shrink-0">
-                      {openIndex === index ? "▲" : "▼"}
-                    </span>
+                    <img 
+                      src={ArrowDown}
+                      alt="Toggle"
+                      className={`w-5 h-5 sm:w-7 sm:h-7 flex-shrink-0 transition-transform duration-200 ${
+                        openIndex === index ? "rotate-180" : ""
+                      }`}             
+                    />
                   </button>
                   {openIndex === index && (
                     <p className="text-gray-600 mt-2 text-xs sm:text-sm leading-relaxed">{faq.answer}</p>

@@ -112,7 +112,7 @@ export default function ClassManagement() {
                   <img
                     src={Archive}
                     alt="Archive"
-                    className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                    className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
                   />
                 </button>
               </Link>
@@ -121,7 +121,7 @@ export default function ClassManagement() {
                   <img
                     src={Add}
                     alt="Add"
-                    className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                    className="h-6 w-6 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
                   />
                 </button>
               </Link>

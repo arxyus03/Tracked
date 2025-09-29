@@ -9,35 +9,34 @@ import ClassManagementLight from '../../assets/ClassManagement(Light).svg';
 import BackButton from '../../assets/BackButton(Light).svg';
 
 export default function ProfileProf() {
-  const [isOpen, setIsOpen] = useState(true);  
+  const [isOpen, setIsOpen] = useState(false);  
   const [popupType, setPopupType] = useState(null);
 
   return (
     <div>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div
-        className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}
-      `}
+        className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}
       >
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
 
         {/* content of ADMIN USER MANAGEMENT PROFESSOR ACCOUNT DETAILS */}
-        <div className="p-5 sm:p-5 md:p-5 lg:p-5 xl:p-5">
+        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
           {/* "Header" */}
-          <div className="flex flex-col sm:flex-row item-start sm:items-center sm:mb-4">
-            <div className="flex items-center sm:mb-0">
+          <div className="flex flex-col sm:flex-row item-start sm:items-center mb-2 sm:mb-4">
+            <div className="flex items-center mb-2 sm:mb-0">
               <img
                 src={ClassManagementLight}
                 alt="ClassManagement"
                 className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
               />
-              <h1 className="font-bold text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
                 User Management
               </h1>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-[1.125rem] text-[#465746] sm:mb-5 ml-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
             <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
               <span className="mb-0 sm:mb-0">
                 Account Details
@@ -46,12 +45,15 @@ export default function ProfileProf() {
                 <img src={BackButton} alt="BackButton" className="h-6 w-6" />
               </Link>
             </div>
+            <Link to="/UserManagementProfessorAccounts" className="hidden sm:block">
+              <img src={BackButton} alt="BackButton" className="h-6 w-6 sm:h-7 sm:w-7" />
+            </Link>
           </div>
 
           <hr className="opacity-60 border-[#465746] rounded border-1 mb-6" />
 
           {/* Content */}
-          <div className="bg-white p-4 sm:p-5 md:p-6 rounded-lg space-y-4 sm:space-y-5 md:space-y-6 mt-5 shadow-md text-[#465746]">
+          <div className="bg-white p-4 sm:p-5 md:p-6 rounded-lg space-y-4 sm:space-y-5 md:space-y-6 mt-4 sm:mt-5 shadow-md text-[#465746]">
             {/* Professor Information Section */}
             <div>
               <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Professor Information</h2>
@@ -147,7 +149,7 @@ export default function ProfileProf() {
                 {/* Reset Password */}
                 <button 
                   onClick={() => setPopupType("reset")} 
-                  className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#465746] hover:border-2 text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                  className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#465746] hover:border-2 text-xs sm:text-sm lg:text-[1.125rem] w-full sm:w-auto transition-colors duration-200 cursor-pointer"
                 >
                   Reset Password
                 </button>
@@ -155,7 +157,7 @@ export default function ProfileProf() {
                 {/* Disable Account */}
                 <button 
                   onClick={() => setPopupType("disable")}  
-                  className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#465746] hover:border-2 text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                  className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#465746] hover:border-2 text-xs sm:text-sm lg:text-[1.125rem] w-full sm:w-auto transition-colors duration-200 cursor-pointer"
                 >
                   Disable Account
                 </button>
