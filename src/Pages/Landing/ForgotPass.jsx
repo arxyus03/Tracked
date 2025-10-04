@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import Guide from "../../assets/Guide(Light).svg";
 import FullLogo from "../../assets/New-FullBlack-TrackEdLogo.svg";
@@ -7,10 +7,17 @@ import Close from "../../assets/BackButton(Light).svg";
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
 
 export default function ForgotPass() {
-
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [tokenValid, setTokenValid] = useState(null); // null = checking, true = valid, false = invalid
+
+  // Get token from URL
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+  const navigate = useNavigate();
 
   // for faqs
   const [isGuideOpen, setIsGuideOpen] = useState(false);
@@ -38,6 +45,132 @@ export default function ForgotPass() {
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
+
+  // Verify token when component loads
+  useEffect(() => {
+    if (!token) {
+      setTokenValid(false);
+      setError("Invalid password reset link. Please request a new one.");
+      return;
+    }
+
+    // Verify token with backend
+    const verifyToken = async () => {
+      try {
+        const response = await fetch("http://localhost/TrackEd/src/Pages/Landing/ForgotPass.php", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "verify_token",
+            token: token,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          setTokenValid(true);
+        } else {
+          setTokenValid(false);
+          setError(data.message || "Invalid or expired reset link.");
+        }
+      } catch (error) {
+        setTokenValid(false);
+        setError("Connection error. Please try again later.");
+        console.error("Error:", error);
+      }
+    };
+
+    verifyToken();
+  }, [token]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    // Validation
+    if (!newPassword || !confirmPassword) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match!");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost/TrackEd/src/Pages/Landing/ForgotPass.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "reset_password",
+          token: token,
+          newPassword: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSuccess("Password changed successfully! Redirecting to login...");
+        setNewPassword("");
+        setConfirmPassword("");
+        
+        // Redirect to login after 2 seconds
+        setTimeout(() => {
+          navigate("/Login");
+        }, 2000);
+      } else {
+        setError(data.message || "Failed to change password. Please try again.");
+      }
+    } catch (error) {
+      setError("Connection error. Please try again later.");
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Show loading while checking token
+  if (tokenValid === null) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-[#465746]">
+        <div className="bg-white p-8 rounded-lg shadow-md">
+          <p className="text-center">Verifying reset link...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if token is invalid
+  if (tokenValid === false) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-[#465746] px-6">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
+          <h2 className="text-center text-xl font-semibold mb-4 text-red-600">Invalid Link</h2>
+          <p className="text-center text-gray-600 mb-6">{error}</p>
+          <Link to="/VerifyAcc">
+            <button className="w-full bg-[#00A15D] hover:bg-green-700 text-white py-2 rounded-md font-medium">
+              Request New Reset Link
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center text-[#465746] px-6 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -69,62 +202,58 @@ export default function ForgotPass() {
           Change Password
         </h2>
 
-        {/* Subtitle */}
-        {/* <p className="text-center text-gray-600 mb-4 sm:mb-6 text-xs sm:text-sm leading-relaxed">
-          Enter your <span className="text-[#465746] font-medium">Student Number</span>. We'll send a reset link to your registered <span className="text-[#465746] font-medium">CVSU Email</span> account.
-        </p> */}
-
-        {/* error message */}
+        {/* Error message */}
         {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-red-600 text-sm"> {error} </p>
-            </div>
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
         )}
 
-        {/* New Password */}
-        <label className="block mb-1 sm:mb-2 text-sm sm:text-sm">
-          New Password
-        </label>
-        <input
-          type="password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          placeholder="Enter your new password"
-          required
-          className="w-full px-4 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-md mb-2 sm:mb-2 md:mb-4 focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
-        />
+        {/* Success message */}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+            <p className="text-green-600 text-sm">{success}</p>
+          </div>
+        )}
 
-        {/* Confirm Password */}
-        <label className="block mb-1 sm:mb-2 text-sm sm:text-sm">
-          Confirm Password
-        </label>
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="Confirm you new password"
-          required
-          className="w-full px-4 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-md mb-2 sm:mb-3 focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm"
-        />
+        <form onSubmit={handleSubmit}>
+          {/* New Password */}
+          <label className="block mb-1 sm:mb-2 text-sm sm:text-sm">
+            New Password
+          </label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Enter your new password"
+            required
+            disabled={loading}
+            className="w-full px-4 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-md mb-2 sm:mb-2 md:mb-4 focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+          />
 
-        {/* Verify Button */}
-        <button
-          type="submit"
-          onClick={(e) => {
-            setError("");
+          {/* Confirm Password */}
+          <label className="block mb-1 sm:mb-2 text-sm sm:text-sm">
+            Confirm Password
+          </label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm your new password"
+            required
+            disabled={loading}
+            className="w-full px-4 sm:px-4 py-2 sm:py-2 border border-gray-300 rounded-md mb-2 sm:mb-3 focus:outline-none focus:ring-2 focus:ring-[#00A15D] text-xs sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+          />
 
-            if (newPassword !== confirmPassword) {
-                setError("Passwords do not match!");
-                return;
-            }
-
-            // Add your verification logic here
-            console.log("Passwords match, proceeding with verification...");
-          }}
-          className="w-full h-9 sm:h-9 bg-[#00A15D] hover:bg-green-700 text-white py-1 rounded-md font-medium mt-2 sm:mt-3 text-sm sm:text-sm cursor-pointer transition-colors duration-200"
-        >
-          Change Password
-        </button>
+          {/* Change Password Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-9 sm:h-9 bg-[#00A15D] hover:bg-green-700 text-white py-1 rounded-md font-medium mt-2 sm:mt-3 text-sm sm:text-sm cursor-pointer transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {loading ? "Changing Password..." : "Change Password"}
+          </button>
+        </form>
 
         {/* Sign in link */}
         <div className="text-center mt-3 sm:mt-4 md:mt-6 text-xs sm:text-sm">
@@ -143,7 +272,6 @@ export default function ForgotPass() {
           className="fixed inset-0 bg-white bg-opacity-50 flex justify-center items-center z-50 overlay-fade p-4"
           style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           onClick={(e) => {
-            // close only when clicking the backdrop (not when clicking inside the modal)
             if (e.target === e.currentTarget) setIsGuideOpen(false);
           }}
           role="dialog"
@@ -203,14 +331,12 @@ export default function ForgotPass() {
               to   { opacity: 1; transform: translateY(0)   scale(1);    }
             }
 
-            /* Responsive scroll behavior */
             @media (max-height: 600px) {
               .modal-pop {
                 max-height: 85vh;
               }
             }
             
-            /* Enhanced mobile styles */
             @media (max-width: 640px) {
               .modal-pop {
                 margin: 1rem;
