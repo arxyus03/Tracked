@@ -13,31 +13,50 @@ export default function ActivityCard({
   deadline,
   instructions,
   link = "#",
+  onEdit,
+  onDelete
 }) {
   const [open, setOpen] = useState(false);
 
   return (
     <div className="bg-[#fff] shadow-md rounded-md mt-5">
       {/* Header */}
-      <div
-        className="flex items-center justify-between p-5 cursor-pointer"
-        onClick={() => setOpen(!open)}
-      >
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between p-5">
+        <div 
+          className="flex items-center gap-3 flex-1 cursor-pointer"
+          onClick={() => setOpen(!open)}
+        >
           <span className="font-bold">{subject}:</span>
           <span>{title}</span>
         </div>
 
         {/* Action Icons */}
         <div className="flex items-center gap-4">
-          <img src={Edit} alt="Edit" />
-          <img src={Delete} alt="Delete" />
+          <img 
+            src={Edit} 
+            alt="Edit" 
+            className="cursor-pointer hover:opacity-70 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onEdit) onEdit();
+            }}
+          />
+          <img 
+            src={Delete} 
+            alt="Delete" 
+            className="cursor-pointer hover:opacity-70 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onDelete) onDelete();
+            }}
+          />
           <img
             src={ArrowDown}
             alt="Expand"
-            className={`h-6 w-6 transform transition-transform duration-300 ${
+            className={`h-6 w-6 transform transition-transform duration-300 cursor-pointer ${
               open ? "rotate-180" : ""
             }`}
+            onClick={() => setOpen(!open)}
           />
         </div>
       </div>
@@ -55,7 +74,9 @@ export default function ActivityCard({
             {/* Right side */}
             <div className="text-sm text-gray-600">
               <p>Date Posted: {datePosted}</p>
-              <p className="text-[#FF6666] font-bold">Deadline: {deadline}</p>
+              {deadline && (
+                <p className="text-[#FF6666] font-bold">Deadline: {deadline}</p>
+              )}
             </div>
           </div>
 
@@ -63,12 +84,16 @@ export default function ActivityCard({
           <div className="mt-4">
             <p className="font-semibold">Instructions:</p>
             <p className="text-sm text-gray-700">{instructions}</p>
-            <Link
-              to={link}
-              className="mt-2 inline-block text-[#00A15D] font-semibold hover:underline"
-            >
-              [View Activity]
-            </Link>
+            {link && link !== "#" && (
+              <Link
+                to={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-[#00A15D] font-semibold hover:underline"
+              >
+                [View Activity]
+              </Link>
+            )}
           </div>
         </div>
       )}

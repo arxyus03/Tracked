@@ -47,7 +47,7 @@ if (empty($idNumber) || empty($inputPassword)) {
 }
 
 // Fetch user from DB
-$sql = "SELECT tracked_password, tracked_Status, tracked_Role FROM tracked_users WHERE tracked_ID = ? LIMIT 1";
+$sql = "SELECT tracked_password, tracked_Status, tracked_Role, tracked_fname, tracked_lname, tracked_mi FROM tracked_users WHERE tracked_ID = ? LIMIT 1";
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
@@ -71,7 +71,7 @@ if ($stmt->num_rows === 0) {
     exit;
 }
 
-$stmt->bind_result($dbPasswordHash, $status, $role);
+$stmt->bind_result($dbPasswordHash, $status, $role, $fname, $lname, $mi);
 $stmt->fetch();
 $stmt->close();
 
@@ -126,12 +126,19 @@ if (!$passwordValid) {
     exit;
 }
 
+// format ng full name (na malalagay sa header)
+$fullName = trim($fname . ' ' . ($mi ? $mi . ". " : '') . $lname);
+
 // Success response
 echo json_encode([
     "success" => true,
     "user" => [
         "id" => $idNumber,
-        "role" => $role
+        "role" => $role,
+        "firstname" => $fname,
+        "lastname" => $lname,
+        "middleInitial" => $mi,
+        "fullName" => $fullName
     ],
     "message" => "Login successful"
 ]);

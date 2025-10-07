@@ -31,7 +31,7 @@ export default function ProfileProf() {
                 className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
               />
               <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
-                User Management
+                Profile
               </h1>
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function ProfileProf() {
           <hr className="opacity-60 border-[#465746] rounded border-1 mb-6" />
 
           {/* Content */}
-          <div className="bg-white p-4 sm:p-5 md:p-6 rounded-lg space-y-4 sm:space-y-5 md:space-y-6 mt-4 sm:mt-5 shadow-md text-[#465746]">
+          <div className="bg-white p-4 sm:p-6 md:p-8 rounded-lg space-y-4 sm:space-y-5 md:space-y-6 mt-4 sm:mt-5 shadow-md text-[#465746]">
             {/* Professor Information Section */}
             <div>
               <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Professor Information</h2>
@@ -83,15 +83,11 @@ export default function ProfileProf() {
                     <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">09606584521</span>
                   </div>
                 </div>
-                
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Age:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">X</span>
-                  </div>
-                </div>
+          
               </div>
             </div>
+
+            <hr className="opacity-10 border-[#465746] rounded border-1 mb-6" />
 
             {/* Professional Information Section */}
             <div>
@@ -112,6 +108,8 @@ export default function ProfileProf() {
                 </div>
               </div>
             </div>
+
+            <hr className="opacity-10 border-[#465746] rounded border-1 mb-6" />
 
             {/* Account Information Section */}
             <div>
