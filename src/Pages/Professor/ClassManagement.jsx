@@ -11,6 +11,8 @@ import Palette from "../../assets/Palette(Light).svg";
 import Add from "../../assets/Add(Light).svg";
 import Book from "../../assets/ClassManagementSubject(Light).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
+import ArchiveWarningIcon from "../../assets/Warning(Yellow).svg";
+import SuccessIcon from '../../assets/Success(Green).svg';
 
 export default function ClassManagement() {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,7 +52,7 @@ export default function ClassManagement() {
       const userDataString = localStorage.getItem('user');
       if (userDataString) {
         const userData = JSON.parse(userDataString);
-        return userData.id; // This is the ID from login
+        return userData.id;
       }
     } catch (error) {
       console.error('Error parsing user data:', error);
@@ -68,23 +70,29 @@ export default function ClassManagement() {
       setLoadingClasses(true);
       const professorId = getProfessorId();
       
+      console.log('Professor ID:', professorId);
+      
       if (!professorId) {
         console.error('No professor ID found. User may not be logged in.');
         setLoadingClasses(false);
         return;
       }
       
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/get_classes.php?professor_ID=${professorId}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
+      
+      console.log('Response status:', response.status);
       
       if (response.ok) {
         const result = await response.json();
+        console.log('API Response:', result);
+        
         if (result.success) {
-          // Add background colors to each class
           const classesWithColors = result.classes.map((classItem, index) => ({
             ...classItem,
             bgColor: bgOptions[index % bgOptions.length]
           }));
           setClasses(classesWithColors);
+          console.log('Classes set:', classesWithColors);
         } else {
           console.error('Error fetching classes:', result.message);
         }
@@ -113,7 +121,7 @@ export default function ClassManagement() {
     try {
       const professorId = getProfessorId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/archive_class.php', {
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/archive_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,7 +206,7 @@ export default function ClassManagement() {
         professor_ID: professorId
       };
 
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/create_class.php', {
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/create_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +230,6 @@ export default function ClassManagement() {
         setFormError("");
         setShowModal(false);
         
-        // Show success modal
         setCreatedSubjectCode(result.class_data.subject_code);
         setShowSuccessModal(true);
       } else {
@@ -240,75 +247,96 @@ export default function ClassManagement() {
   const renderClassCards = () => {
     if (loadingClasses) {
       return (
-        <div className="text-center py-8">
-          <p>Loading classes...</p>
+        <div className="col-span-full text-center py-12">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
+          <p className="mt-3 text-gray-600">Loading classes...</p>
+        </div>
+      );
+    }
+
+    if (classes.length === 0) {
+      return (
+        <div className="col-span-full text-center py-12">
+          <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+            <img src={Add} alt="No classes" className="h-8 w-8 opacity-50" />
+          </div>
+          <p className="text-gray-500 text-sm sm:text-base">
+            No classes created yet. Click the + button to create your first class.
+          </p>
         </div>
       );
     }
 
     return classes.map((classItem, index) => (
-      <Link to={`/SubjectDetails?code=${classItem.subject_code}`} key={classItem.subject_code}>
+      <Link 
+        to={`/SubjectDetails?code=${classItem.subject_code}`} 
+        key={classItem.subject_code}
+        className="block"
+      >
         <div
-          className="text-white text-sm sm:text-base lg:text-[1.125rem] rounded-lg p-4 sm:p-5 space-y-2 sm:space-y-3 mt-4 sm:mt-5 border-2 border-transparent hover:border-[#351111] transition-all duration-200"
+          className="text-white rounded-lg p-4 sm:p-5 lg:p-6 space-y-3 border-2 border-transparent hover:border-[#351111] hover:shadow-lg transition-all duration-200 h-full"
           style={{ backgroundColor: classItem.bgColor }}
         >
-          <div className="flex items-center font-bold flex-wrap gap-2">
-            <div className="flex items-center">
+          {/* Header with Section and Buttons */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center min-w-0 flex-1">
               <img
                 src={Book}
                 alt="Subject"
-                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 mr-2"
+                className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0 mr-2"
               />
-              <p className="text-xs sm:text-sm lg:text-base mr-1">Section:</p>
-              <p className="text-xs sm:text-sm lg:text-base text-[#fff]">{classItem.section}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm opacity-90">Section:</p>
+                <p className="text-sm sm:text-base lg:text-lg font-bold truncate">
+                  {classItem.section}
+                </p>
+              </div>
             </div>
 
-            {/* BUTTONS */}
-            <div className="ml-auto flex gap-2 sm:gap-3">
+            {/* Action Buttons */}
+            <div className="flex gap-2 flex-shrink-0">
               <button
                 onClick={(e) => handlePaletteClick(e, index)}
-                className="font-bold py-1 sm:py-2 bg-white rounded-md w-8 sm:w-10 lg:w-12 h-8 sm:h-10 lg:h-12 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer"
+                className="bg-white rounded-md w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] hover:scale-105 transition-all duration-200 cursor-pointer"
+                aria-label="Change color"
               >
                 <img 
                   src={Palette} 
-                  alt="Change color" 
-                  className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" 
+                  alt="" 
+                  className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6" 
                 />
               </button>
               <button 
                 onClick={(e) => handleArchive(classItem, e)}
-                className="font-bold py-1 sm:py-2 bg-white rounded-md w-8 sm:w-10 lg:w-12 h-8 sm:h-10 lg:h-12 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer"
+                className="bg-white rounded-md w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] hover:scale-105 transition-all duration-200 cursor-pointer"
+                aria-label="Archive class"
               >
                 <img 
                   src={Archive} 
-                  alt="Archive class" 
-                  className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" 
+                  alt="" 
+                  className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6" 
                 />
               </button>
             </div>
           </div>
 
-          {/* Subject details */}
-          <div className="space-y-1 sm:space-y-2">
-            <div className="flex flex-wrap items-center gap-x-2">
-              <p className="text-xs sm:text-sm lg:text-base font-bold">
-                Subject:
-              </p>
-              <p className="text-xs sm:text-sm lg:text-base break-words">
+          {/* Subject Details */}
+          <div className="space-y-2 pt-2 border-t border-white/20">
+            <div>
+              <p className="text-xs sm:text-sm opacity-90 mb-0.5">Subject:</p>
+              <p className="text-sm sm:text-base lg:text-lg font-semibold break-words line-clamp-2">
                 {classItem.subject}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-x-2">
-              <p className="text-xs sm:text-sm lg:text-base font-bold">
-                Year Level:
-              </p>
-              <p className="text-xs sm:text-sm lg:text-base">{classItem.year_level}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-2">
-              <p className="text-xs sm:text-sm lg:text-base font-bold">
-                Subject Code:
-              </p>
-              <p className="text-xs sm:text-sm lg:text-base">{classItem.subject_code}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm lg:text-base">
+              <div>
+                <span className="opacity-90">Year Level: </span>
+                <span className="font-semibold">{classItem.year_level}</span>
+              </div>
+              <div>
+                <span className="opacity-90">Code: </span>
+                <span className="font-semibold">{classItem.subject_code}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -325,53 +353,52 @@ export default function ClassManagement() {
       `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
 
-        {/* content of CLASS MANAGEMENT*/}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        {/* Main Content */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex items-center mb-2 sm:mb-0">
+          {/* Page Header */}
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center mb-2">
               <img
                 src={ClassManagementIcon}
-                alt="Class Management"
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
+                alt=""
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Class Management
               </h1>
             </div>
+            <p className="text-sm sm:text-base lg:text-lg text-[#465746]/80">
+              Academic Management
+            </p>
           </div>
 
-          <div className="text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
-            <span>Academic Management</span>
-          </div>
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
-
-          {/* Filter and Action Buttons */}
-          <div className="flex flex-row mt-4 sm:mt-5 gap-4 justify-between items-center">
+          {/* Filter and Action Bar */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-5 sm:mb-6">
             
-            {/* Filter BUTTON */}
-            <div className="relative">
+            {/* Filter Dropdown */}
+            <div className="relative flex-1 sm:flex-initial">
               <button
                 onClick={() => setOpen(!open)}
-                className="flex items-center font-bold px-3 py-2 bg-[#fff] rounded-md cursor-pointer shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 text-xs sm:text-sm lg:text-base min-w-[100px] sm:min-w-[140px]"
+                className="flex items-center justify-between w-full sm:w-auto font-bold px-4 py-2.5 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 text-sm sm:text-base min-w-[140px] sm:min-w-[160px] cursor-pointer"
               >
-                <span className="flex-1 text-left">Year Level</span>
+                <span>Year Level</span>
                 <img
                   src={ArrowDown}
-                  alt="ArrowDown"
-                  className="ml-2 h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6"
+                  alt=""
+                  className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
                 />
               </button>
 
-              {/* Filter Dropdown SELECTIONS */}
+              {/* Dropdown Menu */}
               {open && (
-                <div className="absolute top-full mt-1 bg-white rounded-md w-full sm:w-48 shadow-lg border border-gray-200 z-10">
+                <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
                   {yearLevels.map((year) => (
                     <button
                       key={year}
-                      className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm md:text-base transition-colors duration-200 cursor-pointer"
+                      className="block px-4 py-2.5 w-full text-left hover:bg-gray-100 text-sm sm:text-base transition-colors duration-150 cursor-pointer"
                       onClick={() => setOpen(false)}
                     >
                       {year}
@@ -381,95 +408,100 @@ export default function ClassManagement() {
               )}
             </div>
 
-            {/* Add and Archive Buttons */}
-            <div className="flex items-center gap-2">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 sm:gap-3 sm:ml-auto">
               <Link to="/ArchiveClass">
-                <button className="font-bold py-2 bg-[#fff] rounded-md w-10 sm:w-12 h-10 sm:h-12 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer">
+                <button className="font-bold py-2.5 bg-white rounded-md w-11 h-11 lg:w-12 lg:h-12 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] hover:scale-105 transition-all duration-200 cursor-pointer">
                   <img
                     src={Archive}
-                    alt="Archive"
-                    className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                    alt=""
+                    className="h-5 w-5 sm:h-6 sm:w-6"
                   />
                 </button>
               </Link>
               <button 
                 onClick={() => setShowModal(true)}
-                className="font-bold py-2 bg-[#fff] rounded-md w-10 sm:w-12 h-10 sm:h-12 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer">
+                className="font-bold py-2.5 bg-white rounded-md w-11 h-11 lg:w-12 lg:h-12 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] hover:scale-105 transition-all duration-200 cursor-pointer"
+              >
                 <img
                   src={Add}
-                  alt="Add"
-                  className="h-6 w-6 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                  alt=""
+                  className="h-6 w-6"
                 />
               </button>
             </div>
           </div>
 
-          {/* Render dynamic class cards */}
-          {renderClassCards()}
-
-          {/* Show message if no classes exist */}
-          {!loadingClasses && classes.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <p>No classes created yet. Click the + button to create your first class.</p>
-            </div>
-          )}
+          {/* Class Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            {renderClassCards()}
+          </div>
         </div>
       </div>
 
       {/* Create Class Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-50 flex justify-center items-center z-50 overlay-fade p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowModal(false);
           }}
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white text-black rounded-lg shadow-lg w-full max-w-sm sm:max-w-md md:max-w-lg p-4 sm:p-6 md:p-8 relative modal-pop max-h-[90vh] overflow-y-auto">
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-md p-6 sm:p-8 relative modal-pop max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowModal(false)}
               aria-label="Close modal"
-              className="absolute top-4 right-4 sm:right-6 md:right-8 top-5 sm:hidden cursor-pointer"
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer sm:hidden"
             >
               <img
                 src={BackButton}
-                alt="BackButton"
-                className="w-5 h-5 sm:w-5 sm:h-5 md:w-6 md:h-6"
+                alt="Backbutton"
+                className="w-5 h-5"
               />
             </button>
 
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 pr-8">
-              Create class
+            <h2 className="text-xl sm:text-2xl font-bold mb-1 pr-10">
+              Create Class
             </h2>
-            <hr className="border-gray-300 mb-3 sm:mb-4" />
+            <p className="text-sm text-gray-600 mb-4">Fill in the details to create a new class</p>
+            <hr className="border-gray-200 mb-5" />
 
             {/* Error Message */}
             {formError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 text-sm">
-                {formError}
+              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-5 text-sm">
+                <p className="font-semibold">Error</p>
+                <p>{formError}</p>
               </div>
             )}
 
-            {/* Modal Body */}
-            <div className="space-y-4">
+            {/* Form */}
+            <div className="space-y-5">
               {/* Year Level Dropdown */}
               <div className="relative">
-                <label className="text-sm font-semibold mb-1 block">Year Level *</label>
+                <label className="text-sm font-semibold mb-2 block text-gray-700">
+                  Year Level <span className="text-red-500">*</span>
+                </label>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setYearLevelDropdownOpen(!yearLevelDropdownOpen);
                   }}
-                  className="w-full bg-white border border-gray-300 text-black rounded-md px-4 py-2.5 flex items-center justify-between hover:border-[#00874E] transition-colors"
+                  className="w-full bg-white border-2 border-gray-300 text-black rounded-md px-4 py-3 flex items-center justify-between hover:border-[#00874E] focus:border-[#00874E] focus:outline-none transition-colors cursor-pointer"
                 >
-                  <span className="text-sm">{selectedYearLevel || "Select Year Level"}</span>
-                  <img src={ArrowDown} alt="Arrow" className="h-4 w-4" />
+                  <span className={`text-sm ${!selectedYearLevel ? 'text-gray-500' : ''}`}>
+                    {selectedYearLevel || "Select Year Level"}
+                  </span>
+                  <img 
+                    src={ArrowDown} 
+                    alt="" 
+                    className={`h-4 w-4 transition-transform ${yearLevelDropdownOpen ? 'rotate-180' : ''}`} 
+                  />
                 </button>
                 {yearLevelDropdownOpen && (
-                  <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                  <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-xl border border-gray-200 z-10 overflow-hidden">
                     {yearLevels.map((year) => (
                       <button
                         key={year}
@@ -478,7 +510,7 @@ export default function ClassManagement() {
                           setSelectedYearLevel(year);
                           setYearLevelDropdownOpen(false);
                         }}
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                        className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 transition-colors cursor-pointer"
                       >
                         {year}
                       </button>
@@ -489,27 +521,31 @@ export default function ClassManagement() {
 
               {/* Subject Input */}
               <div>
-                <label className="text-sm font-semibold mb-1 block">Subject *</label>
+                <label className="text-sm font-semibold mb-2 block text-gray-700">
+                  Subject <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   placeholder="Enter subject name"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none text-sm focus:border-[#00874E] transition-colors"
+                  className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
                 />
               </div>
 
               {/* Section Input */}
               <div>
-                <label className="text-sm font-semibold mb-1 block">Section *</label>
+                <label className="text-sm font-semibold mb-2 block text-gray-700">
+                  Section <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   placeholder="Enter section"
                   value={section}
                   onChange={(e) => setSection(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none text-sm focus:border-[#00874E] transition-colors"
+                  className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
                 />
               </div>
 
@@ -518,10 +554,13 @@ export default function ClassManagement() {
                 onClick={handleCreate}
                 disabled={loading}
                 className={`w-full ${
-                  loading ? 'bg-gray-400' : 'bg-[#00A15D] hover:bg-[#00874E]'
-                } text-white font-bold py-2.5 rounded-md transition-colors text-sm sm:text-base cursor-pointer`}
+                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#00A15D] hover:bg-[#00874E] cursor-pointer'
+                } text-white font-bold py-3 rounded-md transition-all duration-200 text-base flex items-center justify-center gap-2`}
               >
-                {loading ? 'Creating...' : 'Create'}
+                {loading && (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                )}
+                {loading ? 'Creating...' : 'Create Class'}
               </button>
             </div>
           </div>
@@ -545,45 +584,36 @@ export default function ClassManagement() {
       {/* Success Modal */}
       {showSuccessModal && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-50 flex justify-center items-center z-50 overlay-fade p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowSuccessModal(false);
           }}
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white text-black rounded-lg shadow-lg w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
             <div className="text-center">
               {/* Success Icon */}
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                <svg
-                  className="h-8 w-8 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <img 
+                  src={SuccessIcon} 
+                  alt="Success" 
+                  className="h-8 w-8"
+                />
               </div>
 
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 Class Created Successfully!
               </h3>
               
-              <div className="mt-4 mb-6">
-                <p className="text-sm text-gray-600 mb-2">Subject Code:</p>
-                <p className="text-2xl font-bold text-[#00874E]">{createdSubjectCode}</p>
+              <div className="mt-4 mb-6 bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-1">Subject Code:</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#00874E]">{createdSubjectCode}</p>
               </div>
 
               <button
                 onClick={() => setShowSuccessModal(false)}
-                className="w-full bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-colors cursor-pointer"
+                className="w-full bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
               >
                 Got it!
               </button>
@@ -595,8 +625,7 @@ export default function ClassManagement() {
       {/* Archive Confirmation Modal */}
       {showArchiveModal && classToArchive && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-50 flex justify-center items-center z-50 overlay-fade p-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowArchiveModal(false);
@@ -606,54 +635,51 @@ export default function ClassManagement() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white text-black rounded-lg shadow-lg w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
             <div className="text-center">
               {/* Warning Icon */}
-              {/* <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
-                <svg
-                  className="h-8 w-8 text-yellow-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-              </div> */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                <img 
+                  src={ArchiveWarningIcon} 
+                  alt="Warning" 
+                  className="h-8 w-8" 
+                />
+              </div>
 
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                Archive Class
+                Archive Class?
               </h3>
               
               <div className="mt-4 mb-6">
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-600 mb-3">
                   Are you sure you want to archive this class?
                 </p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {classToArchive.subject}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Section: {classToArchive.section}
-                </p>
+                <div className="bg-gray-50 rounded-lg p-4 text-left">
+                  <p className="text-base sm:text-lg font-semibold text-gray-900 break-words">
+                    {classToArchive.subject}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Section: {classToArchive.section}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Code: {classToArchive.subject_code}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => {
                     setShowArchiveModal(false);
                     setClassToArchive(null);
                   }}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-colors cursor-pointer"
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmArchive}
-                  className="flex-1 bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-colors cursor-pointer"
+                  className="flex-1 bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
                 >
                   Archive
                 </button>

@@ -4,10 +4,9 @@ import Menu from '../assets/MenuLine(Light).svg';
 import Notification from '../assets/NotificationIcon.svg';
 import ProfilePhoto from '../assets/ProfilePhoto.svg';
 import LogOut from "../assets/LogOut.svg";
-import Profile from "../assets/Profile.svg";
-import AccountSettings from "../assets/Settings.svg";
+import Profile from "../assets/ClassManagement(Light).svg";
+import AccountSettings from "../assets/Settings(Light).svg";
 // import LogOut from "../assets/LogOut(dark).svg";
-// import Profile from "../assets/Profile(dark).svg";
 // import AccountSettings from "../assets/Settings(dark).svg";
 
 function Header({ setIsOpen }) {

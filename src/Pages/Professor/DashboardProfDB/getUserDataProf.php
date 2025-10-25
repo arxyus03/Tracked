@@ -52,6 +52,30 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($user) {
+        // Fetch handled subjects for this professor (only active classes)
+        $subjectStmt = $conn->prepare("
+            SELECT subject 
+            FROM classes 
+            WHERE professor_ID = :id 
+            AND status = 'Active'
+            ORDER BY created_at DESC
+        ");
+        
+        $subjectStmt->bindParam(':id', $userId);
+        $subjectStmt->execute();
+        
+        $subjects = $subjectStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Extract only subject names
+        $handledSubjects = [];
+        foreach ($subjects as $subject) {
+            $handledSubjects[] = $subject['subject'];
+        }
+        
+        // Add handled subjects to user data
+        $user['handled_subjects'] = $handledSubjects;
+        $user['handled_subjects_count'] = count($subjects);
+        
         echo json_encode([
             'success' => true,
             'user' => $user

@@ -14,6 +14,10 @@ export default function ArchiveClass() {
   const [isOpen, setIsOpen] = useState(false);
   const [archivedClasses, setArchivedClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+  const [classToDelete, setClassToDelete] = useState(null);
+  const [classToUnarchive, setClassToUnarchive] = useState(null);
 
   // background colors (same as ClassManagement.jsx)
   const bgOptions = [
@@ -30,7 +34,7 @@ export default function ArchiveClass() {
       const userDataString = localStorage.getItem('user');
       if (userDataString) {
         const userData = JSON.parse(userDataString);
-        return userData.id; // This is the ID from login
+        return userData.id;
       }
     } catch (error) {
       console.error('Error parsing user data:', error);
@@ -46,7 +50,7 @@ export default function ArchiveClass() {
   const fetchArchivedClasses = async () => {
     try {
       setLoading(true);
-      const professorId = getProfessorId(); // CHANGED: Get dynamic ID
+      const professorId = getProfessorId();
       
       if (!professorId) {
         console.error('No professor ID found. User may not be logged in.');
@@ -54,12 +58,11 @@ export default function ArchiveClass() {
         return;
       }
       
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/get_archived_classes.php?professor_ID=${professorId}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/get_archived_classes.php?professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          // Add background colors to each class (same as ClassManagement.jsx)
           const classesWithColors = result.classes.map((classItem, index) => ({
             ...classItem,
             bgColor: bgOptions[index % bgOptions.length]
@@ -83,36 +86,43 @@ export default function ArchiveClass() {
     e.preventDefault();
     e.stopPropagation();
     
-    if (window.confirm(`Are you sure you want to unarchive "${classItem.subject}"?`)) {
-      try {
-        const professorId = getProfessorId(); // CHANGED: Get dynamic ID
-        
-        const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/unarchive_class.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            subject_code: classItem.subject_code,
-            professor_ID: professorId // CHANGED: Use dynamic ID
-          })
-        });
+    setClassToUnarchive(classItem);
+    setShowUnarchiveModal(true);
+  };
 
-        const result = await response.json();
+  const confirmUnarchive = async () => {
+    if (!classToUnarchive) return;
 
-        if (result.success) {
-          // Remove class from archived list
-          setArchivedClasses(prevClasses => 
-            prevClasses.filter(c => c.subject_code !== classItem.subject_code)
-          );
-          alert('Class unarchived successfully!');
-        } else {
-          alert('Error unarchiving class: ' + result.message);
-        }
-      } catch (error) {
-        console.error('Error unarchiving class:', error);
-        alert('Error unarchiving class. Please try again.');
+    try {
+      const professorId = getProfessorId();
+      
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/unarchive_class.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject_code: classToUnarchive.subject_code,
+          professor_ID: professorId
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setArchivedClasses(prevClasses => 
+          prevClasses.filter(c => c.subject_code !== classToUnarchive.subject_code)
+        );
+        setShowUnarchiveModal(false);
+        setClassToUnarchive(null);
+      } else {
+        alert('Error unarchiving class: ' + result.message);
+        setShowUnarchiveModal(false);
       }
+    } catch (error) {
+      console.error('Error unarchiving class:', error);
+      alert('Error unarchiving class. Please try again.');
+      setShowUnarchiveModal(false);
     }
   };
 
@@ -121,36 +131,43 @@ export default function ArchiveClass() {
     e.preventDefault();
     e.stopPropagation();
     
-    if (window.confirm(`Are you sure you want to permanently delete "${classItem.subject}"? This action cannot be undone.`)) {
-      try {
-        const professorId = getProfessorId(); // CHANGED: Get dynamic ID
-        
-        const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/delete_class.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            subject_code: classItem.subject_code,
-            professor_ID: professorId // CHANGED: Use dynamic ID
-          })
-        });
+    setClassToDelete(classItem);
+    setShowDeleteModal(true);
+  };
 
-        const result = await response.json();
+  const confirmDelete = async () => {
+    if (!classToDelete) return;
 
-        if (result.success) {
-          // Remove class from archived list
-          setArchivedClasses(prevClasses => 
-            prevClasses.filter(c => c.subject_code !== classItem.subject_code)
-          );
-          alert('Class deleted successfully!');
-        } else {
-          alert('Error deleting class: ' + result.message);
-        }
-      } catch (error) {
-        console.error('Error deleting class:', error);
-        alert('Error deleting class. Please try again.');
+    try {
+      const professorId = getProfessorId();
+      
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/delete_class.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject_code: classToDelete.subject_code,
+          professor_ID: professorId
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setArchivedClasses(prevClasses => 
+          prevClasses.filter(c => c.subject_code !== classToDelete.subject_code)
+        );
+        setShowDeleteModal(false);
+        setClassToDelete(null);
+      } else {
+        alert('Error deleting class: ' + result.message);
+        setShowDeleteModal(false);
       }
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      alert('Error deleting class. Please try again.');
+      setShowDeleteModal(false);
     }
   };
 
@@ -158,81 +175,96 @@ export default function ArchiveClass() {
   const renderArchivedClassCards = () => {
     if (loading) {
       return (
-        <div className="text-center py-8">
-          <p>Loading archived classes...</p>
+        <div className="col-span-full text-center py-12">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
+          <p className="mt-3 text-gray-600">Loading archived classes...</p>
+        </div>
+      );
+    }
+
+    if (archivedClasses.length === 0) {
+      return (
+        <div className="col-span-full text-center py-12">
+          <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+            <img src={ArchiveIcon} alt="No archived classes" className="h-8 w-8 opacity-50" />
+          </div>
+          <p className="text-gray-500 text-sm sm:text-base">
+            No archived classes found.
+          </p>
+          <p className="text-gray-400 text-xs sm:text-sm mt-2">
+            Classes you archive will appear here.
+          </p>
         </div>
       );
     }
 
     return archivedClasses.map((classItem) => (
-      <div 
+      <div
         key={classItem.subject_code}
-        className="text-white text-sm sm:text-base lg:text-[1.125rem] rounded-lg p-4 sm:p-5 space-y-2 sm:space-y-3 mt-4 sm:mt-5 border-2 border-transparent hover:border-[#351111] transition-all duration-200 relative"
+        className="text-white rounded-lg p-4 sm:p-5 lg:p-6 space-y-3 border-2 border-transparent hover:border-[#351111] hover:shadow-lg transition-all duration-200"
         style={{ backgroundColor: classItem.bgColor }}
       >
-
-        <div className="flex items-center font-bold flex-wrap gap-2">
-          <div className="flex items-center">
+        {/* Header with Section and Buttons */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center min-w-0 flex-1">
             <img
               src={Book}
               alt="Subject"
-              className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 mr-2"
+              className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0 mr-2"
             />
-            <p className="text-xs sm:text-sm lg:text-base mr-1">Section:</p>
-            <p className="text-xs sm:text-sm lg:text-base text-[#fff]">{classItem.section}</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm opacity-90">Section:</p>
+              <p className="text-sm sm:text-base lg:text-lg font-bold truncate">
+                {classItem.section}
+              </p>
+            </div>
           </div>
 
-          {/* BUTTONS */}
-          <div className="ml-auto flex gap-2 sm:gap-3">
-            {/* Delete Button */}
+          {/* Action Buttons */}
+          <div className="flex gap-2 flex-shrink-0">
             <button
               onClick={(e) => handleDelete(classItem, e)}
-              className="font-bold py-1 sm:py-2 bg-white rounded-md w-8 sm:w-10 lg:w-12 h-8 sm:h-10 lg:h-12 shadow-md flex items-center justify-center border-2 border-transparent hover:border-red-500 transition-all duration-200 cursor-pointer"
+              className="bg-white rounded-md w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 shadow-md flex items-center justify-center border-2 border-transparent hover:border-red-500 hover:scale-105 transition-all duration-200 cursor-pointer"
               title="Delete permanently"
             >
               <img 
                 src={DeleteIcon} 
                 alt="Delete class" 
-                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" 
+                className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6" 
               />
             </button>
 
-            {/* Unarchive Button */}
             <button
               onClick={(e) => handleUnarchive(classItem, e)}
-              className="font-bold py-1 sm:py-2 bg-white rounded-md w-8 sm:w-10 lg:w-12 h-8 sm:h-10 lg:h-12 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer"
+              className="bg-white rounded-md w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] hover:scale-105 transition-all duration-200 cursor-pointer"
               title="Restore class"
             >
               <img 
                 src={UnarchiveIcon} 
                 alt="Unarchive class" 
-                className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" 
+                className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6" 
               />
             </button>
           </div>
         </div>
 
-        {/* Subject details */}
-        <div className="space-y-1 sm:space-y-2">
-          <div className="flex flex-wrap items-center gap-x-2">
-            <p className="text-xs sm:text-sm lg:text-base font-bold">
-              Subject:
-            </p>
-            <p className="text-xs sm:text-sm lg:text-base break-words">
+        {/* Subject Details */}
+        <div className="space-y-2 pt-2 border-t border-white/20">
+          <div>
+            <p className="text-xs sm:text-sm opacity-90 mb-0.5">Subject:</p>
+            <p className="text-sm sm:text-base lg:text-lg font-semibold break-words line-clamp-2">
               {classItem.subject}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-x-2">
-            <p className="text-xs sm:text-sm lg:text-base font-bold">
-              Year Level:
-            </p>
-            <p className="text-xs sm:text-sm lg:text-base">{classItem.year_level}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-2">
-            <p className="text-xs sm:text-sm lg:text-base font-bold">
-              Subject Code:
-            </p>
-            <p className="text-xs sm:text-sm lg:text-base">{classItem.subject_code}</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm lg:text-base">
+            <div>
+              <span className="opacity-90">Year Level: </span>
+              <span className="font-semibold">{classItem.year_level}</span>
+            </div>
+            <div>
+              <span className="opacity-90">Code: </span>
+              <span className="font-semibold">{classItem.subject_code}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -248,60 +280,201 @@ export default function ArchiveClass() {
       `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
 
-        {/* content of ARCHIVED CLASSES */}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        {/* Main Content */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex items-center mb-2 sm:mb-0">
-              <img
-                src={ArchiveIcon}
-                alt="Archive"
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
-              />
-              <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
-                Archives
-              </h1>
-            </div>
-          </div>
-
-          {/* Subtitle with mobile back button */}
-          <div className="flex items-center justify-between mb-4 sm:mb-5 ml-2">
-            <div className="text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746]">
-              <span>Classes you've archived</span>
-            </div>
-            
-            {/* Mobile Back Button - Only visible on mobile */}
-            <Link to="/ClassManagement" className="sm:hidden">
-              <button 
-                className="flex items-center justify-center w-8 h-8 cursor-pointer transition-all duration-200"
-                aria-label="Back to Classes"
-              >
+          {/* Page Header */}
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
                 <img
-                  src={BackButton}
-                  alt="Back"
-                  className="h-6 w-6"
+                  src={ArchiveIcon}
+                  alt=""
+                  className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
                 />
-              </button>
-            </Link>
+                <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
+                  Archives
+                </h1>
+              </div>
+              
+              {/* Mobile Back Button */}
+              <Link to="/ClassManagement" className="sm:hidden">
+                <button 
+                  className="flex items-center justify-center w-9 h-9 cursor-pointer transition-all duration-200 hover:scale-110"
+                  aria-label="Back to Classes"
+                >
+                  <img
+                    src={BackButton}
+                    alt="Back"
+                    className="h-6 w-6"
+                  />
+                </button>
+              </Link>
+            </div>
+            <p className="text-sm sm:text-base lg:text-lg text-[#465746]/80 ml-9 sm:ml-10">
+              Classes you've archived
+            </p>
           </div>
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mt-3" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          {/* ARCHIVED CLASSES CARDS */}
-          <div className="mt-4 sm:mt-5">
+          {/* Archived Classes Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {renderArchivedClassCards()}
-
-            {/* Show message if no archived classes */}
-            {!loading && archivedClasses.length === 0 && (
-              <div className="text-center py-10 sm:py-12 md:py-16">
-                <p className="text-gray-500 text-base sm:text-lg md:text-xl">No archived classes found.</p>
-                <p className="text-gray-400 text-sm mt-2">Classes you archive will appear here.</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
+
+      {/* Unarchive Confirmation Modal */}
+      {showUnarchiveModal && classToUnarchive && (
+        <div
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowUnarchiveModal(false);
+              setClassToUnarchive(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+            <div className="text-center">
+              {/* Info Icon */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <img 
+                  src={UnarchiveIcon} 
+                  alt="Restore" 
+                  className="h-8 w-8"
+                />
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                Restore Class?
+              </h3>
+              
+              <div className="mt-4 mb-6">
+                <p className="text-sm text-gray-600 mb-3">
+                  Are you sure you want to restore this class?
+                </p>
+                <div className="bg-gray-50 rounded-lg p-4 text-left">
+                  <p className="text-base sm:text-lg font-semibold text-gray-900 break-words">
+                    {classToUnarchive.subject}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Section: {classToUnarchive.section}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Code: {classToUnarchive.subject_code}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    setShowUnarchiveModal(false);
+                    setClassToUnarchive(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmUnarchive}
+                  className="flex-1 bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                >
+                  Restore
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && classToDelete && (
+        <div
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDeleteModal(false);
+              setClassToDelete(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+            <div className="text-center">
+              {/* Warning Icon */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <img 
+                  src={DeleteIcon} 
+                  alt="Delete" 
+                  className="h-8 w-8"
+                />
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                Delete Class?
+              </h3>
+              
+              <div className="mt-4 mb-6">
+                <p className="text-sm text-gray-600 mb-1">
+                  Are you sure you want to permanently delete this class?
+                </p>
+                <p className="text-sm font-semibold text-red-600 mb-3">
+                  This action cannot be undone.
+                </p>
+                <div className="bg-gray-50 rounded-lg p-4 text-left">
+                  <p className="text-base sm:text-lg font-semibold text-gray-900 break-words">
+                    {classToDelete.subject}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Section: {classToDelete.section}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Code: {classToDelete.subject_code}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setClassToDelete(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .overlay-fade { animation: overlayFade .18s ease-out both; }
+        @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
+
+        .modal-pop {
+          transform-origin: top center;
+          animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
+        }
+        @keyframes popIn {
+          from { opacity: 0; transform: translateY(-8px) scale(.98); }
+          to   { opacity: 1; transform: translateY(0)   scale(1);    }
+        }
+      `}</style>
     </div>
   );
 }

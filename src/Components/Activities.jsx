@@ -18,7 +18,8 @@ export default function ActivityCard({
     students: activity.students,
     isEditing,
     hasStudents: activity.students?.length > 0,
-    studentCount: activity.students?.length || 0
+    studentCount: activity.students?.length || 0,
+    points: activity.points
   });
 
   // Determine status based on student submissions
@@ -92,6 +93,14 @@ export default function ActivityCard({
     return num.toString();
   };
 
+  // Check if grade exceeds maximum points
+  const isGradeExceeded = (grade) => {
+    if (!grade || grade === '' || !activity.points) return false;
+    
+    const numGrade = parseFloat(grade);
+    return numGrade > activity.points;
+  };
+
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'No deadline';
@@ -103,57 +112,78 @@ export default function ActivityCard({
         day: 'numeric' 
       });
     } catch {
-      // If date parsing fails, return the original string
       return dateString;
     }
   };
 
   return (
-    <div className={`bg-[#fff] rounded-md shadow-md p-4 mb-4 w-full mt-5 border-2 ${
+    <div className={`bg-[#fff] rounded-md shadow-md p-3 sm:p-4 mb-4 w-full mt-5 border-2 ${
       !isEditing ? 'border-transparent' : 'border-[#00874E]'
     }`}>
       {/* Card Header */}
-      <div className="flex items-center justify-between cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
-        <div className="flex flex-col text-[1.125rem] max-w-[250px]">
-          <span className="font-bold">{activity.title || activity.task_number}</span>
-          <span className="text-sm text-gray-600 mt-1">{activity.instruction || activity.description}</span>
+      <div className="relative cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pr-10">
+          
+          {/* Title section */}
+          <div className="flex flex-col text-sm sm:text-base lg:text-[1.125rem] max-w-full sm:max-w-[250px]">
+            <span className="font-bold">{activity.title || activity.task_number}</span>
+            <span className="text-xs sm:text-sm text-gray-600 mt-1">
+              {activity.instruction || activity.description}
+            </span>
+            {activity.points && (
+              <span className="text-xs sm:text-sm font-semibold text-[#465746] mt-1">
+                Total Points: {activity.points}
+              </span>
+            )}
+          </div>
+
+          {/* Status and Deadline section - stack on mobile, row on desktop */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 md:gap-4 text-sm sm:text-base lg:text-[1.125rem]">
+            <div className="flex items-center gap-2">
+              <p className="font-bold whitespace-nowrap">Status:</p>
+              <p className={`whitespace-nowrap text-xs sm:text-sm lg:text-base ${allSubmitted ? 'text-[#00A15D]' : 'text-[#EF4444]'}`}>
+                {status}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="font-bold text-[#EF4444] whitespace-nowrap">Deadline:</p>
+              <p className="whitespace-nowrap text-xs sm:text-sm lg:text-base">
+                {formatDate(activity.deadline)}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Fixed Status and Deadline section - reduced gaps and improved alignment */}
-        <div className="flex items-center gap-4 text-[1.125rem]">
-          <div className="flex items-center gap-2">
-            <p className="font-bold whitespace-nowrap">Status:</p>
-            <p className={`whitespace-nowrap ${allSubmitted ? 'text-[#00A15D]' : 'text-[#EF4444]'}`}>
-              {status}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="font-bold text-[#EF4444] whitespace-nowrap">Deadline:</p>
-            <p className="whitespace-nowrap">{formatDate(activity.deadline)}</p>
-          </div>
-        </div>
-
-        {/* Right: Arrow */}
+        {/* Arrow - absolute positioned on upper right */}
         <img
           src={ArrowDown}
           alt="Expand"
-          className={`h-6 w-6 transform transition-transform duration-300 ml-4 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 sm:h-6 sm:w-6 transform transition-transform duration-300 
+                      absolute top-0 right-0
+                      ${isOpen ? "rotate-180" : ""}`}
         />
       </div>
 
       {/* Collapsible Content */}
       {isOpen && (
-        <div className="mt-3 pt-3 text-[1.125rem] space-y-4">
+        <div className="mt-3 pt-3 space-y-4">
           {/* Student Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="overflow-x-auto relative">
+            {/* Scroll hint for mobile */}
+            <div className="sm:hidden text-xs text-gray-500 mb-2 text-center">
+              ← Swipe to see all columns →
+            </div>
+            
+            <table className="w-full border-collapse min-w-[600px]">
               <thead>
-                <tr className="text-left text-[1.125rem] font-semibold">
+                <tr className="text-left text-xs sm:text-sm lg:text-[1.125rem] font-semibold">
                   <th className="p-2">Student No.</th>
                   <th className="p-2">Student Name</th>
-                  <th className="p-2 text-center">Score</th>
+                  <th className="p-2 text-center">
+                    <span className="hidden sm:inline">Score</span>
+                    <span className="sm:hidden">Pts</span>
+                    {activity.points ? ` / ${activity.points}` : ''}
+                  </th>
                   <th className="p-2 text-center text-[#00A15D]">Submitted</th>
                   <th className="p-2 text-center text-[#767EE0]">Late</th>
                   <th className="p-2 text-center text-[#EF4444]">Missed</th>
@@ -162,36 +192,53 @@ export default function ActivityCard({
               <tbody>
                 {activity.students?.length > 0 ? (
                   activity.students.map((student) => {
-                    console.log('Rendering student:', student); // Debug log for each student
+                    console.log('Rendering student:', student);
                     const currentStatus = getStudentStatus(student);
+                    const gradeExceeded = isGradeExceeded(student.grade);
+                    
                     return (
                       <tr key={student.user_ID || student.id} className="hover:bg-gray-50">
-                        <td className="p-2">{student.user_ID || student.no}</td>
-                        <td className="p-2">{student.user_Name || student.name}</td>
+                        <td className="p-2 text-xs sm:text-sm lg:text-base">{student.user_ID || student.no}</td>
+                        <td className="p-2 text-xs sm:text-sm lg:text-base">{student.user_Name || student.name}</td>
                         <td className="p-2 text-center">
-                          <input
-                            type="number"
-                            className={`w-16 rounded border px-2 py-1 text-sm text-center ${
-                              !isEditing ? 'bg-gray-100 cursor-not-allowed' : 'border-gray-300'
-                            }`}
-                            placeholder="0"
-                            value={formatGrade(student.grade)}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              handleGradeInputChange(student.user_ID || student.id, value);
-                            }}
-                            onBlur={(e) => {
-                              // Auto-submit when grade is entered and field loses focus
-                              const value = e.target.value;
-                              if (value && value > 0 && !student.submitted) {
-                                handleStatusChange(student.user_ID || student.id, 'submitted');
-                              }
-                            }}
-                            disabled={!isEditing}
-                            max={activity.points}
-                            min="0"
-                            step="1" // Allow only whole numbers
-                          />
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                className={`w-14 sm:w-16 rounded border px-1 sm:px-2 py-1.5 sm:py-1 text-xs sm:text-sm text-center ${
+                                  !isEditing ? 'bg-gray-100 cursor-not-allowed' : 'border-gray-300'
+                                } ${
+                                  gradeExceeded ? 'border-red-500 border-2 bg-red-50' : ''
+                                }`}
+                                placeholder="0"
+                                value={formatGrade(student.grade)}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  handleGradeInputChange(student.user_ID || student.id, value);
+                                }}
+                                onBlur={(e) => {
+                                  const value = e.target.value;
+                                  if (value && value > 0 && !student.submitted) {
+                                    handleStatusChange(student.user_ID || student.id, 'submitted');
+                                  }
+                                }}
+                                disabled={!isEditing}
+                                max={activity.points || 100}
+                                min="0"
+                                step="1"
+                              />
+                              {activity.points && (
+                                <span className="text-xs text-gray-500 whitespace-nowrap">
+                                  / {activity.points}
+                                </span>
+                              )}
+                            </div>
+                            {gradeExceeded && (
+                              <span className="text-xs text-red-500 mt-1 whitespace-nowrap font-medium">
+                                Exceeded max!
+                              </span>
+                            )}
+                          </div>
                         </td>
                         
                         {/* Submitted */}
@@ -199,7 +246,7 @@ export default function ActivityCard({
                           <input
                             type="radio"
                             name={`status-${student.user_ID || student.id}`}
-                            className="appearance-none w-6 h-6 border-2 border-[#00A15D] rounded-md checked:bg-[#00A15D] cursor-pointer disabled:cursor-not-allowed"
+                            className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#00A15D] rounded-md checked:bg-[#00A15D] cursor-pointer disabled:cursor-not-allowed"
                             checked={currentStatus === 'submitted'}
                             onChange={() => handleStatusChange(student.user_ID || student.id, 'submitted')}
                             disabled={!isEditing}
@@ -211,7 +258,7 @@ export default function ActivityCard({
                           <input
                             type="radio"
                             name={`status-${student.user_ID || student.id}`}
-                            className="appearance-none w-6 h-6 border-2 border-[#767EE0] rounded-md checked:bg-[#767EE0] cursor-pointer disabled:cursor-not-allowed"
+                            className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#767EE0] rounded-md checked:bg-[#767EE0] cursor-pointer disabled:cursor-not-allowed"
                             checked={currentStatus === 'late'}
                             onChange={() => handleStatusChange(student.user_ID || student.id, 'late')}
                             disabled={!isEditing}
@@ -223,7 +270,7 @@ export default function ActivityCard({
                           <input
                             type="radio"
                             name={`status-${student.user_ID || student.id}`}
-                            className="appearance-none w-6 h-6 border-2 border-[#EF4444] rounded-md checked:bg-[#EF4444] cursor-pointer disabled:cursor-not-allowed"
+                            className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#EF4444] rounded-md checked:bg-[#EF4444] cursor-pointer disabled:cursor-not-allowed"
                             checked={currentStatus === 'missed'}
                             onChange={() => handleStatusChange(student.user_ID || student.id, 'missed')}
                             disabled={!isEditing}
@@ -234,7 +281,7 @@ export default function ActivityCard({
                   })
                 ) : (
                   <tr>
-                    <td colSpan="6" className="p-4 text-center text-gray-500">
+                    <td colSpan="6" className="p-4 text-center text-gray-500 text-xs sm:text-sm">
                       No students found for this activity. Students: {activity.students?.length || 0}
                     </td>
                   </tr>
@@ -244,19 +291,19 @@ export default function ActivityCard({
           </div>
 
           {/* EDIT, MARK ALL, SAVE Buttons */}
-          <div className="flex justify-end space-x-3">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
             {!isEditing ? (
               <>
                 <button 
                   onClick={handleEditToggle}
-                  className="px-4 py-2 bg-[#979797] text-[#fff] font-bold rounded-md hover:border-2 hover:border-[#007846] transition-all duration-200 cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-2 bg-[#979797] text-[#fff] text-sm sm:text-base font-bold rounded-md hover:border-2 hover:border-[#007846] transition-all duration-200 cursor-pointer"
                 >
                   Edit
                 </button>
                 {!allSubmitted && (
                   <button 
                     onClick={handleMarkAllSubmitted}
-                    className="px-4 py-2 bg-[#979797] text-[#fff] font-bold rounded-md hover:border-2 hover:border-[#007846] transition-all duration-200 cursor-pointer"
+                    className="w-full sm:w-auto px-4 py-2 bg-[#979797] text-[#fff] text-sm sm:text-base font-bold rounded-md hover:border-2 hover:border-[#007846] transition-all duration-200 cursor-pointer whitespace-nowrap"
                   >
                     Mark All Submitted
                   </button>
@@ -265,7 +312,7 @@ export default function ActivityCard({
             ) : (
               <button 
                 onClick={handleSave}
-                className="px-4 py-2 bg-[#00A15D] text-[#fff] font-bold rounded-md hover:border-2 hover:border-[#007846] transition-all duration-200 cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 bg-[#00A15D] text-[#fff] text-sm sm:text-base font-bold rounded-md hover:border-2 hover:border-[#007846] transition-all duration-200 cursor-pointer"
               >
                 Save
               </button>

@@ -9,6 +9,8 @@ import ClassManagementLight from '../../assets/ClassManagement(Light).svg';
 import BackButton from '../../assets/BackButton(Light).svg';
 import Add from "../../assets/Add(Light).svg";
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
+import ActivityIcon from '../../assets/ClassManagement(Light).svg';
+import SuccessIcon from '../../assets/Success(Green).svg'; // Add this import
 
 export default function SubjectDetails() {
   const location = useLocation();
@@ -19,8 +21,9 @@ export default function SubjectDetails() {
   const [showModal, setShowModal] = useState(false);
   const [activities, setActivities] = useState([]);
   const [classInfo, setClassInfo] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingActivityId, setEditingActivityId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // Add this state
   
   // Modal form states
   const [activityType, setActivityType] = useState("");
@@ -68,7 +71,7 @@ export default function SubjectDetails() {
   const fetchClassDetails = async () => {
     try {
       const professorId = getProfessorId();
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -85,7 +88,7 @@ export default function SubjectDetails() {
     try {
       if (!classInfo) return;
       
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/get_students_by_section.php?section=${classInfo.section}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_students_by_section.php?section=${classInfo.section}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -101,7 +104,7 @@ export default function SubjectDetails() {
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/get_activities.php?subject_code=${subjectCode}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -140,7 +143,7 @@ export default function SubjectDetails() {
 
       console.log('Creating activity with data:', activityData); // Debug log
 
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/create_activity.php', {
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/create_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +168,13 @@ export default function SubjectDetails() {
         setDeadline("");
         setShowModal(false);
         
-        alert('Activity created successfully!');
+        // Show success modal instead of alert
+        setShowSuccessModal(true);
+        
+        // Auto-hide modal after 2 seconds
+        setTimeout(() => {
+          setShowSuccessModal(false);
+        }, 2000);
       } else {
         alert('Error creating activity: ' + result.message);
       }
@@ -174,10 +183,12 @@ export default function SubjectDetails() {
       alert('Error creating activity. Please try again.');
     }
   };
-
+  
   const handleSaveActivity = async (activityId, updatedStudents) => {
     try {
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/update_activity_grades.php', {
+      console.log('Saving grades for activity:', activityId, 'Students:', updatedStudents);
+      
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/update_activity_grades.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,10 +199,17 @@ export default function SubjectDetails() {
         })
       });
 
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
+      console.log('Save result:', result);
 
       if (result.success) {
-        setIsEditing(false);
+        setEditingActivityId(null); // Exit edit mode after saving
         // Update local state
         setActivities(prev => prev.map(activity => 
           activity.id === activityId 
@@ -203,7 +221,7 @@ export default function SubjectDetails() {
       }
     } catch (error) {
       console.error('Error saving grades:', error);
-      alert('Error saving grades. Please try again.');
+      alert('Error saving grades. Please try again. Error: ' + error.message);
     }
   };
 
@@ -236,20 +254,47 @@ export default function SubjectDetails() {
     ));
   };
 
-  const handleSubmissionChange = (activityId, studentId, submitted) => {
+  const handleSubmissionChange = (activityId, studentId, status) => {
     setActivities(prev => prev.map(activity => 
       activity.id === activityId 
         ? {
             ...activity,
             students: activity.students.map(student =>
               student.user_ID === studentId
-                ? { ...student, submitted }
+                ? { 
+                    ...student, 
+                    submitted: status === 'submitted' || status === 'late',
+                    late: status === 'late'
+                  }
                 : student
             )
           }
         : activity
     ));
   };
+
+  const handleEditToggle = (activityId) => {
+    setEditingActivityId(editingActivityId === activityId ? null : activityId);
+  };
+
+  // Render empty state when no activities
+  const renderEmptyState = () => (
+    <div className="col-span-full text-center py-8 sm:py-12 lg:py-16">
+      <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mb-4 sm:mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+        <img 
+          src={ActivityIcon} 
+          alt="No activities" 
+          className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 opacity-50" 
+        />
+      </div>
+      <p className="text-gray-500 text-sm sm:text-base lg:text-lg mb-2">
+        No activities created yet.
+      </p>
+      <p className="text-gray-400 text-xs sm:text-sm lg:text-base">
+        Click the + button to create your first activity.
+      </p>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -329,28 +374,21 @@ export default function SubjectDetails() {
 
           {/* ACTIVITY CARDS */}
           <div className="space-y-4 mt-4 sm:mt-5">
-            {activities.map((activity) => (
-              <ActivityCard
-                key={activity.id}
-                activity={activity}
-                isEditing={isEditing}
-                onGradeChange={(studentId, value) => handleGradeChange(activity.id, studentId, value)}
-                onSubmissionChange={(studentId, status) => {
-                  // Handle the three status types: 'submitted', 'late', 'missed'
-                  const submitted = status === 'submitted' || status === 'late';
-                  handleSubmissionChange(activity.id, studentId, submitted);
-                  // You might want to store the specific status (late/submitted) in your state
-                }}
-                onSave={(updatedStudents) => handleSaveActivity(activity.id, updatedStudents)}
-                onMarkAllSubmitted={() => handleMarkAllSubmitted(activity.id)}
-                onEditToggle={() => setIsEditing(!isEditing)}
-              />
-            ))}
-            
-            {activities.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>No activities created yet. Click the + button to create your first activity.</p>
-              </div>
+            {activities.length === 0 ? (
+              renderEmptyState()
+            ) : (
+              activities.map((activity) => (
+                <ActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  isEditing={editingActivityId === activity.id}
+                  onGradeChange={(studentId, value) => handleGradeChange(activity.id, studentId, value)}
+                  onSubmissionChange={(studentId, status) => handleSubmissionChange(activity.id, studentId, status)}
+                  onSave={(updatedStudents) => handleSaveActivity(activity.id, updatedStudents)}
+                  onMarkAllSubmitted={() => handleMarkAllSubmitted(activity.id)}
+                  onEditToggle={() => handleEditToggle(activity.id)}
+                />
+              ))
             )}
           </div>
         </div>
@@ -522,6 +560,32 @@ export default function SubjectDetails() {
               to   { opacity: 1; transform: translateY(0)   scale(1);    }
             }
           `}</style>
+        </div>
+      )}
+
+      {/* Success Modal - Auto-dismiss */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4">
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+            <div className="text-center">
+              {/* Success Icon */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <img 
+                  src={SuccessIcon} 
+                  alt="Success" 
+                  className="h-8 w-8"
+                />
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                Success!
+              </h3>
+              
+              <p className="text-sm text-gray-600">
+                Activity created successfully!
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </div>

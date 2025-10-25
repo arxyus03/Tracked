@@ -25,7 +25,7 @@ export default function ProfileProf() {
           
           if (userIdFromStorage) {
             // Fetch complete user data from database
-            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/getUserDataProf.php?id=${userIdFromStorage}`);
+            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/getUserDataProf.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();
@@ -59,6 +59,9 @@ export default function ProfileProf() {
     const { tracked_fname, tracked_lname, tracked_mi } = userData;
     return `${tracked_fname} ${tracked_mi ? tracked_mi + '.' : ''} ${tracked_lname}`;
   };
+
+  // Check if there are handled subjects
+  const hasHandledSubjects = userData?.handled_subjects && userData.handled_subjects.length > 0;
 
   return (
     <div>
@@ -170,7 +173,9 @@ export default function ProfileProf() {
                   <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
                     <div className="flex flex-col sm:contents">
                       <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Subject Handled:</span>
-                      <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">ITEC100A, ITEC200A</span>
+                      <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">
+                        {hasHandledSubjects ? userData.handled_subjects.join(", ") : "No subjects assigned"}
+                      </span>
                     </div>
                   </div>
                 </div>

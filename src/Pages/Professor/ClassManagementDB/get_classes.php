@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 // Handle preflight request
@@ -29,26 +29,28 @@ try {
 $response = ['success' => false, 'message' => '', 'classes' => []];
 
 try {
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-        throw new Exception('Only GET requests are allowed');
+    // Check if it's a GET request with professor_ID parameter
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['professor_ID'])) {
+        $professor_ID = $_GET['professor_ID'];
+        
+        // Validate professor_ID
+        if (empty($professor_ID)) {
+            throw new Exception("Professor ID is required");
+        }
+
+        // Fetch classes for the professor (only active classes)
+        $sql = "SELECT * FROM classes WHERE professor_ID = ? AND status = 'Active' ORDER BY created_at DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$professor_ID]);
+        $classes = $stmt->fetchAll();
+
+        $response['success'] = true;
+        $response['classes'] = $classes;
+        $response['message'] = 'Classes fetched successfully';
+        
+    } else {
+        throw new Exception('Invalid request method or missing professor_ID parameter');
     }
-
-    // Get professor_ID from query parameters
-    $professor_ID = isset($_GET['professor_ID']) ? trim($_GET['professor_ID']) : '';
-
-    if (empty($professor_ID)) {
-        throw new Exception('Professor ID is required');
-    }
-
-    // Fetch classes for this professor
-    $sql = "SELECT * FROM classes WHERE professor_ID = ? AND status = 'Active' ORDER BY created_at DESC";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$professor_ID]);
-    $classes = $stmt->fetchAll();
-
-    $response['success'] = true;
-    $response['message'] = 'Classes fetched successfully';
-    $response['classes'] = $classes;
 
 } catch (PDOException $e) {
     $response['message'] = 'Database error: ' . $e->getMessage();

@@ -18,7 +18,10 @@ export default function DashboardProf() {
   const [userName, setUserName] = useState("Prof. Jane");
   const [userId, setUserId] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [handledSubjects, setHandledSubjects] = useState("");
+  const [classesCount, setClassesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
     // Get user data from localStorage and fetch from database
@@ -35,18 +38,28 @@ export default function DashboardProf() {
             setUserId(userIdFromStorage);
             
             // Fetch complete user data from database
-            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/getUserDataProf.php?id=${userIdFromStorage}`);
+            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/getUserDataProf.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();
               
               if (data.success) {
+                setUserData(data.user);
                 // Set username from database
                 const fullName = `${data.user.tracked_fname} ${data.user.tracked_lname}`;
                 setUserName(fullName);
                 
                 // Set email from database
                 setUserEmail(data.user.tracked_email);
+                
+                // Set handled subjects (only subject names)
+                if (data.user.handled_subjects && data.user.handled_subjects.length > 0) {
+                  setHandledSubjects(data.user.handled_subjects.join(", "));
+                  setClassesCount(data.user.handled_subjects_count);
+                } else {
+                  setHandledSubjects("No subjects assigned");
+                  setClassesCount(0);
+                }
               }
             }
           }
@@ -116,7 +129,7 @@ export default function DashboardProf() {
                       />
                     </div>
                     <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      X
+                      {classesCount}
                     </p>
                   </div>
                 </div>
@@ -169,11 +182,11 @@ export default function DashboardProf() {
             </div>
             <div className="flex flex-col sm:flex-row">
               <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Handled Subject:</span>
-              <span className="text-xs sm:text-sm lg:text-base">ITEC110, ITEC111</span>
+              <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : handledSubjects}</span>
             </div>
             <div className="flex flex-col sm:flex-row">
               <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Department:</span>
-              <span className="text-xs sm:text-sm lg:text-base">Information Technology</span>
+              <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : (userData?.tracked_program || "N/A")}</span>
             </div>
           </div>
         </div>

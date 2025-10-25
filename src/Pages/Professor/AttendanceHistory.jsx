@@ -45,7 +45,7 @@ export default function AttendanceHistory() {
   const fetchClassDetails = async () => {
     try {
       const professorId = getProfessorId();
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -63,7 +63,7 @@ export default function AttendanceHistory() {
       const professorId = getProfessorId();
       console.log('Fetching attendance history for:', { subjectCode, professorId });
       
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/AttendanceDB/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
