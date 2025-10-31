@@ -258,7 +258,11 @@ export default function ClassManagement() {
       return (
         <div className="col-span-full text-center py-12">
           <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <img src={Add} alt="No classes" className="h-8 w-8 opacity-50" />
+            <img 
+              src={Add} 
+              alt="No classes" 
+              className="h-8 w-8 opacity-50"
+            />
           </div>
           <p className="text-gray-500 text-sm sm:text-base">
             No classes created yet. Click the + button to create your first class.

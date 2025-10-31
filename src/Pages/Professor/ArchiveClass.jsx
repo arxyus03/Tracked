@@ -186,7 +186,11 @@ export default function ArchiveClass() {
       return (
         <div className="col-span-full text-center py-12">
           <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <img src={ArchiveIcon} alt="No archived classes" className="h-8 w-8 opacity-50" />
+            <img 
+              src={ArchiveIcon} 
+                alt="No archived classes" 
+                  className="h-8 w-8 opacity-50"
+            />
           </div>
           <p className="text-gray-500 text-sm sm:text-base">
             No archived classes found.

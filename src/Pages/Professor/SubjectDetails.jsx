@@ -368,7 +368,10 @@ export default function SubjectDetails() {
             <button 
               onClick={() => setShowModal(true)}
               className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer">
-              <img src={Add} alt="Add" className="h-5 w-5 sm:h-6 sm:w-6" />
+              <img 
+                src={Add} 
+                alt="Add" 
+                className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
           </div>
 

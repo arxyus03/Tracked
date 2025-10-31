@@ -169,7 +169,11 @@ export default function AttendanceHistory() {
                 type="button"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#465746]"
               >
-                <img src={Search} alt="Search" className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
+                <img 
+                  src={Search} 
+                  alt="Search"
+                  className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7"
+                />
               </button>
             </div>
           </div>
