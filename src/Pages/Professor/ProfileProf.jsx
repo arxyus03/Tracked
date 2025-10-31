@@ -76,33 +76,25 @@ export default function ProfileProf() {
         />
 
         {/* content of ADMIN USER MANAGEMENT PROFESSOR ACCOUNT DETAILS */}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           {/* "Header" */}
-          <div className="flex flex-col sm:flex-row item-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex items-center mb-2 sm:mb-0">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center mb-2">
               <img
                 src={ClassManagementLight}
-                alt="ClassManagement"
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
+                alt="ClassManagementLight"
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Profile
               </h1>
             </div>
+            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
+              Account Details
+            </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
-            <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
-              <span className="mb-0 sm:mb-0">
-                Account Details
-              </span>
-              <Link to="/UserManagementProfessorAccounts" className="sm:hidden">
-                <img src={BackButton} alt="BackButton" className="h-6 w-6" />
-              </Link>
-            </div>
-          </div>
-
-          <hr className="opacity-60 border-[#465746] rounded border-1 mb-6" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
           {/* Content */}
           {loading ? (

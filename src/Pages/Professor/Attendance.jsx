@@ -191,7 +191,7 @@ export default function Attendance() {
                 className='h-6 w-6 sm:h-7 sm:w-7 mr-2 sm:mr-3 mt-0.5 ml-1 sm:ml-2' 
               />
               <p className="font-bold text-lg sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
-                Class Management
+                Attendance
               </p>
             </div>
           </div>

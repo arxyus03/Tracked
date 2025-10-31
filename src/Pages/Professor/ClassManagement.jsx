@@ -368,7 +368,7 @@ export default function ClassManagement() {
                 Class Management
               </h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]/80">
+            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
               Academic Management
             </p>
           </div>

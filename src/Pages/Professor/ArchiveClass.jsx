@@ -311,7 +311,7 @@ export default function ArchiveClass() {
                 </button>
               </Link>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]/80 ml-9 sm:ml-10">
+            <p className="text-sm sm:text-base lg:text-lg text-[#465746]/80">
               Classes you've archived
             </p>
           </div>

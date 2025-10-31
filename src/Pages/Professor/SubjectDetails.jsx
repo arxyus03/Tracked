@@ -324,7 +324,7 @@ export default function SubjectDetails() {
                 className='h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2' 
               />
               <p className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
-                Class Management
+                Subject Details
               </p>
             </div>
           </div>

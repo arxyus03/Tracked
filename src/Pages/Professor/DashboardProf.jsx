@@ -85,30 +85,30 @@ export default function DashboardProf() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
         {/* content of PROFESSOR DASHBOARD*/}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
 
           {/* "Header" of PROFESSOR DASHBOARD */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 sm:mb-4">
-            <div className='flex items-center mb-2 sm:mb-0'>
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center mb-2">
               <img
                 src={Dashboard}
                 alt="Dashboard"
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Dashboard
               </h1>
             </div>
-
+              <div className="text-sm sm:text-base lg:text-lg text-[#465746]">
+                <span>Welcome back,</span>
+                <span className="font-bold ml-1 mr-1">{userName}!</span>
+                <span>Let's see how your students are doing.</span>
+              </div>
           </div>
 
-          <div className="text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
-            <span>Welcome back,</span>
-            <span className="font-bold ml-1 mr-1">{userName}!</span>
-            <span>Let's see how your students are doing.</span>
-          </div>
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
+
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
           {/* main content of PROFESSOR ADMIN */}
 
