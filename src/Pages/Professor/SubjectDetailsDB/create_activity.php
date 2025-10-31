@@ -47,8 +47,8 @@ try {
 
     $section = $class['section'];
 
-    // Insert activity
-    $stmt = $pdo->prepare("INSERT INTO activities (subject_code, professor_ID, activity_type, task_number, title, instruction, link, points, deadline) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    // Insert activity with explicit archived = 0
+    $stmt = $pdo->prepare("INSERT INTO activities (subject_code, professor_ID, activity_type, task_number, title, instruction, link, points, deadline, archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
     $stmt->execute([
         $input['subject_code'],
         $input['professor_ID'],
@@ -120,6 +120,7 @@ try {
             "link" => $input['link'],
             "points" => $input['points'],
             "deadline" => $input['deadline'],
+            "archived" => 0,
             "students" => $studentsWithData
         ],
         "debug" => [

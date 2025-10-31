@@ -53,8 +53,8 @@ try {
     
     error_log("Students from users table matching section '$section': " . count($students));
     
-    // Get activities
-    $stmt = $pdo->prepare("SELECT * FROM activities WHERE subject_code = ? ORDER BY created_at DESC");
+    // Get activities - ONLY NON-ARCHIVED activities (archived = 0 or NULL)
+    $stmt = $pdo->prepare("SELECT * FROM activities WHERE subject_code = ? AND (archived = 0 OR archived IS NULL) ORDER BY created_at DESC");
     $stmt->execute([$subject_code]);
     $activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

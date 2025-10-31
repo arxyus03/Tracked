@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import ClassManagementLight from '../../assets/ClassManagement(Light).svg';
+import AttendanceIcon from '../../assets/Attendance.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
 import Search from '../../assets/Search.svg';
 import SuccessIcon from '../../assets/Success(Green).svg';
@@ -181,22 +181,28 @@ export default function Attendance() {
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen} userName="Jane Doe" />
 
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
-          {/* "Header" of ATTENDANCE */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 sm:mb-4">
-            <div className='flex items-center mb-2 sm:mb-0'>
-              <img 
-                src={ClassManagementLight} 
-                alt="ClassManagement" 
-                className='h-6 w-6 sm:h-7 sm:w-7 mr-2 sm:mr-3 mt-0.5 ml-1 sm:ml-2' 
+        {/* Main Content */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+          
+          {/* Page Header - Updated to match SubjectDetails style */}
+          <div className="mb-4 sm:mb-4">
+            <div className="flex items-center mb-2">
+              <img
+                src={AttendanceIcon}
+                alt="AttendanceIcon"
+                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
-              <p className="font-bold text-lg sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Attendance
-              </p>
+              </h1>
             </div>
+            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
+              Academic Management
+            </p>
           </div>
 
-          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-1 sm:ml-2">
+          {/* Subject Information */}
+          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
             <div className="flex flex-wrap items-center gap-1 sm:gap-3">
               <span className="font-semibold">SUBJECT CODE:</span>
               <span>{classInfo?.subject_code || 'Loading...'}</span>
@@ -207,7 +213,7 @@ export default function Attendance() {
               <span>{classInfo?.subject || 'Loading...'}</span>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 sm:mr-5">
+            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Section:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
@@ -222,7 +228,7 @@ export default function Attendance() {
             </div>
           </div>
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
           {/* Search and History Button */}
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-4 sm:mt-5 gap-3">

@@ -5,7 +5,7 @@ import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import Popup from "../../Components/Popup";
 
-import ClassManagementLight from '../../assets/ClassManagement(Light).svg';
+import ProfilePhoto from '../../assets/ProfilePhoto.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
 
 export default function ProfileProf() {
@@ -81,9 +81,9 @@ export default function ProfileProf() {
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img
-                src={ClassManagementLight}
-                alt="ClassManagementLight"
-                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
+                src={ProfilePhoto}
+                alt="ProfilePhoto"
+                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
               <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Profile

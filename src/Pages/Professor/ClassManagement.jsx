@@ -365,8 +365,8 @@ export default function ClassManagement() {
             <div className="flex items-center mb-2">
               <img
                 src={ClassManagementIcon}
-                alt=""
-                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
+                alt="ClassManagementIcon"
+                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
               <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Class Management

@@ -28,8 +28,8 @@ import AccountSettingProf from './Professor/AccountSettingProf.jsx';
 import SubjectDetails from './Professor/SubjectDetails.jsx';
 import Attendance from './Professor/Attendance.jsx';
 import AttendanceHistory from './Professor/AttendanceHistory.jsx';
-import ArchiveClass from './Professor/ArchiveClass.jsx';
-
+import ArchiveClass from './Professor/ArchiveClass.jsx'; 
+import ArchiveActivities from './Professor/ArchiveActivities.jsx';
 
 function Linking() {
   return (
@@ -67,6 +67,7 @@ function Linking() {
         <Route path="/Attendance" element={<Attendance/>} /> 
         <Route path="/AttendanceHistory" element={<AttendanceHistory/>} /> 
         <Route path="/ArchiveClass" element={<ArchiveClass/>} /> 
+        <Route path="/ArchiveActivities" element={<ArchiveActivities/>} /> 
       </Routes>
     </Router>
   );

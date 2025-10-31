@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ArrowDown from "../assets/ArrowDown(Light).svg";
+import Archive from "../assets/Archive(Light).svg";
 
 export default function ActivityCard({ 
   activity, 
@@ -8,7 +9,9 @@ export default function ActivityCard({
   onSubmissionChange, 
   onSave, 
   onMarkAllSubmitted, 
-  onEditToggle 
+  onEditToggle,
+  onEditSchoolWork,
+  onArchive 
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -41,6 +44,19 @@ export default function ActivityCard({
   const handleEditToggle = () => {
     if (onEditToggle) {
       onEditToggle();
+    }
+  };
+
+  const handleEditSchoolWork = () => {
+    if (onEditSchoolWork) {
+      onEditSchoolWork(activity);
+    }
+  };
+
+  const handleArchive = (e) => {
+    e.stopPropagation();
+    if (onArchive) {
+      onArchive(activity);
     }
   };
 
@@ -208,6 +224,23 @@ export default function ActivityCard({
         />
       </div>
 
+      {/* Archive Button - Only show when card is NOT expanded, positioned at lower right */}
+      {!isOpen && (
+        <div className="mt-3 flex justify-end">
+          <button 
+            onClick={handleArchive}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm font-semibold rounded-md hover:bg-gray-300 transition-all duration-200 cursor-pointer"
+          >
+            <img 
+              src={Archive} 
+              alt="Archive" 
+              className="h-4 w-4" 
+            />
+            Archive
+          </button>
+        </div>
+      )}
+
       {/* Collapsible Content */}
       {isOpen && (
         <div className="mt-3 pt-3 space-y-4">
@@ -334,7 +367,7 @@ export default function ActivityCard({
             </table>
           </div>
 
-          {/* EDIT, MARK ALL, SAVE Buttons */}
+          {/* EDIT RECORDS, EDIT SCHOOL WORKS, MARK ALL, SAVE Buttons */}
           <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
             {!isEditing ? (
               <>
@@ -342,7 +375,13 @@ export default function ActivityCard({
                   onClick={handleEditToggle}
                   className="w-full sm:w-auto px-4 py-2 bg-[#979797] text-[#fff] text-sm sm:text-base font-bold rounded-md hover:border-2 hover:border-[#007846] transition-all duration-200 cursor-pointer"
                 >
-                  Edit
+                  Edit Records
+                </button>
+                <button 
+                  onClick={handleEditSchoolWork}
+                  className="w-full sm:w-auto px-4 py-2 bg-[#979797] text-[#fff] text-sm sm:text-base font-bold rounded-md hover:border-2 hover:border-[#007846] transition-all duration-200 cursor-pointer whitespace-nowrap"
+                >
+                  Edit School Works
                 </button>
                 {!allSubmitted && (
                   <button 
