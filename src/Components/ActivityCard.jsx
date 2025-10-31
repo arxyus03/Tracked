@@ -13,6 +13,7 @@ export default function ActivityCard({
   deadline,
   instructions,
   link = "#",
+  section,
   onEdit,
   onDelete
 }) {
@@ -28,6 +29,9 @@ export default function ActivityCard({
         >
           <span className="font-bold">{subject}:</span>
           <span>{title}</span>
+          {section && section !== "All" && (
+            <span className="text-sm text-gray-600">({section})</span>
+          )}
         </div>
 
         {/* Action Icons */}
@@ -35,7 +39,7 @@ export default function ActivityCard({
           <img 
             src={Edit} 
             alt="Edit" 
-            className="cursor-pointer hover:opacity-70 transition-opacity"
+            className="cursor-pointer hover:opacity-70 transition-opacity w-5 h-5"
             onClick={(e) => {
               e.stopPropagation();
               if (onEdit) onEdit();
@@ -44,7 +48,7 @@ export default function ActivityCard({
           <img 
             src={Delete} 
             alt="Delete" 
-            className="cursor-pointer hover:opacity-70 transition-opacity"
+            className="cursor-pointer hover:opacity-70 transition-opacity w-5 h-5"
             onClick={(e) => {
               e.stopPropagation();
               if (onDelete) onDelete();
@@ -67,32 +71,39 @@ export default function ActivityCard({
           <div className="flex flex-col sm:flex-row justify-between">
             {/* Left side */}
             <div className="mb-3 sm:mb-0">
-              <p className="font-semibold">{title}</p>
+              <p className="font-semibold text-lg">{title}</p>
               <p className="text-sm text-gray-600">Posted By: {postedBy}</p>
+              {section && section !== "All" && (
+                <p className="text-sm text-gray-600">Section: {section}</p>
+              )}
             </div>
 
             {/* Right side */}
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 text-right">
               <p>Date Posted: {datePosted}</p>
               {deadline && (
-                <p className="text-[#FF6666] font-bold">Deadline: {deadline}</p>
+                <p className="text-[#FF6666] font-bold mt-1">
+                  Deadline: {deadline}
+                </p>
               )}
             </div>
           </div>
 
           {/* Instructions */}
           <div className="mt-4">
-            <p className="font-semibold">Instructions:</p>
-            <p className="text-sm text-gray-700">{instructions}</p>
-            {link && link !== "#" && (
-              <Link
-                to={link}
+            <p className="font-semibold mb-2">Instructions:</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              {instructions}
+            </p>
+            {link && link !== "#" && link !== null && link !== "" && (
+              <a
+                href={link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 inline-block text-[#00A15D] font-semibold hover:underline"
+                className="mt-3 inline-block text-[#00A15D] font-semibold hover:underline text-sm"
               >
-                [View Activity]
-              </Link>
+                🔗 View Link
+              </a>
             )}
           </div>
         </div>

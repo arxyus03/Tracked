@@ -1,111 +1,161 @@
-import React from 'react'
-
-import { useState } from "react";
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import Analytics from '../../assets/Analytics(Light).svg';
-import ClassHandled from '../../assets/ClassHandled.svg';
-import ActivitiesToGrade from '../../assets/ActivitiesToGrade.svg';
-import ID from '../../assets/ID(Light).svg';
-import Pie from '../../assets/Pie(Light).svg';
-import Details from '../../assets/Details(Light).svg';
-import Archive from '../../assets/Archive(Light).svg';
+import Analytics from "../../assets/Analytics(Light).svg";
+import UserIcon from "../../assets/UserIcon(Light).svg";
+import BackButton from "../../assets/BackButton(Light).svg";
 
 export default function AnalyticsIndividualInfo() {
   const [isOpen, setIsOpen] = useState(false);
 
-  return (
+  const student = { id: "202210718", name: "Lastname, Firstname M.I." };
 
+  const submittedActivities = [
+    { task: "Activity 1", title: "Mockup Design", date: "January 5, 2025", points: 10 },
+    { task: "Activity 2", title: "UX Research", date: "January 12, 2025", points: 15 },
+  ];
+
+  const missedActivities = [
+    { task: "Activity 3", title: "Wireframe Submission", date: "January 20, 2025", points: 10 },
+  ];
+
+  const attendance = {
+    present: 35,
+    late: 5,
+    absent: 2,
+    total: 42,
+  };
+
+  return (
     <div>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div className={`
-        transition-all duration-300
-        ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
-      `}>
+      <div
+        className={`transition-all duration-300 ${
+          isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
+        }`}
+      >
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
 
-        {/* content of PROFESSOR DASHBOARD*/}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5 text-[#465746]">
+        {/* PAGE CONTENT */}
+        <div className="p-5 text-[#465746]">
+          {/* header */}
+          <div className="flex items-center mb-5">
+            <img src={Analytics} alt="Analytics" className="h-7 w-7 mr-3" />
+            <p className="font-bold text-[1.5rem]">Analytics</p>
+          </div>
 
-          {/* "Header" of PROFESSOR DASHBOARD */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex">
-              <img src={Analytics} alt="Analytics" className='color-[#465746] h-7 w-7 mr-5 mt-1' />
-              <p className="font-bold text-[1.5rem]"> Analytics </p>
+          <div className="flex items-center justify-between ml-2 mb-4">
+            <p> Individual Student Information </p>
+            <Link to="/AnalyticsProf" className="hidden sm:block">
+              <img src={BackButton} alt="BackButton" className="h-6 w-6 sm:h-7 sm:w-7" />
+            </Link>
+          </div>
+
+          <hr className="opacity-60 border-[#465746] mb-5" />
+          
+
+          {/* STUDENT INFO */}
+          <div className="flex items-center bg-white p-5 rounded-md shadow mb-5 gap-4">
+            <img src={UserIcon} alt="Details" className="w-8 h-8" />
+            <div>
+              <p className="text-sm">Student No: {student.id}</p>
+              <p className="font-bold text-lg">{student.name}</p>
             </div>
-
           </div>
 
-          <div className="text-sm sm:text-base md:text-base lg:text-[1.125rem] mb-4 sm:mb-5 ml-2">
-            <span>Individual Student Information</span>
-          </div>
-
-          <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
-
-          {/* main content of PROFESSOR ADMIN */}
-
-          <div className='bg-[#fff]'> 
-            <img />
-            <p> 01 </p>
-            <p> 202210718 </p>
-            <p> Lastname, Firstname MI </p>
-          </div>
-
-          <div className="flex items-center justify-end gap-3">
-            <button className="font-bold px-4 sm:px-5 py-2 bg-white rounded-md shadow-md hover:border-[#00874E] hover:border-2 text-sm sm:text-base lg:text-[1.125rem] whitespace-nowrap cursor-pointer">
+          {/* DOWNLOAD BUTTON */}
+          <div className="flex justify-end mb-5">
+            <button className="font-bold px-5 py-2 bg-white rounded-md shadow hover:border-[#00874E] hover:border-2 text-sm sm:text-base">
               Download
             </button>
           </div>
 
-          <div className='bg-[#fff]'>
-            <p className='font-bold text-red'> Submitted Activities</p>
-            <hr />
-            <table>
-              <th className='font-bold'>Task number</th>
-              <th className='font-bold'>Title</th>
-              <th className='font-bold'>Submission Date</th>
-              <th className='font-bold'>Points</th>
-              <td> Activity 1 </td>
-              <td> Activity Name </td>
-              <td> January 5, 2025</td>
-              <td> 10 </td>
-            </table>
+          {/* SUBMITTED ACTIVITIES */}
+          <div className="bg-white p-5 rounded-md shadow mb-5">
+            <p className="font-bold text-[#00874E] mb-3">Submitted Activities</p>
+            <hr className="mb-3" />
+            <div className="overflow-hidden rounded-lg border border-gray-300">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="p-3">Task</th>
+                    <th className="p-3">Title</th>
+                    <th className="p-3">Submission Date</th>
+                    <th className="p-3 text-center">Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submittedActivities.map((a, i) => (
+                    <tr key={i} className="hover:bg-gray-50 border-t border-gray-200">
+                      <td className="p-3">{a.task}</td>
+                      <td className="p-3">{a.title}</td>
+                      <td className="p-3">{a.date}</td>
+                      <td className="p-3 text-center">{a.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div className='bg-[#fff]'>
-            <p className='font-bold text-green'> Missed Activities </p>
-            <hr />
-            <table>
-              <th className='font-bold'>Task number</th>
-              <th className='font-bold'>Title</th>
-              <th className='font-bold'>Submission Date</th>
-              <th className='font-bold'>Points</th>
-              <td> Activity 1 </td>
-              <td> Activity Name </td>
-              <td> January 5, 2025</td>
-              <td> 10 </td>
-            </table>
+          {/* MISSED ACTIVITIES */}
+          <div className="bg-white p-5 rounded-md shadow mb-5">
+            <p className="font-bold text-red-500 mb-3">Missed Activities</p>
+            <hr className="mb-3" />
+            <div className="overflow-hidden rounded-lg border border-gray-300">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="p-3">Task</th>
+                    <th className="p-3">Title</th>
+                    <th className="p-3">Due Date</th>
+                    <th className="p-3 text-center">Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {missedActivities.map((a, i) => (
+                    <tr key={i} className="hover:bg-gray-50 border-t border-gray-200">
+                      <td className="p-3">{a.task}</td>
+                      <td className="p-3">{a.title}</td>
+                      <td className="p-3">{a.date}</td>
+                      <td className="p-3 text-center">{a.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div>
-            <p> Attendance </p>
-            <hr />
-            <p> Present: </p>
-            <span> 35 </span>
-            <p> Late: </p>
-            <span> 35 </span>
-            <p> Absent: </p>
-            <span> 35 </span>
-            <p> Total Class Held: </p>
-            <span> 35 </span>
+          {/* ATTENDANCE */}
+          <div className="bg-white p-5 rounded-md shadow mb-10">
+            <p className="font-bold mb-3">Attendance</p>
+            <hr className="mb-3" />
+            <Link to={"/AnalyticsAttendanceInfo"}>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div>
+                  <p className="font-semibold text-green-600">Present</p>
+                  <span>{attendance.present}</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-yellow-500">Late</p>
+                  <span>{attendance.late}</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-red-500">Absent</p>
+                  <span>{attendance.absent}</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-700">Total Held</p>
+                  <span>{attendance.total}</span>
+                </div>
+              </div>
+            </Link>
           </div>
-
-      </div>
-
+        </div>
       </div>
     </div>
-  )
+  );
 }

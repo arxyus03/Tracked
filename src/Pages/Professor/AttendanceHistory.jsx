@@ -1,39 +1,110 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import AttendanceCard from "../../Components/AttendanceCard";
 
-import ClassManagementLight from '../../assets/ClassManagement(Light).svg';
+import AttendanceHistoryIcon from '../../assets/AttendanceHistory.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
 import Search from '../../assets/Search.svg';
 
 export default function AttendanceHistory() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const subjectCode = searchParams.get('code');
+  
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [classInfo, setClassInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const attendanceData = [
-    
-    {
-      date: "August 8, 2025",
-      students: [
-        { no: 1, studentNo: "2023001", name: "Alice Cruz", status: "Absent" },
-        { no: 2, studentNo: "2023002", name: "John Dela Cruz", status: "Present" },
-        { no: 3, studentNo: "2023003", name: "Maria Santos", status: "Absent" },
-        { no: 4, studentNo: "2023004", name: "Mark Reyes", status: "Present" },
-        { no: 5, studentNo: "2023005", name: "Sophia Lim", status: "Present" },
-      ],
-    },
+  // Get professor ID from localStorage
+  const getProfessorId = () => {
+    try {
+      const userDataString = localStorage.getItem('user');
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        return userData.id;
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+    }
+    return null;
+  };
 
-    {
-      date: "August 9, 2025",
-      students: [
-        { no: 1, studentNo: "2023010", name: "Lucas Tan", status: "Present" },
-        { no: 2, studentNo: "2023011", name: "Angela Yu", status: "Absent" },
-        { no: 3, studentNo: "2023012", name: "Henry Ong", status: "Present" },
-      ],
-    },
-  ];
+  // Fetch class details and attendance history
+  useEffect(() => {
+    if (subjectCode) {
+      fetchClassDetails();
+      fetchAttendanceHistory();
+    }
+  }, [subjectCode]);
+
+  const fetchClassDetails = async () => {
+    try {
+      const professorId = getProfessorId();
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setClassInfo(result.class_data);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching class details:', error);
+    }
+  };
+
+  const fetchAttendanceHistory = async () => {
+    try {
+      const professorId = getProfessorId();
+      console.log('Fetching attendance history for:', { subjectCode, professorId });
+      
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/AttendanceDB/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Attendance history API response:', result);
+        
+        if (result.success) {
+          console.log('Attendance history data:', result.attendance_history);
+          setAttendanceHistory(result.attendance_history);
+        } else {
+          console.error('API returned error:', result.message);
+        }
+      } else {
+        console.error('Failed to fetch attendance history');
+      }
+    } catch (error) {
+      console.error('Error fetching attendance history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter attendance history based on search term
+  const filteredHistory = attendanceHistory.filter(record =>
+    record.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    record.students.some(student => 
+      student.user_Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.user_ID.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  if (loading) {
+    return (
+      <div>
+        <Sidebar role="teacher" isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+        <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
+          <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen} userName="Jane Doe" />
+          <div className="p-5 text-center">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -41,33 +112,44 @@ export default function AttendanceHistory() {
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen} userName="Jane Doe" />
 
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
-          {/* Header of ATTENDANCE HISTORY */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 sm:mb-4">
-            <div className='flex items-center mb-2 sm:mb-0'>
-              <img 
-                src={ClassManagementLight} 
-                alt="ClassManagement" 
-                className='h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2' 
+        {/* Main Content */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+          
+          {/* Page Header - Updated to match Attendance style */}
+          <div className="mb-4 sm:mb-4">
+            <div className="flex items-center mb-2">
+              <img
+                src={AttendanceHistoryIcon}
+                alt="AttendanceHistoryIcon"
+                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
-              <p className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
-                Class Management
-              </p>
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
+                Attendance History
+              </h1>
             </div>
+            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
+              Academic Management
+            </p>
           </div>
 
-          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
+          {/* Subject Information */}
+          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
             <div className="flex flex-wrap items-center gap-1 sm:gap-3">
-              <span className="font-semibold">SUBJECTCODE:</span>
-              <span>Attendance History</span>
+              <span className="font-semibold">SUBJECT CODE:</span>
+              <span>{classInfo?.subject_code || 'Loading...'}</span>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 sm:mr-5">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+              <span className="font-semibold">SUBJECT:</span>
+              <span>{classInfo?.subject || 'Loading...'}</span>
+            </div>
+
+            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Section:</span>
-                <span>A</span>
+                <span>{classInfo?.section || 'Loading...'}</span>
               </div>
-              <Link to={"/Attendance"} className="sm:hidden">
+              <Link to={`/Attendance?code=${subjectCode}`} className="sm:hidden">
                 <img 
                   src={BackButton} 
                   alt="Back" 
@@ -77,36 +159,46 @@ export default function AttendanceHistory() {
             </div>
           </div>
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          {/* Search & Download */}
+          {/* Search */}
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-4 sm:mt-5 gap-3">
             <div className="relative flex-1 max-w-full sm:max-w-md">
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search by date or student..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-9 sm:h-10 lg:h-11 rounded-md pl-3 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm"
               />
               <button
                 type="button"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#465746]"
               >
-                <img src={Search} alt="Search" className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-end gap-3">
-              <button className="font-bold px-4 sm:px-5 py-2 bg-white rounded-md shadow-md hover:border-[#00874E] hover:border-2 text-sm sm:text-base lg:text-[1.125rem] whitespace-nowrap cursor-pointer">
-                Download
+                <img 
+                  src={Search} 
+                  alt="Search"
+                  className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                />
               </button>
             </div>
           </div>
 
           {/* Attendance Cards */}
           <div className="space-y-4 mt-4 sm:mt-5">
-            {attendanceData.map((record, index) => (
-              <AttendanceCard key={index} date={record.date} students={record.students} />
-            ))}
+            {filteredHistory.length > 0 ? (
+              filteredHistory.map((record, index) => (
+                <AttendanceCard 
+                  key={index} 
+                  date={record.date} 
+                  students={record.students}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>No attendance records found.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

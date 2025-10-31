@@ -3,57 +3,49 @@ import { Link } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
+import ActivityOverview from "../../Components/ActivityOverview"; // <- new component
 
 import Analytics from '../../assets/Analytics(Light).svg';
 import ArrowDown from '../../assets/ArrowDown(Light).svg';
 import Search from "../../assets/Search.svg";
-import Pie from '../../assets/Pie(Light).svg';
 import Details from '../../assets/Details(Light).svg';
 
 export default function AnalyticsProf() {
   const [isOpen, setIsOpen] = useState(true);
   const [openSubject, setOpenSubject] = useState(false);
   const [openSection, setOpenSection] = useState(false);
+
+  // parent controls selectedFilter so ActivityOverview and table stay synced
   const [selectedFilter, setSelectedFilter] = useState("");
 
-  // ----- SAMPLE DATA (replace with backend data or props) -----
-  // The chart and Created Task panel will use the lengths of these arrays.
+  // ---------- DATA ----------
   const quizzesList = [
-    { id: 1, title: 'Quiz 1' },
-    { id: 2, title: 'Quiz 2' },
-    { id: 3, title: 'Quiz 3' },
-    { id: 4, title: 'Quiz 4' }
+    { id: 1, task: "Quiz 1", title: "Algebra Basics", submitted: 28, missing: 2, deadline: "Sept 25, 2025" },
+    { id: 2, task: "Quiz 2", title: "Geometry", submitted: 27, missing: 3, deadline: "Oct 2, 2025" },
+    { id: 3, task: "Quiz 3", title: "Trigonometry", submitted: 29, missing: 1, deadline: "Oct 10, 2025" },
+    { id: 4, task: "Quiz 4", title: "Calculus Intro", submitted: 25, missing: 4, deadline: "Oct 20, 2025" }
   ];
   const assignmentsList = [
-    // add assignment items here
-    { id: 1, title: 'Assignment 1' }
+    { id: 1, task: "Assign 1", title: "Essay 1", submitted: 20, missing: 8, deadline: "Sept 30, 2025" }
   ];
   const activitiesList = [
-    { id: 1, title: 'Activity 1' },
-    { id: 2, title: 'Activity 2' }
+    { id: 1, task: "Activity 1", title: "Group Work", submitted: 22, missing: 6, deadline: "Oct 1, 2025" },
+    { id: 2, task: "Activity 2", title: "In-class Task", submitted: 18, missing: 10, deadline: "Oct 8, 2025" }
   ];
   const projectsList = [
-    { id: 1, title: 'Project 1' }
+    { id: 1, task: "Project 1", title: "Final Project", submitted: 15, missing: 5, deadline: "Nov 1, 2025" }
   ];
   // ------------------------------------------------------------
 
-  const quizzesCount = quizzesList.length;
-  const assignmentsCount = assignmentsList.length;
-  const activitiesCount = activitiesList.length;
-  const projectsCount = projectsList.length;
-  const totalCount = quizzesCount + assignmentsCount + activitiesCount + projectsCount;
+  const displayedList = selectedFilter === 'Assignment'
+    ? assignmentsList
+    : selectedFilter === 'Activities'
+    ? activitiesList
+    : selectedFilter === 'Projects'
+    ? projectsList
+    : quizzesList;
 
-  const segments = useMemo(() => ([
-    { label: 'Quizzes', value: quizzesCount, color: '#00A15D' },
-    { label: 'Assignment', value: assignmentsCount, color: '#F59E0B' },
-    { label: 'Activities', value: activitiesCount, color: '#3B82F6' },
-    { label: 'Projects', value: projectsCount, color: '#EF4444' },
-  ]), [quizzesCount, assignmentsCount, activitiesCount, projectsCount]);
-
-  const radius = 14;
-  const circumference = 2 * Math.PI * radius; 
-
-  let cumulative = 0;
+  const displayedLabel = selectedFilter === '' ? 'Quizzes' : selectedFilter;
 
   return (
     <div>
@@ -61,10 +53,7 @@ export default function AnalyticsProf() {
       <div className={`transition-all duration-300 ${isOpen ? 'ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
 
-        {/* content of ANALYTICS PROF*/}
         <div className="p-5 text-[#465746]">
-
-          {/* "Header" of CLASS MANAGEMENT */}
           <div className="flex">
             <img src={Analytics} alt="Analytics" className='color-[#465746] h-7 w-7 mr-5 mt-1' />
             <p className="font-bold text-[1.5rem]"> Analytics </p>
@@ -77,40 +66,20 @@ export default function AnalyticsProf() {
           <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
 
           <div className="flex flex-col lg:flex-row mt-5 gap-4 justify-between items-center">
-            
-            {/* Filter BUTTON */}
             <div className="flex flex-wrap gap-2">
-              {/* Subject Filter Dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => {
-                    setOpenSubject(!openSubject);
-                    setOpenSection(false); 
-                  }}
+                  onClick={() => { setOpenSubject(!openSubject); setOpenSection(false); }}
                   className="flex w-80 items-center font-bold px-3 py-2 bg-[#fff] rounded-md cursor-pointer shadow-md">
                   Subject
                   <img src={ArrowDown} alt="ArrowDown" className="ml-50 h-5 w-5 sm:h-6 sm:w-6 md:h-6 md:w-6 lg:h-7 lg:w-7" />
                 </button>
-
-                {/* Subject Dropdown SELECTIONS */}
                 {openSubject && (
                   <div className="absolute top-full mt-1 bg-white rounded-md w-80 shadow-lg border border-gray-200 z-10">
-                    <button 
-                      className="block px-3 py-2 w-full text-left hover:bg-gray-100"
-                      onClick={() => {
-                        setSelectedFilter("Math");
-                        setOpenSubject(false);
-                      }}
-                    >
+                    <button className="block px-3 py-2 w-full text-left hover:bg-gray-100" onClick={() => { setOpenSubject(false); }}>
                       Math
                     </button>
-                    <button 
-                      className="block px-3 py-2 w-full text-left hover:bg-gray-100"
-                      onClick={() => {
-                        setSelectedFilter("Science");
-                        setOpenSubject(false);
-                      }}
-                    >
+                    <button className="block px-3 py-2 w-full text-left hover:bg-gray-100" onClick={() => { setOpenSubject(false); }}>
                       Science
                     </button>
                   </div>
@@ -118,7 +87,6 @@ export default function AnalyticsProf() {
               </div>
             </div>
 
-            {/* Search Button */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1 lg:w-64 xl:w-80">
                 <input
@@ -130,237 +98,64 @@ export default function AnalyticsProf() {
                   <img src={Search} alt="Search" className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />
                 </button>
               </div>
-            </div>   
+            </div>
           </div>
 
-          {/* Analytics PIE CHART section*/}
-          <div className='bg-[#fff] rounded-lg shadow-md mt-5 p-5'>
-        
-            <div className='flex items-center'> 
-              <img src={Pie} alt="Pie" className="h-8 w-8 mr-3" />
-              <p className='text-[1.125rem] font-bold'> Activity Overview </p>
+          {/* ActivityOverview component (separated) */}
+          <ActivityOverview
+            quizzesList={quizzesList}
+            assignmentsList={assignmentsList}
+            activitiesList={activitiesList}
+            projectsList={projectsList}
+            selectedFilter={selectedFilter}
+            setSelectedFilter={setSelectedFilter}
+          />
 
-              {/* Section Filter Dropdown */}
-              <div className="flex flex-wrap gap-2 mt-3 ml-auto">
-                <div className="relative">
-                  <button
-                    onClick={() => {
-                      setOpenSection(!openSection);
-                      setOpenSubject(false);
-                    }}
-                    className="flex w-80 items-center font-bold px-3 py-2 bg-[#D4D4D4] rounded-md cursor-pointer shadow-md"
-                  >
-                    Section
-                    <img 
-                      src={ArrowDown} 
-                      alt="ArrowDown" 
-                      className="ml-50 h-5 w-5 sm:h-6 sm:w-6 md:h-6 md:w-6 lg:h-7 lg:w-7" 
-                    />
-                  </button>
-
-                  {/* Section Dropdown SELECTIONS */}
-                  {openSection && (
-                    <div className="absolute top-full mt-1 bg-white rounded-md w-80 shadow-lg border border-gray-200 z-10">
-                      <button 
-                        className="block px-3 py-2 w-full text-left hover:bg-gray-100"
-                        onClick={() => {
-                          setSelectedFilter("All Sections");
-                          setOpenSection(false);
-                        }}
-                      >
-                        All Sections
-                      </button>
-                      <button 
-                        className="block px-3 py-2 w-full text-left hover:bg-gray-100"
-                        onClick={() => {
-                          setSelectedFilter("Section A");
-                          setOpenSection(false);
-                        }}
-                      >
-                        Section A
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
-              </div>
-            </div>
-
-            <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
-                
-            
-            {/* CREATED TASK overview and PIE CHART*/}
-            <div className='flex mt-5'>
-              {/* CREATED TASK */}
-              <div className='bg-[#D4D4D4] p-5 rounded-md text-[1.125rem] w-80 h-120'>
-                <p className='font-bold mb-3'>Created Task</p>
-
-                <div className='flex justify-between'>
-                  <span>Quizzes:</span>
-                  <span>{quizzesCount}</span>
-                </div>
-
-                <div className='flex justify-between'>
-                  <span>Assignment:</span>
-                  <span>{assignmentsCount}</span>
-                </div>
-
-                <div className='flex justify-between'>
-                  <span>Activities:</span>
-                  <span>{activitiesCount}</span>
-                </div>
-
-                <div className='flex justify-between'>
-                  <span>Projects:</span>
-                  <span>{projectsCount}</span>
-                </div>
-
-                <hr className="my-2 border-[#465746] opacity-50" />
-
-                <div className='flex justify-between font-bold'>
-                  <span>Total Created Task:</span>
-                  <span>{totalCount}</span>
-                </div>
-              </div>
-
-              {/* PIE CHART container - position & size unchanged */}
-              <div className=" bg-[#D4D4D4] ml-5 rounded-md text-[1.125rem] items-center gap-6 w-295">
-                
-                {/* PIE CHART */}
-                <div className="flex flex-col items-center mt-5">
-                  <div>
-                    {/* keep same SVG size/viewBox as before */}
-                    <svg width="400" height="400" viewBox="0 0 32 32">
-                      {/* optional grey ring background */}
-                      <circle
-                        r={radius}
-                        cx="16"
-                        cy="16"
-                        fill="transparent"
-                        stroke="#E5E7EB"
-                        strokeWidth="2.5"
-                      />
-
-                      {/* handle zero total: show empty ring (no colored segments) */}
-                      {totalCount === 0 ? null : (
-                        segments.map((seg, i) => {
-                          const len = (seg.value / totalCount) * circumference;
-                          // draw only if value > 0
-                          const dash = `${len} ${Math.max(0, circumference - len)}`;
-                          const dashOffset = -cumulative;
-                          cumulative += len;
-                          return (
-                            seg.value > 0 && (
-                              <circle
-                                key={i}
-                                r={radius}
-                                cx="16"
-                                cy="16"
-                                fill="transparent"
-                                stroke={seg.color}
-                                strokeWidth="2.5"
-                                strokeDasharray={dash}
-                                strokeDashoffset={dashOffset}
-                                strokeLinecap="butt"
-                                transform="rotate(-90 16 16)"
-                              />
-                            )
-                          );
-                        })
-                      )}
-
-                      {/* TEXT INSIDE PIE CHART */}
-                      <text x="16" y="15" textAnchor="middle" fontSize=".125rem" fontWeight="bold" fill="#465746">
-                        SECTION X:
-                      </text>
-
-                      <text x="16" y="18" textAnchor="middle" fontSize=".125rem" fill="#465746">
-                        Overall
-                      </text>
-
-                    </svg>
-                  </div>
-
-                  {/* LEGEND: Quizzes / Assignment / Activities / Projects */}
-                  <div className="flex gap-6 mt-5">
-                    {segments.map((item, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: item.color }}> </span>
-                        <span> {item.label}: </span>
-                        <span className="font-bold">{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-
-
-            </div>
-            
-            {/* ACTIVITY LIST */}
-            <div className='bg-[#D4D4D4] p-5 rounded-md mt-5'>
-              <p className='font-bold mb-3 text-[1.125rem]'> Quizzes </p>
-              <table className="w-full border-collapse text-[1.125rem]">
-                <thead>
-                  <tr>
-                    <th className="text-left p-2">Task</th>
-                    <th className="text-left p-2">Title</th>
-                    <th className="text-left p-2 text-[#00A15D]">Submitted</th>
-                    <th className="text-left p-2 text-[#FF6666]">Missing</th>
-                    <th className="text-left p-2">Deadline</th>
+          {/* ACTIVITY LIST */}
+          <div className='bg-[#fff] p-5 rounded-md mt-5 shadow-md'>
+            <p className='font-bold mb-3 text-[1.125rem]'>{displayedLabel}</p>
+            <table className="w-full border-collapse text-[1.125rem]">
+              <thead>
+                <tr>
+                  <th className="text-left p-2">Task</th>
+                  <th className="text-left p-2">Title</th>
+                  <th className="text-left p-2 text-[#00A15D]">Submitted</th>
+                  <th className="text-left p-2 text-[#FF6666]">Missing</th>
+                  <th className="text-left p-2">Deadline</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayedList.map(item => (
+                  <tr key={item.id}>
+                    <td className="p-2">{item.task}</td>
+                    <td className="p-2">{item.title}</td>
+                    <td className="p-2">{item.submitted}</td>
+                    <td className="p-2">{item.missing}</td>
+                    <td className="p-2">{item.deadline}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="p-2">Quiz 1</td>
-                    <td className="p-2">Algebra Basics</td>
-                    <td className="p-2">28</td>
-                    <td className="p-2">2</td>
-                    <td className="p-2">Sept 25, 2025</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2">Quiz 2</td>
-                    <td className="p-2">Geometry</td>
-                    <td className="p-2">27</td>
-                    <td className="p-2">3</td>
-                    <td className="p-2">Oct 2, 2025</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2">Quiz 3</td>
-                    <td className="p-2">Trigonometry</td>
-                    <td className="p-2">29</td>
-                    <td className="p-2">1</td>
-                    <td className="p-2">Oct 10, 2025</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          {/* Analytics PIE CHART section*/}
+          {/* Student Attendance Tracking (unchanged below here) */}
           <div className='bg-[#fff] rounded-lg shadow-md mt-5 p-5'>
             <p className='text-[1.125rem] font-bold'> Student Attendance Tracking </p>
-
             <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
-                
             <div className="overflow-x-auto mt-5">
               <table className="min-w-full border-collapse rounded-md overflow-hidden shadow-md">
-                
-                  <thead className="text-left">
-                    <tr>
-                      <th className="px-4 py-2">No.</th>
-                      <th className="px-4 py-2">Student No.</th>
-                      <th className="px-4 py-2">Student Name</th>
-                      <th className="px-4 py-2 text-[#00A15D]">Present</th>
-                      <th className="px-4 py-2 text-[#FF6666]">Absent</th>
-                      <th className="px-4 py-2 text-[#00A15D]">Submitted</th>
-                      <th className="px-4 py-2 text-[#FF6666]">Missed</th>
-                      <th className="px-4 py-2">Details</th>
-                    </tr>
-                  </thead>
-
+                <thead className="text-left">
+                  <tr>
+                    <th className="px-4 py-2">No.</th>
+                    <th className="px-4 py-2">Student No.</th>
+                    <th className="px-4 py-2">Student Name</th>
+                    <th className="px-4 py-2 text-[#00A15D]">Present</th>
+                    <th className="px-4 py-2 text-[#FF6666]">Absent</th>
+                    <th className="px-4 py-2 text-[#00A15D]">Submitted</th>
+                    <th className="px-4 py-2 text-[#FF6666]">Missed</th>
+                    <th className="px-4 py-2">Details</th>
+                  </tr>
+                </thead>
                 <tbody>
                   <tr className="hover:bg-gray-100">
                     <td className="px-4 py-2">1</td>
@@ -376,7 +171,6 @@ export default function AnalyticsProf() {
                       </td>
                     </Link>
                   </tr>
-
                   <tr className="hover:bg-gray-100">
                     <td className="px-4 py-2">2</td>
                     <td className="px-4 py-2">2025-002</td>
@@ -391,7 +185,6 @@ export default function AnalyticsProf() {
                       </td>
                     </Link>
                   </tr>
-
                   <tr className="hover:bg-gray-100">
                     <td className="px-4 py-2">3</td>
                     <td className="px-4 py-2">2025-003</td>
@@ -409,12 +202,10 @@ export default function AnalyticsProf() {
                 </tbody>
               </table>
             </div>
-
-
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
-  )
+  );
 }
