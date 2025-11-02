@@ -8,7 +8,7 @@ import ArchiveIcon from "../../assets/Archive(Light).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
 import DeleteIcon from "../../assets/Delete.svg";
 import UnarchiveIcon from "../../assets/Unarchive.svg";
-import ActivityIcon from '../../assets/ClassManagement(Light).svg';
+import ActivityIcon from '../../assets/SubjectDetails.svg';
 
 export default function ArchiveActivities() {
   const [isOpen, setIsOpen] = useState(false);
@@ -239,7 +239,7 @@ export default function ArchiveActivities() {
             <img
               src={ActivityIcon}
               alt="Activity"
-              className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0 mr-2"
+              className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0 mr-2"
             />
             <div className="min-w-0">
               <p className="text-xs sm:text-sm text-gray-600">Title:</p>

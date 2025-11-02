@@ -20,6 +20,7 @@ export default function DashboardProf() {
   const [userEmail, setUserEmail] = useState("");
   const [handledSubjects, setHandledSubjects] = useState("");
   const [classesCount, setClassesCount] = useState(0);
+  const [activitiesCount, setActivitiesCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
 
@@ -38,7 +39,7 @@ export default function DashboardProf() {
             setUserId(userIdFromStorage);
             
             // Fetch complete user data from database
-            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/getUserDataProf.php?id=${userIdFromStorage}`);
+            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();
@@ -60,6 +61,9 @@ export default function DashboardProf() {
                   setHandledSubjects("No subjects assigned");
                   setClassesCount(0);
                 }
+
+                // Fetch activities count
+                await fetchActivitiesCount(userIdFromStorage);
               }
             }
           }
@@ -74,8 +78,23 @@ export default function DashboardProf() {
     fetchUserData();
   }, []);
 
-  return (
+  // Fetch activities count
+  const fetchActivitiesCount = async (professorId) => {
+    try {
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/get_activities_count.php?professor_id=${professorId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setActivitiesCount(data.total_activities);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching activities count:", error);
+    }
+  };
 
+  return (
     <div>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`
@@ -106,8 +125,6 @@ export default function DashboardProf() {
               </div>
           </div>
 
-
-
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
           {/* main content of PROFESSOR ADMIN */}
@@ -135,6 +152,7 @@ export default function DashboardProf() {
                 </div>
               </div>
 
+              {/* UPDATED: Activities to Grade Widget */}
               <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 text-[#465746] shadow-md'> 
                 <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
                   <h1 className='mb-2'> Activities to Grade </h1>
@@ -147,94 +165,93 @@ export default function DashboardProf() {
                       />
                     </div>
                     <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      X
+                      {loading ? "..." : activitiesCount}
                     </p>
                   </div>
                 </div>
               </div>
 
             </div>
-
           </div>
 
-        <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-4 sm:p-5">
-          {/* Header: Name */}
-          <div className="flex items-center">
-            <img 
-              src={ID}
-              alt="ID"
-              className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3"
-            />
-            <p className="font-bold text-sm sm:text-base lg:text-[1.125rem]">{userName}</p>
+          {/* Profile Information Card */}
+          <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-4 sm:p-5">
+            {/* Header: Name */}
+            <div className="flex items-center">
+              <img 
+                src={ID}
+                alt="ID"
+                className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3"
+              />
+              <p className="font-bold text-sm sm:text-base lg:text-[1.125rem]">{userName}</p>
+            </div>
+
+            <hr className="opacity-60 border-[#465746] rounded border-1 my-2 sm:my-3" />
+
+            {/* Info rows */}
+            <div className="pl-4 sm:pl-8 space-y-1 sm:space-y-2">
+              <div className="flex flex-col sm:flex-row">
+                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Faculty Number:</span>
+                <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : (userId || "N/A")}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row">
+                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">CvSU Email:</span>
+                <span className="text-xs sm:text-sm lg:text-base break-all sm:break-normal">{loading ? "Loading..." : (userEmail || "N/A")}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row">
+                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Handled Subject:</span>
+                <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : handledSubjects}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row">
+                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Department:</span>
+                <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : (userData?.tracked_program || "N/A")}</span>
+              </div>
+            </div>
           </div>
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 my-2 sm:my-3" />
+          {/* Student Attendance Details Card */}
+          <Link to={"/AnalyticsProf"}>
+            <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-3 sm:p-4 border-2 border-transparent hover:border-[#00874E] transition-all duration-200">
+              <div className="flex items-center">
+                <img
+                  src={Pie}
+                  alt="Pie"
+                  className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3"
+                />
+                <p className="font-bold text-sm sm:text-base lg:text-[1.125rem] flex-1">
+                  Student Attendance Details
+                </p>
+                <img 
+                  src={Details}
+                  alt="Details"
+                  className="h-6 w-6 sm:h-8 sm:w-8 ml-2 sm:ml-auto sm:mr-2"
+                />
+              </div>
+            </div>
+          </Link>
 
-          {/* Info rows */}
-          <div className="pl-4 sm:pl-8 space-y-1 sm:space-y-2">
-            <div className="flex flex-col sm:flex-row">
-              <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Faculty Number:</span>
-              <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : (userId || "N/A")}</span>
+          {/* Archive Subjects Card */}
+          <Link to={"/ArchiveClass"}>
+            <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-3 sm:p-4 border-2 border-transparent hover:border-[#00874E] transition-all duration-200">
+              <div className="flex items-center">
+                <img 
+                  src={Archive}
+                  alt="Archive"
+                  className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3"
+                />
+                <p className="font-bold text-sm sm:text-base lg:text-[1.125rem] flex-1"> 
+                  Archive Subjects
+                </p>
+                <img 
+                  src={Details}
+                  alt="Details"
+                  className="h-6 w-6 sm:h-8 sm:w-8 ml-2 sm:ml-auto sm:mr-2"
+                />
+              </div>
             </div>
-            <div className="flex flex-col sm:flex-row">
-              <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">CvSU Email:</span>
-              <span className="text-xs sm:text-sm lg:text-base break-all sm:break-normal">{loading ? "Loading..." : (userEmail || "N/A")}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row">
-              <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Handled Subject:</span>
-              <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : handledSubjects}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row">
-              <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Department:</span>
-              <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : (userData?.tracked_program || "N/A")}</span>
-            </div>
-          </div>
+          </Link>
+
         </div>
-
-        {/* Student Attendance Details Card */}
-        <Link to={"/AnalyticsProf"}>
-          <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-3 sm:p-4 border-2 border-transparent hover:border-[#00874E] transition-all duration-200">
-            <div className="flex items-center">
-              <img
-                src={Pie}
-                alt="Pie"
-                className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3"
-              />
-              <p className="font-bold text-sm sm:text-base lg:text-[1.125rem] flex-1">
-                Student Attendance Details
-              </p>
-              <img 
-                src={Details}
-                alt="Details"
-                className="h-6 w-6 sm:h-8 sm:w-8 ml-2 sm:ml-auto sm:mr-2"
-              />
-            </div>
-          </div>
-        </Link>
-
-        {/* Archive Subjects Card */}
-        <Link to={"/ArchiveClass"}>
-          <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-3 sm:p-4 border-2 border-transparent hover:border-[#00874E] transition-all duration-200">
-            <div className="flex items-center">
-              <img 
-                src={Archive}
-                alt="Archive"
-                className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3"
-              />
-              <p className="font-bold text-sm sm:text-base lg:text-[1.125rem] flex-1"> 
-                Archive Subjects
-              </p>
-              <img 
-                src={Details}
-                alt="Details"
-                className="h-6 w-6 sm:h-8 sm:w-8 ml-2 sm:ml-auto sm:mr-2"
-              />
-            </div>
-          </div>
-        </Link>
-
-      </div>
-
       </div>
     </div>
   )

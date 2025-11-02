@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 31, 2025 at 01:28 PM
+-- Generation Time: Nov 02, 2025 at 12:12 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,6 +43,14 @@ CREATE TABLE `activities` (
   `archived` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `activities`
+--
+
+INSERT INTO `activities` (`id`, `subject_code`, `professor_ID`, `activity_type`, `task_number`, `title`, `instruction`, `link`, `points`, `deadline`, `created_at`, `updated_at`, `archived`) VALUES
+(33, 'VD5248', '1156', 'Activity', 'Activity 1', 'HTML', 'Create a HTML code', '', 100, '2025-11-07', '2025-10-31 12:33:43', '2025-10-31 12:36:12', 0),
+(36, 'VD5248', '1156', 'Laboratory', 'asdasda', 'dasdasdasd', 'asdasdasd', '', 100, '2025-11-09', '2025-11-02 10:46:36', '2025-11-02 10:46:36', 0);
+
 -- --------------------------------------------------------
 
 --
@@ -57,6 +65,46 @@ CREATE TABLE `activity_grades` (
   `submitted` tinyint(1) DEFAULT 0,
   `submitted_at` timestamp NULL DEFAULT NULL,
   `late` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `activity_grades`
+--
+
+INSERT INTO `activity_grades` (`id`, `activity_ID`, `student_ID`, `grade`, `submitted`, `submitted_at`, `late`, `created_at`, `updated_at`) VALUES
+(193, 33, '202210602', 100.00, 1, NULL, 0, '2025-10-31 12:33:43', '2025-11-02 10:59:25'),
+(194, 33, '202210718', 100.00, 1, NULL, 0, '2025-10-31 12:33:43', '2025-11-02 10:59:25'),
+(195, 33, '202210784', 100.00, 1, NULL, 0, '2025-10-31 12:33:43', '2025-11-02 10:59:25'),
+(196, 33, '202210870', 100.00, 1, NULL, 0, '2025-10-31 12:33:43', '2025-11-02 10:59:25'),
+(197, 33, '202218101', 100.00, 1, NULL, 0, '2025-10-31 12:33:43', '2025-11-02 10:59:25'),
+(198, 33, '20230001', 100.00, 1, NULL, 0, '2025-10-31 12:33:43', '2025-11-02 10:59:25'),
+(199, 33, '20230002', 100.00, 1, NULL, 0, '2025-10-31 12:33:43', '2025-11-02 10:59:25'),
+(200, 33, '20230003', 100.00, 1, NULL, 0, '2025-10-31 12:33:43', '2025-11-02 10:59:25'),
+(213, 36, '202210602', 100.00, 1, NULL, 0, '2025-11-02 10:46:36', '2025-11-02 10:58:56'),
+(215, 36, '202210718', 100.00, 1, NULL, 1, '2025-11-02 10:46:36', '2025-11-02 10:59:16'),
+(216, 36, '202210784', 0.00, 0, NULL, 0, '2025-11-02 10:46:36', '2025-11-02 11:08:38'),
+(217, 36, '202210870', 100.00, 1, NULL, 0, '2025-11-02 10:46:36', '2025-11-02 10:58:56'),
+(218, 36, '202218101', 100.00, 1, NULL, 0, '2025-11-02 10:46:36', '2025-11-02 10:58:56'),
+(219, 36, '20230001', 100.00, 1, NULL, 0, '2025-11-02 10:46:36', '2025-11-02 10:58:56'),
+(220, 36, '20230002', 100.00, 1, NULL, 0, '2025-11-02 10:46:36', '2025-11-02 10:58:56'),
+(221, 36, '20230003', 100.00, 1, NULL, 0, '2025-11-02 10:46:36', '2025-11-02 10:58:56');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `announcements`
+--
+
+CREATE TABLE `announcements` (
+  `announcement_ID` int(11) NOT NULL,
+  `professor_ID` varchar(20) NOT NULL,
+  `classroom_ID` varchar(10) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `link` varchar(500) DEFAULT NULL,
+  `deadline` datetime DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -94,6 +142,15 @@ CREATE TABLE `classes` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `status` varchar(10) NOT NULL DEFAULT 'Active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `classes`
+--
+
+INSERT INTO `classes` (`subject_code`, `year_level`, `subject`, `section`, `professor_ID`, `created_at`, `updated_at`, `status`) VALUES
+('LY7552', '2nd Year', 'DCIT 25A', '2E', '1156', '2025-10-31 12:35:21', '2025-11-02 10:46:19', 'Archived'),
+('VD5248', '4th Year', 'ITEC 101', '4D', '1156', '2025-10-31 12:33:15', '2025-11-02 10:15:57', 'Active'),
+('VI9168', '4th Year', 'ITEC 90', '4A', '1156', '2025-11-02 10:05:57', '2025-11-02 10:05:57', 'Active');
 
 -- --------------------------------------------------------
 
@@ -147,14 +204,14 @@ CREATE TABLE `tracked_users` (
 
 INSERT INTO `tracked_users` (`tracked_ID`, `tracked_Role`, `tracked_email`, `tracked_password`, `tracked_fname`, `tracked_lname`, `tracked_mi`, `tracked_program`, `tracked_yearandsec`, `tracked_bday`, `tracked_gender`, `tracked_phone`, `tracked_Status`, `created_at`, `updated_at`) VALUES
 ('1123', 'Admin', 'admin@cvsu.edu.ph', '$2y$10$1YMz3I5brKKoL.zgSN225ubRTBgeFZ5UT./XRGY3s.SBSQbtBe0la', 'John', 'Admin', 'A', 'BSIT', '', '2000-12-08', 'Male', '09864518549', 'Active', '2025-09-26 05:10:40', '2025-09-26 05:10:40'),
-('1156', 'Professor', 'patrick.star@cvsu.edu.ph', '$2y$10$bDgTGNu6YIat9k621TSb4.mUetk7VGr5fdlq5MiqGcVp8Al7jV/ja', 'Patrick', 'Star', 'S', 'BSIT', '', '2001-01-01', 'Male', '09465462341', 'Active', '2025-10-07 11:29:33', '2025-10-31 12:05:20'),
+('1156', 'Professor', 'patrick.star@cvsu.edu.ph', '$2y$10$bDgTGNu6YIat9k621TSb4.mUetk7VGr5fdlq5MiqGcVp8Al7jV/ja', 'Patrick', 'Star', 'S', 'BSIT', '', '2001-01-01', 'Male', '09123613618', 'Active', '2025-10-07 11:29:33', '2025-10-31 12:34:56'),
 ('1223', 'Professor', 'robert.smith@cvsu.edu.ph', '$2y$10$iribSN/82ELXIjWjvxLDnOcb6h.ihKz5qdNPIX1pvvoZN8a4oeFkS', 'Robert', 'Smith', 'S', 'BSIT', 'Not Applicable', '1995-08-10', 'Male', '09123681723', 'Active', '2025-10-20 08:05:47', '2025-10-31 08:32:08'),
 ('202210870', 'Student', 'ic.xyrilljohn.abreu@cvsu.edu.ph', '$2y$10$C8VK3O1BOdz4Br5HpcNchO1GEUoPXd5eM4vz2nNAofwTe8mRoK0Ke', 'Xyrill John', 'Abreu', 'F', 'BSIT', 'BSIT-4D', '2003-08-03', 'Female', '09422169425', 'Active', '2025-10-07 17:46:42', '2025-10-07 17:47:38'),
 ('202218101', 'Student', 'spongebob.squarepants@cvsu.edu.ph', '$2y$10$JfTw/0p6wqh1onqCRuKpL..BBsVDmqSF1tiBirQWXfl.O5b8qM0/K', 'Spongebob', 'Squarepants', 'S', 'BSIT', 'BSIT-4D', '2000-01-01', 'Male', '09357633953', 'Active', '2025-10-07 12:45:51', '2025-10-07 12:45:51');
 
 -- --------------------------------------------------------
 
--- 
+--
 -- Table structure for table `users`
 --
 
@@ -207,6 +264,14 @@ ALTER TABLE `activity_grades`
   ADD KEY `student_ID` (`student_ID`);
 
 --
+-- Indexes for table `announcements`
+--
+ALTER TABLE `announcements`
+  ADD PRIMARY KEY (`announcement_ID`),
+  ADD KEY `professor_ID` (`professor_ID`),
+  ADD KEY `classroom_ID` (`classroom_ID`);
+
+--
 -- Indexes for table `attendance`
 --
 ALTER TABLE `attendance`
@@ -253,13 +318,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `activities`
 --
 ALTER TABLE `activities`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `activity_grades`
 --
 ALTER TABLE `activity_grades`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=193;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=233;
+
+--
+-- AUTO_INCREMENT for table `announcements`
+--
+ALTER TABLE `announcements`
+  MODIFY `announcement_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `attendance`
@@ -290,6 +361,13 @@ ALTER TABLE `activities`
 ALTER TABLE `activity_grades`
   ADD CONSTRAINT `activity_grades_ibfk_1` FOREIGN KEY (`activity_ID`) REFERENCES `activities` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `activity_grades_ibfk_2` FOREIGN KEY (`student_ID`) REFERENCES `users` (`user_ID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `announcements`
+--
+ALTER TABLE `announcements`
+  ADD CONSTRAINT `announcements_ibfk_1` FOREIGN KEY (`professor_ID`) REFERENCES `tracked_users` (`tracked_ID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `announcements_ibfk_2` FOREIGN KEY (`classroom_ID`) REFERENCES `classes` (`subject_code`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `attendance`

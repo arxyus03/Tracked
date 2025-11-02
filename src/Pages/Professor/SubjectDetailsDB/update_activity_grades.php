@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: http://localhost:5173'); // Use specific origin instead of *
+header('Access-Control-Allow-Origin: *'); // Use specific origin instead of *
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Credentials: true');
@@ -45,7 +45,21 @@ if (empty($input['activity_ID']) || empty($input['students'])) {
 try {
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare("UPDATE activity_grades SET grade = ?, submitted = ?, late = ?, submitted_at = CASE WHEN ? = 1 AND submitted = 0 THEN NOW() ELSE submitted_at END WHERE activity_ID = ? AND student_ID = ?");
+    // Updated SQL to handle submitted_at properly
+    $stmt = $pdo->prepare("
+        UPDATE activity_grades 
+        SET grade = ?, 
+            submitted = ?, 
+            late = ?, 
+            submitted_at = CASE 
+                WHEN ? = 1 AND submitted_at IS NULL THEN NOW()  -- Set timestamp when first submitting
+                WHEN ? = 0 THEN NULL  -- Clear timestamp when marking as not submitted (missed)
+                ELSE submitted_at  -- Keep existing timestamp if already set
+            END,
+            updated_at = NOW() 
+        WHERE activity_ID = ? 
+        AND student_ID = ?
+    ");
     
     $updatedCount = 0;
     foreach ($input['students'] as $student) {
@@ -75,7 +89,8 @@ try {
             $grade,
             $submitted,
             $late,
-            $submitted,
+            $submitted, // First parameter for CASE WHEN condition
+            $submitted, // Second parameter for CASE WHEN condition  
             $input['activity_ID'],
             $student['user_ID']
         ]);

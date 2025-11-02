@@ -25,7 +25,7 @@ export default function ProfileProf() {
           
           if (userIdFromStorage) {
             // Fetch complete user data from database
-            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/getUserDataProf.php?id=${userIdFromStorage}`);
+            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();

@@ -16,7 +16,6 @@ import SuccessIcon from '../../assets/Success(Green).svg';
 
 export default function ClassManagement() {
   const [isOpen, setIsOpen] = useState(false);
-  const [open, setOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,6 +34,10 @@ export default function ClassManagement() {
   // Dropdown state for modal
   const [yearLevelDropdownOpen, setYearLevelDropdownOpen] = useState(false);
 
+  // Filter states
+  const [selectedFilter, setSelectedFilter] = useState("All Year Levels");
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
+
   // background colors
   const bgOptions = [
     "#874040",
@@ -44,7 +47,7 @@ export default function ClassManagement() {
     "#1E3A8A",
   ];
 
-  const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+  const yearLevels = ["All Year Levels", "1st Year", "2nd Year", "3rd Year", "4th Year"];
 
   // GET LOGGED-IN USER ID
   const getProfessorId = () => {
@@ -106,6 +109,41 @@ export default function ClassManagement() {
     }
   };
 
+  // Filter classes based on selected filter
+  const filteredClasses = classes.filter(classItem => {
+    if (selectedFilter === "All Year Levels") {
+      return true;
+    }
+    return classItem.year_level === selectedFilter;
+  });
+
+  // Handle filter selection
+  const handleFilterSelect = (filter) => {
+    setSelectedFilter(filter);
+    setFilterDropdownOpen(false);
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close year level dropdown in modal
+      if (yearLevelDropdownOpen && !event.target.closest('.year-level-dropdown')) {
+        setYearLevelDropdownOpen(false);
+      }
+      
+      // Close filter dropdown
+      if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
+        setFilterDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [yearLevelDropdownOpen, filterDropdownOpen]);
+
   // Handle archive class
   const handleArchive = async (classItem, e) => {
     e.preventDefault();
@@ -156,29 +194,21 @@ export default function ClassManagement() {
     }
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setYearLevelDropdownOpen(false);
-    };
-
-    if (yearLevelDropdownOpen) {
-      document.addEventListener('click', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [yearLevelDropdownOpen]);
-
   const handlePaletteClick = (e, index) => {
     e.preventDefault();
     e.stopPropagation();
     const newClasses = [...classes];
-    const currentIndex = bgOptions.indexOf(newClasses[index].bgColor);
-    const nextIndex = (currentIndex + 1) % bgOptions.length;
-    newClasses[index].bgColor = bgOptions[nextIndex];
-    setClasses(newClasses);
+    
+    // Find the actual index in the original classes array
+    const classItem = filteredClasses[index];
+    const originalIndex = classes.findIndex(c => c.subject_code === classItem.subject_code);
+    
+    if (originalIndex !== -1) {
+      const currentIndex = bgOptions.indexOf(newClasses[originalIndex].bgColor);
+      const nextIndex = (currentIndex + 1) % bgOptions.length;
+      newClasses[originalIndex].bgColor = bgOptions[nextIndex];
+      setClasses(newClasses);
+    }
   };
 
   const handleCreate = async () => {
@@ -245,6 +275,8 @@ export default function ClassManagement() {
 
   // Function to render class cards
   const renderClassCards = () => {
+    const classesToRender = filteredClasses;
+
     if (loadingClasses) {
       return (
         <div className="col-span-full text-center py-12">
@@ -254,7 +286,7 @@ export default function ClassManagement() {
       );
     }
 
-    if (classes.length === 0) {
+    if (classesToRender.length === 0) {
       return (
         <div className="col-span-full text-center py-12">
           <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
@@ -265,13 +297,16 @@ export default function ClassManagement() {
             />
           </div>
           <p className="text-gray-500 text-sm sm:text-base">
-            No classes created yet. Click the + button to create your first class.
+            {selectedFilter === "All Year Levels" 
+              ? "No classes created yet. Click the + button to create your first class."
+              : `No classes found for ${selectedFilter}.`
+            }
           </p>
         </div>
       );
     }
 
-    return classes.map((classItem, index) => (
+    return classesToRender.map((classItem, index) => (
       <Link 
         to={`/SubjectDetails?code=${classItem.subject_code}`} 
         key={classItem.subject_code}
@@ -383,27 +418,29 @@ export default function ClassManagement() {
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-5 sm:mb-6">
             
             {/* Filter Dropdown */}
-            <div className="relative flex-1 sm:flex-initial">
+            <div className="relative flex-1 sm:flex-initial filter-dropdown">
               <button
-                onClick={() => setOpen(!open)}
+                onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
                 className="flex items-center justify-between w-full sm:w-auto font-bold px-4 py-2.5 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 text-sm sm:text-base min-w-[140px] sm:min-w-[160px] cursor-pointer"
               >
-                <span>Year Level</span>
+                <span>{selectedFilter}</span>
                 <img
                   src={ArrowDown}
                   alt=""
-                  className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                  className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
               {/* Dropdown Menu */}
-              {open && (
+              {filterDropdownOpen && (
                 <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
                   {yearLevels.map((year) => (
                     <button
                       key={year}
-                      className="block px-4 py-2.5 w-full text-left hover:bg-gray-100 text-sm sm:text-base transition-colors duration-150 cursor-pointer"
-                      onClick={() => setOpen(false)}
+                      className={`block px-4 py-2.5 w-full text-left hover:bg-gray-100 text-sm sm:text-base transition-colors duration-150 cursor-pointer ${
+                        selectedFilter === year ? 'bg-gray-50 font-semibold' : ''
+                      }`}
+                      onClick={() => handleFilterSelect(year)}
                     >
                       {year}
                     </button>
@@ -483,7 +520,7 @@ export default function ClassManagement() {
             {/* Form */}
             <div className="space-y-5">
               {/* Year Level Dropdown */}
-              <div className="relative">
+              <div className="relative year-level-dropdown">
                 <label className="text-sm font-semibold mb-2 block text-gray-700">
                   Year Level <span className="text-red-500">*</span>
                 </label>
@@ -506,7 +543,7 @@ export default function ClassManagement() {
                 </button>
                 {yearLevelDropdownOpen && (
                   <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-xl border border-gray-200 z-10 overflow-hidden">
-                    {yearLevels.map((year) => (
+                    {yearLevels.filter(year => year !== "All Year Levels").map((year) => (
                       <button
                         key={year}
                         type="button"

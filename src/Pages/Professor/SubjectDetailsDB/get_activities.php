@@ -72,20 +72,21 @@ try {
             $gradeData = $gradeStmt->fetch(PDO::FETCH_ASSOC);
             
             if ($gradeData) {
-                // Use existing grade data
+                // Use existing grade data - include submitted_at
                 $activityStudents[] = [
                     'user_ID' => $student['user_ID'],
                     'user_Name' => $student['user_Name'],
                     'grade' => $gradeData['grade'],
                     'submitted' => (bool)$gradeData['submitted'],
-                    'late' => (bool)$gradeData['late']
+                    'late' => (bool)$gradeData['late'],
+                    'submitted_at' => $gradeData['submitted_at'] // Include submitted_at in response
                 ];
             } else {
                 // Create default entry if doesn't exist
                 try {
                     $insertStmt = $pdo->prepare("
-                        INSERT INTO activity_grades (activity_ID, student_ID, grade, submitted, late) 
-                        VALUES (?, ?, NULL, 0, 0)
+                        INSERT INTO activity_grades (activity_ID, student_ID, grade, submitted, late, submitted_at) 
+                        VALUES (?, ?, NULL, 0, 0, NULL)
                     ");
                     $insertStmt->execute([$activity['id'], $student['user_ID']]);
                     
@@ -94,7 +95,8 @@ try {
                         'user_Name' => $student['user_Name'],
                         'grade' => null,
                         'submitted' => false,
-                        'late' => false
+                        'late' => false,
+                        'submitted_at' => null // Include submitted_at in response
                     ];
                 } catch (Exception $insertError) {
                     error_log("Error inserting grade for student {$student['user_ID']}: " . $insertError->getMessage());

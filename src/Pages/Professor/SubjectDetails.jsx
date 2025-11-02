@@ -3,14 +3,13 @@ import { Link, useLocation } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import ActivityCard from "../../Components/Activities";
+import ActivityCard from "../../Components/ActivityCard";
 
 import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
 import Add from "../../assets/Add(Light).svg";
 import Archive from "../../assets/Archive(Light).svg";
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
-import ActivityIcon from '../../assets/ClassManagement(Light).svg';
 import SuccessIcon from '../../assets/Success(Green).svg';
 import ArchiveWarningIcon from '../../assets/Warning(Yellow).svg';
 
@@ -348,18 +347,64 @@ export default function SubjectDetails() {
     }
   };
 
-  const handleMarkAllSubmitted = (activityId) => {
-    setActivities(prev => prev.map(activity => 
-      activity.id === activityId 
-        ? {
-            ...activity,
-            students: activity.students.map(student => ({
-              ...student,
-              submitted: true
-            }))
-          }
-        : activity
-    ));
+  const handleMarkAllSubmitted = async (activityId) => {
+    try {
+      const activity = activities.find(a => a.id === activityId);
+      if (!activity || !activity.students) {
+        console.error('Activity or students not found');
+        return;
+      }
+
+      // Prepare students data
+      const studentsData = activity.students.map(student => ({
+        user_ID: student.user_ID || student.id,
+        user_Name: student.user_Name || student.name
+      }));
+
+      // Include the activity points in the request
+      const requestData = {
+        activity_ID: activityId,
+        students: studentsData,
+        points: activity.points // Send the current activity points
+      };
+
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/mark_all_submitted.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local state with the points from server response
+        const assignedPoints = result.data.points_assigned;
+        
+        setActivities(prev => prev.map(activity => 
+          activity.id === activityId 
+            ? {
+                ...activity,
+                students: activity.students.map(student => ({
+                  ...student,
+                  submitted: true,
+                  late: false,
+                  grade: assignedPoints // Use the exact points from server
+                }))
+              }
+            : activity
+        ));
+
+        console.log('Mark all submitted successful. Points assigned:', assignedPoints);
+      } else {
+        console.error('Error marking all as submitted:', result.message);
+        alert('Error marking all as submitted: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error marking all as submitted:', error);
+      alert('Error marking all as submitted. Please try again.');
+    }
   };
 
   const handleGradeChange = (activityId, studentId, value) => {
@@ -405,7 +450,7 @@ export default function SubjectDetails() {
     <div className="col-span-full text-center py-8 sm:py-12 lg:py-16">
       <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mb-4 sm:mb-6 rounded-full bg-gray-100 flex items-center justify-center">
         <img 
-          src={ActivityIcon} 
+          src={SubjectDetailsIcon} 
           alt="No activities" 
           className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 opacity-50" 
         />

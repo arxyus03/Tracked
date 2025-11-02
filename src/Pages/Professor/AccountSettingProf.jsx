@@ -43,7 +43,7 @@ export default function AccountSettingProf() {
         const userIdFromStorage = user.id;
         
         if (userIdFromStorage) {
-          const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/getUserDataProf.php?id=${userIdFromStorage}`);
+          const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
           
           if (response.ok) {
             const data = await response.json();
