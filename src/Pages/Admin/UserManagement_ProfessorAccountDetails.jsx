@@ -24,139 +24,142 @@ export default function UserManagement_ProfessorAccountDetails() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
         {/* content of ADMIN USER MANAGEMENT PROFESSOR ACCOUNT DETAILS */}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           {/* "Header" */}
-          <div className="flex flex-col sm:flex-row item-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex items-center mb-2 sm:mb-0">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center mb-2">
               <img
                 src={ClassManagementLight}
                 alt="ClassManagement"
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 User Management
               </h1>
             </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
-            <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
-              <span className="mb-0 sm:mb-0">
-                Professor Account Details
-              </span>
-              <Link to="/UserManagementProfessorAccounts" className="sm:hidden">
-                <img src={BackButton} alt="BackButton" className="h-6 w-6" />
+            <div className="flex items-center justify-between text-sm sm:text-base lg:text-lg text-[#465746]">
+              <span>Professor Account Details</span>
+              <Link to="/UserManagementProfessorAccounts">
+                <img
+                  src={BackButton}
+                  alt="BackButton"
+                  className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 hover:opacity-70 transition-opacity sm:hidden"
+                />
               </Link>
             </div>
-            <Link to="/UserManagementProfessorAccounts" className="hidden sm:block">
-              <img
-                src={BackButton}
-                alt="BackButton"
-                className="h-6 w-6 sm:h-7 sm:w-7"
-              />
-            </Link>
           </div>
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mb-6" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
           {/* Content */}
-          <div className="bg-white p-4 sm:p-5 md:p-6 rounded-lg space-y-4 sm:space-y-5 md:space-y-6 mt-5 shadow-md text-[#465746]">
+          <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-lg sm:rounded-xl space-y-5 sm:space-y-6 shadow-md text-[#465746]">
             {/* Professor Information Section */}
             <div>
-              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Professor Information</h2>
-              <div className="space-y-3 sm:space-y-2">
-                {/* Mobile: Stacked layout, Desktop: Grid layout */}
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Professor Name:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">Firstname Middlename Middle Initial Lastname</span>
-                  </div>
+              <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-[#465746]">
+                Professor Information
+              </h2>
+              <div className="space-y-3 sm:space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Professor Name:
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746]">
+                    Firstname Middlename Middle Initial Lastname
+                  </span>
                 </div>
                 
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Faculty ID (ID Number):</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">202210718</span>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Faculty ID (ID Number):
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746]">202210718</span>
                 </div>
                 
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">CVSU Email Address:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0 break-all sm:break-normal">Lastname@cvsu.edu.ph</span>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    CVSU Email Address:
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746] break-all sm:break-normal">
+                    Lastname@cvsu.edu.ph
+                  </span>
                 </div>
                 
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Phone Number:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">09606584521</span>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Phone Number:
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746]">09606584521</span>
                 </div>
                 
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Age:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">X</span>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Age:
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746]">X</span>
                 </div>
               </div>
             </div>
 
             {/* Professional Information Section */}
             <div>
-              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Professional Information</h2>
-              <div className="space-y-3 sm:space-y-2">
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Department:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">Information Technology (IT)</span>
-                  </div>
+              <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-[#465746]">
+                Professional Information
+              </h2>
+              <div className="space-y-3 sm:space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Department:
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746]">
+                    Information Technology (IT)
+                  </span>
                 </div>
                 
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Subject Handled:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">ITEC100A, ITEC200A</span>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Subject Handled:
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746]">ITEC100A, ITEC200A</span>
                 </div>
               </div>
             </div>
 
             {/* Account Information Section */}
             <div>
-              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Account Information</h2>
-              <div className="space-y-3 sm:space-y-2">
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Date Created:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">September 3, 2025</span>
-                  </div>
+              <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-[#465746]">
+                Account Information
+              </h2>
+              <div className="space-y-3 sm:space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Date Created:
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746]">September 3, 2025</span>
                 </div>
                 
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Last Login:</span>
-                    <span className="font-semibold sm:font-normal text-sm sm:text-base mb-2 sm:mb-0">September 3, 2025</span>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Last Login:
+                  </span>
+                  <span className="sm:col-span-2 text-[#465746]">September 3, 2025</span>
                 </div>
                 
-                <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 sm:gap-y-2 text-sm sm:text-base md:text-lg">
-                  <div className="flex flex-col sm:contents">
-                    <span className="font-medium sm:font-normal text-xs sm:text-base text-gray-600 sm:text-[#465746]">Account Status:</span>
-                    <span className="font-semibold text-green-600 text-sm sm:text-base mb-2 sm:mb-0">Active</span>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 text-sm sm:text-base">
+                  <span className="font-semibold text-gray-600 sm:text-[#465746] sm:font-normal">
+                    Account Status:
+                  </span>
+                  <span className="sm:col-span-2 font-bold text-green-600">Active</span>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-4 border-t border-gray-200">
+            <div className="pt-4 sm:pt-5 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 {/* Reset Password */}
                 <button 
                   onClick={() => setPopupType("reset")} 
-                  className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#465746] hover:border-2 text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                  className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#006F3A] text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
                 >
                   Reset Password
                 </button>
@@ -164,7 +167,7 @@ export default function UserManagement_ProfessorAccountDetails() {
                 {/* Disable Account */}
                 <button 
                   onClick={() => setPopupType("disable")}  
-                  className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#465746] hover:border-2 text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                  className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#FF6666] rounded-md shadow-md text-center hover:bg-[#E55555] text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
                 >
                   Disable Account
                 </button>

@@ -18,34 +18,33 @@ export default function AccountRequest() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
         {/* main content of ADMIN ACCOUNT REQUEST */}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
         
           {/* "Header" */}
-          <div className="flex flex-col sm:flex-row item-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex items-center mb-2 sm:mb-0">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center mb-2">
               <img 
                 src={AccountRequestLight} 
                 alt="AccountRequest" 
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-base md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Account Request
               </h1>
             </div>
+            <div className="text-sm sm:text-base lg:text-lg text-[#465746]">
+              <span>Account creation request</span>
+            </div>
           </div>
 
-          <div className="text-sm sm:text-sm md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
-            <span className="mb-0 sm:mb-0">Account creation request</span>
-          </div>
-
-          <hr className="opacity-60 border-[#465746] rounded border-1 mb-6" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
           {/* Account Request Main Content */}
           {/* Account Request Table */}
-          <div className="mt-5">
+          <div className="mt-4 sm:mt-5">
             {/* Desktop Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm md:text-base lg:text-lg min-w-[600px]">
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm lg:text-base">
                 {/* Table Header */}
                 <thead>
                   <tr className="text-[#465746] font-bold">
@@ -59,34 +58,34 @@ export default function AccountRequest() {
 
                 {/* Table Body */}
                 <tbody className="text-[#465746]">
-                  <tr className="bg-[#fff] rounded-lg shadow hover:bg-gray-100">
-                    <td className="py-2 px-2 sm:px-3 rounded-l-lg">1</td>
-                    <td className="py-2 px-2 sm:px-3">2025001</td>
-                    <td className="py-2 px-2 sm:px-3">Alice Mendoza</td>
-                    <td className="py-2 px-2 sm:px-3 break-all sm:break-normal">alice@example.com</td>
-                    <td className="py-2 px-2 sm:px-3 rounded-r-lg">
+                  <tr className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200">
+                    <td className="py-3 px-2 sm:px-3 rounded-l-lg">1</td>
+                    <td className="py-3 px-2 sm:px-3">2025001</td>
+                    <td className="py-3 px-2 sm:px-3">Alice Mendoza</td>
+                    <td className="py-3 px-2 sm:px-3 break-all sm:break-normal">alice@example.com</td>
+                    <td className="py-3 px-2 sm:px-3 rounded-r-lg">
                       <div className="flex gap-2">
-                        <button className="font-bold text-xs sm:text-sm px-2 py-1 bg-[#00A15D] text-white rounded hover:bg-[#007A47] transition-colors cursor-pointer">
+                        <button className="font-bold text-xs sm:text-sm lg:text-base px-3 py-1.5 bg-[#00A15D] text-white rounded hover:bg-[#007A47] transition-colors duration-200 cursor-pointer">
                           Accept
                         </button>
-                        <button className="font-bold text-xs sm:text-sm px-2 py-1 bg-[#FF6666] text-white rounded hover:bg-[#E55555] transition-colors cursor-pointer">
+                        <button className="font-bold text-xs sm:text-sm lg:text-base px-3 py-1.5 bg-[#FF6666] text-white rounded hover:bg-[#E55555] transition-colors duration-200 cursor-pointer">
                           Decline
                         </button>
                       </div>
                     </td>
                   </tr>
 
-                  <tr className="bg-[#fff] rounded-lg shadow hover:bg-gray-100">
-                    <td className="py-2 px-2 sm:px-3 rounded-l-lg">2</td>
-                    <td className="py-2 px-2 sm:px-3">2025002</td>
-                    <td className="py-2 px-2 sm:px-3">Brian Santos</td>
-                    <td className="py-2 px-2 sm:px-3 break-all sm:break-normal">brian@example.com</td>
-                    <td className="py-2 px-2 sm:px-3 rounded-r-lg">
+                  <tr className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200">
+                    <td className="py-3 px-2 sm:px-3 rounded-l-lg">2</td>
+                    <td className="py-3 px-2 sm:px-3">2025002</td>
+                    <td className="py-3 px-2 sm:px-3">Brian Santos</td>
+                    <td className="py-3 px-2 sm:px-3 break-all sm:break-normal">brian@example.com</td>
+                    <td className="py-3 px-2 sm:px-3 rounded-r-lg">
                       <div className="flex gap-2">
-                        <button className="font-bold text-xs sm:text-sm px-2 py-1 bg-[#00A15D] text-white rounded hover:bg-[#007A47] transition-colors cursor-pointer">
+                        <button className="font-bold text-xs sm:text-sm lg:text-base px-3 py-1.5 bg-[#00A15D] text-white rounded hover:bg-[#007A47] transition-colors duration-200 cursor-pointer">
                           Accept
                         </button>
-                        <button className="font-bold text-xs sm:text-sm px-2 py-1 bg-[#FF6666] text-white rounded hover:bg-[#E55555] transition-colors cursor-pointer">
+                        <button className="font-bold text-xs sm:text-sm lg:text-base px-3 py-1.5 bg-[#FF6666] text-white rounded hover:bg-[#E55555] transition-colors duration-200 cursor-pointer">
                           Decline
                         </button>
                       </div>
@@ -97,7 +96,7 @@ export default function AccountRequest() {
             </div>
 
             {/* Mobile Cards */}
-            <div className="sm:hidden space-y-3">
+            <div className="md:hidden space-y-3">
               {/* Card 1 */}
               <div className="bg-white rounded-lg shadow p-4 text-[#465746]">
                 <div className="flex justify-between items-start mb-3">
@@ -105,11 +104,11 @@ export default function AccountRequest() {
                     <p className="text-xs text-gray-500 mb-1">No. 1 | Student No.</p>
                     <p className="font-semibold text-sm">2025001</p>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <button className="font-bold text-xs px-2 py-1 bg-[#00A15D] text-white rounded hover:bg-[#007A47] transition-colors cursor-pointer">
+                  <div className="flex flex-col gap-2">
+                    <button className="font-bold text-xs px-3 py-1.5 bg-[#00A15D] text-white rounded hover:bg-[#007A47] transition-colors duration-200 cursor-pointer whitespace-nowrap">
                       Accept
                     </button>
-                    <button className="font-bold text-xs px-2 py-1 bg-[#FF6666] text-white rounded hover:bg-[#E55555] transition-colors cursor-pointer">
+                    <button className="font-bold text-xs px-3 py-1.5 bg-[#FF6666] text-white rounded hover:bg-[#E55555] transition-colors duration-200 cursor-pointer whitespace-nowrap">
                       Decline
                     </button>
                   </div>
@@ -135,11 +134,11 @@ export default function AccountRequest() {
                     <p className="text-xs text-gray-500 mb-1">No. 2 | Student No.</p>
                     <p className="font-semibold text-sm">2025002</p>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <button className="font-bold text-xs px-2 py-1 bg-[#00A15D] text-white rounded hover:bg-[#007A47] transition-colors cursor-pointer">
+                  <div className="flex flex-col gap-2">
+                    <button className="font-bold text-xs px-3 py-1.5 bg-[#00A15D] text-white rounded hover:bg-[#007A47] transition-colors duration-200 cursor-pointer whitespace-nowrap">
                       Accept
                     </button>
-                    <button className="font-bold text-xs px-2 py-1 bg-[#FF6666] text-white rounded hover:bg-[#E55555] transition-colors cursor-pointer">
+                    <button className="font-bold text-xs px-3 py-1.5 bg-[#FF6666] text-white rounded hover:bg-[#E55555] transition-colors duration-200 cursor-pointer whitespace-nowrap">
                       Decline
                     </button>
                   </div>

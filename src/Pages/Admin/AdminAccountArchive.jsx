@@ -16,76 +16,69 @@ export default function AdminAccountArchive() {
   const [isOpen, setIsOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState("All");
 
   return (
     <div>
       <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`
         transition-all duration-300
-        ${isOpen ? 'lg:ml-[250px] xl:ml-[250px] 2xl:ml-[300px]' : 'ml-0'}
+        ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
       `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
         {/* main content of ADMIN ACCOUNT ARCHIVE */}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
         
           {/* "Header" */}
-          <div className="flex flex-col sm:flex-row item-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex items-center mb-2 sm:mb-0">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center mb-2">
               <img 
                 src={Archive} 
                 alt="Archive" 
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-base md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Archives
               </h1>
             </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-sm md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
-            <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
-              <span className="mb-0 sm:mb-0">
-                Accounts Archived
-              </span>
-              <Link to="/UserManagement" className="sm:hidden">
-                <img
+            <div className="flex items-center justify-between text-sm sm:text-base lg:text-lg text-[#465746]">
+              <span>Accounts Archived</span>
+              <Link to="/UserManagementProfessorAccounts">
+                <img 
                   src={BackButton} 
-                  alt="BackButton"
-                  className="h-6 w-6"
+                  alt="BackButton" 
+                  className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 hover:opacity-70 transition-opacity sm:hidden"
                 />
               </Link>
             </div>
-            <Link to="/UserManagementProfessorAccounts" className="hidden sm:block">
-              <img 
-                src={BackButton} 
-                alt="BackButton" 
-                className="h-6 w-6 sm:h-7 sm:w-7"
-              />
-            </Link>
           </div>
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mb-6" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
           {/* BUTTONS */}
-          <div className="flex flex-col lg:flex-row mt-4 sm:mt-5 text-sm sm:text-sm md:text-base lg:text-[1.125rem] text-[#465746] gap-4 lg:justify-between lg:items-center">
+          <div className="flex flex-col sm:flex-row text-[#465746] gap-3 sm:gap-4 sm:justify-between sm:items-center">
             {/* Filter and Backup BUTTONS */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               
              {/* Filter Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setOpen(!open)}
-                  className="flex items-center font-bold px-3 py-2 bg-[#fff] rounded-md w-32 sm:w-36 md:w-44 lg:w-40 shadow-md hover:border-[#00874E] hover:border-2 text-xs sm:text-sm lg:text-[1.125rem] cursor-pointer"
+                  className="flex items-center justify-between font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md w-28 sm:w-36 lg:w-40 shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
                 >
-                  Filter
-                  <img src={ArrowDown} alt="ArrowDown" className="ml-15 h-5 w-5 sm:h-6 sm:w-6 md:h-6 md:w-6 lg:h-7 lg:w-7" />
+                  <span>Filter</span>
+                  <img 
+                    src={ArrowDown} 
+                    alt="ArrowDown" 
+                    className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ml-2"
+                  />
                 </button>
 
                 {open && (
-                  <div className="absolute top-full mt-1 bg-white rounded-md w-32 sm:w-36 md:w-44 lg:w-40 shadow-lg border border-gray-200 z-10">
+                  <div className="absolute top-full mt-1 bg-white rounded-md w-28 sm:w-36 lg:w-40 shadow-lg border border-gray-200 z-10">
                     <button 
-                      className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm md:text-base transition-colors duration-200 cursor-pointer"
+                      className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                       onClick={() => {
                         setSelectedFilter("Students");
                         setOpen(false);
@@ -94,7 +87,7 @@ export default function AdminAccountArchive() {
                       Students
                     </button>
                     <button 
-                      className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm md:text-base transition-colors duration-200 cursor-pointer"
+                      className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                       onClick={() => {
                         setSelectedFilter("Professor");
                         setOpen(false);
@@ -106,36 +99,34 @@ export default function AdminAccountArchive() {
                 )}
               </div>
 
-              <button className="font-bold px-3 py-2 bg-[#fff] rounded-md shadow-md hover:border-[#00874E] hover:border-2 text-xs sm:text-sm lg:text-[1.125rem] cursor-pointer">
+              <button className="font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer">
                 Backup
               </button>
             </div>
 
             {/* Search Button */}
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 lg:w-64 xl:w-80">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm"
+            <div className="relative flex-1 sm:max-w-xs lg:max-w-md">
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm border-2 border-transparent focus:border-[#00874E] transition-all duration-200"
+              />
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
+                <img 
+                  src={Search} 
+                  alt="Search"
+                  className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
                 />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
-                  <img 
-                    src={Search} 
-                    alt="Search"
-                    className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7"
-                  />
-                </button>
-              </div>
+              </button>
             </div>
           </div>
 
           {/* Account Archive Main Content */}
           {/* Account Request Table */}
-          <div className="mt-5">
+          <div className="mt-4 sm:mt-5">
             {/* Desktop Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm md:text-base lg:text-lg min-w-[600px]">
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm lg:text-base">
                 {/* Table Header */}
                 <thead>
                   <tr className="text-[#465746] font-bold">
@@ -150,34 +141,34 @@ export default function AdminAccountArchive() {
 
                 {/* Table Body */}
                 <tbody className="text-[#465746]">
-                  <tr className="bg-[#fff] rounded-lg shadow hover:bg-gray-100">
-                    <td className="py-2 px-2 sm:px-3 rounded-l-lg">1</td>
-                    <td className="py-2 px-2 sm:px-3">2025001</td>
-                    <td className="py-2 px-2 sm:px-3">Alice Mendoza</td>
-                    <td className="py-2 px-2 sm:px-3 break-all sm:break-normal">alice@example.com</td>
-                    <td className="py-2 px-2 sm:px-3 font-bold text-[#FF6666]">Deactivated</td>
-                    <td className="py-2 px-2 sm:px-3 rounded-r-lg">
+                  <tr className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200">
+                    <td className="py-3 px-2 sm:px-3 rounded-l-lg">1</td>
+                    <td className="py-3 px-2 sm:px-3">2025001</td>
+                    <td className="py-3 px-2 sm:px-3">Alice Mendoza</td>
+                    <td className="py-3 px-2 sm:px-3 break-all sm:break-normal">alice@example.com</td>
+                    <td className="py-3 px-2 sm:px-3 font-bold text-[#FF6666]">Deactivated</td>
+                    <td className="py-3 px-2 sm:px-3 rounded-r-lg">
                       <img 
                         onClick={() => setShowPopup(true)} 
                         src={Unarchive} 
                         alt="Unarchive" 
-                        className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 cursor-pointer" 
+                        className="h-5 w-5 sm:h-6 sm:w-6 cursor-pointer hover:opacity-70 transition-opacity" 
                       />
                     </td>
                   </tr>
 
-                  <tr className="bg-[#fff] rounded-lg shadow hover:bg-gray-100">
-                    <td className="py-2 px-2 sm:px-3 rounded-l-lg">2</td>
-                    <td className="py-2 px-2 sm:px-3">2025002</td>
-                    <td className="py-2 px-2 sm:px-3">Brian Santos</td>
-                    <td className="py-2 px-2 sm:px-3 break-all sm:break-normal">brian@example.com</td>
-                    <td className="py-2 px-2 sm:px-3 font-bold text-[#FF6666]">Deactivated</td>
-                    <td className="py-2 px-2 sm:px-3 rounded-r-lg">
+                  <tr className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200">
+                    <td className="py-3 px-2 sm:px-3 rounded-l-lg">2</td>
+                    <td className="py-3 px-2 sm:px-3">2025002</td>
+                    <td className="py-3 px-2 sm:px-3">Brian Santos</td>
+                    <td className="py-3 px-2 sm:px-3 break-all sm:break-normal">brian@example.com</td>
+                    <td className="py-3 px-2 sm:px-3 font-bold text-[#FF6666]">Deactivated</td>
+                    <td className="py-3 px-2 sm:px-3 rounded-r-lg">
                       <img 
                         onClick={() => setShowPopup(true)} 
                         src={Unarchive} 
                         alt="Unarchive" 
-                        className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 cursor-pointer" 
+                        className="h-5 w-5 sm:h-6 sm:w-6 cursor-pointer hover:opacity-70 transition-opacity" 
                       />
                     </td>
                   </tr>
@@ -186,7 +177,7 @@ export default function AdminAccountArchive() {
             </div>
 
             {/* Mobile Cards */}
-            <div className="sm:hidden space-y-3">
+            <div className="md:hidden space-y-3">
               {/* Card 1 */}
               <div className="bg-white rounded-lg shadow p-4 text-[#465746]">
                 <div className="flex justify-between items-start mb-3">

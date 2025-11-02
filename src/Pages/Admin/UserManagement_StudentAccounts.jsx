@@ -23,9 +23,9 @@ export default function UserManagementStudentAccounts() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Fetch professors from backend
+  // Fetch students from backend
   useEffect(() => {
-    fetch("http://localhost/TrackEd/src/Pages/Admin/get_students.php")
+    fetch("http://localhost/TrackEd/src/Pages/Admin/StudentAccountsDB/get_students.php")
       .then((res) => res.json())
       .then((data) => setStudents(data))
       .catch((err) => console.error(err));
@@ -50,62 +50,56 @@ export default function UserManagementStudentAccounts() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
         {/* content of ADMIN USER MANAGEMENT STUDENT ACCOUNT LIST */}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           {/* "Header" */}
-          <div className="flex flex-col sm:flex-row item-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex items-center mb-2 sm:mb-0">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center mb-2">
               <img
                 src={ClassManagementLight}
                 alt="ClassManagement"
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 User Management
               </h1>
             </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
-            <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
-              <span className="mb-0 sm:mb-0">Student Account Administration</span>
-              <Link to="/UserManagement" className="sm:hidden">
-                <img src={BackButton} alt="BackButton" className="h-6 w-6" />
+            <div className="flex items-center justify-between text-sm sm:text-base lg:text-lg text-[#465746]">
+              <span>Student Account Administration</span>
+              <Link to="/UserManagement">
+                <img
+                  src={BackButton}
+                  alt="BackButton"
+                  className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 hover:opacity-70 transition-opacity sm:hidden"
+                />
               </Link>
             </div>
-            <Link to="/UserManagement" className="hidden sm:block">
-              <img
-                src={BackButton}
-                alt="BackButton"
-                className="h-6 w-6 sm:h-7 sm:w-7"
-              />
-            </Link>
           </div>
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mb-6" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
           {/* BUTTONS */}
-          <div className="flex flex-col lg:flex-row mt-4 sm:mt-5 text-sm sm:text-sm md:text-base lg:text-[1.125rem] text-[#465746] gap-4 lg:justify-between lg:items-center">
-            <div className="flex flex-wrap gap-2 ">
+          <div className="flex flex-col sm:flex-row text-[#465746] gap-3 sm:gap-4 sm:justify-between sm:items-center">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               {/* Filter Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setOpen(!open)}
-                  className="flex items-center font-bold px-3 py-2 bg-[#fff] rounded-md w-32 sm:w-36 md:w-44 lg:w-40 shadow-md hover:border-[#00874E] hover:border-2 text-xs sm:text-sm lg:text-[1.125rem] cursor-pointer"
+                  className="flex items-center justify-between font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md w-28 sm:w-36 lg:w-40 shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
                 >
-                  Filter
+                  <span>Filter</span>
                   <img
                     src={ArrowDown}
                     alt="ArrowDown"
-                    className="ml-15 h-5 w-5 sm:h-6 sm:w-6 md:h-6 md:w-6 lg:h-7 lg:w-7"
+                    className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ml-2"
                   />
                 </button>
 
                 {open && (
-                  <div className="absolute top-full mt-1 bg-white rounded-md w-32 sm:w-36 md:w-44 lg:w-40 shadow-lg border border-gray-200 z-10">
+                  <div className="absolute top-full mt-1 bg-white rounded-md w-28 sm:w-36 lg:w-40 shadow-lg border border-gray-200 z-10">
                     {["All", "Active", "Deactivated"].map((f) => (
                       <button
                         key={f}
-                        className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm md:text-base transition-colors duration-200 cursor-pointer"
+                        className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                         onClick={() => {
                           setSelectedFilter(f);
                           setOpen(false);
@@ -118,38 +112,38 @@ export default function UserManagementStudentAccounts() {
                 )}
               </div>
 
-              <button className="font-bold px-3 py-2 bg-[#fff] rounded-md shadow-md hover:border-[#00874E] hover:border-2 text-xs sm:text-sm lg:text-[1.125rem] whitespace-nowrap cursor-pointer">
+              <button className="font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base whitespace-nowrap transition-all duration-200 cursor-pointer">
                 Import Database
               </button>
 
-              <button className="font-bold px-3 py-2 bg-[#fff] rounded-md shadow-md hover:border-[#00874E] hover:border-2 text-xs sm:text-sm lg:text-[1.125rem] cursor-pointer">
+              <button className="font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer">
                 Backup
               </button>
             </div>
 
             {/* Search and Archive Buttons */}
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 lg:w-64 xl:w-80">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="relative flex-1 sm:max-w-xs lg:max-w-md">
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm"
+                  className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm border-2 border-transparent focus:border-[#00874E] transition-all duration-200"
                 />
                 <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
                   <img
                     src={Search}
                     alt="Search"
-                    className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7"
+                    className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
                   />
                 </button>
               </div>
 
               <Link to="/AdminAccountArchive">
-                <button className="font-bold py-2 bg-[#fff] rounded-md w-10 sm:w-11 lg:w-12 shadow-md flex items-center justify-center hover:border-[#00874E] hover:border-2 cursor-pointer">
+                <button className="font-bold py-2 bg-[#fff] rounded-md w-9 sm:w-10 lg:w-11 h-9 sm:h-10 lg:h-11 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer">
                   <img
                     src={Archive}
                     alt="Archive"
-                    className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7"
+                    className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
                   />
                 </button>
               </Link>
@@ -157,10 +151,10 @@ export default function UserManagementStudentAccounts() {
           </div>
 
           {/* Table */}
-          <div className="mt-5">
+          <div className="mt-4 sm:mt-5">
             {/* Desktop Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm md:text-base lg:text-lg min-w-[600px]">
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm lg:text-base">
                 <thead>
                   <tr className="text-[#465746] font-bold">
                     <th className="py-2 px-2 sm:px-3">Student ID No.</th>
@@ -175,20 +169,20 @@ export default function UserManagementStudentAccounts() {
                   {currentStudents.map((stud, index) => (
                     <tr
                       key={stud.tracked_ID}
-                      className="bg-[#fff] rounded-lg shadow hover:bg-gray-100"
+                      className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200"
                     >
-                      <td className="py-2 px-2 sm:px-3">{stud.tracked_ID}</td>
-                      <td className="py-2 px-2 sm:px-3">
+                      <td className="py-3 px-2 sm:px-3 rounded-l-lg">{stud.tracked_ID}</td>
+                      <td className="py-3 px-2 sm:px-3">
                         {stud.tracked_fname} {stud.tracked_mi} {stud.tracked_lname}
                       </td>
-                      <td className="py-2 px-2 sm:px-3 break-all sm:break-normal">
+                      <td className="py-3 px-2 sm:px-3 break-all sm:break-normal">
                         {stud.tracked_email}
                       </td>
-                       <td className="py-2 px-2 sm:px-3 break-all sm:break-normal">
+                      <td className="py-3 px-2 sm:px-3">
                         {stud.tracked_yearandsec}
                       </td>
                       <td
-                        className={`py-2 px-2 sm:px-3 font-bold ${
+                        className={`py-3 px-2 sm:px-3 font-bold ${
                           stud.tracked_Status === "Active"
                             ? "text-[#00A15D]"
                             : "text-[#FF6666]"
@@ -196,19 +190,19 @@ export default function UserManagementStudentAccounts() {
                       >
                         {stud.tracked_Status}
                       </td>
-                      <td className="py-2 px-2 sm:px-3 rounded-r-lg">
+                      <td className="py-3 px-2 sm:px-3 rounded-r-lg">
                         <div className="flex gap-2">
                           <img
                             onClick={() => setShowPopup(true)}
                             src={ArchiveRow}
                             alt="Archive"
-                            className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 cursor-pointer"
+                            className="h-5 w-5 sm:h-6 sm:w-6 cursor-pointer hover:opacity-70 transition-opacity"
                           />
                           <Link to="/UserManagementStudentAccountDetails">
                             <img
                               src={Details}
                               alt="Details"
-                              className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7"
+                              className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 transition-opacity"
                             />
                           </Link>
                         </div>
@@ -219,8 +213,8 @@ export default function UserManagementStudentAccounts() {
               </table>
             </div>
 
-            {/* Mobile Cards */}
-            <div className="sm:hidden space-y-3">
+            {/* Mobile/Tablet Cards */}
+            <div className="lg:hidden space-y-3">
               {currentStudents.map((stud, i) => (
                 <div
                   key={stud.tracked_ID}
@@ -229,7 +223,7 @@ export default function UserManagementStudentAccounts() {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">
-                        No. {i + 1} | Student ID No.
+                        No. {indexOfFirst + i + 1} | Student ID No.
                       </p>
                       <p className="font-semibold text-sm">{stud.tracked_ID}</p>
                     </div>
@@ -240,7 +234,7 @@ export default function UserManagementStudentAccounts() {
                         alt="Archive"
                         className="h-5 w-5 cursor-pointer"
                       />
-                      <Link to="/UserManagementStudentAccountsDetails">
+                      <Link to="/UserManagementStudentAccountDetails">
                         <img src={Details} alt="Details" className="h-5 w-5" />
                       </Link>
                     </div>
@@ -257,6 +251,11 @@ export default function UserManagementStudentAccounts() {
                     <div>
                       <p className="text-xs text-gray-500">Email</p>
                       <p className="text-sm break-all">{stud.tracked_email}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500">Year and Section</p>
+                      <p className="text-sm">{stud.tracked_yearandsec}</p>
                     </div>
 
                     <div>
@@ -277,20 +276,60 @@ export default function UserManagementStudentAccounts() {
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-center mt-6 gap-2">
-              {Array.from({ length: totalPages }, (_, i) => (
+            <div className="flex flex-wrap justify-center mt-5 sm:mt-6 gap-2">
+              {/* Previous Button */}
+              {currentPage > 1 && (
                 <button
-                  key={i + 1}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={`px-3 py-1 rounded-md shadow-md ${
-                    currentPage === i + 1
-                      ? "bg-[#00874E] text-white font-bold"
-                      : "bg-white text-[#465746] hover:bg-gray-100"
-                  }`}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md bg-white text-[#465746] hover:bg-gray-100 font-medium text-xs sm:text-sm transition-colors duration-200"
                 >
-                  {i + 1}
+                  Previous
                 </button>
-              ))}
+              )}
+
+              {/* Page Numbers */}
+              {Array.from({ length: totalPages }, (_, i) => {
+                const pageNum = i + 1;
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md text-xs sm:text-sm font-medium transition-colors duration-200 ${
+                        currentPage === pageNum
+                          ? "bg-[#00874E] text-white"
+                          : "bg-white text-[#465746] hover:bg-gray-100"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  pageNum === currentPage - 2 ||
+                  pageNum === currentPage + 2
+                ) {
+                  return (
+                    <span key={pageNum} className="px-2 py-1.5 sm:py-2 text-[#465746]">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+
+              {/* Next Button */}
+              {currentPage < totalPages && (
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md bg-white text-[#465746] hover:bg-gray-100 font-medium text-xs sm:text-sm transition-colors duration-200"
+                >
+                  Next
+                </button>
+              )}
             </div>
 
             {/* Popup */}
