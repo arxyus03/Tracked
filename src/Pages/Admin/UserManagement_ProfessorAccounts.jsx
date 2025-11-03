@@ -413,7 +413,7 @@ export default function UserManagementProfessorAccounts() {
                     from { opacity: 0; transform: translateY(-8px) scale(.98); }
                     to   { opacity: 1; transform: translateY(0)   scale(1);    }
                   }
-                `}</style>
+                `}</style>  
               </div>
             )}
           </div>

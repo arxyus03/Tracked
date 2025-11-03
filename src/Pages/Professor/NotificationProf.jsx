@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import NotificationCard from "../../Components/NotificationCard"; // Import the card
+import NotificationCard from "../../Components/NotificationCard";
 
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
 import Notification from "../../assets/NotificationIcon.svg";
@@ -12,6 +12,8 @@ import Search from "../../assets/Search.svg";
 export default function NotificationProf() {
   const [isOpen, setIsOpen] = useState(false);
   const [open, setOpen] = useState(false);
+  const [filterOption, setFilterOption] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div>
@@ -24,51 +26,53 @@ export default function NotificationProf() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
 
         {/* content of NOTIFICATION*/}
-        <div className="p-3 sm:p-4 md:p-5 lg:p-5 xl:p-5">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center mb-2 sm:mb-4">
-            <div className="flex items-center mb-2 sm:mb-0">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center mb-2">
               <img
                 src={Notification}
                 alt="Notification"
-                className="h-7 w-7 sm:h-6 sm:w-7 md:h-7 md:w-7 mr-3 sm:mr-3 mt-0.5 ml-2"
+                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-xl md:text-xl lg:text-[1.5rem] text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Notification
               </h1>
             </div>
+            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
+              Account Notification
+            </p>
           </div>
 
-          <div className="text-sm sm:text-base md:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5 ml-2">
-            <span>Account Notification</span>
-          </div>
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          <hr className="opacity-60 border-[#465746] rounded border-1 mt-5" />
-
-          {/* Filter and Action Buttons */}
-          <div className="flex flex-row mt-4 sm:mt-5 gap-4 justify-between items-center">
-            {/* Filter & Search BUTTON */}
-            <div className="relative">
+          {/* Filter and Search - Responsive Layout */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-5 sm:mb-6">
+            {/* Filter dropdown */}
+            <div className="relative sm:flex-initial filter-dropdown">
               <button
                 onClick={() => setOpen(!open)}
-                className="flex items-center font-bold px-3 py-2 bg-[#fff] rounded-md cursor-pointer shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 text-xs sm:text-sm lg:text-base min-w-[100px] sm:min-w-[140px]"
+                className="flex items-center justify-between w-full sm:w-auto font-bold px-4 py-2.5 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] active:border-[#00874E] transition-all duration-200 text-sm sm:text-base sm:min-w-[160px] cursor-pointer touch-manipulation"
               >
-                <span className="flex-1 text-left">Filter</span>
+                <span>{filterOption}</span>
                 <img
                   src={ArrowDown}
-                  alt="ArrowDown"
-                  className="ml-2 h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6"
+                  alt=""
+                  className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
                 />
               </button>
 
               {/* Filter Dropdown SELECTIONS */}
               {open && (
-                <div className="absolute top-full mt-1 bg-white rounded-md w-full sm:w-48 shadow-lg border border-gray-200 z-10">
+                <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
                   {["All", "Unread", "Read", "Newest"].map((filter) => (
                     <button
                       key={filter}
-                      className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm md:text-base transition-colors duration-200 cursor-pointer"
+                      className={`block px-4 py-2.5 w-full text-left hover:bg-gray-100 active:bg-gray-200 text-sm sm:text-base transition-colors duration-150 cursor-pointer touch-manipulation ${
+                        filterOption === filter ? 'bg-gray-50 font-semibold' : ''
+                      }`}
                       onClick={() => {
+                        setFilterOption(filter);
                         setOpen(false);
                       }}
                     >
@@ -79,26 +83,27 @@ export default function NotificationProf() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1 lg:w-64 xl:w-80">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none bg-white text-xs sm:text-sm"
+            {/* Search bar */}
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search notifications..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
+              />
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <img
+                  src={Search}
+                  alt="Search"
+                  className="h-5 w-5 sm:h-6 sm:w-6"
                 />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover">
-                  <img
-                    src={Search}
-                    alt="Search"
-                    className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7"
-                  />
-                </button>
-              </div>
+              </button>
             </div>
           </div>
 
           {/* Notification Cards */}
-          <div className="mt-6">
+          <div className="space-y-4 sm:space-y-5">
             <NotificationCard
               title="New Account Created"
               description="An account for John Doe has been successfully created."
@@ -109,6 +114,12 @@ export default function NotificationProf() {
               title="Password Changed"
               description="Jane Doe changed their password successfully."
               date="September 25, 2025"
+              isRead={true}
+            />
+            <NotificationCard
+              title="Profile Updated"
+              description="Mary Smith has updated her profile information."
+              date="September 24, 2025"
               isRead={true}
             />
           </div>
