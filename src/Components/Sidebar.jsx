@@ -54,14 +54,14 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
   const menus = {
     student: {
       main: [
-        { label: "Dashboard", icon: Dashboard, path: "/Dashboard" },
-        { label: "My Courses", icon: Subjects, path: "/MyCourses" },
-        { label: "Grades", icon: Analytics, path: "/Grades" },
+        { label: "Dashboard", icon: Dashboard, path: "/DashboardStudent" },
+        { label: "Subjects", icon: Subjects, path: "/Subjects" },
+        { label: "Analytics", icon: Analytics, path: "/AnalyticsStudent" },
       ],
       extras: [
-        { label: "Notification", icon: Notification, path: "/Notification" },
-        { label: "Profile", icon: Profile, path: "/Profile" },
-        { label: "Account Settings", icon: AccountSettings, path: "/AccountSetting" },
+        { label: "Notification", icon: Notification, path: "/NotificationStudent" },
+        { label: "Profile", icon: Profile, path: "/ProfileStudent" },
+        { label: "Account Setting", icon: AccountSettings, path: "/AccountSetting" },
       ],
     },
 
@@ -75,7 +75,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
       extras: [
         { label: "Notification", icon: Notification, path: "/NotificationProf" },
         { label: "Profile", icon: Profile, path: "/ProfileProf" },
-        { label: "Account Settings", icon: AccountSettings, path: "/AccountSettingProf" },
+        { label: "Account Setting", icon: AccountSettings, path: "/AccountSettingProf" },
       ],
     },
 

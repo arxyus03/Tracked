@@ -33,12 +33,24 @@ import AnalyticsAttendanceInfo from './Professor/AnalyticsAttendanceInfo.jsx';
 import ArchiveClass from './Professor/ArchiveClass.jsx'; 
 import ArchiveActivities from './Professor/ArchiveActivities.jsx';
 
+{/* Student Links */}
+import DashboardStudent from './Student/DashboardStudent.jsx';
+import Subjects from './Student/Subjects.jsx';
+import AnalyticsStudent from './Student/AnalyticsStudent.jsx';
+import NotificationStudent from './Student/NotificationStudent.jsx';
+import ProfileStudent from './Student/ProfileStudent.jsx';
+import AccountSetting from './Student/AccountSetting.jsx';
+import AttendanceHistoryStudent from './Student/AttendanceHistoryStudent.jsx';
+import SubjectDetailsStudent from './Student/SubjectDetailsStudent.jsx';
+import ArchiveClassStudent from './Student/ArchiveClassStudent.jsx';
+
+
 function Linking() {
   return (
     <Router>
       <Routes>
         {/* Starting Flow */} 
-        <Route path="/" element={<DashboardProf />} />  
+        <Route path="/" element={<DashboardStudent />} />  
         
         {/* Navigations for Landing */}
         <Route path ="/Login" element={<Login />} />
@@ -72,6 +84,18 @@ function Linking() {
         <Route path="/ArchiveActivities" element={<ArchiveActivities/>} /> 
         <Route path="/AnalyticsIndividualInfo" element={<AnalyticsIndividualInfo/>} /> 
         <Route path="/AnalyticsAttendanceInfo" element={<AnalyticsAttendanceInfo/>} /> 
+
+        {/* Navigations for Student */}
+        <Route path="/DashboardStudent" element={<DashboardStudent />} />
+        <Route path="/Subjects" element={<Subjects />} />
+        <Route path="/AnalyticsStudent" element={<AnalyticsStudent />} />
+        <Route path="/NotificationStudent" element={<NotificationStudent />} />
+        <Route path="/ProfileStudent" element={<ProfileStudent />} />
+        <Route path="/AccountSetting" element={<AccountSetting />} />
+        <Route path="/AttendanceHistoryStudent" element={<AttendanceHistoryStudent />} />
+        <Route path="/SubjectDetailsStudent" element={<SubjectDetailsStudent />} />
+        <Route path="/ArchiveClassStudent" element={<ArchiveClassStudent />} />
+
       </Routes>
     </Router>
   );
