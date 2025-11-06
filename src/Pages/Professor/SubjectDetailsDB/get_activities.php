@@ -56,7 +56,26 @@ try {
     error_log("ENROLLED Students for class '$subject_code': " . count($students));
     
     // Get activities - ONLY NON-ARCHIVED activities (archived = 0 or NULL)
-    $stmt = $pdo->prepare("SELECT * FROM activities WHERE subject_code = ? AND (archived = 0 OR archived IS NULL) ORDER BY created_at DESC");
+    // Format deadline to include time for frontend display
+    $stmt = $pdo->prepare("
+        SELECT 
+            id,
+            subject_code,
+            professor_ID,
+            activity_type,
+            task_number,
+            title,
+            instruction,
+            link,
+            points,
+            DATE_FORMAT(deadline, '%Y-%m-%d %H:%i:%s') as deadline,
+            created_at,
+            updated_at,
+            archived
+        FROM activities 
+        WHERE subject_code = ? AND (archived = 0 OR archived IS NULL) 
+        ORDER BY created_at DESC
+    ");
     $stmt->execute([$subject_code]);
     $activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

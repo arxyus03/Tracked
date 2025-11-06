@@ -66,7 +66,7 @@ export default function SubjectDetailsStudent() {
     try {
       const studentId = getStudentId();
       
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectDetailsStudentDB/get_activities.php?subject_code=${subjectCode}&student_id=${studentId}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectDetailsStudentDB/get_activities_student.php?subject_code=${subjectCode}&student_id=${studentId}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -112,16 +112,34 @@ export default function SubjectDetailsStudent() {
     return () => document.removeEventListener("click", onClick);
   }, [filterDropdownOpen]);
 
-  // Format date for display
+  // Format date for display with time
   const formatDate = (dateString) => {
     if (!dateString) return 'No deadline';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
+      
+      // Check if the date has time component
+      const hasTime = dateString.includes(' ') || dateString.includes('T');
+      
+      if (hasTime) {
+        // Format with time
+        return date.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) + ' | ' + date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      } else {
+        // Format without time (legacy date-only format)
+        return date.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      }
     } catch {
       return dateString;
     }
@@ -232,7 +250,7 @@ export default function SubjectDetailsStudent() {
                 <p className="mt-3 text-gray-600">Loading activities...</p>
               </div>
             ) : sorted.length > 0 ? (
-              sorted.map((activity, idx) => (
+              sorted.map((activity) => (
                 <ActivityCardStudent
                   key={activity.id}
                   activity={activity}

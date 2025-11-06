@@ -40,9 +40,23 @@ try {
         exit;
     }
 
-    // Get activities for this subject
+    // Get activities for this subject with formatted deadline
     $stmt = $pdo->prepare("
-        SELECT a.*, ag.grade, ag.submitted, ag.late, ag.submitted_at 
+        SELECT 
+            a.id,
+            a.subject_code,
+            a.activity_type,
+            a.task_number,
+            a.title,
+            a.instruction,
+            a.link,
+            a.points,
+            DATE_FORMAT(a.deadline, '%Y-%m-%d %H:%i:%s') as deadline,
+            a.created_at,
+            ag.grade, 
+            ag.submitted, 
+            ag.late, 
+            ag.submitted_at 
         FROM activities a 
         LEFT JOIN activity_grades ag ON a.id = ag.activity_ID AND ag.student_ID = ?
         WHERE a.subject_code = ? AND (a.archived = 0 OR a.archived IS NULL)

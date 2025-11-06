@@ -47,6 +47,12 @@ try {
 
     $section = $class['section'];
 
+    // Format deadline for database storage (convert from datetime-local to MySQL datetime)
+    $deadline = null;
+    if (!empty($input['deadline'])) {
+        $deadline = date('Y-m-d H:i:s', strtotime($input['deadline']));
+    }
+
     // Insert activity with explicit archived = 0
     $stmt = $pdo->prepare("INSERT INTO activities (subject_code, professor_ID, activity_type, task_number, title, instruction, link, points, deadline, archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)");
     $stmt->execute([
@@ -58,7 +64,7 @@ try {
         $input['instruction'] ?? '',
         $input['link'] ?? '',
         $input['points'] ?? 0,
-        $input['deadline'] ?? null
+        $deadline
     ]);
 
     $activity_ID = $pdo->lastInsertId();
@@ -119,7 +125,7 @@ try {
             "instruction" => $input['instruction'],
             "link" => $input['link'],
             "points" => $input['points'],
-            "deadline" => $input['deadline'],
+            "deadline" => $input['deadline'], // Return original datetime string
             "archived" => 0,
             "students" => $studentsWithData
         ],
@@ -127,7 +133,9 @@ try {
             "section" => $section,
             "students_found" => count($students),
             "students_added" => $studentsAdded,
-            "student_list" => $students
+            "student_list" => $students,
+            "deadline_original" => $input['deadline'],
+            "deadline_formatted" => $deadline
         ]
     ]);
 

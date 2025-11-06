@@ -700,8 +700,8 @@ export default function SubjectDetails() {
               <div>
                 <label className="text-sm font-semibold mb-1.5 block">Deadline:</label>
                 <input
-                  type="date"
-                  placeholder="dd / mm / yy"
+                  type="datetime-local"
+                  placeholder="Select deadline"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none text-sm focus:border-[#00874E] transition-colors"
@@ -865,17 +865,17 @@ export default function SubjectDetails() {
                 />
               </div>
 
-              {/* Deadline Input */}
-              <div>
-                <label className="text-sm font-semibold mb-1.5 block">Deadline:</label>
-                <input
-                  type="date"
-                  placeholder="dd / mm / yy"
-                  value={editDeadline}
-                  onChange={(e) => setEditDeadline(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none text-sm focus:border-[#00874E] transition-colors"
-                />
-              </div>
+            {/* Deadline Input */}
+            <div>
+              <label className="text-sm font-semibold mb-1.5 block">Deadline:</label>
+              <input
+                type="datetime-local"
+                placeholder="Select deadline"
+                value={editDeadline}
+                onChange={(e) => setEditDeadline(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none text-sm focus:border-[#00874E] transition-colors"
+              />
+            </div>
 
               {/* Save Button */}
               <button

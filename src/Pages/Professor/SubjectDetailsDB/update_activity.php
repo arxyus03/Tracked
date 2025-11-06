@@ -29,6 +29,12 @@ if (!$input || !isset($input['activity_ID'])) {
 }
 
 try {
+    // Format deadline for database storage (convert from datetime-local to MySQL datetime)
+    $deadline = null;
+    if (!empty($input['deadline'])) {
+        $deadline = date('Y-m-d H:i:s', strtotime($input['deadline']));
+    }
+
     $stmt = $pdo->prepare("
         UPDATE activities 
         SET 
@@ -49,13 +55,17 @@ try {
         $input['instruction'] ?? '',
         $input['link'] ?? '',
         $input['points'] ?? 0,
-        $input['deadline'] ?? null,
+        $deadline,
         $input['activity_ID']
     ]);
 
     echo json_encode([
         "success" => true,
-        "message" => "Activity updated successfully"
+        "message" => "Activity updated successfully",
+        "debug" => [
+            "deadline_original" => $input['deadline'],
+            "deadline_formatted" => $deadline
+        ]
     ]);
 
 } catch (Exception $e) {

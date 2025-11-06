@@ -121,16 +121,34 @@ export default function ActivityCard({
     return numGrade > activity.points;
   };
 
-  // Format date for display
+  // Format date for display with time
   const formatDate = (dateString) => {
     if (!dateString) return 'No deadline';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
+      
+      // Check if the date has time component
+      const hasTime = dateString.includes(' ') || dateString.includes('T');
+      
+      if (hasTime) {
+        // Format with time
+        return date.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }) + ' | ' + date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      } else {
+        // Format without time (legacy date-only format)
+        return date.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      }
     } catch {
       return dateString;
     }

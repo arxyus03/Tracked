@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import NotificationCard from "../../Components/NotificationCard";
+import NotificationCard from "../../Components/NotificationCardStudent";
 
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
 import Notification from "../../assets/NotificationIcon.svg";
