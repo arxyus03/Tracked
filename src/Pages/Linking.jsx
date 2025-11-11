@@ -44,13 +44,23 @@ import AttendanceHistoryStudent from './Student/AttendanceHistoryStudent.jsx';
 import SubjectDetailsStudent from './Student/SubjectDetailsStudent.jsx';
 import ArchiveClassStudent from './Student/ArchiveClassStudent.jsx';
 
+{/* Super Admin Links */}
+import SuperAdminAccountList from './SuperAdmin/SuperAdminAccountList.jsx';
+import SuperAdminLanding from './SuperAdmin/SuperAdminLanding.jsx';
+import SuperAdminAdminAccountDetails from './SuperAdmin/SuperAdminAdminAccountDetails.jsx';
+import SuperAdminProfAccountDetails from './SuperAdmin/SuperAdminProfAccountDetails.jsx';
+import SuperAdminStudentAccountDetails from './SuperAdmin/SuperAdminStudentAccountDetails.jsx';
+import SuperAdminAdminAccount from './SuperAdmin/SuperAdminAdminAccount.jsx';
+import SuperAdminProfAccount from './SuperAdmin/SuperAdminProfAccount.jsx';
+import SuperAdminStudentAccount from './SuperAdmin/SuperAdminStudentAccount.jsx';
+
 
 function Linking() {
   return (
     <Router>
       <Routes>
         {/* Starting Flow */} 
-        <Route path="/" element={<DashboardStudent />} />  
+        <Route path="/" element={<SuperAdminAccountList />} />  
         
         {/* Navigations for Landing */}
         <Route path ="/Login" element={<Login />} />
@@ -95,6 +105,16 @@ function Linking() {
         <Route path="/AttendanceHistoryStudent" element={<AttendanceHistoryStudent />} />
         <Route path="/SubjectDetailsStudent" element={<SubjectDetailsStudent />} />
         <Route path="/ArchiveClassStudent" element={<ArchiveClassStudent />} />
+
+        {/* Navigations for Super Admin */}
+        <Route path="/SuperAdminAccountList" element={<SuperAdminAccountList />} />
+        <Route path="/SuperAdminLanding" element={<SuperAdminLanding />} />
+        <Route path="/SuperAdminAdminAccountDetails" element={<SuperAdminAdminAccountDetails />} />
+        <Route path="/SuperAdminProfAccountDetails" element={<SuperAdminProfAccountDetails />} />
+        <Route path="/SuperAdminStudentAccountDetails" element={<SuperAdminStudentAccountDetails />} />
+        <Route path="/SuperAdminAdminAccount" element={<SuperAdminAdminAccount />} />
+        <Route path="/SuperAdminProfAccount" element={<SuperAdminProfAccount />} />
+        <Route path="/SuperAdminStudentAccount" element={<SuperAdminStudentAccount />} />
 
       </Routes>
     </Router>
