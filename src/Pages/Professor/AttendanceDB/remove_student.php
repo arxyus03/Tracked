@@ -59,7 +59,7 @@ try {
 
     // Get student name for response from tracked_users
     $studentStmt = $pdo->prepare("
-        SELECT CONCAT(tracked_fname, ' ', tracked_lname) as user_Name 
+        SELECT CONCAT(tracked_firstname, ' ', tracked_lastname) as user_Name
         FROM tracked_users 
         WHERE tracked_ID = ? AND tracked_Role = 'Student'
     ");

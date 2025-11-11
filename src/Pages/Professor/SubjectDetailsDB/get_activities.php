@@ -43,16 +43,12 @@ try {
     
     // Get students who are actually ENROLLED in this class from tracked_users table
     $studentsStmt = $pdo->prepare("
-        SELECT 
-            t.tracked_ID as user_ID, 
-            CONCAT(t.tracked_fname, ' ', t.tracked_lname) as user_Name,
-            t.tracked_yearandsec as YearandSection
+        SELECT t.tracked_ID as user_ID, 
+            CONCAT(t.tracked_firstname, ' ', t.tracked_lastname) as user_Name
         FROM tracked_users t
         INNER JOIN student_classes sc ON t.tracked_ID = sc.student_ID
-        WHERE t.tracked_Role = 'Student' 
-        AND t.tracked_Status = 'Active'
-        AND sc.subject_code = ?
-        AND sc.archived = 0
+        WHERE sc.subject_code = ? AND sc.archived = 0
+        AND t.tracked_Role = 'Student' AND t.tracked_Status = 'Active'
     ");
     $studentsStmt->execute([$subject_code]);
     $students = $studentsStmt->fetchAll(PDO::FETCH_ASSOC);

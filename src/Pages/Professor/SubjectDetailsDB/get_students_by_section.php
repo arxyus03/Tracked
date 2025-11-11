@@ -34,7 +34,7 @@ try {
     $sql = "
         SELECT 
             t.tracked_ID as user_ID, 
-            CONCAT(t.tracked_fname, ' ', t.tracked_lname) as user_Name,
+            CONCAT(t.tracked_firstname, ' ', t.tracked_lastname) as user_Name,
             t.tracked_email as user_Email,
             t.tracked_gender as user_Gender,
             t.tracked_yearandsec as YearandSection,

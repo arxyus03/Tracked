@@ -50,12 +50,21 @@ export default function Login() {
       const text = await response.text();
       console.log("RAW RESPONSE FROM PHP:", text);
 
+      // Check if response contains HTML error tags
+      if (text.includes('<br />') || text.includes('<b>') || text.trim().startsWith('<!DOCTYPE') || text.includes('<?php')) {
+        console.error("PHP Error detected in response");
+        setError("Server error occurred. Please check if PHP is configured properly.");
+        setIsLoading(false);
+        return;
+      }
+
       let data;
       try {
         data = JSON.parse(text);
         console.log("PARSED DATA:", data);
       } catch (err) {
         console.error("JSON Parse Error:", err);
+        console.error("Raw response that failed to parse:", text);
         setError("Invalid response from server. Please check the PHP file for errors.");
         setIsLoading(false);
         return;

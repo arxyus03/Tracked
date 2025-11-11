@@ -3,9 +3,12 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Clear any output buffers
-while (ob_get_level()) ob_end_clean();
+// Clear any output buffers to prevent unwanted output
+while (ob_get_level()) {
+    ob_end_clean();
+}
 
+// Set headers FIRST to prevent any output issues
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: Content-Type");
@@ -46,12 +49,14 @@ if (empty($idNumber) || empty($inputPassword)) {
     exit;
 }
 
-// Fetch user from DB
-$sql = "SELECT tracked_password, tracked_Status, tracked_Role, tracked_fname, tracked_lname, tracked_mi FROM tracked_users WHERE tracked_ID = ? LIMIT 1";
+// Fetch user from DB - UPDATED COLUMN NAMES to match your schema
+$sql = "SELECT tracked_password, tracked_Status, tracked_Role, tracked_firstname, tracked_lastname, tracked_middlename 
+        FROM tracked_users 
+        WHERE tracked_ID = ? LIMIT 1";
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
-    echo json_encode(["success" => false, "message" => "Database error"]);
+    echo json_encode(["success" => false, "message" => "Database error: " . $conn->error]);
     exit;
 }
 
@@ -81,25 +86,16 @@ if ($status !== 'Active') {
     exit;
 }
 
-// DEBUG: Log the verification process
-error_log("=== LOGIN ATTEMPT ===");
-error_log("User ID: " . $idNumber);
-error_log("Input password: " . $inputPassword);
-error_log("Stored hash: " . $dbPasswordHash);
-error_log("Stored hash length: " . strlen($dbPasswordHash));
-
 // Verify password with comprehensive checking
 $passwordValid = false;
 
 // Method 1: Check if it's a valid password hash
 if (password_verify($inputPassword, $dbPasswordHash)) {
     $passwordValid = true;
-    error_log("Password verification: SUCCESS (proper hash)");
 } 
 // Method 2: Check if password was stored in plain text (fallback)
 elseif ($inputPassword === $dbPasswordHash) {
     $passwordValid = true;
-    error_log("Password verification: SUCCESS (plain text match)");
     
     // Upgrade to proper hashing for future logins
     $newHash = password_hash($inputPassword, PASSWORD_DEFAULT);
@@ -109,16 +105,7 @@ elseif ($inputPassword === $dbPasswordHash) {
         $upStmt->bind_param("ss", $newHash, $idNumber);
         $upStmt->execute();
         $upStmt->close();
-        error_log("Password upgraded to hash");
     }
-} 
-// Method 3: Check if it's the exact hash string (for debugging)
-elseif ($inputPassword === trim($dbPasswordHash)) {
-    $passwordValid = true;
-    error_log("Password verification: SUCCESS (exact hash match)");
-}
-else {
-    error_log("Password verification: FAILED - All methods failed");
 }
 
 if (!$passwordValid) {
@@ -126,7 +113,7 @@ if (!$passwordValid) {
     exit;
 }
 
-// format ng full name (na malalagay sa header)
+// Format full name
 $fullName = trim($fname . ' ' . ($mi ? $mi . ". " : '') . $lname);
 
 // Success response
@@ -143,7 +130,6 @@ echo json_encode([
     "message" => "Login successful"
 ]);
 
-error_log("Login successful for user: " . $idNumber);
 $conn->close();
 exit;
 ?>

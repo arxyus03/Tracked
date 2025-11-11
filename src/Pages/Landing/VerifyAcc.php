@@ -68,7 +68,7 @@ try {
         throw new Exception("Database connection failed");
     }
 
-    $stmt = $conn->prepare("SELECT tracked_ID, tracked_fname, tracked_lname, tracked_email FROM tracked_users WHERE tracked_email = ? AND tracked_ID = ?");
+    $stmt = $conn->prepare("SELECT tracked_ID, tracked_firstname, tracked_lastname, tracked_email FROM tracked_users WHERE tracked_email = ? AND tracked_ID = ?");
     $stmt->bind_param("ss", $email, $idNumber);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -83,7 +83,7 @@ try {
 
     $user = $result->fetch_assoc();
     $userId = $user["tracked_ID"];
-    $userName = $user["tracked_fname"] . ' ' . $user["tracked_lname"];
+    $userName = $user["tracked_firstname"] . ' ' . $user["tracked_lastnameme"];
 
     $token = bin2hex(random_bytes(32));
     $expiry = date("Y-m-d H:i:s", strtotime("+24 hours"));

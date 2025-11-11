@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 09, 2025 at 05:53 PM
+-- Generation Time: Nov 11, 2025 at 08:45 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -162,11 +162,12 @@ CREATE TABLE `tracked_users` (
   `tracked_Role` varchar(20) NOT NULL DEFAULT 'Student',
   `tracked_email` varchar(100) NOT NULL,
   `tracked_password` varchar(255) NOT NULL,
-  `tracked_fname` varchar(50) NOT NULL,
-  `tracked_lname` varchar(50) NOT NULL,
-  `tracked_mi` varchar(5) DEFAULT NULL,
+  `tracked_firstname` varchar(50) NOT NULL,
+  `tracked_lastname` varchar(50) NOT NULL,
+  `tracked_middlename` varchar(50) DEFAULT NULL,
   `tracked_program` varchar(50) NOT NULL,
   `tracked_yearandsec` varchar(50) NOT NULL,
+  `tracked_semester` varchar(50) NOT NULL,
   `tracked_bday` date NOT NULL,
   `tracked_gender` varchar(10) DEFAULT NULL,
   `tracked_phone` varchar(15) DEFAULT NULL,
@@ -179,12 +180,13 @@ CREATE TABLE `tracked_users` (
 -- Dumping data for table `tracked_users`
 --
 
-INSERT INTO `tracked_users` (`tracked_ID`, `tracked_Role`, `tracked_email`, `tracked_password`, `tracked_fname`, `tracked_lname`, `tracked_mi`, `tracked_program`, `tracked_yearandsec`, `tracked_bday`, `tracked_gender`, `tracked_phone`, `tracked_Status`, `created_at`, `updated_at`) VALUES
-('1123', 'Admin', 'admin@cvsu.edu.ph', '$2y$10$1YMz3I5brKKoL.zgSN225ubRTBgeFZ5UT./XRGY3s.SBSQbtBe0la', 'John', 'Admin', 'A', 'BSIT', '', '2000-12-08', 'Male', '09864518549', 'Active', '2025-09-26 05:10:40', '2025-09-26 05:10:40'),
-('1156', 'Professor', 'patrick.star@cvsu.edu.ph', '$2y$10$E5Z9GJpFDcg9jwYDYddsSOD6fBZhsuD0T9t/wAwByAmaWjNA559Py', 'Patrick', 'Star', 'S', 'BSIT', '', '2001-01-01', 'Male', '09123613623', 'Active', '2025-10-07 11:29:33', '2025-11-09 12:53:49'),
-('1223', 'Professor', 'robert.smith@cvsu.edu.ph', '$2y$10$iribSN/82ELXIjWjvxLDnOcb6h.ihKz5qdNPIX1pvvoZN8a4oeFkS', 'Robert', 'Smith', 'S', 'BSIT', 'Not Applicable', '1995-08-10', 'Male', '09123681723', 'Active', '2025-10-20 08:05:47', '2025-11-03 07:22:30'),
-('202210870', 'Student', 'ic.xyrilljohn.abreu@cvsu.edu.ph', '$2y$10$M39WFMg9OGFhwUKfpnAQFuGucrm6/F9TSUSYapKNxs2SamQL/dp7K', 'Xyrill John', 'Abreu', 'F', 'BSIT', '4D', '2003-08-03', 'Female', '09422169425', 'Active', '2025-10-07 17:46:42', '2025-11-09 12:54:33'),
-('202218101', 'Student', 'spongebob.squarepants@cvsu.edu.ph', '$2y$10$JfTw/0p6wqh1onqCRuKpL..BBsVDmqSF1tiBirQWXfl.O5b8qM0/K', 'Spongebob', 'Squarepants', 'S', 'BSIT', '4D', '2000-01-01', 'Male', '09357633953', 'Active', '2025-10-07 12:45:51', '2025-10-07 12:45:51');
+INSERT INTO `tracked_users` (`tracked_ID`, `tracked_Role`, `tracked_email`, `tracked_password`, `tracked_firstname`, `tracked_lastname`, `tracked_middlename`, `tracked_program`, `tracked_yearandsec`, `tracked_semester`, `tracked_bday`, `tracked_gender`, `tracked_phone`, `tracked_Status`, `created_at`, `updated_at`) VALUES
+('12345', 'Admin', 'ic.brielle.balatayo@cvsu.edu.ph', '$2y$10$rsCVmY/Spf4PV5BrY3JNvO.h5ShG5JeTdB7RTmlqZDcRI/Gi4q/uS', 'Brielle Edrian', 'Balatayo', 'Ana', 'Not Applicable', 'Not Applicable', 'Not Applicable', '2002-08-18', 'Male', '9153406553', 'Active', '2025-11-10 18:51:38', '2025-11-11 07:39:16'),
+('202210602', 'Professor', 'ic.dhenizekristafaith.lopez@cvsu.edu.ph', '$2y$10$BW/GUXrWRWIs0Ud6wEhVwOxOp9yQb8XN1NKMyACvcweuYIZ5OJ42i', 'Dhenize Krista Faith', 'Lopez', 'Cabardo', 'Information Technology', 'Not Applicable', 'Not Applicable', '2004-11-24', 'Male', '9988262316', 'Active', '2025-11-10 18:51:38', '2025-11-10 18:51:38'),
+('202210718', 'Student', 'ic.michaelrhoi.gonzales@cvsu.edu.ph', '$2y$10$JLd345Vpp/wOKj80phHg/uXpK3Q1be40i3zHErpbMvNa6sSUpRJ5y', 'Michael Rhoi', 'Gonzales', 'Ladrica', 'BSIT', '4D', 'FIRST', '2004-06-20', 'Female', '9085527790', 'Active', '2025-11-10 18:51:38', '2025-11-10 18:51:38'),
+('202210784', 'Student', 'ic.jeannen.basay@cvsu.edu.ph', '$2y$10$O8ioCpngkH1Z552EpesayO8M2tUog87fE4tue9txvstmTUdILpbBq', 'Jeannen', 'Basay', 'Kummer', 'BSIT', '4D', 'SECOND', '2002-03-24', 'Female', '0', 'Active', '2025-11-10 18:51:38', '2025-11-10 19:00:27'),
+('202210870', 'Student', 'ic.xyrilljohn.abreu@cvsu.edu.ph', '$2y$10$t1rWbbOTKQXPo4YWAXEjz.R2cytZI8ts1.2JJQXC/EFckHMlYlJkS', 'Xyrill John', 'Abreu', 'Fecundo', 'BSIT', '4D', 'FIRST', '2003-08-03', 'Female', '9422169425', 'Active', '2025-11-10 18:51:39', '2025-11-10 18:51:39'),
+('20230003', 'Professor', 'ic.juliaann.fajardo@cvsu.edu.ph', '$2y$10$7ZNQh.QzypKcv4o5I5ebG.S6khqlH/CM2KAZQl71fOtkl6xqXwuqW', 'Julia Ann', 'Fajardo', 'Sisno', 'Information Technology', 'Not Applicable', 'Not Applicable', '2001-06-07', 'Female', '9679532083', 'Active', '2025-11-10 18:51:39', '2025-11-10 18:51:39');
 
 -- --------------------------------------------------------
 
@@ -194,31 +196,30 @@ INSERT INTO `tracked_users` (`tracked_ID`, `tracked_Role`, `tracked_email`, `tra
 
 CREATE TABLE `users` (
   `user_ID` varchar(20) NOT NULL,
-  `user_Name` varchar(100) NOT NULL,
+  `user_firstname` varchar(50) NOT NULL,
+  `user_middlename` varchar(50) NOT NULL,
+  `user_lastname` varchar(50) NOT NULL,
   `user_Email` varchar(100) NOT NULL,
+  `user_phonenumber` bigint(11) NOT NULL,
+  `user_bday` date NOT NULL,
   `user_Gender` varchar(10) DEFAULT NULL,
   `user_Role` varchar(20) NOT NULL DEFAULT 'Student',
-  `YearandSection` varchar(100) NOT NULL
+  `user_yearandsection` varchar(50) NOT NULL,
+  `user_program` varchar(50) NOT NULL,
+  `user_semester` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_ID`, `user_Name`, `user_Email`, `user_Gender`, `user_Role`, `YearandSection`) VALUES
-('1123', 'Admin', 'admin@cvsu.edu.ph', 'Male', 'Admin', 'Not Applicable'),
-('1156', 'Patrick Star', 'patrick.star@cvsu.edu.ph', 'Male', 'Professor', 'Not Applicable'),
-('1223', 'Dr. Robert Smith', 'robert.smith@cvsu.edu.ph', 'Male', 'Professor', 'Not Applicable'),
-('1233', 'Dr. Lisa Garcia', 'lisa.garcia@cvsu.edu.ph', 'Female', 'Professor', 'Not Applicable'),
-('12345', 'System Administrator', 'system.admin@cvsu.edu.ph', 'Male', 'Admin', 'Not Applicable'),
-('202210602', 'Dhenize Krista Faith C. Lopez', 'ic.dhenizekristafaith.lopez@cvsu.edu.ph', 'Male', 'Student', 'BSIT-4D'),
-('202210718', 'Masarap Syang Tunay Gonzales', 'ic.michaelrhoi.gonzales@cvsu.edu.ph', 'Female', 'Student', 'BSIT-4D'),
-('202210784', 'Jeannen K. Basay', 'ic.jeannen.basay@cvsu.edu.ph', 'Female', 'Student', 'BSIT-4D'),
-('202210870', 'Xyrill John F. Abreu', 'ic.xyrilljohn.abreu@cvsu.edu.ph', 'Female', 'Student', 'BSIT-4D'),
-('202218101', 'Spongebob Squarepants', 'spongebob.squarepants@cvsu.edu.ph', 'Male', 'Student', 'BSIT-4D'),
-('20230001', 'Maria Santos', 'maria.santos@cvsu.edu.ph', 'Female', 'Student', 'BSIT-4D'),
-('20230002', 'Juan Dela Cruz', 'juan.delacruz@cvsu.edu.ph', 'Male', 'Student', 'BSIT-4D'),
-('20230003', 'Ana Reyes', 'ana.reyes@cvsu.edu.ph', 'Female', 'Student', 'BSIT-4D');
+INSERT INTO `users` (`user_ID`, `user_firstname`, `user_middlename`, `user_lastname`, `user_Email`, `user_phonenumber`, `user_bday`, `user_Gender`, `user_Role`, `user_yearandsection`, `user_program`, `user_semester`) VALUES
+('12345', 'Brielle Edrian', 'Ana', 'Balatayo', 'ic.brielle.balatayo@cvsu.edu.ph', 9153406553, '2002-08-18', 'Male', 'Admin', 'Not Applicable', 'Not Applicable', 'Not Applicable'),
+('202210602', 'Dhenize Krista Faith', 'Cabardo', 'Lopez', 'ic.dhenizekristafaith.lopez@cvsu.edu.ph', 9988262316, '2004-11-24', 'Male', 'Professor', 'Not Applicable', 'Information Technology', 'Not Applicable'),
+('202210718', 'Michael Rhoi', 'Ladrica', 'Gonzales', 'ic.michaelrhoi.gonzales@cvsu.edu.ph', 9085527790, '2004-06-20', 'Female', 'Student', '4D', 'BSIT', 'FIRST'),
+('202210784', 'Jeannen', 'Kummer', 'Basay', 'ic.jeannen.basay@cvsu.edu.ph', 0, '2002-03-24', 'Female', 'Student', '4D', 'BSIT', 'SECOND'),
+('202210870', 'Xyrill John', 'Fecundo', 'Abreu', 'ic.xyrilljohn.abreu@cvsu.edu.ph', 9422169425, '2003-08-03', 'Female', 'Student', '4D', 'BSIT', 'FIRST'),
+('20230003', 'Julia Ann', 'Sisno', 'Fajardo', 'ic.juliaann.fajardo@cvsu.edu.ph', 9679532083, '2001-06-07', 'Female', 'Professor', 'Not Applicable', 'Information Technology', 'Not Applicable');
 
 --
 -- Indexes for dumped tables
@@ -351,7 +352,7 @@ ALTER TABLE `activities`
 --
 ALTER TABLE `activity_grades`
   ADD CONSTRAINT `activity_grades_ibfk_1` FOREIGN KEY (`activity_ID`) REFERENCES `activities` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `activity_grades_ibfk_2` FOREIGN KEY (`student_ID`) REFERENCES `users` (`user_ID`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_activity_grades_student` FOREIGN KEY (`student_ID`) REFERENCES `tracked_users` (`tracked_ID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `announcements`
@@ -366,26 +367,20 @@ ALTER TABLE `announcements`
 ALTER TABLE `attendance`
   ADD CONSTRAINT `attendance_ibfk_1` FOREIGN KEY (`subject_code`) REFERENCES `classes` (`subject_code`) ON DELETE CASCADE,
   ADD CONSTRAINT `attendance_ibfk_2` FOREIGN KEY (`professor_ID`) REFERENCES `tracked_users` (`tracked_ID`) ON DELETE CASCADE,
-  ADD CONSTRAINT `attendance_ibfk_3` FOREIGN KEY (`student_ID`) REFERENCES `users` (`user_ID`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_attendance_student` FOREIGN KEY (`student_ID`) REFERENCES `tracked_users` (`tracked_ID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `classes`
 --
 ALTER TABLE `classes`
-  ADD CONSTRAINT `classes_ibfk_1` FOREIGN KEY (`professor_ID`) REFERENCES `tracked_users` (`tracked_ID`) ON DELETE CASCADE;
-
---
--- Constraints for table `password_resets`
---
-ALTER TABLE `password_resets`
-  ADD CONSTRAINT `password_resets_ibfk_1` FOREIGN KEY (`tracked_ID`) REFERENCES `tracked_users` (`tracked_ID`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_classes_professor` FOREIGN KEY (`professor_ID`) REFERENCES `tracked_users` (`tracked_ID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `student_classes`
 --
 ALTER TABLE `student_classes`
-  ADD CONSTRAINT `student_classes_ibfk_1` FOREIGN KEY (`student_ID`) REFERENCES `users` (`user_ID`) ON DELETE CASCADE,
-  ADD CONSTRAINT `student_classes_ibfk_2` FOREIGN KEY (`subject_code`) REFERENCES `classes` (`subject_code`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_student_classes_student` FOREIGN KEY (`student_ID`) REFERENCES `tracked_users` (`tracked_ID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_student_classes_subject` FOREIGN KEY (`subject_code`) REFERENCES `classes` (`subject_code`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

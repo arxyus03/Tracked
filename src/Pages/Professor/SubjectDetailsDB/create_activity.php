@@ -71,7 +71,8 @@ try {
 
     // Get all students enrolled in this specific class from tracked_users
     $studentsStmt = $pdo->prepare("
-        SELECT t.tracked_ID, CONCAT(t.tracked_fname, ' ', t.tracked_lname) as user_Name
+        SELECT t.tracked_ID as user_ID, 
+            CONCAT(t.tracked_firstname, ' ', t.tracked_lastname) as user_Name
         FROM tracked_users t
         INNER JOIN student_classes sc ON t.tracked_ID = sc.student_ID
         WHERE sc.subject_code = ? AND sc.archived = 0

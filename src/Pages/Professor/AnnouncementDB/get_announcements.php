@@ -51,7 +51,7 @@ try {
                     a.link,
                     a.deadline,
                     a.created_at,
-                    CONCAT(t.tracked_lname, ', ', t.tracked_fname, ' ', COALESCE(t.tracked_mi, '')) as posted_by,
+                    CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by
                     c.subject,
                     c.section,
                     c.subject_code
@@ -88,15 +88,15 @@ try {
                     a.link,
                     a.deadline,
                     a.created_at,
-                    CONCAT(t.tracked_lname, ', ', t.tracked_fname, ' ', COALESCE(t.tracked_mi, '')) as posted_by,
+                    CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by,
                     c.subject,
                     c.section,
                     c.subject_code
-                  FROM announcements a
-                  JOIN tracked_users t ON a.professor_ID = t.tracked_ID
-                  JOIN classes c ON a.classroom_ID = c.subject_code
-                  WHERE a.classroom_ID = ? AND a.professor_ID = ?
-                  ORDER BY a.created_at DESC";
+                FROM announcements a
+                JOIN tracked_users t ON a.professor_ID = t.tracked_ID
+                JOIN classes c ON a.classroom_ID = c.subject_code
+                WHERE a.professor_ID = ?
+                ORDER BY a.created_at DESC";
 
         $stmt = $conn->prepare($query);
         $stmt->bind_param("ss", $classroom_ID, $professor_ID);
