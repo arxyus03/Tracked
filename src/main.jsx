@@ -1,10 +1,10 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import Linking from "./Pages/Linking.jsx";
 
-import Linking from './Linking.jsx'
-
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <Linking />   
-  </StrictMode>,
-)
+    <Linking />
+  </StrictMode>
+);

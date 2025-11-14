@@ -37,7 +37,7 @@ export default function Login() {
     try {
       console.log("Sending login request...", { idNumber, password });
       
-      const response = await fetch("/src/Pages/Landing/Login.php", {
+      const response = await fetch("http://localhost/TrackEd/src/Pages/Landing/Login.php", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -182,16 +182,6 @@ export default function Login() {
             {isLoading ? "Logging in..." : "Log In"}
           </button>
         </form>
-
-        {/* Register link */}
-        {/* <div className="text-center mt-3 sm:mt-4 md:mt-6 text-xs sm:text-sm">
-          <span>Don't have an account? </span>
-          <Link to={"/Signup"}>
-            <span className="text-[#00A15D] font-semibold cursor-pointer hover:underline">
-              Register Here
-            </span>
-          </Link>
-        </div> */}
       </div>
 
       {/* Footer */}
