@@ -27,6 +27,8 @@ export default function AdminImport() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
+  // Add loading state for activation
+  const [isActivating, setIsActivating] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -130,6 +132,9 @@ export default function AdminImport() {
   };
 
   const confirmActivateAccounts = () => {
+    // Set loading state to true when activation starts
+    setIsActivating(true);
+    
     fetch("http://localhost/TrackEd/src/Pages/Admin/AdminImportDB/activate_accounts.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -161,6 +166,8 @@ export default function AdminImport() {
         setShowResultModal(true);
       })
       .finally(() => {
+        // Reset loading state and close modal when done
+        setIsActivating(false);
         setShowActivateModal(false);
       });
   };
@@ -554,7 +561,7 @@ export default function AdminImport() {
         <div
           className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
           onClick={(e) => {
-            if (e.target === e.currentTarget) {
+            if (e.target === e.currentTarget && !isActivating) {
               setShowActivateModal(false);
             }
           }}
@@ -596,15 +603,27 @@ export default function AdminImport() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setShowActivateModal(false)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isActivating}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmActivateAccounts}
-                  className="flex-1 bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                  className="flex-1 bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  disabled={isActivating}
                 >
-                  Activate Accounts
+                  {isActivating ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Activating...
+                    </>
+                  ) : (
+                    "Activate Accounts"
+                  )}
                 </button>
               </div>
             </div>
@@ -675,7 +694,7 @@ export default function AdminImport() {
                           • Emails sent with temporary passwords
                         </p>
                         <p className="text-sm text-gray-600">
-                          • Users can now login with their temporary credentials
+                          • Users can now login with their temporary passwords
                         </p>
                       </>
                     )}

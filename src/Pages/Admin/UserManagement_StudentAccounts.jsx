@@ -234,7 +234,7 @@ export default function UserManagementStudentAccounts() {
     if (!selectedStudent) return null;
     
     const isDeactivating = selectedStudent.tracked_Status === "Active";
-    const action = isDeactivating ? "Deactivated" : "Restore";
+    const action = isDeactivating ? "Deactivate" : "Activate";
     
     return {
       title: `${action} Account?`,
@@ -245,6 +245,27 @@ export default function UserManagementStudentAccounts() {
   };
 
   const modalContent = getModalContent();
+
+  // Toggle button component
+  const StatusToggleButton = ({ status, onClick }) => {
+    const isActive = status === "Active";
+    
+    return (
+      <button
+        onClick={onClick}
+        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none ${
+          isActive ? 'bg-[#00A15D]' : 'bg-[#FF6666]'
+        }`}
+        title={isActive ? "Deactivate" : "Activate"}
+      >
+        <span
+          className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${
+            isActive ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    );
+  };
 
   return (
     <div>
@@ -406,12 +427,9 @@ export default function UserManagementStudentAccounts() {
                       </td>
                       <td className="py-3 px-2 sm:px-3 rounded-r-lg">
                         <div className="flex gap-2">
-                          <img
+                          <StatusToggleButton 
+                            status={stud.tracked_Status}
                             onClick={() => handleStatusChange(stud)}
-                            src={stud.tracked_Status === "Active" ? ArchiveRow : Restore}
-                            alt={stud.tracked_Status === "Active" ? "Deactivated" : "Restore"}
-                            className="h-5 w-5 sm:h-6 sm:w-6 cursor-pointer hover:opacity-70 transition-opacity duration-200"
-                            title={stud.tracked_Status === "Active" ? "Deactivated" : "Restore"}
                           />
                           {/* UPDATED: Use query parameter instead of URL parameter */}
                           <Link 
@@ -446,12 +464,9 @@ export default function UserManagementStudentAccounts() {
                       <p className="font-semibold text-sm">{stud.tracked_ID}</p>
                     </div>
                     <div className="flex gap-2">
-                      <img
+                      <StatusToggleButton 
+                        status={stud.tracked_Status}
                         onClick={() => handleStatusChange(stud)}
-                        src={stud.tracked_Status === "Active" ? ArchiveRow : Restore}
-                        alt={stud.tracked_Status === "Active" ? "Deactivated" : "Restore"}
-                        className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity duration-200"
-                        title={stud.tracked_Status === "Active" ? "Deactivated" : "Restore"}
                       />
                       {/* UPDATED: Use query parameter instead of URL parameter */}
                       <Link 
