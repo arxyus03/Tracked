@@ -51,7 +51,7 @@ export default function DashboardStudent() {
             setUserId(userIdFromStorage);
             
             // Fetch complete user data from database
-            const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`);
+            const response = await fetch(`https://tracked.6minds.site/Student/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();
@@ -103,7 +103,7 @@ export default function DashboardStudent() {
   const fetchDashboardData = async (studentId) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/DashboardStudentDB/get_dashboard_data.php?student_id=${studentId}`);
+      const response = await fetch(`https://tracked.6minds.site/Student/DashboardStudentDB/get_dashboard_data.php?student_id=${studentId}`);
       
       if (response.ok) {
         const data = await response.json();

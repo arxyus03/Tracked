@@ -58,7 +58,7 @@ export default function ArchiveClass() {
         return;
       }
       
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/get_archived_classes.php?professor_ID=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/ArchiveClassDB/get_archived_classes.php?professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -96,7 +96,7 @@ export default function ArchiveClass() {
     try {
       const professorId = getProfessorId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/unarchive_class.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveClassDB/unarchive_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export default function ArchiveClass() {
     try {
       const professorId = getProfessorId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/delete_class.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveClassDB/delete_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

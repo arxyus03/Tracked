@@ -25,7 +25,7 @@ export default function ProfileProf() {
           
           if (userIdFromStorage) {
             // Fetch complete user data from database
-            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
+            const response = await fetch(`https://tracked.6minds.site/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();
@@ -148,7 +148,7 @@ export default function ProfileProf() {
                   {/* Temporary Password */}
                   <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
                     <span className="font-medium text-gray-600">Temporary Password :</span>
-                    <span></span> {/* Left empty as requested */}
+                    <span className="font-semibold">{userData?.temporary_password || "N/A"}</span>
                   </div>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function ProfileProf() {
                   {/* Department - Left empty as requested */}
                   <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
                     <span className="font-medium text-gray-600">Department :</span>
-                    <span></span> {/* Left empty as requested */}
+                    <span>{userData?.tracked_program || "N/A"}</span>
                   </div>
                   
                   {/* Subject Handled */}
@@ -205,25 +205,25 @@ export default function ProfileProf() {
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              {/* <div className="pt-4 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4"> */}
                   {/* Reset Password */}
-                  <button 
+                  {/* <button 
                     onClick={() => setPopupType("reset")} 
                     className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center border-2 border-transparent hover:bg-green-800 transition-colors duration-200 text-xs sm:text-sm lg:text-[1.125rem] w-full sm:w-auto transition-colors duration-200 cursor-pointer"
                   >
                     Reset Password
-                  </button>
+                  </button> */}
 
                   {/* Disable Account */}
-                  <button 
+                  {/* <button 
                     onClick={() => setPopupType("disable")}  
                     className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center border-2 border-transparent hover:bg-green-800 transition-colors duration-200 text-xs sm:text-sm lg:text-[1.125rem] w-full sm:w-auto transition-colors duration-200 cursor-pointer"
                   >
                     Disable Account
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Popup */}
               {popupType === "reset" && (

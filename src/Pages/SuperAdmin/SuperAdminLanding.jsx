@@ -31,7 +31,7 @@ export default function SuperAdminLanding() {
   const [loading, setLoading] = useState(true);
 
   // Base URL for API calls
-  const baseUrl = "http://localhost/TrackEd/src/Pages/SuperAdmin/SuperAdminDB";
+  const baseUrl = "https://tracked.6minds.site/SuperAdmin/SuperAdminDB";
 
   // Fetch all data on component mount
   useEffect(() => {

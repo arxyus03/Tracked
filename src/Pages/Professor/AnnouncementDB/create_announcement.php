@@ -12,9 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Database connection
 $host = "localhost";
-$username = "root";
-$password = "";
-$database = "tracked";
+$username = "u713320770_trackedDB";
+$password = "Tracked@2025";
+$database = "u713320770_tracked";
 
 $conn = new mysqli($host, $username, $password, $database);
 

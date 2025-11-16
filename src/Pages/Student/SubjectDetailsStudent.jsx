@@ -54,7 +54,7 @@ export default function SubjectDetailsStudent() {
 
   const fetchClassDetails = async () => {
     try {
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectDetailsStudentDB/get_class_details_student.php?subject_code=${subjectCode}`);
+      const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_class_details_student.php?subject_code=${subjectCode}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -75,7 +75,7 @@ export default function SubjectDetailsStudent() {
     if (!studentId) return;
     
     try {
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectDetailsStudentDB/get_activities_student.php?subject_code=${subjectCode}&student_id=${studentId}`);
+      const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?subject_code=${subjectCode}&student_id=${studentId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -102,7 +102,7 @@ export default function SubjectDetailsStudent() {
     }
 
     try {
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Student/SubjectDetailsStudentDB/mark_activity_done.php', {
+      const response = await fetch('https://tracked.6minds.site/Student/SubjectDetailsStudentDB/mark_activity_done.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ export default function SubjectDetailsStudent() {
         hour: '2-digit',
         minute: '2-digit'
       });
-    } catch (error) {
+    } catch {
       return dateString;
     }
   };

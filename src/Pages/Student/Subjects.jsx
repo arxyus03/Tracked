@@ -71,7 +71,7 @@ export default function Subjects() {
       const studentId = getStudentId();
       
       if (studentId) {
-        const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
+        const response = await fetch(`https://tracked.6minds.site/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -110,7 +110,7 @@ export default function Subjects() {
     try {
       const studentId = getStudentId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Student/SubjectsDB/join_class.php', {
+      const response = await fetch('https://tracked.6minds.site/Student/SubjectsDB/join_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

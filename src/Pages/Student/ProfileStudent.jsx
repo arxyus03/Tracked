@@ -25,7 +25,7 @@ export default function ProfileStudent() {
           
           if (userIdFromStorage) {
             // Fetch complete user data from database
-            const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`);
+            const response = await fetch(`https://tracked.6minds.site/Student/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();
@@ -89,7 +89,7 @@ export default function ProfileStudent() {
         <Header 
           setIsOpen={setIsOpen} 
           isOpen={isOpen} 
-          userName={userData ? `${userData.tracked_fname} ${userData.tracked_lname}` : "Loading..."} 
+          userName={userData ? `${userData.tracked_firstname} ${userData.tracked_lastname}` : "Loading..."} 
         />
 
         {/* Content of STUDENT ACCOUNT DETAILS */}
@@ -190,16 +190,10 @@ export default function ProfileStudent() {
                     <span>{getSection()}</span>
                   </div>
 
-                  {/* Department */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">Department :</span>
-                    <span></span> {/* Left empty as requested */}
-                  </div>
-
-                  {/* Temporary Password */}
+                  {/* Temporary Password - UPDATED */}
                   <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
                     <span className="font-medium text-gray-600">Temporary Password :</span>
-                    <span></span> {/* Left empty as requested */}
+                    <span className="font-semibold">{userData?.temporary_password || "N/A"}</span>
                   </div>
                 </div>
               </div>
@@ -273,8 +267,8 @@ export default function ProfileStudent() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-4 border-t border-gray-200">
+              {/* Action Buttons (commented out as in original) */}
+              {/* <div className="pt-4 border-t border-gray-200">
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <button 
                     onClick={() => setPopupType("reset")} 
@@ -290,7 +284,7 @@ export default function ProfileStudent() {
                     Disable Account
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Popup Components */}
               {popupType === "reset" && (

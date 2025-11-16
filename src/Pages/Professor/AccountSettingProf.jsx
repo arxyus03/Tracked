@@ -43,7 +43,7 @@ export default function AccountSettingProf() {
         const userIdFromStorage = user.id;
         
         if (userIdFromStorage) {
-          const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
+          const response = await fetch(`https://tracked.6minds.site/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
           
           if (response.ok) {
             const data = await response.json();
@@ -139,7 +139,7 @@ export default function AccountSettingProf() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/AccountSettingProfDB/updateAccountInfo.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/AccountSettingProfDB/updateAccountInfo.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +197,7 @@ export default function AccountSettingProf() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/AccountSettingProfDB/changePassword.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/AccountSettingProfDB/changePassword.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

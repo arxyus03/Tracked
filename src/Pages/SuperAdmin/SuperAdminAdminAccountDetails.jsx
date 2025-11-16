@@ -16,7 +16,7 @@ export default function SuperAdminAdminAccountDetails() {
   const [searchParams] = useSearchParams();
   const adminId = searchParams.get('id');
 
-  const baseUrl = "http://localhost/TrackEd/src/Pages/SuperAdmin/SuperAdminDB";
+  const baseUrl = "https://tracked.6minds.site/SuperAdmin/SuperAdminDB";
 
   useEffect(() => {
     if (adminId) {

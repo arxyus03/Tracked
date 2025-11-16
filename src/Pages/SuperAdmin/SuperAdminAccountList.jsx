@@ -15,7 +15,7 @@ export default function SuperAdminAccountList() {
   const [studentCount, setStudentCount] = useState(0);
 
   useEffect(() => {
-    fetch("http://localhost/TrackEd/src/Pages/Admin/UserManagementDB/get_user_counts.php")
+    fetch("https://tracked.6minds.site/Admin/UserManagementDB/get_user_counts.php")
       .then((res) => res.json())
       .then((data) => {
         setProfessorCount(data.Professors || 0);

@@ -53,7 +53,7 @@ export default function ArchivedClasses() {
       if (studentId) {
         // Since we don't have a separate archive table, we'll get classes where student is enrolled
         // In a real scenario, you might want to add an 'archived' column to student_classes
-        const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/ArchiveClassStudentDB/get_archived_student_classes.php?student_id=${studentId}`);
+        const response = await fetch(`https://tracked.6minds.site/Student/ArchiveClassStudentDB/get_archived_student_classes.php?student_id=${studentId}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -89,7 +89,7 @@ export default function ArchivedClasses() {
     try {
       const studentId = getStudentId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Student/ArchiveClassStudentDB/delete_student_class.php', {
+      const response = await fetch('https://tracked.6minds.site/Student/ArchiveClassStudentDB/delete_student_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,7 +136,7 @@ export default function ArchivedClasses() {
     try {
       const studentId = getStudentId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Student/ArchiveClassStudentDB/unarchive_student_class.php', {
+      const response = await fetch('https://tracked.6minds.site/Student/ArchiveClassStudentDB/unarchive_student_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

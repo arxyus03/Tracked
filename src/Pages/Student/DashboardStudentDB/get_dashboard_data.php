@@ -6,9 +6,9 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 // Database connection
 $host = 'localhost';
-$dbname = 'tracked';
-$username = 'root';
-$password = '';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);

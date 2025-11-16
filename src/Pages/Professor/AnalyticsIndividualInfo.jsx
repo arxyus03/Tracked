@@ -75,7 +75,7 @@ export default function AnalyticsIndividualInfo() {
         }
 
         // Use your existing get_activities.php endpoint
-        const activitiesUrl = `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`;
+        const activitiesUrl = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`;
         
         console.log('📡 Fetching activities from:', activitiesUrl);
         
@@ -626,7 +626,7 @@ export default function AnalyticsIndividualInfo() {
             <button 
               onClick={downloadReport}
               disabled={downloading}
-              className="font-bold px-4 sm:px-5 py-2 bg-white rounded-md shadow-md hover:border-[#00874E] hover:border-2 text-xs sm:text-sm lg:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className=" cursor-pointer font-bold px-4 sm:px-5 py-2 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] hover:scale-105 transition-all duration-200 text-xs sm:text-sm lg:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {downloading ? (
                 <>

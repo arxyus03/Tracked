@@ -14,7 +14,7 @@ import Check from '../../assets/CheckTable.svg';
 export default function AnalyticsStudent() {
   const [isOpen, setIsOpen] = useState(false);
   const [openSubject, setOpenSubject] = useState(false);
-  const [openSection, setOpenSection] = useState(false);
+  const [setOpenSection] = useState(false);
 
   const [selectedFilter, setSelectedFilter] = useState("");
   const [subjects, setSubjects] = useState([]);
@@ -91,7 +91,7 @@ export default function AnalyticsStudent() {
     const fetchStudentClasses = async () => {
       try {
         console.log('Fetching classes for student:', studentId);
-        const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
+        const response = await fetch(`https://tracked.6minds.site/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -126,7 +126,7 @@ export default function AnalyticsStudent() {
     const fetchAttendanceData = async () => {
       try {
         console.log('Fetching attendance for student:', studentId);
-        const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/AttendanceStudentDB/get_attendance_student.php?student_id=${studentId}`);
+        const response = await fetch(`https://tracked.6minds.site/Student/AttendanceStudentDB/get_attendance_student.php?student_id=${studentId}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -160,7 +160,7 @@ export default function AnalyticsStudent() {
       setLoading(true);
       try {
         console.log('Fetching activities for subject:', selectedSubject, 'student:', studentId);
-        const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectDetailsStudentDB/get_activities_student.php?student_id=${studentId}&subject_code=${selectedSubject}`);
+        const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?student_id=${studentId}&subject_code=${selectedSubject}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -502,7 +502,7 @@ export default function AnalyticsStudent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {subjectWarnings.map((subject, index) => (
+                      {subjectWarnings.map((subject) => (
                         <tr key={subject.subject_code} className={`border-b ${subject.isAtRisk ? 'bg-red-50' : subject.hasWarning ? 'bg-yellow-50' : 'hover:bg-gray-50'}`}>
                           <td className="px-2 sm:px-4 py-2 sm:py-3">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">

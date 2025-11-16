@@ -39,7 +39,7 @@ export default function DashboardProf() {
             setUserId(userIdFromStorage);
             
             // Fetch complete user data from database
-            const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
+            const response = await fetch(`https://tracked.6minds.site/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();
@@ -81,7 +81,7 @@ export default function DashboardProf() {
   // Fetch activities count
   const fetchActivitiesCount = async (professorId) => {
     try {
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/DashboardProfDB/get_activities_count.php?professor_id=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/DashboardProfDB/get_activities_count.php?professor_id=${professorId}`);
       
       if (response.ok) {
         const data = await response.json();

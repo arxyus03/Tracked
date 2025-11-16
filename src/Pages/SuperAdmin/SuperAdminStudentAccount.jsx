@@ -30,7 +30,7 @@ export default function UserManagementStudentAccounts() {
 
   // Fetch students from backend
   useEffect(() => {
-    fetch("http://localhost/TrackEd/src/Pages/Admin/StudentAccountsDB/get_students.php")
+    fetch("https://tracked.6minds.site/Admin/StudentAccountsDB/get_students.php")
       .then((res) => res.json())
       .then((data) => setStudents(data))
       .catch((err) => console.error(err));

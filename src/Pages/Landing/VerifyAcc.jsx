@@ -77,7 +77,7 @@ export default function VerifyAcc() {
       try {
         // Try to parse as JSON
         data = JSON.parse(responseText);
-      } catch (parseError) {
+      } catch {
         // If parsing fails, it's likely an HTML error page
         console.error("Failed to parse JSON:", responseText);
         throw new Error("Server returned an invalid response. Please try again.");

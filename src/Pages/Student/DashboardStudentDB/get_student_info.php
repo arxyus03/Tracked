@@ -6,9 +6,9 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 // Database connection
 $host = 'localhost';
-$dbname = 'tracked';
-$username = 'root';
-$password = '';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
@@ -25,7 +25,7 @@ try {
     
     $userId = $_GET['id'];
     
-    // Fetch user data from tracked_users table
+    // Fetch user data from tracked_users table - INCLUDING temporary_password
     $stmt = $conn->prepare("
         SELECT 
             tracked_ID,
@@ -41,6 +41,7 @@ try {
             tracked_gender,
             tracked_phone,
             tracked_Status,
+            temporary_password,  -- ADD THIS LINE
             created_at,
             updated_at
         FROM tracked_users 

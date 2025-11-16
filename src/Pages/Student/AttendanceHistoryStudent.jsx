@@ -43,7 +43,7 @@ export default function AttendanceHistoryStudent() {
 
       try {
         setLoading(true);
-        const attendanceUrl = `http://localhost/TrackEd/src/Pages/Student/StudentDB/get_attendance_history_student.php?student_id=${studentId}&subject_code=${subject}`;
+        const attendanceUrl = `https://tracked.6minds.site/Student/StudentDB/get_attendance_history_student.php?student_id=${studentId}&subject_code=${subject}`;
         const response = await fetch(attendanceUrl);
         
         if (response.ok) {

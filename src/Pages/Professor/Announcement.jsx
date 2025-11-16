@@ -56,6 +56,12 @@ export default function Announcement() {
     return null;
   };
 
+  // Get current datetime in YYYY-MM-DDTHH:mm format for min attribute
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    return now.toISOString().slice(0, 16);
+  };
+
   // Fetch professor's classes for dropdowns
   const fetchClasses = async () => {
     try {
@@ -68,7 +74,7 @@ export default function Announcement() {
         return;
       }
       
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -100,7 +106,7 @@ export default function Announcement() {
       }
       
       // Fetch all announcements for the professor
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/AnnouncementDB/get_announcements.php?professor_ID=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/AnnouncementDB/get_announcements.php?professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -220,6 +226,16 @@ export default function Announcement() {
       return;
     }
 
+    // Validate deadline (should not be in the past)
+    if (deadline) {
+      const selectedDate = new Date(deadline);
+      const now = new Date();
+      if (selectedDate < now) {
+        alert("Deadline cannot be in the past. Please select a current or future date.");
+        return;
+      }
+    }
+
     const professorId = getProfessorId();
     if (!professorId) {
       alert("Error: Professor ID not found");
@@ -249,7 +265,7 @@ export default function Announcement() {
 
         console.log('Sending UPDATE data:', updateData);
 
-        const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/AnnouncementDB/update_announcement.php', {
+        const response = await fetch('https://tracked.6minds.site/Professor/AnnouncementDB/update_announcement.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -283,7 +299,7 @@ export default function Announcement() {
 
         console.log('Sending CREATE data:', postData);
 
-        const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/AnnouncementDB/create_announcement.php', {
+        const response = await fetch('https://tracked.6minds.site/Professor/AnnouncementDB/create_announcement.php', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -327,7 +343,7 @@ export default function Announcement() {
     try {
       const professorId = getProfessorId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/AnnouncementDB/delete_announcement.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/AnnouncementDB/delete_announcement.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -760,6 +776,7 @@ export default function Announcement() {
                   type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
+                  min={getCurrentDateTime()} // Prevent past dates
                   className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
                 />
               </div>

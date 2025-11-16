@@ -68,6 +68,12 @@ export default function SubjectDetails() {
     return null;
   };
 
+  // Get current datetime in YYYY-MM-DDTHH:mm format for min attribute
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    return now.toISOString().slice(0, 16);
+  };
+
   // Fetch class details
   useEffect(() => {
     if (subjectCode) {
@@ -85,7 +91,7 @@ export default function SubjectDetails() {
   const fetchClassDetails = async () => {
     try {
       const professorId = getProfessorId();
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -100,7 +106,7 @@ export default function SubjectDetails() {
 
   const fetchActivities = async () => {
     try {
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -124,6 +130,22 @@ const handleCreateActivity = async () => {
     return;
   }
 
+  // Validate points (should not be negative)
+  if (points < 0) {
+    alert("Points cannot be negative. Please enter a value of 0 or higher.");
+    return;
+  }
+
+  // Validate deadline (should not be in the past)
+  if (deadline) {
+    const selectedDate = new Date(deadline);
+    const now = new Date();
+    if (selectedDate < now) {
+      alert("Deadline cannot be in the past. Please select a current or future date.");
+      return;
+    }
+  }
+
   try {
     const professorId = getProfessorId();
     const activityData = {
@@ -140,7 +162,7 @@ const handleCreateActivity = async () => {
 
     console.log('Creating activity with data:', activityData);
 
-    const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/create_activity.php', {
+    const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/create_activity.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -232,6 +254,21 @@ const handleCreateActivity = async () => {
   };
 
 const handleSaveSchoolWork = async () => {
+  // Validate points (should not be negative)
+  if (editPoints < 0) {
+    alert("Points cannot be negative. Please enter a value of 0 or higher.");
+    return;
+  }
+
+  // Validate deadline (should not be in the past)
+  if (editDeadline) {
+    const selectedDate = new Date(editDeadline);
+    const now = new Date();
+    if (selectedDate < now) {
+      alert("Deadline cannot be in the past. Please select a current or future date.");
+      return;
+    }
+  }
 
   try {
     const updatedActivityData = {
@@ -246,7 +283,7 @@ const handleSaveSchoolWork = async () => {
 
     console.log('Updating activity with data:', updatedActivityData);
 
-    const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/update_activity.php', {
+    const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/update_activity.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -291,7 +328,7 @@ const handleSaveSchoolWork = async () => {
     try {
       const professorId = getProfessorId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveActivitiesDB/archive_activity.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveActivitiesDB/archive_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -328,7 +365,7 @@ const handleSaveSchoolWork = async () => {
     try {
       console.log('Saving grades for activity:', activityId, 'Students:', updatedStudents);
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/update_activity_grades.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/update_activity_grades.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -390,7 +427,7 @@ const handleSaveSchoolWork = async () => {
         points: activity.points // Send the current activity points
       };
 
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/mark_all_submitted.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/mark_all_submitted.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -744,7 +781,7 @@ const handleSaveSchoolWork = async () => {
                   value={points}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Only allow numbers up to 3 digits (0-999)
+                    // Only allow numbers up to 3 digits (0-999) and prevent negative values
                     if (value === '' || (value >= 0 && value <= 999 && value.length <= 3)) {
                       setPoints(value);
                     }
@@ -763,6 +800,7 @@ const handleSaveSchoolWork = async () => {
                   placeholder="Select deadline"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
+                  min={getCurrentDateTime()} // Prevent past dates
                   className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none text-sm focus:border-[#00874E] transition-colors"
                 />
               </div>
@@ -921,7 +959,7 @@ const handleSaveSchoolWork = async () => {
                   value={editPoints}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Only allow numbers up to 3 digits (0-999)
+                    // Only allow numbers up to 3 digits (0-999) and prevent negative values
                     if (value === '' || (value >= 0 && value <= 999 && value.length <= 3)) {
                       setEditPoints(value);
                     }
@@ -940,6 +978,7 @@ const handleSaveSchoolWork = async () => {
                 placeholder="Select deadline"
                 value={editDeadline}
                 onChange={(e) => setEditDeadline(e.target.value)}
+                min={getCurrentDateTime()} // Prevent past dates
                 className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none text-sm focus:border-[#00874E] transition-colors"
               />
             </div>

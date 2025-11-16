@@ -16,7 +16,7 @@ export default function SuperAdminStudentAccountDetails() {
   const [searchParams] = useSearchParams();
   const studentId = searchParams.get('id');
 
-  const baseUrl = "http://localhost/TrackEd/src/Pages/SuperAdmin/SuperAdminDB";
+  const baseUrl = "https://tracked.6minds.site/SuperAdmin/SuperAdminDB";
 
   useEffect(() => {
     if (studentId) {

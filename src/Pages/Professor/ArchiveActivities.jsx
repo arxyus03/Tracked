@@ -49,7 +49,7 @@ export default function ArchiveActivities() {
   const fetchClassDetails = async () => {
     try {
       const professorId = getProfessorId();
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -73,7 +73,7 @@ export default function ArchiveActivities() {
         return;
       }
       
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/ArchiveActivitiesDB/get_archived_activities.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/ArchiveActivitiesDB/get_archived_activities.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -107,7 +107,7 @@ export default function ArchiveActivities() {
     try {
       const professorId = getProfessorId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveActivitiesDB/unarchive_activity.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveActivitiesDB/unarchive_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ export default function ArchiveActivities() {
     try {
       const professorId = getProfessorId();
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveActivitiesDB/delete_activity.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveActivitiesDB/delete_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

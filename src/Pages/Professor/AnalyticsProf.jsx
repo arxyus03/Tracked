@@ -35,7 +35,7 @@ export default function AnalyticsProf() {
       try {
         const user = JSON.parse(userData);
         setProfessorId(user.id || '');
-      } catch (error) {
+      } catch {
         setProfessorId('');
       }
     } else {
@@ -50,7 +50,7 @@ export default function AnalyticsProf() {
     const fetchClasses = async () => {
       setClassesLoading(true);
       try {
-        const apiUrl = `http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`;
+        const apiUrl = `https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`;
         const response = await fetch(apiUrl);
         const data = await response.json();
         
@@ -70,7 +70,7 @@ export default function AnalyticsProf() {
           setSelectedSubject("");
           setSelectedSection("");
         }
-      } catch (error) {
+      } catch {
         setClasses([]);
         setSelectedSubject("");
         setSelectedSection("");
@@ -109,7 +109,7 @@ export default function AnalyticsProf() {
     setLoading(true);
     try {
       // Fetch attendance data
-      const attendanceUrl = `http://localhost/TrackEd/src/Pages/Professor/AttendanceDB/get_attendance_history.php?subject_code=${selectedSubject}&professor_ID=${professorId}`;
+      const attendanceUrl = `https://tracked.6minds.site/Professor/AttendanceDB/get_attendance_history.php?subject_code=${selectedSubject}&professor_ID=${professorId}`;
       const attendanceResponse = await fetch(attendanceUrl);
       
       if (!attendanceResponse.ok) {
@@ -119,7 +119,7 @@ export default function AnalyticsProf() {
       const attendanceData = await attendanceResponse.json();
 
       // Fetch activities data
-      const activitiesUrl = `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${selectedSubject}`;
+      const activitiesUrl = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${selectedSubject}`;
       const activitiesResponse = await fetch(activitiesUrl);
       
       if (!activitiesResponse.ok) {
@@ -131,7 +131,7 @@ export default function AnalyticsProf() {
       // Process the data
       processAnalyticsData(attendanceData, activitiesData);
       
-    } catch (error) {
+    } catch {
       // Set empty analytics data structure
       setAnalyticsData({
         attendanceSummary: { present: 0, absent: 0, late: 0, total: 0, attendanceRate: 0 },
@@ -478,7 +478,7 @@ export default function AnalyticsProf() {
   };
 
   // Custom tooltip for bar chart to show student name when hovering
-  const CustomBarTooltip = ({ active, payload, label }) => {
+  const CustomBarTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

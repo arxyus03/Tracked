@@ -25,7 +25,7 @@ export default function SuperAdminProfAccount() {
 
   // Fetch professors from backend
   useEffect(() => {
-    fetch("http://localhost/TrackEd/src/Pages/Admin/ProfessorAccountsDB/get_professors.php")
+    fetch("https://tracked.6minds.site/Admin/ProfessorAccountsDB/get_professors.php")
       .then((res) => res.json())
       .then((data) => setProfessors(data))
       .catch((err) => console.error(err));
