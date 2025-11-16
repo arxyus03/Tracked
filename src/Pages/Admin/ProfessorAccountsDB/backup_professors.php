@@ -46,7 +46,7 @@ try {
     }
 
     // Save to backup folder
-    $backupDir = __DIR__ . '/../../Database/backup/';
+    $backupDir = __DIR__ . '/../../Backup/professors/';
     if (!is_dir($backupDir)) {
         mkdir($backupDir, 0777, true);
     }

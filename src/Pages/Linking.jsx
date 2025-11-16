@@ -55,10 +55,10 @@ import SuperAdminStudentAccount from './SuperAdmin/SuperAdminStudentAccount.jsx'
 
 function Linking() {
   return (
-    <Router>
+    <Router basename="/">
       <Routes>
         {/* Starting Flow */} 
-        <Route path="/" element={<Login />} />  
+        <Route path="/" />  
         
         {/* Navigations for Landing */}
         <Route path="/Login" element={<Login />} />

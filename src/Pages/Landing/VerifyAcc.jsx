@@ -59,7 +59,7 @@ export default function VerifyAcc() {
     }
 
     try {
-      const response = await fetch("https://tracked.6minds.site/VerifyAcc.php", {
+      const response = await fetch("https://tracked.6minds.site/Landing/VerifyAcc.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

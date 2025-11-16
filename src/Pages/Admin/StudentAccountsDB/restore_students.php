@@ -14,7 +14,7 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Get the latest backup file for students
-    $backupDir = __DIR__ . '/../../Database/backup/';
+    $backupDir = __DIR__ . '/../../Backup/students/';
     $files = glob($backupDir . 'students_backup_*.sql');
     
     if (empty($files)) {

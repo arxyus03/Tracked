@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Database connection settings - UPDATED FOR HOST
-$dbHost = "mysql.tracked.6minds.site";
+// Database connection settings
+$dbHost = "localhost";
 $dbUser = "u713320770_trackedDB";
 $dbPass = "Tracked@2025";
 $dbName = "u713320770_tracked";
@@ -49,7 +49,7 @@ if (empty($raw)) {
 
 $input = json_decode($raw, true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-    echo json_encode(["success" => false, "message" => "Invalid JSON data"]);
+    echo json_encode(["success" => false, "message" => "Invalid JSON data: " . json_last_error_msg()]);
     exit;
 }
 
@@ -81,13 +81,13 @@ try {
         $stmt->bind_param("s", $token);
         
         if (!$stmt->execute()) {
-            throw new Exception('Database query failed');
+            throw new Exception('Database query failed: ' . $stmt->error);
         }
         
         $result = $stmt->get_result();
         
         if ($result->num_rows === 0) {
-            echo json_encode(["success" => false, "message" => "Invalid reset link"]);
+            echo json_encode(["success" => false, "message" => "Invalid or expired reset link"]);
             $stmt->close();
             exit;
         }
@@ -140,13 +140,13 @@ try {
         $stmt->bind_param("s", $token);
         
         if (!$stmt->execute()) {
-            throw new Exception('Database query failed');
+            throw new Exception('Database query failed: ' . $stmt->error);
         }
         
         $result = $stmt->get_result();
         
         if ($result->num_rows === 0) {
-            echo json_encode(["success" => false, "message" => "Invalid reset link"]);
+            echo json_encode(["success" => false, "message" => "Invalid or expired reset link"]);
             $stmt->close();
             exit;
         }
@@ -166,7 +166,7 @@ try {
         $expiry = new DateTime($reset['expiry']);
         
         if ($now > $expiry) {
-            echo json_encode(["success" => false, "message" => "This reset link has expired"]);
+            echo json_encode(["success" => false, "message" => "This reset link has expired. Please request a new one."]);
             $stmt->close();
             exit;
         }
@@ -183,18 +183,24 @@ try {
         $updateStmt->bind_param("ss", $hashedPassword, $trackedId);
         
         if (!$updateStmt->execute()) {
-            throw new Exception('Failed to update password');
+            throw new Exception('Failed to update password: ' . $updateStmt->error);
         }
         
         // Mark the token as used
-        $markStmt = $conn->prepare("UPDATE password_resets SET used = TRUE WHERE token = ?");
-        if ($markStmt) {
-            $markStmt->bind_param("s", $token);
-            $markStmt->execute();
-            $markStmt->close();
+        $markStmt = $conn->prepare("UPDATE password_resets SET used = 1 WHERE token = ?");
+        if (!$markStmt) {
+            throw new Exception('Database error: ' . $conn->error);
+        }
+        
+        $markStmt->bind_param("s", $token);
+        
+        if (!$markStmt->execute()) {
+            throw new Exception('Failed to mark token as used: ' . $markStmt->error);
         }
         
         echo json_encode(["success" => true, "message" => "Password has been reset successfully"]);
+        
+        $markStmt->close();
         $updateStmt->close();
         $stmt->close();
         
@@ -203,11 +209,11 @@ try {
     }
     
 } catch (Exception $e) {
+    error_log("ForgotPass Error: " . $e->getMessage());
     echo json_encode([
         "success" => false,
         "message" => "An error occurred. Please try again later."
     ]);
-    error_log($e->getMessage());
 }
 
 $conn->close();

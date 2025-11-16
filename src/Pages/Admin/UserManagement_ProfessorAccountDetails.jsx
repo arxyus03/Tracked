@@ -42,7 +42,7 @@ export default function UserManagement_ProfessorAccountDetails() {
   const fetchProfessorData = (professorId) => {
     setIsLoading(true);
     fetch(
-      `https://tracked.6minds.site/src/Pages/Admin/ProfessorAccountsDB/get_professors.php?id=${professorId}`
+      `https://tracked.6minds.site/Admin/ProfessorAccountsDB/get_professors.php?id=${professorId}`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -71,7 +71,7 @@ export default function UserManagement_ProfessorAccountDetails() {
   const fetchProfessorClasses = (professorId) => {
     setClassesLoading(true);
     fetch(
-      `https://tracked.6minds.site/src/Pages/Admin/ProfessorAccountsDB/get_professor_classes.php?professor_id=${professorId}`
+      `https://tracked.6minds.site/Admin/ProfessorAccountsDB/get_professor_classes.php?professor_id=${professorId}`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -140,7 +140,7 @@ export default function UserManagement_ProfessorAccountDetails() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "https://tracked.6minds.site/src/Pages/Admin/ProfessorAccountsDB/update_professor.php",
+        "https://tracked.6minds.site/Admin/ProfessorAccountsDB/update_professor.php",
         {
           method: "POST",
           headers: {

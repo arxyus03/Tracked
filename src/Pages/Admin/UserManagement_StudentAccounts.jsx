@@ -39,7 +39,7 @@ export default function UserManagementStudentAccounts() {
   }, []);
 
   const fetchStudents = () => {
-    fetch("https://tracked.6minds.site/src/Pages/Admin/StudentAccountsDB/get_students.php")
+    fetch("https://tracked.6minds.site/Admin/StudentAccountsDB/get_students.php")
       .then((res) => res.json())
       .then((data) => {
         // Handle different response formats
@@ -64,7 +64,7 @@ export default function UserManagementStudentAccounts() {
   // Backup function
   const handleBackup = async () => {
     try {
-      const response = await fetch("https://tracked.6minds.site/src/Pages/Admin/StudentAccountsDB/backup_students.php", {
+      const response = await fetch("https://tracked.6minds.site/Admin/StudentAccountsDB/backup_students.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -116,7 +116,7 @@ export default function UserManagementStudentAccounts() {
     setShowRestoreModal(false);
     
     try {
-      const response = await fetch("http://localhost/TrackEd/src/Pages/Admin/StudentAccountsDB/restore_students.php", {
+      const response = await fetch("https://tracked.6minds.site/Admin/StudentAccountsDB/restore_students.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -190,7 +190,7 @@ export default function UserManagementStudentAccounts() {
     const newStatus = selectedStudent.tracked_Status === "Active" ? "Deactivated" : "Active";
     
     try {
-      const response = await fetch("http://localhost/TrackEd/src/Pages/Admin/StudentAccountsDB/update_student_status.php", {
+      const response = await fetch("https://tracked.6minds.site/Admin/StudentAccountsDB/update_student_status.php", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -253,10 +253,10 @@ export default function UserManagementStudentAccounts() {
     return (
       <button
         onClick={onClick}
-        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none ${
+        className={`cursor-pointer inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none ${
           isActive ? 'bg-[#00A15D]' : 'bg-[#FF6666]'
         }`}
-        title={isActive ? "Deactivate" : "Activate"}
+        // title={isActive ? "Deactivate" : "Activate"}
       >
         <span
           className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${

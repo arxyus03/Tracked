@@ -12,16 +12,62 @@ export default function UserManagement() {
   const [isOpen, setIsOpen] = useState(false);
   const [professorCount, setProfessorCount] = useState(0);
   const [studentCount, setStudentCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("https://tracked.6minds.site/src/Pages/Admin/UserManagementDB_ReportsDB/get_user_counts.php")
-      .then((res) => res.json())
-      .then((data) => {
-        setProfessorCount(data.Professors || 0);
-        setStudentCount(data.Students || 0);
-      })
-      .catch((err) => console.error("Error fetching user counts:", err));
+    const fetchUserCounts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch("https://tracked.6minds.site/Admin/UserManagementDB_ReportsDB/get_user_counts.php");
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Convert to numbers to ensure proper handling
+          setProfessorCount(Number(data.Professors) || 0);
+          setStudentCount(Number(data.Students) || 0);
+        } else {
+          throw new Error(data.error || "Failed to fetch user counts");
+        }
+      } catch (err) {
+        console.error("Error fetching user counts:", err);
+        setError(err.message);
+        // Set default values on error
+        setProfessorCount(0);
+        setStudentCount(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserCounts();
   }, []);
+
+  if (loading) {
+    return (
+      <div>
+        <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`
+          transition-all duration-300
+          ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}
+        `}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+            <div className="flex justify-center items-center h-40">
+              <p className="text-[#465746]">Loading user counts...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -57,6 +103,12 @@ export default function UserManagement() {
           </div>
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              Error: {error}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-5 lg:gap-6">
             {/* Professor Accounts Button */}

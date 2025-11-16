@@ -27,8 +27,8 @@ export default function AdminImport() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
-  // Add loading state for activation
   const [isActivating, setIsActivating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state for users
 
   const fileInputRef = useRef(null);
 
@@ -38,10 +38,35 @@ export default function AdminImport() {
   }, []);
 
   const fetchUsers = () => {
-    fetch("https://tracked.6minds.site/src/Pages/Admin/AdminImportDB/get_users.php")
-      .then((res) => res.json())
-      .then((data) => setUsers(data))
-      .catch((err) => console.error(err));
+    setIsLoading(true);
+    fetch("https://tracked.6minds.site/Admin/AdminImportDB/get_users.php")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setUsers(data);
+        } else {
+          console.error("Invalid data format:", data);
+          setUsers([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching users:", err);
+        setUsers([]);
+        setResultData({
+          type: "error",
+          title: "Fetch Error!",
+          message: "Failed to load users. Please try again."
+        });
+        setShowResultModal(true);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const handleImportDatabase = () => {
@@ -51,17 +76,35 @@ export default function AdminImport() {
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Check if file is SQL
-      if (file.name.endsWith('.sql') || file.type === 'application/sql') {
-        setImportFile(file);
-      } else {
+      // Enhanced file validation
+      const validTypes = ['.sql', 'application/sql', 'text/sql', 'text/plain'];
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      
+      const isSQLFile = file.name.endsWith('.sql') || 
+                       validTypes.includes(file.type) ||
+                       file.type === '';
+      
+      if (!isSQLFile) {
         setResultData({
           type: "error",
-          title: "Invalid File!",
-          message: "Please select a valid SQL file."
+          title: "Invalid File Type!",
+          message: "Please select a valid SQL file (.sql extension)."
         });
         setShowResultModal(true);
+        return;
       }
+      
+      if (file.size > maxSize) {
+        setResultData({
+          type: "error",
+          title: "File Too Large!",
+          message: "Please select an SQL file smaller than 10MB."
+        });
+        setShowResultModal(true);
+        return;
+      }
+      
+      setImportFile(file);
     }
   };
 
@@ -84,11 +127,16 @@ export default function AdminImport() {
     const formData = new FormData();
     formData.append("sqlFile", importFile);
 
-    fetch("https://tracked.6minds.site/src/Pages/Admin/AdminImportDB/import_data.php", {
+    fetch("https://tracked.6minds.site/Admin/AdminImportDB/import_data.php", {
       method: "POST",
       body: formData,
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data.success) {
           setResultData({
@@ -96,8 +144,7 @@ export default function AdminImport() {
             title: "Import Successful!",
             message: data.message
           });
-          // Refresh the user list after successful import
-          fetchUsers();
+          fetchUsers(); // Refresh the user list
         } else {
           setResultData({
             type: "error",
@@ -111,7 +158,7 @@ export default function AdminImport() {
         console.error("Error importing database:", err);
         setResultData({
           type: "error",
-          title: "Network Error!",
+          title: "Import Error!",
           message: "An error occurred while importing the database. Please try again."
         });
         setShowResultModal(true);
@@ -120,7 +167,6 @@ export default function AdminImport() {
         setIsImporting(false);
         setShowImportModal(false);
         setImportFile(null);
-        // Reset file input
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -128,18 +174,31 @@ export default function AdminImport() {
   };
 
   const handleActivateAccounts = () => {
+    if (users.length === 0) {
+      setResultData({
+        type: "error",
+        title: "No Users Found!",
+        message: "There are no users to activate. Please import data first."
+      });
+      setShowResultModal(true);
+      return;
+    }
     setShowActivateModal(true);
   };
 
   const confirmActivateAccounts = () => {
-    // Set loading state to true when activation starts
     setIsActivating(true);
     
-    fetch("https://tracked.6minds.site/src/Pages/Admin/AdminImportDB/activate_accounts.php", {
+    fetch("https://tracked.6minds.site/Admin/AdminImportDB/activate_accounts.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         if (data.status === "success") {
           setResultData({
@@ -147,10 +206,11 @@ export default function AdminImport() {
             title: "Success!",
             message: data.message
           });
+          fetchUsers(); // Refresh user list
         } else {
           setResultData({
             type: "error",
-            title: "Error!",
+            title: "Activation Failed!",
             message: data.message
           });
         }
@@ -166,7 +226,6 @@ export default function AdminImport() {
         setShowResultModal(true);
       })
       .finally(() => {
-        // Reset loading state and close modal when done
         setIsActivating(false);
         setShowActivateModal(false);
       });
@@ -230,7 +289,7 @@ export default function AdminImport() {
           type="file"
           ref={fileInputRef}
           onChange={handleFileSelect}
-          accept=".sql,application/sql"
+          accept=".sql,application/sql,text/sql"
           className="hidden"
         />
 
@@ -296,10 +355,15 @@ export default function AdminImport() {
               </button>
 
               <button
-                onClick={() => handleActivateAccounts()}
-                className="font-bold text-white px-3 sm:px-4 py-2 bg-[#00A15D] hover:bg-[#00874E] rounded-md shadow-md border-2 border-transparent text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
+                onClick={handleActivateAccounts}
+                disabled={users.length === 0 || isActivating}
+                className={`font-bold text-white px-3 sm:px-4 py-2 rounded-md shadow-md border-2 border-transparent text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer ${
+                  users.length === 0 || isActivating
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#00A15D] hover:bg-[#00874E]"
+                }`}
               >
-                Activate Accounts
+                {isActivating ? "Activating..." : "Activate Accounts"}
               </button>
             </div>
 
@@ -322,141 +386,168 @@ export default function AdminImport() {
 
           {/* ACCOUNT Table */}
           <div className="mt-4 sm:mt-5">
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00A15D]"></div>
+              </div>
+            )}
+
             {/* Desktop Table */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm lg:text-base">
-                <thead>
-                  <tr className="text-[#465746] font-bold">
-                    <th className="py-2 px-2 sm:px-3">ID No.</th>
-                    <th className="py-2 px-2 sm:px-3">Full Name</th>
-                    <th className="py-2 px-2 sm:px-3">Email</th>
-                    <th className="py-2 px-2 sm:px-3">Role</th>
-                    <th className="py-2 px-2 sm:px-3">Gender</th>
-                    <th className="py-2 px-2 sm:px-3">Year & Section</th>
-                  </tr>
-                </thead>
+            {!isLoading && (
+              <>
+                <div className="hidden lg:block overflow-x-auto">
+                  <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm lg:text-base">
+                    <thead>
+                      <tr className="text-[#465746] font-bold">
+                        <th className="py-2 px-2 sm:px-3">ID No.</th>
+                        <th className="py-2 px-2 sm:px-3">Full Name</th>
+                        <th className="py-2 px-2 sm:px-3">Email</th>
+                        <th className="py-2 px-2 sm:px-3">Role</th>
+                        <th className="py-2 px-2 sm:px-3">Gender</th>
+                        <th className="py-2 px-2 sm:px-3">Year & Section</th>
+                      </tr>
+                    </thead>
 
-                <tbody className="text-[#465746]">
-                  {currentUsers.map((user, index) => (
-                    <tr
-                      key={index}
-                      className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200"
-                    >
-                      <td className="py-3 px-2 sm:px-3 rounded-l-lg">{user.user_ID}</td>
-                      <td className="py-3 px-2 sm:px-3">{user.user_firstname} {user.user_middlename} {user.user_lastname}</td>
-                      <td className="py-3 px-2 sm:px-3 break-all sm:break-normal">
-                        {user.user_Email}
-                      </td>
-                      <td className="py-3 px-2 sm:px-3">{user.user_Role}</td>
-                      <td className="py-3 px-2 sm:px-3">{user.user_Gender}</td>
-                      <td className="py-3 px-2 sm:px-3 rounded-r-lg">
-                        {user.user_yearandsection}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile/Tablet Cards */}
-            <div className="lg:hidden space-y-3">
-              {currentUsers.map((user, index) => (
-                <div key={index} className="bg-white rounded-lg shadow p-4 text-[#465746]">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">ID No.</p>
-                      <p className="font-semibold text-sm">{user.user_ID}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 mb-1">Role</p>
-                      <p className="font-semibold text-sm">{user.user_Role}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-xs text-gray-500">Full Name</p>
-                      <p className="font-medium text-sm">{user.user_firstname} {user.user_middlename} {user.user_lastname}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-xs text-gray-500">Email</p>
-                      <p className="text-sm break-all">{user.user_Email}</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-xs text-gray-500">Gender</p>
-                        <p className="text-sm">{user.user_Gender}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-xs text-gray-500">Year & Section</p>
-                        <p className="text-sm">{user.user_yearandsection}</p>
-                      </div>
-                    </div>
-                  </div>
+                    <tbody className="text-[#465746]">
+                      {currentUsers.length > 0 ? (
+                        currentUsers.map((user, index) => (
+                          <tr
+                            key={index}
+                            className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200"
+                          >
+                            <td className="py-3 px-2 sm:px-3 rounded-l-lg">{user.user_ID}</td>
+                            <td className="py-3 px-2 sm:px-3">{user.user_firstname} {user.user_middlename} {user.user_lastname}</td>
+                            <td className="py-3 px-2 sm:px-3 break-all sm:break-normal">
+                              {user.user_Email}
+                            </td>
+                            <td className="py-3 px-2 sm:px-3">{user.user_Role}</td>
+                            <td className="py-3 px-2 sm:px-3">{user.user_Gender}</td>
+                            <td className="py-3 px-2 sm:px-3 rounded-r-lg">
+                              {user.user_yearandsection}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="6" className="text-center py-8 text-gray-500">
+                            No users found. Please import data first.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
-            </div>
 
-            {/* Pagination Controls */}
-            <div className="flex flex-wrap justify-center mt-5 sm:mt-6 gap-2">
-              {/* Previous Button */}
-              {currentPage > 1 && (
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md bg-white text-[#465746] hover:bg-gray-100 font-medium text-xs sm:text-sm transition-colors duration-200 cursor-pointer"
-                >
-                  Previous
-                </button>
-              )}
+                {/* Mobile/Tablet Cards */}
+                <div className="lg:hidden space-y-3">
+                  {currentUsers.length > 0 ? (
+                    currentUsers.map((user, index) => (
+                      <div key={index} className="bg-white rounded-lg shadow p-4 text-[#465746]">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">ID No.</p>
+                            <p className="font-semibold text-sm">{user.user_ID}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500 mb-1">Role</p>
+                            <p className="font-semibold text-sm">{user.user_Role}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs text-gray-500">Full Name</p>
+                            <p className="font-medium text-sm">{user.user_firstname} {user.user_middlename} {user.user_lastname}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-xs text-gray-500">Email</p>
+                            <p className="text-sm break-all">{user.user_Email}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <p className="text-xs text-gray-500">Gender</p>
+                              <p className="text-sm">{user.user_Gender}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-xs text-gray-500">Year & Section</p>
+                              <p className="text-sm">{user.user_yearandsection}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No users found. Please import data first.
+                    </div>
+                  )}
+                </div>
 
-              {/* Page Numbers */}
-              {Array.from({ length: totalPages }, (_, i) => {
-                const pageNum = i + 1;
-                // Show first page, last page, current page, and pages around current
-                if (
-                  pageNum === 1 ||
-                  pageNum === totalPages ||
-                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                ) {
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md text-xs sm:text-sm font-medium transition-colors duration-200 cursor-pointer ${
-                        currentPage === pageNum
-                          ? "bg-[#00874E] text-white"
-                          : "bg-white text-[#465746] hover:bg-gray-100"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                } else if (
-                  pageNum === currentPage - 2 ||
-                  pageNum === currentPage + 2
-                ) {
-                  return (
-                    <span key={pageNum} className="px-2 py-1.5 sm:py-2 text-[#465746]">
-                      ...
-                    </span>
-                  );
-                }
-                return null;
-              })}
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex flex-wrap justify-center mt-5 sm:mt-6 gap-2">
+                    {/* Previous Button */}
+                    {currentPage > 1 && (
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md bg-white text-[#465746] hover:bg-gray-100 font-medium text-xs sm:text-sm transition-colors duration-200 cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                    )}
 
-              {/* Next Button */}
-              {currentPage < totalPages && (
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md bg-white text-[#465746] hover:bg-gray-100 font-medium text-xs sm:text-sm transition-colors duration-200 cursor-pointer"
-                >
-                  Next
-                </button>
-              )}
-            </div>
+                    {/* Page Numbers */}
+                    {Array.from({ length: totalPages }, (_, i) => {
+                      const pageNum = i + 1;
+                      // Show first page, last page, current page, and pages around current
+                      if (
+                        pageNum === 1 ||
+                        pageNum === totalPages ||
+                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md text-xs sm:text-sm font-medium transition-colors duration-200 cursor-pointer ${
+                              currentPage === pageNum
+                                ? "bg-[#00874E] text-white"
+                                : "bg-white text-[#465746] hover:bg-gray-100"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      } else if (
+                        pageNum === currentPage - 2 ||
+                        pageNum === currentPage + 2
+                      ) {
+                        return (
+                          <span key={pageNum} className="px-2 py-1.5 sm:py-2 text-[#465746]">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+
+                    {/* Next Button */}
+                    {currentPage < totalPages && (
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md bg-white text-[#465746] hover:bg-gray-100 font-medium text-xs sm:text-sm transition-colors duration-200 cursor-pointer"
+                      >
+                        Next
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
 
             {showPopup && <Popup setOpen={setShowPopup} />}
           </div>
@@ -468,7 +559,7 @@ export default function AdminImport() {
         <div
           className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
           onClick={(e) => {
-            if (e.target === e.currentTarget) {
+            if (e.target === e.currentTarget && !isImporting) {
               setShowImportModal(false);
             }
           }}
@@ -512,7 +603,8 @@ export default function AdminImport() {
 
                 <button
                   onClick={triggerFileInput}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer border-2 border-dashed border-gray-300"
+                  disabled={isImporting}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer border-2 border-dashed border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Choose SQL File
                 </button>
@@ -524,17 +616,27 @@ export default function AdminImport() {
                     setShowImportModal(false);
                     setImportFile(null);
                   }}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isImporting}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmImportDatabase}
-                  className="flex-1 bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   disabled={!importFile || isImporting}
                 >
-                  {isImporting ? "Importing..." : "Import Database"}
+                  {isImporting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Importing...
+                    </>
+                  ) : (
+                    "Import Database"
+                  )}
                 </button>
               </div>
             </div>
@@ -673,7 +775,7 @@ export default function AdminImport() {
               </h3>
               
               <div className="mt-4 mb-6">
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-gray-600 mb-3 whitespace-pre-line">
                   {resultData.message}
                 </p>
                 {resultData.type === "success" && (

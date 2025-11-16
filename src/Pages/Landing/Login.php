@@ -15,7 +15,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Methods: POST");
 
 // Database connection settings - UPDATED FOR HOST
-$dbHost = "mysql.tracked.6minds.site"; // or your host server IP if different
+$dbHost = "localhost";
 $dbUser = "u713320770_trackedDB";
 $dbPass = "Tracked@2025";
 $dbName = "u713320770_tracked";

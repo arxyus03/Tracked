@@ -45,9 +45,9 @@ export default function Report() {
   const fetchWidgetData = async () => {
     try {
       const [userCountsRes, studentsRes, professorsRes] = await Promise.all([
-        fetch('https://tracked.6minds.site/src/Pages/Admin/UserManagementDB_ReportsDB/get_user_counts.php'),
-        fetch('https://tracked.6minds.site/src/Pages/Admin/StudentAccountsDB/get_students.php'),
-        fetch('https://tracked.6minds.site/src/Pages/Admin/ProfessorAccountsDB/get_professors.php')
+        fetch('https://tracked.6minds.site/Admin/UserManagementDB_ReportsDB/get_user_counts.php'),
+        fetch('https://tracked.6minds.site/Admin/StudentAccountsDB/get_students.php'),
+        fetch('https://tracked.6minds.site/Admin/ProfessorAccountsDB/get_professors.php')
       ]);
 
       if (!userCountsRes.ok || !studentsRes.ok || !professorsRes.ok) {

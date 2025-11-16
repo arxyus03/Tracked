@@ -57,7 +57,7 @@ export default function UserManagement_StudentAccountDetails() {
   const fetchStudentData = (studentId) => {
     setIsFetching(true);
     fetch(
-      `https://tracked.6minds.site/src/Pages/Admin/StudentAccountsDB/get_students.php?id=${studentId}`
+      `https://tracked.6minds.site/Admin/StudentAccountsDB/get_students.php?id=${studentId}`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -137,7 +137,7 @@ export default function UserManagement_StudentAccountDetails() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "https://tracked.6minds.site/src/Pages/Admin/StudentAccountsDB/update_student.php",
+        "https://tracked.6minds.site/Admin/StudentAccountsDB/update_student.php",
         {
           method: "POST",
           headers: {
