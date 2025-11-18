@@ -20,19 +20,30 @@ export default function ActivityOverviewStudent({
 
   const [animationProgress, setAnimationProgress] = useState(0);
 
-  // utility: sum up status counts for a list of items
+  // FIXED: Updated utility function to properly count pending tasks for students
   const sumStatusCounts = (list) => {
-    let completed = 0, missed = 0, ongoing = 0;
+    let completed = 0, missed = 0, pending = 0, late = 0;
+    
     list.forEach(it => {
-      const s = Number(it.submitted || 0);
-      const m = Number(it.missing || 0);
-      // if total is provided use it, else assume total = submitted + missing (ongoing = 0)
-      const t = Number(it.total ?? (s + m));
-      completed += s;
-      missed += m;
-      ongoing += Math.max(0, t - s - m);
+      const submitted = it.submitted === 1 || it.submitted === true;
+      const missing = it.missing === 1 || it.missing === true;
+      const lateSubmission = it.late === 1 || it.late === true;
+      
+      if (submitted) {
+        if (lateSubmission) {
+          late++; // Count as late if submitted but late
+        } else {
+          completed++; // Count as completed if submitted on time
+        }
+      } else if (missing) {
+        missed++;
+      } else {
+        // If not submitted and not missing, it's pending/pending
+        pending++;
+      }
     });
-    return { completed, ongoing, missed };
+    
+    return { completed, pending, missed, late };
   };
 
   // compute status counts depending on selected filter
@@ -44,8 +55,9 @@ export default function ActivityOverviewStudent({
       const p = sumStatusCounts(projectsList);
       return {
         completed: q.completed + a.completed + act.completed + p.completed,
-        ongoing:   q.ongoing   + a.ongoing   + act.ongoing   + p.ongoing,
+        pending:   q.pending   + a.pending   + act.pending   + p.pending,
         missed:    q.missed    + a.missed    + act.missed    + p.missed,
+        late:      q.late      + a.late      + act.late      + p.late,
       };
     } else if (selectedFilter === "Quizzes") {
       return sumStatusCounts(quizzesList);
@@ -56,14 +68,15 @@ export default function ActivityOverviewStudent({
     } else if (selectedFilter === "Projects") {
       return sumStatusCounts(projectsList);
     } else {
-      return { completed: 0, ongoing: 0, missed: 0 };
+      return { completed: 0, pending: 0, missed: 0, late: 0 };
     }
   }, [selectedFilter, quizzesList, assignmentsList, activitiesList, projectsList]);
 
-  // segments for pie: Completed, Ongoing, Missed
+  // segments for pie: Completed, pending, Missed
   const segments = useMemo(() => [
     { label: "Completed", value: statusCounts.completed, color: "#00A15D" },
-    { label: "Ongoing", value: statusCounts.ongoing, color: "#F59E0B" },
+    { label: "Late", value: statusCounts.late, color: "#2196F3" }, // ADD LATE SEGMENT
+    { label: "Pending", value: statusCounts.pending, color: "#F59E0B" },
     { label: "Missed", value: statusCounts.missed, color: "#EF4444" },
   ], [statusCounts]);
 
@@ -214,7 +227,7 @@ export default function ActivityOverviewStudent({
                   })()
                 )}
 
-                {/* center labels */}
+                {/* center labels - FIXED: Show "Overall:" instead of "SECTION X:" */}
                 <text
                   x="16"
                   y="15"
@@ -223,7 +236,7 @@ export default function ActivityOverviewStudent({
                   fontWeight="bold"
                   fill="#465746"
                 >
-                  {selectedFilter ? selectedFilter.toUpperCase() : "SECTION X:"}
+                  {selectedFilter ? selectedFilter.toUpperCase() : "OVERALL:"}
                 </text>
 
                 <text
@@ -233,7 +246,7 @@ export default function ActivityOverviewStudent({
                   fontSize=".125rem"
                   fill="#465746"
                 >
-                  {statusTotal === 0 ? "No data" : (selectedFilter ? "Overview" : "Overall")}
+                  {statusTotal === 0 ? "No data" : "Overview"}
                 </text>
               </svg>
             </div>

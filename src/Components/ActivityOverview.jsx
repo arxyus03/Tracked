@@ -8,7 +8,10 @@ export default function ActivityOverview({
   activitiesList = [],
   projectsList = [],
   selectedFilter,
-  setSelectedFilter
+  setSelectedFilter,
+  selectedSubject = "",
+  selectedSection = "",
+  getCurrentSubjectName = () => ""
 }) {
   const quizzesCount = quizzesList.length;
   const assignmentsCount = assignmentsList.length;
@@ -58,6 +61,33 @@ export default function ActivityOverview({
     setSelectedFilter((prev) => (prev === label ? "" : label));
   };
 
+  // Get the display text for the pie chart center
+  const getPieChartText = () => {
+    if (selectedFilter === "") {
+      return "OVERALL:";
+    } else {
+      return selectedFilter.toUpperCase();
+    }
+  };
+
+  // Get the subtitle for the pie chart - NOW PROPERLY USING THE PROPS
+  const getPieChartSubtitle = () => {
+    if (selectedFilter === "") {
+      const subjectName = getCurrentSubjectName();
+      if (subjectName && selectedSection) {
+        return `${subjectName} (Section ${selectedSection})`;
+      } else if (subjectName) {
+        return subjectName;
+      } else if (selectedSubject && selectedSection) {
+        return `${selectedSubject} (Section ${selectedSection})`;
+      } else if (selectedSubject) {
+        return selectedSubject;
+      }
+      return "All Activities";
+    }
+    return "Overview";
+  };
+
   return (
     <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 p-4 sm:p-5 text-[#465746]">
       {/* Header Section */}
@@ -66,8 +96,6 @@ export default function ActivityOverview({
           <img src={PieIcon} alt="Pie" className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3" />
           <p className="text-base sm:text-lg lg:text-xl font-bold">Activity Overview</p>
         </div>
-
-
       </div>
 
       <hr className="border-[#465746]/30 mt-3 sm:mt-4 lg:mt-5" />
@@ -184,7 +212,7 @@ export default function ActivityOverview({
                   const othersValue = totalCount - (chosen ? chosen.value : 0);
                   const toDraw = [];
                   if (chosen && chosen.value > 0) toDraw.push({ ...chosen });
-                  if (othersValue > 0) toDraw.push({ label: "Others", value: othersValue, color: "#fff" });
+                  if (othersValue > 0) toDraw.push({ label: "Others", value: othersValue, color: "#D1D5DB" });
 
                   let cum2 = 0;
                   return toDraw.map((seg, i) => {
@@ -216,23 +244,23 @@ export default function ActivityOverview({
 
                 <text 
                   x="16" 
-                  y="15" 
+                  y="14.5" 
                   textAnchor="middle" 
                   fontSize=".125rem" 
                   fontWeight="bold" 
                   fill="#465746"
                 >
-                  {selectedFilter ? selectedFilter.toUpperCase() : "SECTION X:"}
+                  {getPieChartText()}
                 </text>
 
                 <text 
                   x="16" 
-                  y="18" 
+                  y="17.5" 
                   textAnchor="middle" 
-                  fontSize=".125rem" 
+                  fontSize=".08rem" 
                   fill="#465746"
                 >
-                  {selectedFilter ? "Overview" : "Overall"}
+                  {getPieChartSubtitle()}
                 </text>
               </svg>
             </div>

@@ -14,7 +14,6 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Get professor ID from query parameter
     if (!isset($_GET['professor_id'])) {
         echo json_encode([
             'success' => false,
@@ -25,14 +24,30 @@ try {
     
     $professorId = $_GET['professor_id'];
     
-    // Count activities that have at least one student NOT submitted (need grading)
+    // Count activities that need attention (pending submissions OR submitted but not graded)
     $stmt = $conn->prepare("
         SELECT COUNT(DISTINCT a.id) as activities_to_grade
         FROM activities a
-        INNER JOIN activity_grades ag ON a.id = ag.activity_ID
         WHERE a.professor_ID = :professor_id 
         AND a.archived = 0
-        AND ag.submitted = 0  -- At least one student hasn't submitted
+        AND (
+            -- Activities with pending submissions (not submitted yet)
+            EXISTS (
+                SELECT 1 
+                FROM activity_grades ag 
+                WHERE ag.activity_ID = a.id 
+                AND ag.submitted = 0
+            )
+            OR
+            -- OR activities with submitted work but no grade assigned
+            EXISTS (
+                SELECT 1 
+                FROM activity_grades ag 
+                WHERE ag.activity_ID = a.id 
+                AND ag.submitted = 1 
+                AND (ag.grade IS NULL OR ag.grade = '')
+            )
+        )
     ");
     
     $stmt->bindParam(':professor_id', $professorId);
@@ -43,7 +58,7 @@ try {
     echo json_encode([
         'success' => true,
         'total_activities' => (int)$result['activities_to_grade'],
-        'message' => 'Activities with pending submissions'
+        'message' => 'Activities needing grading attention'
     ]);
     
 } catch(PDOException $e) {

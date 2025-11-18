@@ -58,11 +58,11 @@ export default function DashboardStudent() {
               
               if (data.success) {
                 // Set username from database
-                const fullName = `${data.user.tracked_fname} ${data.user.tracked_lname}`;
-                setUserName(fullName);
+                const fullName = `${data.user.tracked_firstname} ${data.user.tracked_lastname}`;
+                setUserName(fullName || "N/A");
                 
                 // Set email from database
-                setUserEmail(data.user.tracked_email);
+                setUserEmail(data.user.tracked_email || "N/A");
                 
                 // Set course and year level
                 setStudentCourse(data.user.tracked_program || "N/A");

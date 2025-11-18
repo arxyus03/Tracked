@@ -10,6 +10,12 @@ import Analytics from '../../assets/Analytics(Light).svg';
 import ArrowDown from '../../assets/ArrowDown(Light).svg';
 import Search from "../../assets/Search.svg";
 import Details from '../../assets/Details(Light).svg';
+import CheckSubmitted from '../../assets/CheckTable(Green).svg';
+import CheckPending from '../../assets/PendingTable(Yellow).svg';
+import CheckLate from '../../assets/LateTable(Blue).svg';
+import Cross from '../../assets/CrossTable(Red).svg';
+import ArrowLeft from '../../assets/ArrowLeft.svg';
+import ArrowRight from '../../assets/ArrowRight.svg';
 
 export default function AnalyticsProf() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,8 +31,13 @@ export default function AnalyticsProf() {
   const [classesLoading, setClassesLoading] = useState(true);
   const [professorId, setProfessorId] = useState('');
 
+  // Pagination states
+  const [activityCurrentPage, setActivityCurrentPage] = useState(1);
+  const [attendanceCurrentPage, setAttendanceCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Colors for charts
-  const COLORS = ['#00A15D', '#FF6666', '#FFC107', '#2196F3', '#9C27B0'];
+  const COLORS = ['#00A15D', '#FF6666', '#2196F3', '#FFC107', '#9C27B0'];
 
   // Get professor ID from localStorage
   useEffect(() => {
@@ -43,6 +54,12 @@ export default function AnalyticsProf() {
     }
   }, []);
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    setActivityCurrentPage(1);
+    setAttendanceCurrentPage(1);
+  }, [selectedFilter, selectedSubject, selectedSection]);
+
   // Fetch classes for the professor when professorId is available
   useEffect(() => {
     if (!professorId) return;
@@ -58,13 +75,9 @@ export default function AnalyticsProf() {
           const classesData = data.classes || [];
           setClasses(classesData);
           
-          if (classesData.length > 0) {
-            setSelectedSubject(classesData[0].subject_code);
-            setSelectedSection(classesData[0].section || '');
-          } else {
-            setSelectedSubject("");
-            setSelectedSection("");
-          }
+          // Don't set any default selections - let the user choose
+          setSelectedSubject("");
+          setSelectedSection("");
         } else {
           setClasses([]);
           setSelectedSubject("");
@@ -88,9 +101,9 @@ export default function AnalyticsProf() {
     return uniqueSections;
   }, [classes]);
 
-  // Filter classes by selected section
-  const filteredClasses = useMemo(() => {
-    if (!selectedSection) return classes;
+  // Get subjects based on selected section filter
+  const getFilteredSubjects = useMemo(() => {
+    if (!selectedSection) return []; // Return empty if no section selected
     return classes.filter(cls => cls.section === selectedSection);
   }, [classes, selectedSection]);
 
@@ -101,15 +114,16 @@ export default function AnalyticsProf() {
     } else {
       setAnalyticsData(null);
     }
-  }, [selectedSubject, professorId]);
+  }, [selectedSubject, selectedSection, professorId]);
 
   const fetchAnalyticsData = async () => {
-    if (!selectedSubject || !professorId) return;
+    if (!selectedSubject || !professorId || !selectedSection) return;
 
     setLoading(true);
     try {
-      // Fetch attendance data
-      const attendanceUrl = `https://tracked.6minds.site/Professor/AttendanceDB/get_attendance_history.php?subject_code=${selectedSubject}&professor_ID=${professorId}`;
+      // Build URL with section parameter
+      const attendanceUrl = `https://tracked.6minds.site/Professor/AttendanceDB/get_attendance_history.php?subject_code=${selectedSubject}&professor_ID=${professorId}&section=${selectedSection}`;
+
       const attendanceResponse = await fetch(attendanceUrl);
       
       if (!attendanceResponse.ok) {
@@ -119,7 +133,8 @@ export default function AnalyticsProf() {
       const attendanceData = await attendanceResponse.json();
 
       // Fetch activities data
-      const activitiesUrl = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${selectedSubject}`;
+      const activitiesUrl = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${selectedSubject}&section=${selectedSection}`;
+
       const activitiesResponse = await fetch(activitiesUrl);
       
       if (!activitiesResponse.ok) {
@@ -131,7 +146,8 @@ export default function AnalyticsProf() {
       // Process the data
       processAnalyticsData(attendanceData, activitiesData);
       
-    } catch {
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
       // Set empty analytics data structure
       setAnalyticsData({
         attendanceSummary: { present: 0, absent: 0, late: 0, total: 0, attendanceRate: 0 },
@@ -236,132 +252,154 @@ export default function AnalyticsProf() {
   };
 
   const calculateStudentPerformance = (attendanceHistory, activities) => {
-    const studentMap = new Map();
+  const studentMap = new Map();
 
-    // Helper functions
-    const getIdFrom = (studentObj) => {
-      return studentObj?.student_ID ?? studentObj?.user_ID ?? null;
-    };
-    
-    const getNameFrom = (studentObj) => {
-      return studentObj?.user_Name ?? studentObj?.userName ?? studentObj?.name ?? 'Unknown Student';
-    };
+  // Helper functions
+  const getIdFrom = (studentObj) => {
+    return studentObj?.student_ID ?? studentObj?.user_ID ?? null;
+  };
+  
+  const getNameFrom = (studentObj) => {
+    return studentObj?.user_Name ?? studentObj?.userName ?? studentObj?.name ?? 'Unknown Student';
+  };
 
-    // Initialize from attendance data
-    if (attendanceHistory.length > 0 && Array.isArray(attendanceHistory[0].students)) {
-      attendanceHistory[0].students.forEach(student => {
-        const id = getIdFrom(student);
+  // Initialize from attendance data
+  if (attendanceHistory.length > 0 && Array.isArray(attendanceHistory[0].students)) {
+    attendanceHistory[0].students.forEach(student => {
+      const id = getIdFrom(student);
+      const name = getNameFrom(student);
+      if (!id) return;
+      studentMap.set(id, {
+        name: name,
+        id,
+        presentCount: 0,
+        absentCount: 0,
+        lateCount: 0,
+        submittedCount: 0,
+        pendingCount: 0, // ADD THIS
+        missingCount: 0,
+        lateSubmissionCount: 0,
+        totalActivities: 0
+      });
+    });
+  }
+
+  // Count attendance (keep existing code)
+  attendanceHistory.forEach(day => {
+    if (!Array.isArray(day.students)) return;
+    day.students.forEach(student => {
+      const id = getIdFrom(student);
+      if (!id) return;
+      
+      let studentData = studentMap.get(id);
+      if (!studentData) {
         const name = getNameFrom(student);
-        if (!id) return;
-        studentMap.set(id, {
+        studentData = {
           name: name,
           id,
           presentCount: 0,
           absentCount: 0,
           lateCount: 0,
           submittedCount: 0,
+          pendingCount: 0, // ADD THIS
           missingCount: 0,
           lateSubmissionCount: 0,
           totalActivities: 0
-        });
-      });
-    }
+        };
+        studentMap.set(id, studentData);
+      }
 
-    // Count attendance
-    attendanceHistory.forEach(day => {
-      if (!Array.isArray(day.students)) return;
-      day.students.forEach(student => {
-        const id = getIdFrom(student);
-        if (!id) return;
-        
-        let studentData = studentMap.get(id);
-        if (!studentData) {
-          const name = getNameFrom(student);
-          studentData = {
-            name: name,
-            id,
-            presentCount: 0,
-            absentCount: 0,
-            lateCount: 0,
-            submittedCount: 0,
-            missingCount: 0,
-            lateSubmissionCount: 0,
-            totalActivities: 0
-          };
-          studentMap.set(id, studentData);
-        }
-
-        const status = String(student.status).toLowerCase();
-        if (status === 'present') {
-          studentData.presentCount++;
-        } else if (status === 'late') {
-          studentData.lateCount++;
-        } else {
-          studentData.absentCount++;
-        }
-      });
+      const status = String(student.status).toLowerCase();
+      if (status === 'present') {
+        studentData.presentCount++;
+      } else if (status === 'late') {
+        studentData.lateCount++;
+      } else {
+        studentData.absentCount++;
+      }
     });
+  });
 
-    // Count activity submissions
-    activities.forEach(activity => {
-      if (!Array.isArray(activity.students)) return;
-      activity.students.forEach(student => {
-        const id = getIdFrom(student);
-        if (!id) return;
-        
-        let studentData = studentMap.get(id);
-        if (!studentData) {
-          const name = getNameFrom(student);
-          studentData = {
-            name: name,
-            id,
-            presentCount: 0,
-            absentCount: 0,
-            lateCount: 0,
-            submittedCount: 0,
-            missingCount: 0,
-            lateSubmissionCount: 0,
-            totalActivities: 0
-          };
-          studentMap.set(id, studentData);
+  // Count activity submissions - UPDATED
+  activities.forEach(activity => {
+    if (!Array.isArray(activity.students)) return;
+    
+    const currentDate = new Date();
+    const deadlineDate = activity.deadline ? new Date(activity.deadline) : null;
+    const isPastDeadline = deadlineDate && deadlineDate < currentDate;
+    
+    activity.students.forEach(student => {
+      const id = getIdFrom(student);
+      if (!id) return;
+      
+      let studentData = studentMap.get(id);
+      if (!studentData) {
+        const name = getNameFrom(student);
+        studentData = {
+          name: name,
+          id,
+          presentCount: 0,
+          absentCount: 0,
+          lateCount: 0,
+          submittedCount: 0,
+          pendingCount: 0, // ADD THIS
+          missingCount: 0,
+          lateSubmissionCount: 0,
+          totalActivities: 0
+        };
+        studentMap.set(id, studentData);
+      }
+
+      studentData.totalActivities++;
+      const submitted = student.submitted === true || student.submitted === 1 || student.submitted === '1';
+      const late = student.late === true || student.late === 1 || student.late === '1';
+      
+      if (submitted) {
+        studentData.submittedCount++;
+        if (late) {
+          studentData.lateSubmissionCount++;
         }
-
-        studentData.totalActivities++;
-        const submitted = student.submitted === true || student.submitted === 1 || student.submitted === '1';
-        const late = student.late === true || student.late === 1 || student.late === '1';
-        
-        if (submitted) {
-          studentData.submittedCount++;
-          if (late) {
-            studentData.lateSubmissionCount++;
-          }
-        } else {
+      } else {
+        // FIX: Only count as missing if past deadline
+        if (isPastDeadline) {
           studentData.missingCount++;
+        } else {
+          studentData.pendingCount++;
         }
-      });
+      }
     });
+  });
 
-    // Convert to array and calculate rates
-    const studentArray = Array.from(studentMap.values());
+  // Convert to array and calculate rates (keep existing code)
+  const studentArray = Array.from(studentMap.values());
 
-    studentArray.forEach(s => {
-      const attendanceDenom = s.presentCount + s.absentCount + s.lateCount;
-      s.attendanceRate = attendanceDenom > 0 ? ((s.presentCount + s.lateCount) / attendanceDenom) * 100 : 0;
-      s.submissionRate = s.totalActivities > 0 ? (s.submittedCount / s.totalActivities) * 100 : 0;
-    });
+  studentArray.forEach(s => {
+    const attendanceDenom = s.presentCount + s.absentCount + s.lateCount;
+    s.attendanceRate = attendanceDenom > 0 ? ((s.presentCount + s.lateCount) / attendanceDenom) * 100 : 0;
+    s.submissionRate = s.totalActivities > 0 ? (s.submittedCount / s.totalActivities) * 100 : 0;
+  });
 
-    // Sort by performance
-    studentArray.sort((a, b) => {
-      if (b.submissionRate !== a.submissionRate) return b.submissionRate - a.submissionRate;
-      return b.attendanceRate - a.attendanceRate;
-    });
+  // Sort by performance
+  studentArray.sort((a, b) => {
+    if (b.submissionRate !== a.submissionRate) return b.submissionRate - a.submissionRate;
+    return b.attendanceRate - a.attendanceRate;
+  });
 
-    return studentArray;
-  };
+  return studentArray;
+};
 
   // Helper function to get subject name from class object
   const getSubjectName = (classItem) => {
     return classItem.subject_name || classItem.subject || 'Untitled Subject';
+  };
+
+  // Get current subject name for display
+  const getCurrentSubjectName = () => {
+    if (!selectedSubject || !selectedSection) return '';
+    const subject = classes.find(cls => 
+      cls.subject_code === selectedSubject && cls.section === selectedSection
+    );
+    return subject ? `${subject.subject_code} - ${getSubjectName(subject)}` : selectedSubject;
   };
 
   // Get activities data for ActivityOverview
@@ -391,7 +429,16 @@ export default function AnalyticsProf() {
       ).length || 0;
       
       const totalStudents = activity.students?.length || 0;
-      const missing = totalStudents - submitted;
+      
+      // FIX: Calculate pending and missing correctly
+      const currentDate = new Date();
+      const deadlineDate = activity.deadline ? new Date(activity.deadline) : null;
+      const isPastDeadline = deadlineDate && deadlineDate < currentDate;
+      
+      // If past deadline, unsubmitted = missing
+      // If not past deadline, unsubmitted = pending
+      const missing = isPastDeadline ? (totalStudents - submitted) : 0;
+      const pending = !isPastDeadline ? (totalStudents - submitted) : 0;
       
       const deadline = activity.deadline ? new Date(activity.deadline).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -404,9 +451,11 @@ export default function AnalyticsProf() {
         task: activity.task_number || `Task ${activity.id}`,
         title: activity.title || 'Untitled',
         submitted: submitted,
-        missing: missing,
+        missing: missing, // Only count as missing if past deadline
+        pending: pending, // Count as pending if not past deadline
         late: late,
-        deadline: deadline
+        deadline: deadline,
+        isPastDeadline: isPastDeadline // Add this for reference
       };
 
       const activityType = activity.activity_type?.toLowerCase();
@@ -432,15 +481,53 @@ export default function AnalyticsProf() {
   };
 
   const activitiesData = getActivitiesData();
-  const displayedList = selectedFilter === 'Assignment'
-    ? activitiesData.assignments
-    : selectedFilter === 'Activities'
-    ? activitiesData.activities
-    : selectedFilter === 'Projects'
-    ? activitiesData.projects
-    : activitiesData.quizzes;
 
-  const displayedLabel = selectedFilter === '' ? 'Quizzes' : selectedFilter;
+  // Fixed: Combine all activities when "Overall" is selected (empty selectedFilter)
+  const displayedList = useMemo(() => {
+    if (selectedFilter === 'Assignment') {
+      return activitiesData.assignments || [];
+    } else if (selectedFilter === 'Activities') {
+      return activitiesData.activities || [];
+    } else if (selectedFilter === 'Projects') {
+      return activitiesData.projects || [];
+    } else if (selectedFilter === '') {
+      // Overall view - combine all activity types
+      return [
+        ...(activitiesData.quizzes || []),
+        ...(activitiesData.assignments || []),
+        ...(activitiesData.activities || []),
+        ...(activitiesData.projects || [])
+      ];
+    } else {
+      // Default to quizzes (for backward compatibility)
+      return activitiesData.quizzes || [];
+    }
+  }, [selectedFilter, activitiesData]);
+
+  const displayedLabel = selectedFilter === '' 
+    ? 'All Activities' 
+    : selectedFilter || 'Quizzes';
+
+  // Pagination calculations for activities
+  const activityTotalPages = Math.ceil(displayedList.length / itemsPerPage);
+  const activityStartIndex = (activityCurrentPage - 1) * itemsPerPage;
+  const activityEndIndex = activityStartIndex + itemsPerPage;
+  const currentActivities = displayedList.slice(activityStartIndex, activityEndIndex);
+
+  // Pagination calculations for student attendance
+  const attendanceTotalPages = Math.ceil((analyticsData?.studentPerformance?.length || 0) / itemsPerPage);
+  const attendanceStartIndex = (attendanceCurrentPage - 1) * itemsPerPage;
+  const attendanceEndIndex = attendanceStartIndex + itemsPerPage;
+  const currentAttendance = analyticsData?.studentPerformance?.slice(attendanceStartIndex, attendanceEndIndex) || [];
+
+  // Pagination handlers
+  const handleActivityPageChange = (page) => {
+    setActivityCurrentPage(page);
+  };
+
+  const handleAttendancePageChange = (page) => {
+    setAttendanceCurrentPage(page);
+  };
 
   // Chart data preparation
   const attendanceChartData = analyticsData ? [
@@ -482,14 +569,84 @@ export default function AnalyticsProf() {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
-          <p className="font-bold">{`Student: ${data.studentName}`}</p>
-          <p className="text-[#00A15D]">{`Attendance: ${payload[0].value}%`}</p>
-          <p className="text-[#2196F3]">{`Submission: ${payload[1].value}%`}</p>
+        <div className="bg-white p-2 sm:p-3 border border-gray-300 rounded-lg shadow-lg text-xs sm:text-sm max-w-[200px]">
+          <p className="font-bold text-gray-800 mb-1 truncate">{data.studentName}</p>
+          <p className="text-[#00A15D] text-xs sm:text-sm">Attendance: {payload[0].value}%</p>
+          <p className="text-[#2196F3] text-xs sm:text-sm">Submission: {payload[1].value}%</p>
         </div>
       );
     }
     return null;
+  };
+
+  // Pagination Component
+  const Pagination = ({ currentPage, totalPages, onPageChange, dataType }) => {
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    const pageNumbers = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-2">
+        <div className="text-xs sm:text-sm text-gray-600">
+          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, dataType === 'activities' ? displayedList.length : analyticsData?.studentPerformance?.length || 0)} of {dataType === 'activities' ? displayedList.length : analyticsData?.studentPerformance?.length || 0} tasks
+        </div>
+        
+        <div className="flex items-center gap-1">
+          {/* Previous Button */}
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`flex items-center justify-center w-8 h-8 rounded-md border ${
+              currentPage === 1 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300' 
+                : 'bg-white text-[#465746] border-gray-300 hover:bg-gray-50 cursor-pointer'
+            }`}
+          >
+            <img src={ArrowLeft} alt="Previous" className="w-5 h-5" />
+          </button>
+
+          {/* Page Numbers */}
+          {pageNumbers.map(page => (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`cursor-pointer flex items-center justify-center w-8 h-8 rounded-md border text-sm font-medium ${
+                currentPage === page
+                  ? 'bg-[#465746] text-white border-[#465746]'
+                  : 'bg-white text-[#465746] border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          {/* Next Button */}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`flex items-center justify-center w-8 h-8 rounded-md border ${
+              currentPage === totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300'
+                : 'bg-white text-[#465746] border-gray-300 hover:bg-gray-50 cursor-pointer'
+            }`}
+          >
+            <img src={ArrowRight} alt="Next" className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -533,8 +690,8 @@ export default function AnalyticsProf() {
                 >
                   <span>
                     {classesLoading ? 'Loading...' : 
-                     sections.length === 0 ? 'All Sections' :
-                     selectedSection || 'All Sections'
+                     sections.length === 0 ? 'No sections available' :
+                     selectedSection || 'Select Section'
                     }
                   </span>
                   {!classesLoading && sections.length > 0 && (
@@ -546,21 +703,14 @@ export default function AnalyticsProf() {
                   )}
                 </button>
                 {openSection && sections.length > 0 && (
-                  <div className="absolute top-full mt-1 bg-white rounded-md w-full shadow-lg border border-gray-200 z-20">
-                    <button 
-                      className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-sm sm:text-base text-[#465746] border-b border-gray-100"
-                      onClick={() => { 
-                        setSelectedSection('');
-                        setOpenSection(false);
-                      }}>
-                      All Sections
-                    </button>
+                  <div className="absolute top-full mt-1 bg-white rounded-md w-full shadow-lg border border-gray-200 z-20 max-h-60 overflow-y-auto">
                     {sections.map((section) => (
                       <button 
                         key={section}
-                        className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-sm sm:text-base text-[#465746]"
+                        className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-sm sm:text-base text-[#465746] border-b border-gray-100 last:border-b-0"
                         onClick={() => { 
                           setSelectedSection(section);
+                          setSelectedSubject(""); // Reset subject when section changes
                           setOpenSection(false);
                         }}>
                         {section}
@@ -573,19 +723,27 @@ export default function AnalyticsProf() {
               {/* Subject Dropdown */}
               <div className="relative w-full sm:w-auto sm:min-w-[200px] lg:min-w-[250px]">
                 <button
-                  onClick={() => { setOpenSubject(!openSubject); setOpenSection(false); }}
-                  className="flex w-full items-center justify-between font-bold px-3 py-2 sm:py-2.5 bg-[#fff] rounded-md cursor-pointer shadow-md text-sm sm:text-base text-[#465746]"
-                  disabled={classesLoading || filteredClasses.length === 0}
+                  onClick={() => { 
+                    if (selectedSection) {
+                      setOpenSubject(!openSubject); 
+                      setOpenSection(false); 
+                    }
+                  }}
+                  className={`flex w-full items-center justify-between font-bold px-3 py-2 sm:py-2.5 bg-[#fff] rounded-md cursor-pointer shadow-md text-sm sm:text-base ${
+                    !selectedSection ? 'text-gray-400 cursor-not-allowed' : 'text-[#465746]'
+                  }`}
+                  disabled={classesLoading || getFilteredSubjects.length === 0 || !selectedSection}
                 >
                   <span>
                     {classesLoading ? 'Loading classes...' : 
-                     filteredClasses.length === 0 ? 'No classes available' :
+                     !selectedSection ? 'Select Subject' :
+                     getFilteredSubjects.length === 0 ? 'No subjects available' :
                      selectedSubject ? 
-                      filteredClasses.find(cls => cls.subject_code === selectedSubject)?.subject_code || 'Select Subject' 
+                      getFilteredSubjects.find(cls => cls.subject_code === selectedSubject)?.subject_code || 'Select Subject' 
                       : 'Select Subject'
                     }
                   </span>
-                  {!classesLoading && filteredClasses.length > 0 && (
+                  {!classesLoading && getFilteredSubjects.length > 0 && selectedSection && (
                     <img 
                       src={ArrowDown} 
                       alt="ArrowDown" 
@@ -593,18 +751,20 @@ export default function AnalyticsProf() {
                     />
                   )}
                 </button>
-                {openSubject && filteredClasses.length > 0 && (
-                  <div className="absolute top-full mt-1 bg-white rounded-md w-full shadow-lg border border-gray-200 z-10">
-                    {filteredClasses.map((classItem) => (
+                {openSubject && getFilteredSubjects.length > 0 && selectedSection && (
+                  <div className="absolute top-full mt-1 bg-white rounded-md w-full shadow-lg border border-gray-200 z-10 max-h-60 overflow-y-auto">
+                    {getFilteredSubjects.map((classItem) => (
                       <button 
-                        key={classItem.subject_code}
-                        className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-sm sm:text-base text-[#465746]"
+                        key={`${classItem.subject_code}-${classItem.section}`}
+                        className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-sm sm:text-base text-[#465746] border-b border-gray-100 last:border-b-0"
                         onClick={() => { 
                           setSelectedSubject(classItem.subject_code);
                           setOpenSubject(false);
                         }}>
-                        {classItem.subject_code} - {getSubjectName(classItem)}
-                        {classItem.section && ` (${classItem.section})`}
+                        <div className="font-medium">{classItem.subject_code}</div>
+                        <div className="text-xs text-gray-600">
+                          {getSubjectName(classItem)}
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -625,14 +785,11 @@ export default function AnalyticsProf() {
           </div>
 
           {/* No Classes Message */}
-          {!classesLoading && filteredClasses.length === 0 && (
+          {!classesLoading && classes.length === 0 && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center mb-6">
               <h3 className="font-bold text-lg text-yellow-800 mb-2">No Classes Found</h3>
-              <p className="text-yellow-700 mb-4">
-                {selectedSection 
-                  ? `No classes found for section "${selectedSection}". Try selecting a different section.`
-                  : 'You don\'t have any classes assigned. Please contact administration to get assigned to classes.'
-                }
+              <p className="text-yellow-700">
+                You don't have any classes assigned. Please contact administration to get assigned to classes.
               </p>
             </div>
           )}
@@ -646,30 +803,45 @@ export default function AnalyticsProf() {
             <div className="bg-[#fff] p-6 rounded-lg shadow-md text-center">
               <p className="text-[#465746]">Loading analytics data...</p>
             </div>
-          ) : analyticsData && filteredClasses.length > 0 ? (
+          ) : analyticsData && selectedSubject && selectedSection ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
               {/* Attendance Pie Chart */}
               <div className="bg-[#fff] p-4 sm:p-6 rounded-lg shadow-md">
                 <h3 className="font-bold text-lg mb-4 text-[#465746]">Attendance Overview</h3>
-                <div className="h-64 min-h-0">
+                <div className="h-64 sm:h-80 min-h-0">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart style={{ outline: 'none' }}>
                       <Pie
                         data={attendanceChartData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
                         label={CustomPieLabel}
-                        outerRadius={80}
+                        outerRadius="70%" 
                         fill="#8884d8"
                         dataKey="value"
+                        activeShape={false}
                       >
                         {attendanceChartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
-                      <Legend />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #ddd', 
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          fontSize: '12px'
+                        }}
+                        itemStyle={{ fontSize: '12px', padding: '2px 0' }}
+                        wrapperStyle={{ zIndex: 1000 }}
+                      />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '5px' }}
+                        iconSize={15}
+                        className="text-sm sm:text-lg"
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -683,25 +855,40 @@ export default function AnalyticsProf() {
               {/* Activities Pie Chart */}
               <div className="bg-[#fff] p-4 sm:p-6 rounded-lg shadow-md">
                 <h3 className="font-bold text-lg mb-4 text-[#465746]">Activities Submission</h3>
-                <div className="h-64 min-h-0">
+                <div className="h-64 sm:h-80 min-h-0">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart style={{ outline: 'none' }}>
                       <Pie
                         data={activitiesChartData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
                         label={CustomPieLabel}
-                        outerRadius={80}
+                        outerRadius="70%"  // Change from 80 to "60%" for responsive sizing
                         fill="#8884d8"
                         dataKey="value"
+                        activeShape={false}
                       >
                         {activitiesChartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
-                      <Legend />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'white', 
+                          border: '1px solid #ddd', 
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          fontSize: '12px'
+                        }}
+                        itemStyle={{ fontSize: '12px', padding: '2px 0' }}
+                        wrapperStyle={{ zIndex: 1000 }}
+                      />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '5px' }}
+                        iconSize={15}
+                        className="text-sm sm:text-lg"
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -709,7 +896,7 @@ export default function AnalyticsProf() {
                   <p className="text-sm text-[#465746]">
                     Overall Submission Rate: <strong>{analyticsData.activitiesSummary.submissionRate}%</strong>
                   </p>
-                  <p className="text-sm text-[#FFC107]">
+                  <p className="text-sm text-[#2196F3]">
                     Late Submissions: <strong>{analyticsData.activitiesSummary.late}</strong>
                   </p>
                 </div>
@@ -717,12 +904,21 @@ export default function AnalyticsProf() {
 
               {/* Student Performance Bar Chart */}
               <div className="bg-[#fff] p-4 sm:p-6 rounded-lg shadow-md lg:col-span-2">
-                <h3 className="font-bold text-lg mb-4 text-[#465746]">Top Student Performance</h3>
-                <div className="h-80 min-h-0">
+                <h3 className="font-bold text-lg mb-4 text-[#465746]">
+                  Top Student Performance - Section {selectedSection}
+                </h3>
+                <div className="h-60 sm:h-80 min-h-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={performanceChartData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                      margin={{ 
+                        top: 10, 
+                        right: 10, 
+                        left: 0, 
+                        bottom: 20
+                      }}
+                      className="text-sm sm:text-lg"
+                      style={{ outline: 'none' }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
@@ -732,28 +928,44 @@ export default function AnalyticsProf() {
                         height={60} 
                         interval={0}
                         tick={{ fontSize: 12 }}
+                        tickMargin={5} 
                       />
                       <YAxis 
-                        label={{ value: 'Percentage (%)', angle: -90, position: 'insideLeft' }} 
+                        label={{ 
+                          value: 'Percentage (%)', 
+                          angle: -90, 
+                          style: { fontSize: 12 } 
+                        }} 
                         domain={[0, 100]}
+                        tick={{ fontSize: 12 }}
                       />
-                      <Tooltip content={<CustomBarTooltip />} />
-                      <Legend />
-                      <Bar dataKey="Attendance" fill="#00A15D" name="Attendance Rate" />
-                      <Bar dataKey="Submission" fill="#2196F3" name="Submission Rate" />
+                      <Tooltip 
+                        content={<CustomBarTooltip />}
+                        wrapperStyle={{ zIndex: 1000 }}
+                        cursor={{ fill: 'rgba(0, 161, 93, 0.1)' }}
+                      />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '10px' }}
+                        iconSize={15}
+                        className="text-sm sm:text-lg"
+                      />
+                      <Bar dataKey="Attendance" fill="#00A15D" name="Attendance Rate" barSize={40} maxBarSize={60} />
+                      <Bar dataKey="Submission" fill="#2196F3" name="Submission Rate" barSize={40} maxBarSize={60} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             </div>
-          ) : !classesLoading && filteredClasses.length > 0 ? (
+          ) : !classesLoading && classes.length > 0 ? (
             <div className="bg-[#fff] p-6 rounded-lg shadow-md text-center">
-              <p className="text-[#465746]">Select a subject to view analytics</p>
+              <p className="text-[#465746]">
+                {!selectedSection ? 'Please select a section to view analytics' : 'Please select a subject to view analytics'}
+              </p>
             </div>
           ) : null}
 
-          {/* ActivityOverview component - Only show if we have classes */}
-          {!classesLoading && filteredClasses.length > 0 && (
+          {/* ActivityOverview component - Only show if we have classes and both selections made */}
+          {!classesLoading && selectedSubject && selectedSection && (
             <ActivityOverview
               quizzesList={activitiesData.quizzes}
               assignmentsList={activitiesData.assignments}
@@ -761,119 +973,179 @@ export default function AnalyticsProf() {
               projectsList={activitiesData.projects}
               selectedFilter={selectedFilter}
               setSelectedFilter={setSelectedFilter}
+              selectedSubject={selectedSubject}
               selectedSection={selectedSection}
-              setSelectedSection={setSelectedSection}
-              sections={sections}
+              getCurrentSubjectName={getCurrentSubjectName}
             />
           )}
 
           {/* Only show activity list and student tracking if we have classes and analytics data */}
-          {!classesLoading && filteredClasses.length > 0 && (
+          {!classesLoading && selectedSubject && selectedSection && (
             <>
-              {/* ACTIVITY LIST */}
-              <div className="bg-[#fff] p-4 sm:p-5 rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 text-[#465746]">
-                <p className="font-bold mb-3 sm:mb-4 text-base sm:text-lg lg:text-xl">
-                  {displayedLabel}
-                </p>
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-                    <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left p-2 sm:p-3 font-bold">Task</th>
-                          <th className="text-left p-2 sm:p-3 font-bold">Title</th>
-                          <th className="text-left p-2 sm:p-3 font-bold text-[#00A15D]">Submitted</th>
-                          <th className="text-left p-2 sm:p-3 font-bold text-[#FFC107]">Late</th>
-                          <th className="text-left p-2 sm:p-3 font-bold text-[#FF6666]">Missing</th>
-                          <th className="text-left p-2 sm:p-3 font-bold">Deadline</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {displayedList.length > 0 ? (
-                          displayedList.map(item => (
-                            <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="p-2 sm:p-3 whitespace-nowrap">{item.task}</td>
-                              <td className="p-2 sm:p-3">{item.title}</td>
-                              <td className="p-2 sm:p-3 text-[#00A15D]">{item.submitted}</td>
-                              <td className="p-2 sm:p-3 text-[#FFC107]">{item.late || 0}</td>
-                              <td className="p-2 sm:p-3 text-[#FF6666]">{item.missing}</td>
-                              <td className="p-2 sm:p-3 whitespace-nowrap">{item.deadline}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="6" className="p-2 sm:p-3 text-center text-gray-500">
-                              No {displayedLabel.toLowerCase()} found
+          {/* ACTIVITY LIST */}
+          <div className="bg-[#fff] p-4 sm:p-5 rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 text-[#465746]">
+            <p className="font-bold mb-3 sm:mb-4 text-base sm:text-lg lg:text-xl">
+              {displayedLabel} - {getCurrentSubjectName()} (Section {selectedSection})
+            </p>
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left p-2 sm:p-3 font-bold">Task</th>
+                      <th className="text-left p-2 sm:p-3 font-bold">Title</th>
+                      <th className="text-left p-2 sm:p-3 font-bold text-[#00A15D]">Submitted</th>
+                      <th className="text-left p-2 sm:p-3 font-bold text-[#2196F3]">Late</th>
+                      <th className="text-left p-2 sm:p-3 font-bold text-[#F59E0B]">Pending</th>
+                      <th className="text-left p-2 sm:p-3 font-bold text-[#FF6666]">Missing</th>
+                      <th className="text-left p-2 sm:p-3 font-bold">Deadline</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentActivities.length > 0 ? (
+                      currentActivities.map(item => {
+                        const hasLate = item.late && item.late > 0;
+                        const hasPending = item.pending && item.pending > 0;
+                        const hasMissing = item.missing && item.missing > 0;
+                        
+                        return (
+                          <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="p-2 sm:p-3 whitespace-nowrap">{item.task}</td>
+                            <td className="p-2 sm:p-3">{item.title}</td>
+                            
+                            {/* Submitted Column */}
+                            <td className="p-2 sm:p-3 text-[#00A15D]">
+                              {item.submitted > 0 ? (
+                                <img src={CheckSubmitted} alt="Submitted" className="w-5 h-5 sm:w-6 sm:h-6" />
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </td>
+                            
+                            {/* Late Column */}
+                            <td className="p-2 sm:p-3 text-[#2196F3]">
+                              {hasLate ? (
+                                <img src={CheckLate} alt="Late" className="w-5 h-5 sm:w-6 sm:h-6" />
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </td>
+                            
+                            {/* Pending Column */}
+                            <td className="p-2 sm:p-3 text-[#F59E0B]">
+                              {hasPending ? (
+                               <img src={CheckPending} alt="Pending" className="w-5 h-5 sm:w-6 sm:h-6" />
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </td>
+                            
+                            {/* Missing Column */}
+                            <td className="p-2 sm:p-3 text-[#FF6666]">
+                              {hasMissing ? (
+                                <img src={Cross} alt="Missing" className="w-5 h-5 sm:w-6 sm:h-6" />
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </td>
+                            
+                            <td className="p-2 sm:p-3 whitespace-nowrap">{item.deadline}</td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="p-2 sm:p-3 text-center text-gray-500">
+                          No {displayedLabel.toLowerCase()} found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Activity List Pagination */}
+            <Pagination
+              currentPage={activityCurrentPage}
+              totalPages={activityTotalPages}
+              onPageChange={handleActivityPageChange}
+              dataType="activities"
+            />
+          </div>
+
+            {/* Student Attendance Tracking */}
+            <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 p-4 sm:p-5 text-[#465746]">
+              <p className="text-base sm:text-lg lg:text-xl font-bold">
+                Student Attendance Tracking - {getCurrentSubjectName()} (Section {selectedSection})
+              </p>
+              <hr className="border-[#465746]/30 my-3 sm:my-4" />
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                  <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">No.</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student No.</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student Name</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Present</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Absent</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Submitted</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late Sub</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#F59E0B]">Pending</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Missed</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentAttendance.length > 0 ? (
+                        currentAttendance.map((student, index) => (
+                          <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3">{attendanceStartIndex + index + 1}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.id}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.name}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.presentCount}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3]">{student.lateCount}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.absentCount}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.submittedCount}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3]">{student.lateSubmissionCount}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#F59E0B]">{student.pendingCount}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.missingCount}</td>
+                            <td className="px-2 sm:px-4 py-2 sm:py-3">
+                              <Link 
+                                to={`/AnalyticsIndividualInfo?student_id=${student.id}&subject_code=${selectedSubject}&section=${selectedSection}`}
+                                state={{ 
+                                  student: student,
+                                  subjectCode: selectedSubject,
+                                  section: selectedSection
+                                }}
+                              >
+                                <img src={Details} alt="Details" className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-70" />
+                              </Link>
                             </td>
                           </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="11" className="px-2 sm:px-4 py-2 sm:py-3 text-center text-gray-500">
+                            No student data available
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              {/* Student Attendance Tracking */}
-              <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 p-4 sm:p-5 text-[#465746]">
-                <p className="text-base sm:text-lg lg:text-xl font-bold">
-                  Student Attendance Tracking
-                </p>
-                <hr className="border-[#465746]/30 my-3 sm:my-4" />
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-                    <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">No.</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student No.</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student Name</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Present</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FFC107]">Late</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Absent</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Submitted</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FFC107]">Late Sub</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Missed</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">Details</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {analyticsData?.studentPerformance && analyticsData.studentPerformance.length > 0 ? (
-                          analyticsData.studentPerformance.slice(0, 5).map((student, index) => (
-                            <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="px-2 sm:px-4 py-2 sm:py-3">{index + 1}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.id}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.name}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.presentCount}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FFC107]">{student.lateCount}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.absentCount}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.submittedCount}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FFC107]">{student.lateSubmissionCount}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.missingCount}</td>
-                              <td className="px-2 sm:px-4 py-2 sm:py-3">
-                                <Link 
-                                  to="/AnalyticsIndividualInfo" 
-                                  state={{ 
-                                    student: student,
-                                    subjectCode: selectedSubject
-                                  }}
-                                >
-                                  <img src={Details} alt="Details" className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-70" />
-                                </Link>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="10" className="px-2 sm:px-4 py-2 sm:py-3 text-center text-gray-500">
-                              No student data available
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+              {/* Attendance Tracking Pagination */}
+              <Pagination
+                currentPage={attendanceCurrentPage}
+                totalPages={attendanceTotalPages}
+                onPageChange={handleAttendancePageChange}
+                dataType="attendance"
+              />
+            </div>
             </>
           )}
         </div>

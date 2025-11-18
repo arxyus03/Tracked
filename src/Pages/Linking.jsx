@@ -41,7 +41,6 @@ import ProfileStudent from './Student/ProfileStudent.jsx';
 import AccountSetting from './Student/AccountSetting.jsx';
 import AttendanceHistoryStudent from './Student/AttendanceHistoryStudent.jsx';
 import SubjectDetailsStudent from './Student/SubjectDetailsStudent.jsx';
-import ArchiveClassStudent from './Student/ArchiveClassStudent.jsx';
 
 // Super Admin Links
 import SuperAdminAccountList from './SuperAdmin/SuperAdminAccountList.jsx';
@@ -101,7 +100,6 @@ function Linking() {
         <Route path="/AccountSetting" element={<AccountSetting />} />
         <Route path="/AttendanceHistoryStudent" element={<AttendanceHistoryStudent />} />
         <Route path="/SubjectDetailsStudent" element={<SubjectDetailsStudent />} />
-        <Route path="/ArchiveClassStudent" element={<ArchiveClassStudent />} />
 
         {/* Navigations for Super Admin */}
         <Route path="/SuperAdminAccountList" element={<SuperAdminAccountList />} />
