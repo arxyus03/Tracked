@@ -49,7 +49,7 @@ export default function NotificationStudent() {
       
       console.log("Sending request to PHP with student ID:", studentId); // Debug log
       
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Student/NotificationstudentDB/get_student_announcements.php', {
+      const response = await fetch('https://tracked.6minds.site/Student/NotificationStudentDB/get_student_announcements.php', {
         method: 'POST',
         body: formData
       });
@@ -76,10 +76,29 @@ export default function NotificationStudent() {
     }
   };
 
+  const handleMarkAsRead = (announcementId) => {
+    // Update local state
+    setAnnouncements(prev => prev.map(ann => 
+      ann.id === announcementId ? { ...ann, isRead: true } : ann
+    ));
+    
+    // Here you can also make an API call to update read status in the database
+    console.log(`Marked announcement ${announcementId} as read`);
+  };
+
+  const handleMarkAsUnread = (announcementId) => {
+    // Update local state
+    setAnnouncements(prev => prev.map(ann => 
+      ann.id === announcementId ? { ...ann, isRead: false } : ann
+    ));
+    
+    console.log(`Marked announcement ${announcementId} as unread`);
+  };
+
   // Filter announcements based on search query and filter option
   const filteredAnnouncements = announcements.filter(announcement => {
     const matchesSearch = announcement.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         announcement.description?.toLowerCase().includes(searchQuery.toLowerCase());
+                         announcement.instructions?.toLowerCase().includes(searchQuery.toLowerCase());
     
     if (filterOption === "All") return matchesSearch;
     if (filterOption === "Unread") return matchesSearch && !announcement.isRead;
@@ -91,7 +110,7 @@ export default function NotificationStudent() {
 
   // Sort announcements by date (newest first)
   const sortedAnnouncements = [...filteredAnnouncements].sort((a, b) => 
-    new Date(b.created_at) - new Date(a.created_at)
+    new Date(b.datePosted) - new Date(a.datePosted)
   );
 
   if (loading) {
@@ -224,17 +243,18 @@ export default function NotificationStudent() {
             ) : (
               sortedAnnouncements.map((announcement) => (
                 <NotificationCard
-                  key={announcement.announcement_ID}
+                  key={announcement.id}
+                  subject={announcement.subject}
                   title={announcement.title}
-                  description={announcement.description}
-                  date={new Date(announcement.created_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
+                  postedBy={announcement.postedBy}
+                  datePosted={announcement.datePosted}
+                  deadline={announcement.deadline}
+                  instructions={announcement.instructions}
+                  link={announcement.link}
+                  section={announcement.section}
                   isRead={announcement.isRead || false}
-                  // Optional: You can pass additional data if needed
-                  className={announcement.classroom_ID}
+                  onMarkAsRead={() => handleMarkAsRead(announcement.id)}
+                  onMarkAsUnread={() => handleMarkAsUnread(announcement.id)}
                 />
               ))
             )}

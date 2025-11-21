@@ -16,7 +16,6 @@ export default function Announcement() {
   
   // Modal form states
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
@@ -24,7 +23,6 @@ export default function Announcement() {
   
   // Dropdown states for modal
   const [subjectDropdownOpen, setSubjectDropdownOpen] = useState(false);
-  const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
 
   // Editing state
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
@@ -138,28 +136,22 @@ export default function Announcement() {
     fetchAnnouncements();
   }, []);
 
-  // Get unique subjects from classes
+  // Get unique subjects from classes - FIXED VERSION
   const getUniqueSubjects = () => {
-    const subjects = classes.map(classItem => ({
-      subject_code: classItem.subject_code,
-      subject_name: classItem.subject
-    }));
+    // Use a Map to ensure uniqueness by subject_code while keeping the first occurrence
+    const subjectMap = new Map();
     
-    // Remove duplicates based on subject_code
-    const uniqueSubjects = subjects.filter((subject, index, self) =>
-      index === self.findIndex(s => s.subject_code === subject.subject_code)
-    );
+    classes.forEach(classItem => {
+      if (!subjectMap.has(classItem.subject_code)) {
+        subjectMap.set(classItem.subject_code, {
+          subject_code: classItem.subject_code,
+          subject_name: classItem.subject,
+          section: classItem.section
+        });
+      }
+    });
     
-    return uniqueSubjects;
-  };
-
-  // Get sections for selected subject
-  const getSectionsForSubject = () => {
-    if (!selectedSubject) return [];
-    
-    return classes
-      .filter(classItem => classItem.subject_code === selectedSubject)
-      .map(classItem => classItem.section);
+    return Array.from(subjectMap.values());
   };
 
   // Handle marking announcement as read
@@ -330,7 +322,6 @@ export default function Announcement() {
   // Reset form function
   const resetForm = () => {
     setSelectedSubject("");
-    setSelectedSection("");
     setTitle("");
     setDescription("");
     setLink("");
@@ -378,7 +369,6 @@ export default function Announcement() {
     )?.subject_code || "";
     
     setSelectedSubject(subjectCode);
-    setSelectedSection(announcement.section || "");
     setTitle(announcement.title);
     setDescription(announcement.instructions);
     setLink(announcement.link === "#" ? "" : announcement.link);
@@ -435,11 +425,6 @@ export default function Announcement() {
       if (subjectDropdownOpen && !event.target.closest('.subject-dropdown')) {
         setSubjectDropdownOpen(false);
       }
-      
-      // Close section dropdown
-      if (sectionDropdownOpen && !event.target.closest('.section-dropdown')) {
-        setSectionDropdownOpen(false);
-      }
     };
 
     document.addEventListener('click', handleClickOutside);
@@ -447,7 +432,7 @@ export default function Announcement() {
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [filterDropdownOpen, subjectDropdownOpen, sectionDropdownOpen]);
+  }, [filterDropdownOpen, subjectDropdownOpen]);
 
   return (
     <div>
@@ -643,13 +628,18 @@ export default function Announcement() {
                   onClick={(e) => {
                     e.stopPropagation();
                     setSubjectDropdownOpen(!subjectDropdownOpen);
-                    setSectionDropdownOpen(false);
                   }}
                   className="w-full bg-white border-2 border-gray-300 text-black rounded-md px-4 py-3 flex items-center justify-between hover:border-[#00874E] active:border-[#00874E] focus:border-[#00874E] focus:outline-none transition-colors cursor-pointer touch-manipulation"
                 >
                   <span className={`text-sm ${!selectedSubject ? 'text-gray-500' : ''}`}>
-                    {selectedSubject ? getUniqueSubjects().find(subj => subj.subject_code === selectedSubject)?.subject_name : "Select Subject"}
-                  </span>
+                  {selectedSubject 
+                    ? (() => {
+                        const selectedSubj = getUniqueSubjects().find(subj => subj.subject_code === selectedSubject);
+                        return `${selectedSubj?.subject_name} (${selectedSubj?.subject_code}) - ${selectedSubj?.section}`;
+                      })()
+                    : "Select Subject"
+                  }
+                </span>
                   <img 
                     src={ArrowDown} 
                     alt="" 
@@ -667,62 +657,15 @@ export default function Announcement() {
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedSubject(subject.subject_code);
-                            setSelectedSection(""); // Reset section when subject changes
                             setSubjectDropdownOpen(false);
                           }}
                           className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer touch-manipulation"
                         >
-                          {subject.subject_name}
+                          {subject.subject_name} ({subject.subject_code}) - {subject.section}
                         </button>
                       ))
                     ) : (
                       <div className="px-4 py-3 text-sm text-gray-500">No subjects found. Create a class first.</div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Section Dropdown */}
-              <div className="relative section-dropdown">
-                <label className="text-sm font-semibold mb-2 block text-gray-700">Section</label>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSectionDropdownOpen(!sectionDropdownOpen);
-                    setSubjectDropdownOpen(false);
-                  }}
-                  disabled={!selectedSubject}
-                  className={`w-full bg-white border-2 border-gray-300 text-black rounded-md px-4 py-3 flex items-center justify-between hover:border-[#00874E] active:border-[#00874E] focus:border-[#00874E] focus:outline-none transition-colors cursor-pointer touch-manipulation ${
-                    !selectedSubject ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <span className={`text-sm ${!selectedSection ? 'text-gray-500' : ''}`}>
-                    {selectedSection || "Select Section"}
-                  </span>
-                  <img 
-                    src={ArrowDown} 
-                    alt="" 
-                    className={`h-4 w-4 transition-transform ${sectionDropdownOpen ? 'rotate-180' : ''}`} 
-                  />
-                </button>
-                {sectionDropdownOpen && selectedSubject && (
-                  <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-xl border border-gray-200 z-10 max-h-40 overflow-y-auto">
-                    {getSectionsForSubject().length > 0 ? (
-                      getSectionsForSubject().map((section) => (
-                        <button
-                          key={section}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedSection(section);
-                            setSectionDropdownOpen(false);
-                          }}
-                          className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer touch-manipulation"
-                        >
-                          {section}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-gray-500">No sections found for this subject</div>
                     )}
                   </div>
                 )}

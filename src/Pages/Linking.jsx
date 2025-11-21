@@ -57,7 +57,7 @@ function Linking() {
     <Router basename="/">
       <Routes>
         {/* Starting Flow */} 
-        <Route path="/" />  
+        <Route path="https://tracked.6minds.site/" />  
         
         {/* Navigations for Landing */}
         <Route path="/Login" element={<Login />} />

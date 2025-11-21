@@ -1,6 +1,6 @@
 <?php
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Access-Control-Allow-Credentials: true");
@@ -12,9 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Database configuration
 $host = 'localhost';
-$dbname = 'tracked';
-$username = 'root';
-$password = '';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 // Create connection
 try {
@@ -28,11 +28,7 @@ try {
 // Get student ID from request
 $studentId = $_POST['student_id'] ?? '';
 
-// Debug logging
-error_log("Received student ID: " . $studentId);
-
 if (empty($studentId)) {
-    error_log("Student ID is empty");
     echo json_encode(['success' => false, 'message' => 'Student ID is required']);
     exit;
 }
@@ -40,48 +36,52 @@ if (empty($studentId)) {
 try {
     // Get all classes the student is enrolled in
     $stmt = $pdo->prepare("
-        SELECT subject_code 
-        FROM student_classes 
-        WHERE student_ID = ? AND archived = 0
+        SELECT sc.subject_code, c.subject, c.section, c.professor_ID
+        FROM student_classes sc
+        JOIN classes c ON sc.subject_code = c.subject_code
+        WHERE sc.student_ID = ? AND sc.archived = 0
     ");
     $stmt->execute([$studentId]);
     $studentClasses = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    error_log("Found " . count($studentClasses) . " classes for student: " . $studentId);
-    
     if (empty($studentClasses)) {
-        error_log("No classes found for student");
         echo json_encode(['success' => true, 'announcements' => []]);
         exit;
     }
     
     // Extract subject codes
     $subjectCodes = array_column($studentClasses, 'subject_code');
-    error_log("Subject codes: " . implode(', ', $subjectCodes));
     
     // Create placeholders for the IN clause
     $placeholders = str_repeat('?,', count($subjectCodes) - 1) . '?';
     
-    // Get announcements for these classes - FIXED: removed user name fields
+    // Get announcements with professor information - FIXED field names and formatting
     $stmt = $pdo->prepare("
         SELECT 
-            a.announcement_ID,
-            a.professor_ID,
-            a.classroom_ID,
-            a.title,
-            a.description,
-            a.link,
-            a.deadline,
-            a.created_at,
-            a.updated_at
+            a.announcement_ID as id,
+            c.subject as subject,
+            a.title as title,
+            CONCAT(t.tracked_firstname, ' ', t.tracked_lastname) as postedBy,
+            DATE_FORMAT(a.created_at, '%M %e, %Y') as datePosted,
+            CASE 
+                WHEN a.deadline IS NOT NULL THEN 
+                    CONCAT(DATE_FORMAT(a.deadline, '%M %e, %Y'), ' | ', DATE_FORMAT(a.deadline, '%l:%i%p'))
+                ELSE NULL
+            END as deadline,
+            a.description as instructions,
+            COALESCE(NULLIF(a.link, ''), '#') as link,
+            c.section as section
         FROM announcements a
+        JOIN classes c ON a.classroom_ID = c.subject_code
+        JOIN tracked_users t ON a.professor_ID = t.tracked_ID
         WHERE a.classroom_ID IN ($placeholders)
         ORDER BY a.created_at DESC
     ");
     $stmt->execute($subjectCodes);
     $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    error_log("Found " . count($announcements) . " announcements");
+    // Debug output to see what data is being returned
+    error_log("Announcements data: " . json_encode($announcements));
     
     // Add isRead property
     foreach ($announcements as &$announcement) {
@@ -91,11 +91,10 @@ try {
     echo json_encode([
         'success' => true,
         'announcements' => $announcements,
-        'debug_info' => [
+        'debug' => [
             'student_id' => $studentId,
             'classes_count' => count($studentClasses),
-            'announcements_count' => count($announcements),
-            'subject_codes' => $subjectCodes
+            'announcements_count' => count($announcements)
         ]
     ]);
     
