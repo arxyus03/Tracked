@@ -387,18 +387,24 @@ export default function AnalyticsAttendanceInfo() {
             </div>
           </div>
 
+          {/* UPDATED BACK BUTTON - FIXED */}
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <p className="text-sm sm:text-base lg:text-lg">
               Student Attendance Details - {getSubjectName()} {section && `- Section ${section}`}
             </p>
             <Link 
               to="/AnalyticsIndividualInfo" 
+              state={{
+                student: attendanceData?.student,
+                subjectCode: subjectCode,
+                section: section
+              }}
               className="flex items-center gap-2 hover:opacity-70 transition-opacity"
             >
               <img 
                 src={BackButton} 
                 alt="BackButton" 
-                className="h-5 w-5 sm:h-6 sm:w-6 sm:hidden" 
+                className="h-5 w-5 sm:h-6 sm:w-6" 
               />
             </Link>
           </div>

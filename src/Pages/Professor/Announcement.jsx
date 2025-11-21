@@ -600,11 +600,11 @@ export default function Announcement() {
             <button
               onClick={handleModalClose}
               aria-label="Close modal"
-              className="absolute top-4 right-4 p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors cursor-pointer touch-manipulation sm:hidden"
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors cursor-pointer touch-manipulation"
             >
               <img
                 src={BackButton}
-                alt="Close"
+                alt="BackButton"
                 className="w-5 h-5"
               />
             </button>

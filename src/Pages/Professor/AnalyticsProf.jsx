@@ -10,10 +10,6 @@ import Analytics from '../../assets/Analytics(Light).svg';
 import ArrowDown from '../../assets/ArrowDown(Light).svg';
 import Search from "../../assets/Search.svg";
 import Details from '../../assets/Details(Light).svg';
-import CheckSubmitted from '../../assets/CheckTable(Green).svg';
-import CheckPending from '../../assets/PendingTable(Yellow).svg';
-import CheckLate from '../../assets/LateTable(Blue).svg';
-import Cross from '../../assets/CrossTable(Red).svg';
 import ArrowLeft from '../../assets/ArrowLeft.svg';
 import ArrowRight from '../../assets/ArrowRight.svg';
 
@@ -35,6 +31,9 @@ export default function AnalyticsProf() {
   const [activityCurrentPage, setActivityCurrentPage] = useState(1);
   const [attendanceCurrentPage, setAttendanceCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Search state for Activity List
+  const [activitySearchTerm, setActivitySearchTerm] = useState("");
 
   // Colors for charts
   const COLORS = ['#00A15D', '#FF6666', '#2196F3', '#FFC107', '#9C27B0'];
@@ -59,6 +58,11 @@ export default function AnalyticsProf() {
     setActivityCurrentPage(1);
     setAttendanceCurrentPage(1);
   }, [selectedFilter, selectedSubject, selectedSection]);
+
+  // Reset search and pagination when search term changes
+  useEffect(() => {
+    setActivityCurrentPage(1);
+  }, [activitySearchTerm]);
 
   // Fetch classes for the professor when professorId is available
   useEffect(() => {
@@ -151,7 +155,7 @@ export default function AnalyticsProf() {
       // Set empty analytics data structure
       setAnalyticsData({
         attendanceSummary: { present: 0, absent: 0, late: 0, total: 0, attendanceRate: 0 },
-        activitiesSummary: { submitted: 0, missing: 0, late: 0, total: 0, submissionRate: 0 },
+        activitiesSummary: { submitted: 0, missing: 0, pending: 0, late: 0, total: 0, submissionRate: 0 },
         studentPerformance: [],
         rawActivities: []
       });
@@ -222,10 +226,16 @@ export default function AnalyticsProf() {
     let totalSubmitted = 0;
     let totalMissing = 0;
     let totalLate = 0;
+    let totalPending = 0; // Add this for pending count
     let totalEntries = 0;
 
     activities.forEach(activity => {
       if (!Array.isArray(activity.students)) return;
+      
+      const currentDate = new Date();
+      const deadlineDate = activity.deadline ? new Date(activity.deadline) : null;
+      const isPastDeadline = deadlineDate && deadlineDate < currentDate;
+      
       activity.students.forEach(student => {
         totalEntries++;
         const submitted = student.submitted === true || student.submitted === 1 || student.submitted === '1';
@@ -237,7 +247,12 @@ export default function AnalyticsProf() {
             totalLate++;
           }
         } else {
-          totalMissing++;
+          // FIX: Only count as missing if past deadline, otherwise count as pending
+          if (isPastDeadline) {
+            totalMissing++;
+          } else {
+            totalPending++; // Count as pending if not past deadline
+          }
         }
       });
     });
@@ -245,6 +260,7 @@ export default function AnalyticsProf() {
     return {
       submitted: totalSubmitted,
       missing: totalMissing,
+      pending: totalPending, // Include pending in the summary
       late: totalLate,
       total: totalEntries,
       submissionRate: totalEntries > 0 ? ((totalSubmitted / totalEntries) * 100).toFixed(1) : 0
@@ -252,141 +268,141 @@ export default function AnalyticsProf() {
   };
 
   const calculateStudentPerformance = (attendanceHistory, activities) => {
-  const studentMap = new Map();
+    const studentMap = new Map();
 
-  // Helper functions
-  const getIdFrom = (studentObj) => {
-    return studentObj?.student_ID ?? studentObj?.user_ID ?? null;
-  };
-  
-  const getNameFrom = (studentObj) => {
-    return studentObj?.user_Name ?? studentObj?.userName ?? studentObj?.name ?? 'Unknown Student';
-  };
+    // Helper functions
+    const getIdFrom = (studentObj) => {
+      return studentObj?.student_ID ?? studentObj?.user_ID ?? null;
+    };
+    
+    const getNameFrom = (studentObj) => {
+      return studentObj?.user_Name ?? studentObj?.userName ?? studentObj?.name ?? 'Unknown Student';
+    };
 
-  // Initialize from attendance data
-  if (attendanceHistory.length > 0 && Array.isArray(attendanceHistory[0].students)) {
-    attendanceHistory[0].students.forEach(student => {
-      const id = getIdFrom(student);
-      const name = getNameFrom(student);
-      if (!id) return;
-      studentMap.set(id, {
-        name: name,
-        id,
-        presentCount: 0,
-        absentCount: 0,
-        lateCount: 0,
-        submittedCount: 0,
-        pendingCount: 0, // ADD THIS
-        missingCount: 0,
-        lateSubmissionCount: 0,
-        totalActivities: 0
+    // Initialize from attendance data
+    if (attendanceHistory.length > 0 && Array.isArray(attendanceHistory[0].students)) {
+      attendanceHistory[0].students.forEach(student => {
+        const id = getIdFrom(student);
+        const name = getNameFrom(student);
+        if (!id) return;
+        studentMap.set(id, {
+          name: name,
+          id,
+          presentCount: 0,
+          absentCount: 0,
+          lateCount: 0,
+          submittedCount: 0,
+          pendingCount: 0,
+          missingCount: 0,
+          lateSubmissionCount: 0,
+          totalActivities: 0
+        });
+      });
+    }
+
+    // Count attendance (keep existing code)
+    attendanceHistory.forEach(day => {
+      if (!Array.isArray(day.students)) return;
+      day.students.forEach(student => {
+        const id = getIdFrom(student);
+        if (!id) return;
+        
+        let studentData = studentMap.get(id);
+        if (!studentData) {
+          const name = getNameFrom(student);
+          studentData = {
+            name: name,
+            id,
+            presentCount: 0,
+            absentCount: 0,
+            lateCount: 0,
+            submittedCount: 0,
+            pendingCount: 0,
+            missingCount: 0,
+            lateSubmissionCount: 0,
+            totalActivities: 0
+          };
+          studentMap.set(id, studentData);
+        }
+
+        const status = String(student.status).toLowerCase();
+        if (status === 'present') {
+          studentData.presentCount++;
+        } else if (status === 'late') {
+          studentData.lateCount++;
+        } else {
+          studentData.absentCount++;
+        }
       });
     });
-  }
 
-  // Count attendance (keep existing code)
-  attendanceHistory.forEach(day => {
-    if (!Array.isArray(day.students)) return;
-    day.students.forEach(student => {
-      const id = getIdFrom(student);
-      if (!id) return;
+    // Count activity submissions - UPDATED
+    activities.forEach(activity => {
+      if (!Array.isArray(activity.students)) return;
       
-      let studentData = studentMap.get(id);
-      if (!studentData) {
-        const name = getNameFrom(student);
-        studentData = {
-          name: name,
-          id,
-          presentCount: 0,
-          absentCount: 0,
-          lateCount: 0,
-          submittedCount: 0,
-          pendingCount: 0, // ADD THIS
-          missingCount: 0,
-          lateSubmissionCount: 0,
-          totalActivities: 0
-        };
-        studentMap.set(id, studentData);
-      }
-
-      const status = String(student.status).toLowerCase();
-      if (status === 'present') {
-        studentData.presentCount++;
-      } else if (status === 'late') {
-        studentData.lateCount++;
-      } else {
-        studentData.absentCount++;
-      }
-    });
-  });
-
-  // Count activity submissions - UPDATED
-  activities.forEach(activity => {
-    if (!Array.isArray(activity.students)) return;
-    
-    const currentDate = new Date();
-    const deadlineDate = activity.deadline ? new Date(activity.deadline) : null;
-    const isPastDeadline = deadlineDate && deadlineDate < currentDate;
-    
-    activity.students.forEach(student => {
-      const id = getIdFrom(student);
-      if (!id) return;
+      const currentDate = new Date();
+      const deadlineDate = activity.deadline ? new Date(activity.deadline) : null;
+      const isPastDeadline = deadlineDate && deadlineDate < currentDate;
       
-      let studentData = studentMap.get(id);
-      if (!studentData) {
-        const name = getNameFrom(student);
-        studentData = {
-          name: name,
-          id,
-          presentCount: 0,
-          absentCount: 0,
-          lateCount: 0,
-          submittedCount: 0,
-          pendingCount: 0, // ADD THIS
-          missingCount: 0,
-          lateSubmissionCount: 0,
-          totalActivities: 0
-        };
-        studentMap.set(id, studentData);
-      }
-
-      studentData.totalActivities++;
-      const submitted = student.submitted === true || student.submitted === 1 || student.submitted === '1';
-      const late = student.late === true || student.late === 1 || student.late === '1';
-      
-      if (submitted) {
-        studentData.submittedCount++;
-        if (late) {
-          studentData.lateSubmissionCount++;
+      activity.students.forEach(student => {
+        const id = getIdFrom(student);
+        if (!id) return;
+        
+        let studentData = studentMap.get(id);
+        if (!studentData) {
+          const name = getNameFrom(student);
+          studentData = {
+            name: name,
+            id,
+            presentCount: 0,
+            absentCount: 0,
+            lateCount: 0,
+            submittedCount: 0,
+            pendingCount: 0,
+            missingCount: 0,
+            lateSubmissionCount: 0,
+            totalActivities: 0
+          };
+          studentMap.set(id, studentData);
         }
-      } else {
-        // FIX: Only count as missing if past deadline
-        if (isPastDeadline) {
-          studentData.missingCount++;
+
+        studentData.totalActivities++;
+        const submitted = student.submitted === true || student.submitted === 1 || student.submitted === '1';
+        const late = student.late === true || student.late === 1 || student.late === '1';
+        
+        if (submitted) {
+          studentData.submittedCount++;
+          if (late) {
+            studentData.lateSubmissionCount++;
+          }
         } else {
-          studentData.pendingCount++;
+          // FIX: Only count as missing if past deadline
+          if (isPastDeadline) {
+            studentData.missingCount++;
+          } else {
+            studentData.pendingCount++;
+          }
         }
-      }
+      });
     });
-  });
 
-  // Convert to array and calculate rates (keep existing code)
-  const studentArray = Array.from(studentMap.values());
+    // Convert to array and calculate rates (keep existing code)
+    const studentArray = Array.from(studentMap.values());
 
-  studentArray.forEach(s => {
-    const attendanceDenom = s.presentCount + s.absentCount + s.lateCount;
-    s.attendanceRate = attendanceDenom > 0 ? ((s.presentCount + s.lateCount) / attendanceDenom) * 100 : 0;
-    s.submissionRate = s.totalActivities > 0 ? (s.submittedCount / s.totalActivities) * 100 : 0;
-  });
+    studentArray.forEach(s => {
+      const attendanceDenom = s.presentCount + s.absentCount + s.lateCount;
+      s.attendanceRate = attendanceDenom > 0 ? ((s.presentCount + s.lateCount) / attendanceDenom) * 100 : 0;
+      s.submissionRate = s.totalActivities > 0 ? (s.submittedCount / s.totalActivities) * 100 : 0;
+    });
 
-  // Sort by performance
-  studentArray.sort((a, b) => {
-    if (b.submissionRate !== a.submissionRate) return b.submissionRate - a.submissionRate;
-    return b.attendanceRate - a.attendanceRate;
-  });
+    // Sort by performance
+    studentArray.sort((a, b) => {
+      if (b.submissionRate !== a.submissionRate) return b.submissionRate - a.submissionRate;
+      return b.attendanceRate - a.attendanceRate;
+    });
 
-  return studentArray;
-};
+    return studentArray;
+  };
 
   // Helper function to get subject name from class object
   const getSubjectName = (classItem) => {
@@ -446,9 +462,15 @@ export default function AnalyticsProf() {
         day: 'numeric'
       }) : 'No deadline';
 
+      // FIX: Include activity type in task display like the student version
+      const activityType = activity.activity_type?.toLowerCase();
+      const taskDisplay = activityType && activity.task_number 
+        ? `${activityType.charAt(0).toUpperCase() + activityType.slice(1)} ${activity.task_number}`
+        : activity.task_number || `Task ${activity.id}`;
+
       const activityItem = {
         id: activity.id,
-        task: activity.task_number || `Task ${activity.id}`,
+        task: taskDisplay, // FIXED: Now shows "Quiz 1" instead of just "1"
         title: activity.title || 'Untitled',
         submitted: submitted,
         missing: missing, // Only count as missing if past deadline
@@ -458,7 +480,6 @@ export default function AnalyticsProf() {
         isPastDeadline: isPastDeadline // Add this for reference
       };
 
-      const activityType = activity.activity_type?.toLowerCase();
       switch (activityType) {
         case 'quiz':
           quizzes.push(activityItem);
@@ -504,15 +525,29 @@ export default function AnalyticsProf() {
     }
   }, [selectedFilter, activitiesData]);
 
+  // Filter activities based on search term
+  const filteredActivities = useMemo(() => {
+    if (!activitySearchTerm.trim()) {
+      return displayedList;
+    }
+    
+    const searchTermLower = activitySearchTerm.toLowerCase().trim();
+    return displayedList.filter(activity => 
+      activity.task.toLowerCase().includes(searchTermLower) ||
+      activity.title.toLowerCase().includes(searchTermLower) ||
+      activity.deadline.toLowerCase().includes(searchTermLower)
+    );
+  }, [displayedList, activitySearchTerm]);
+
   const displayedLabel = selectedFilter === '' 
     ? 'All Activities' 
     : selectedFilter || 'Quizzes';
 
-  // Pagination calculations for activities
-  const activityTotalPages = Math.ceil(displayedList.length / itemsPerPage);
+  // Pagination calculations for activities (using filteredActivities)
+  const activityTotalPages = Math.ceil(filteredActivities.length / itemsPerPage);
   const activityStartIndex = (activityCurrentPage - 1) * itemsPerPage;
   const activityEndIndex = activityStartIndex + itemsPerPage;
-  const currentActivities = displayedList.slice(activityStartIndex, activityEndIndex);
+  const currentActivities = filteredActivities.slice(activityStartIndex, activityEndIndex);
 
   // Pagination calculations for student attendance
   const attendanceTotalPages = Math.ceil((analyticsData?.studentPerformance?.length || 0) / itemsPerPage);
@@ -539,6 +574,7 @@ export default function AnalyticsProf() {
   const activitiesChartData = analyticsData ? [
     { name: 'Submitted', value: analyticsData.activitiesSummary.submitted },
     { name: 'Missing', value: analyticsData.activitiesSummary.missing },
+    { name: 'Pending', value: analyticsData.activitiesSummary.pending }, // Add pending to chart
     { name: 'Late', value: analyticsData.activitiesSummary.late }
   ] : [];
 
@@ -600,7 +636,7 @@ export default function AnalyticsProf() {
     return (
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-2">
         <div className="text-xs sm:text-sm text-gray-600">
-          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, dataType === 'activities' ? displayedList.length : analyticsData?.studentPerformance?.length || 0)} of {dataType === 'activities' ? displayedList.length : analyticsData?.studentPerformance?.length || 0} tasks
+          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, dataType === 'activities' ? filteredActivities.length : analyticsData?.studentPerformance?.length || 0)} of {dataType === 'activities' ? filteredActivities.length : analyticsData?.studentPerformance?.length || 0} tasks
         </div>
         
         <div className="flex items-center gap-1">
@@ -771,17 +807,6 @@ export default function AnalyticsProf() {
                 )}
               </div>
             </div>
-
-            <div className="relative w-full lg:w-64 xl:w-80">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none bg-white text-xs sm:text-sm text-[#465746]"
-              />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
-              </button>
-            </div>
           </div>
 
           {/* No Classes Message */}
@@ -899,6 +924,9 @@ export default function AnalyticsProf() {
                   <p className="text-sm text-[#2196F3]">
                     Late Submissions: <strong>{analyticsData.activitiesSummary.late}</strong>
                   </p>
+                  <p className="text-sm text-[#F59E0B]">
+                    Pending Submissions: <strong>{analyticsData.activitiesSummary.pending}</strong>
+                  </p>
                 </div>
               </div>
 
@@ -982,170 +1010,172 @@ export default function AnalyticsProf() {
           {/* Only show activity list and student tracking if we have classes and analytics data */}
           {!classesLoading && selectedSubject && selectedSection && (
             <>
-          {/* ACTIVITY LIST */}
-          <div className="bg-[#fff] p-4 sm:p-5 rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 text-[#465746]">
-            <p className="font-bold mb-3 sm:mb-4 text-base sm:text-lg lg:text-xl">
-              {displayedLabel} - {getCurrentSubjectName()} (Section {selectedSection})
-            </p>
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-                <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left p-2 sm:p-3 font-bold">Task</th>
-                      <th className="text-left p-2 sm:p-3 font-bold">Title</th>
-                      <th className="text-left p-2 sm:p-3 font-bold text-[#00A15D]">Submitted</th>
-                      <th className="text-left p-2 sm:p-3 font-bold text-[#2196F3]">Late</th>
-                      <th className="text-left p-2 sm:p-3 font-bold text-[#F59E0B]">Pending</th>
-                      <th className="text-left p-2 sm:p-3 font-bold text-[#FF6666]">Missing</th>
-                      <th className="text-left p-2 sm:p-3 font-bold">Deadline</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentActivities.length > 0 ? (
-                      currentActivities.map(item => {
-                        const hasLate = item.late && item.late > 0;
-                        const hasPending = item.pending && item.pending > 0;
-                        const hasMissing = item.missing && item.missing > 0;
-                        
-                        return (
-                          <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="p-2 sm:p-3 whitespace-nowrap">{item.task}</td>
-                            <td className="p-2 sm:p-3">{item.title}</td>
-                            
-                            {/* Submitted Column */}
-                            <td className="p-2 sm:p-3 text-[#00A15D]">
-                              {item.submitted > 0 ? (
-                                <img src={CheckSubmitted} alt="Submitted" className="w-5 h-5 sm:w-6 sm:h-6" />
-                              ) : (
-                                <span>-</span>
-                              )}
-                            </td>
-                            
-                            {/* Late Column */}
-                            <td className="p-2 sm:p-3 text-[#2196F3]">
-                              {hasLate ? (
-                                <img src={CheckLate} alt="Late" className="w-5 h-5 sm:w-6 sm:h-6" />
-                              ) : (
-                                <span>-</span>
-                              )}
-                            </td>
-                            
-                            {/* Pending Column */}
-                            <td className="p-2 sm:p-3 text-[#F59E0B]">
-                              {hasPending ? (
-                               <img src={CheckPending} alt="Pending" className="w-5 h-5 sm:w-6 sm:h-6" />
-                              ) : (
-                                <span>-</span>
-                              )}
-                            </td>
-                            
-                            {/* Missing Column */}
-                            <td className="p-2 sm:p-3 text-[#FF6666]">
-                              {hasMissing ? (
-                                <img src={Cross} alt="Missing" className="w-5 h-5 sm:w-6 sm:h-6" />
-                              ) : (
-                                <span>-</span>
-                              )}
-                            </td>
-                            
-                            <td className="p-2 sm:p-3 whitespace-nowrap">{item.deadline}</td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan="7" className="p-2 sm:p-3 text-center text-gray-500">
-                          No {displayedLabel.toLowerCase()} found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Activity List Pagination */}
-            <Pagination
-              currentPage={activityCurrentPage}
-              totalPages={activityTotalPages}
-              onPageChange={handleActivityPageChange}
-              dataType="activities"
-            />
-          </div>
-
-            {/* Student Attendance Tracking */}
-            <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 p-4 sm:p-5 text-[#465746]">
-              <p className="text-base sm:text-lg lg:text-xl font-bold">
-                Student Attendance Tracking - {getCurrentSubjectName()} (Section {selectedSection})
-              </p>
-              <hr className="border-[#465746]/30 my-3 sm:my-4" />
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
-                <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-                  <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">No.</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student No.</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student Name</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Present</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Absent</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Submitted</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late Sub</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#F59E0B]">Pending</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Missed</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">Details</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentAttendance.length > 0 ? (
-                        currentAttendance.map((student, index) => (
-                          <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="px-2 sm:px-4 py-2 sm:py-3">{attendanceStartIndex + index + 1}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.id}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.name}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.presentCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3]">{student.lateCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.absentCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.submittedCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3]">{student.lateSubmissionCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#F59E0B]">{student.pendingCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.missingCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3">
-                              <Link 
-                                to={`/AnalyticsIndividualInfo?student_id=${student.id}&subject_code=${selectedSubject}&section=${selectedSection}`}
-                                state={{ 
-                                  student: student,
-                                  subjectCode: selectedSubject,
-                                  section: selectedSection
-                                }}
-                              >
-                                <img src={Details} alt="Details" className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-70" />
-                              </Link>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="11" className="px-2 sm:px-4 py-2 sm:py-3 text-center text-gray-500">
-                            No student data available
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+              {/* ACTIVITY LIST */}
+              <div className="bg-[#fff] p-4 sm:p-5 rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 text-[#465746]">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                  <p className="font-bold text-base sm:text-lg lg:text-xl">
+                    {displayedLabel} - {getCurrentSubjectName()} (Section {selectedSection})
+                  </p>
+                  
+                  {/* Activity List Search */}
+                  <div className="relative w-full sm:w-64 lg:w-80">
+                    <input
+                      type="text"
+                      placeholder="Search activities..."
+                      value={activitySearchTerm}
+                      onChange={(e) => setActivitySearchTerm(e.target.value)}
+                      className="w-full h-9 sm:h-10 rounded-md px-3 py-2 pr-10 shadow-md outline-none bg-white text-xs sm:text-sm text-[#465746] border border-gray-300 focus:border-[#465746]"
+                    />
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                      <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
+                  </div>
                 </div>
+
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                    <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left p-2 sm:p-3 font-bold">Task</th>
+                          <th className="text-left p-2 sm:p-3 font-bold">Title</th>
+                          <th className="text-left p-2 sm:p-3 font-bold text-[#00A15D]">Submitted</th>
+                          <th className="text-left p-2 sm:p-3 font-bold text-[#2196F3]">Late</th>
+                          <th className="text-left p-2 sm:p-3 font-bold text-[#F59E0B]">Pending</th>
+                          <th className="text-left p-2 sm:p-3 font-bold text-[#FF6666]">Missing</th>
+                          <th className="text-left p-2 sm:p-3 font-bold">Deadline</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentActivities.length > 0 ? (
+                          currentActivities.map(item => {
+                            const hasSubmitted = item.submitted && item.submitted > 0;
+                            const hasLate = item.late && item.late > 0;
+                            const hasPending = item.pending && item.pending > 0;
+                            const hasMissing = item.missing && item.missing > 0;
+                            
+                            return (
+                              <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                <td className="p-2 sm:p-3 whitespace-nowrap">{item.task}</td>
+                                <td className="p-2 sm:p-3">{item.title}</td>
+                                
+                                {/* Submitted Column - Show count as number */}
+                                <td className="p-2 sm:p-3 text-[#00A15D] font-semibold">
+                                  {hasSubmitted ? item.submitted : '0'}
+                                </td>
+                                
+                                {/* Late Column - Show count as number */}
+                                <td className="p-2 sm:p-3 text-[#2196F3] font-semibold">
+                                  {hasLate ? item.late : '0'}
+                                </td>
+                                
+                                {/* Pending Column - Show count as number */}
+                                <td className="p-2 sm:p-3 text-[#F59E0B] font-semibold">
+                                  {hasPending ? item.pending : '0'}
+                                </td>
+                                
+                                {/* Missing Column - Show count as number */}
+                                <td className="p-2 sm:p-3 text-[#FF6666] font-semibold">
+                                  {hasMissing ? item.missing : '0'}
+                                </td>
+                                
+                                <td className="p-2 sm:p-3 whitespace-nowrap">{item.deadline}</td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan="7" className="p-2 sm:p-3 text-center text-gray-500">
+                              {activitySearchTerm ? `No activities found for "${activitySearchTerm}"` : `No ${displayedLabel.toLowerCase()} found`}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Activity List Pagination */}
+                <Pagination
+                  currentPage={activityCurrentPage}
+                  totalPages={activityTotalPages}
+                  onPageChange={handleActivityPageChange}
+                  dataType="activities"
+                />
               </div>
 
-              {/* Attendance Tracking Pagination */}
-              <Pagination
-                currentPage={attendanceCurrentPage}
-                totalPages={attendanceTotalPages}
-                onPageChange={handleAttendancePageChange}
-                dataType="attendance"
-              />
-            </div>
+              {/* Student Attendance Tracking */}
+              <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 p-4 sm:p-5 text-[#465746]">
+                <p className="text-base sm:text-lg lg:text-xl font-bold">
+                  Student Attendance Tracking - {getCurrentSubjectName()} (Section {selectedSection})
+                </p>
+                <hr className="border-[#465746]/30 my-3 sm:my-4" />
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                    <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">No.</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student No.</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student Name</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Present</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Absent</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Submitted</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late Sub</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#F59E0B]">Pending</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Missed</th>
+                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">Details</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentAttendance.length > 0 ? (
+                          currentAttendance.map((student, index) => (
+                            <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="px-2 sm:px-4 py-2 sm:py-3">{attendanceStartIndex + index + 1}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.id}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.name}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.presentCount}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3]">{student.lateCount}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.absentCount}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.submittedCount}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3]">{student.lateSubmissionCount}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#F59E0B]">{student.pendingCount}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.missingCount}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3">
+                                <Link 
+                                  to={`/AnalyticsIndividualInfo?student_id=${student.id}&subject_code=${selectedSubject}&section=${selectedSection}`}
+                                  state={{ 
+                                    student: student,
+                                    subjectCode: selectedSubject,
+                                    section: selectedSection
+                                  }}
+                                >
+                                  <img src={Details} alt="Details" className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-70" />
+                                </Link>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="11" className="px-2 sm:px-4 py-2 sm:py-3 text-center text-gray-500">
+                              No student data available
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Attendance Tracking Pagination */}
+                <Pagination
+                  currentPage={attendanceCurrentPage}
+                  totalPages={attendanceTotalPages}
+                  onPageChange={handleAttendancePageChange}
+                  dataType="attendance"
+                />
+              </div>
             </>
           )}
         </div>

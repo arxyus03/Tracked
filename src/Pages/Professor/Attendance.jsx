@@ -275,7 +275,6 @@ export default function Attendance() {
               </div>
               <Link
                 to={`/SubjectDetails?code=${subjectCode}`}
-                className="sm:hidden"
               >
                 <img
                   src={BackButton}

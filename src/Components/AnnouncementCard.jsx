@@ -50,6 +50,7 @@ export default function AnnouncementCard({
   const handleMarkAsUnreadClick = (e) => {
     e.stopPropagation();
     setReadStatus(false);
+    setOpen(false); // Close the card when marking as unread
     if (onMarkAsUnread) onMarkAsUnread();
   };
 

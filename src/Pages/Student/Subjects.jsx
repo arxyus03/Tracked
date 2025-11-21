@@ -181,7 +181,7 @@ export default function Subjects() {
       try {
           const studentId = getStudentId();
           
-          const response = await fetch('http://localhost/TrackEd/src/Pages/Student/SubjectsDB/archive_class.php', {
+          const response = await fetch('https://tracked.6minds.site/Student/SubjectsDB/archive_class.php', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -390,7 +390,7 @@ export default function Subjects() {
 
               <button
                 onClick={closeJoinModal}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors sm:hidden"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 aria-label="Close"
               >
                 <img src={BackButton} alt="Close" className="h-6 w-6 sm:h-7 sm:w-7"/>

@@ -16,6 +16,7 @@ export default function AttendanceHistoryStudent() {
   const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState('');
   const [subjectCode, setSubjectCode] = useState('');
+  const [section, setSection] = useState('');
   const location = useLocation();
   
   // Pagination state
@@ -27,10 +28,12 @@ export default function AttendanceHistoryStudent() {
     const urlParams = new URLSearchParams(location.search);
     const subjectFromUrl = urlParams.get('subject_code');
     const studentFromUrl = urlParams.get('student_id');
+    const sectionFromUrl = urlParams.get('section');
     
     console.log('URL Parameters:', {
       subject_code: subjectFromUrl,
-      student_id: studentFromUrl
+      student_id: studentFromUrl,
+      section: sectionFromUrl
     });
     
     if (subjectFromUrl) {
@@ -39,6 +42,10 @@ export default function AttendanceHistoryStudent() {
     
     if (studentFromUrl) {
       setStudentId(studentFromUrl);
+    }
+
+    if (sectionFromUrl) {
+      setSection(sectionFromUrl);
     }
   }, [location.search]);
 
@@ -103,6 +110,12 @@ export default function AttendanceHistoryStudent() {
           console.log('Attendance history response:', data);
           if (data.success) {
             setAttendanceData(data);
+            
+            // Set section from API response if available and not already set from URL
+            if (!section && data.class && data.class.section) {
+              console.log('Setting section from API response:', data.class.section);
+              setSection(data.class.section);
+            }
           } else {
             console.error('API returned error:', data.message);
             setAttendanceData(null);
@@ -120,7 +133,7 @@ export default function AttendanceHistoryStudent() {
     };
 
     fetchAttendanceData();
-  }, [studentId, subjectCode]);
+  }, [studentId, subjectCode, section]);
 
   // Get subject name for display
   const getSubjectName = () => {
@@ -129,6 +142,21 @@ export default function AttendanceHistoryStudent() {
     }
     return subjectCode || 'Current Subject';
   };
+
+  // Get section for display - try multiple sources
+  const getDisplaySection = () => {
+    // First priority: URL parameter
+    if (section) return section;
+    
+    // Second priority: API response
+    if (attendanceData && attendanceData.class && attendanceData.class.section) {
+      return attendanceData.class.section;
+    }
+    
+    return null;
+  };
+
+  const displaySection = getDisplaySection();
 
   // Pagination calculations
   const getCombinedAttendanceData = () => {
@@ -320,7 +348,7 @@ export default function AttendanceHistoryStudent() {
               <img 
                 src={BackButton} 
                 alt="BackButton" 
-                className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 cursor-pointer sm:hidden" 
+                className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 cursor-pointer" 
               />
             </Link>
           </div>
@@ -341,6 +369,11 @@ export default function AttendanceHistoryStudent() {
               <p className="font-bold text-base sm:text-lg lg:text-xl">
                 {student.name}
               </p>
+              {displaySection && (
+                <p className="text-xs text-gray-600 mt-1">
+                  Section: {displaySection}
+                </p>
+              )}
             </div>
           </div>
 

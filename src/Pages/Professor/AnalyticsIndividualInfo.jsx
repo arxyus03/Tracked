@@ -28,6 +28,18 @@ export default function AnalyticsIndividualInfo() {
   // Get student data and subject code from navigation state
   const student = location.state?.student;
   const subjectCode = location.state?.subjectCode;
+  const section = location.state?.section;
+
+  // Add safety check to handle cases where data might be missing
+  useEffect(() => {
+    if (!student && location.state) {
+      // Try to get data from location state if student is not available
+      const { student: stateStudent } = location.state;
+      if (stateStudent) {
+        console.log('Found student data in location state:', stateStudent);
+      }
+    }
+  }, [location.state, student]);
 
   // If no student data is passed, show a message or redirect
   if (!student) {
@@ -41,8 +53,14 @@ export default function AnalyticsIndividualInfo() {
         >
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
           <div className="p-8 text-center">
-            <p className="text-red-500 text-lg">No student data available.</p>
-            <Link to="/AnalyticsProf" className="text-blue-500 hover:underline">
+            <p className="text-red-500 text-lg mb-4">No student data available.</p>
+            <p className="text-sm text-gray-600 mb-4">
+              This might happen if you navigated directly to this page or used the browser's back button.
+            </p>
+            <Link 
+              to="/AnalyticsProf" 
+              className="text-blue-500 hover:underline inline-block bg-blue-50 px-4 py-2 rounded-md"
+            >
               Go back to Analytics
             </Link>
           </div>
@@ -96,11 +114,21 @@ export default function AnalyticsIndividualInfo() {
         const activitiesData = await response.json();
         console.log("✅ Activities API response:", activitiesData);
 
-        // Process the activities data for this specific student
-        if (
-          activitiesData.success &&
-          Array.isArray(activitiesData.activities)
-        ) {
+        // Add detailed logging of the first few activities to see their structure
+        if (activitiesData.success && Array.isArray(activitiesData.activities)) {
+          console.log("🔍 Sample activity structure:", activitiesData.activities.slice(0, 3));
+          activitiesData.activities.slice(0, 3).forEach((activity, index) => {
+            console.log(`Activity ${index + 1} structure:`, {
+              id: activity.id,
+              title: activity.title,
+              activity_type: activity.activity_type,
+              type: activity.type,
+              category: activity.category,
+              task_number: activity.task_number,
+              deadline: activity.deadline
+            });
+          });
+          
           processStudentActivities(activitiesData.activities, student.id);
         } else {
           console.log("❌ No activity data received or invalid format");
@@ -121,6 +149,13 @@ export default function AnalyticsIndividualInfo() {
 
     fetchStudentActivities();
   }, [student.id, subjectCode]);
+
+  // Log the received student data for debugging
+  useEffect(() => {
+    console.log("Received student data:", student);
+    console.log("Received subject code:", subjectCode);
+    console.log("Received section:", section);
+  }, [student, subjectCode, section]);
 
   const processStudentActivities = (activities, studentId) => {
     const submitted = [];
@@ -144,6 +179,39 @@ export default function AnalyticsIndividualInfo() {
       const deadlineDate = activity.deadline ? new Date(activity.deadline) : null;
       const isPastDeadline = deadlineDate && deadlineDate < currentDate;
 
+      // Get activity type with better handling
+      let activityType = "activity"; // default
+      
+      // Try multiple possible fields for activity type
+      if (activity.activity_type) {
+        activityType = activity.activity_type.toLowerCase();
+      } else if (activity.type) {
+        activityType = activity.type.toLowerCase();
+      } else if (activity.category) {
+        activityType = activity.category.toLowerCase();
+      }
+
+      // Clean up the activity type
+      activityType = activityType.trim();
+      
+      // Map common variations to standard types
+      const typeMapping = {
+        'quiz': 'quiz',
+        'quizzes': 'quiz',
+        'assignment': 'assignment',
+        'assignments': 'assignment',
+        'activity': 'activity',
+        'activities': 'activity',
+        'project': 'project',
+        'projects': 'project',
+        'laboratory': 'activity',
+        'lab': 'activity',
+        'exercise': 'activity',
+        'task': 'activity'
+      };
+
+      activityType = typeMapping[activityType] || activityType;
+
       if (studentSubmission) {
         const activityItem = {
           id: activity.id,
@@ -161,7 +229,7 @@ export default function AnalyticsIndividualInfo() {
             studentSubmission.late === true ||
             studentSubmission.late === 1 ||
             studentSubmission.late === "1",
-          activity_type: activity.activity_type || "activity",
+          activity_type: activityType, // Use the properly processed type
           isPastDeadline: isPastDeadline,
         };
 
@@ -191,7 +259,7 @@ export default function AnalyticsIndividualInfo() {
             submitted_date: null,
             submitted: false,
             late: false,
-            activity_type: activity.activity_type || "activity",
+            activity_type: activityType, // Use the properly processed type
             isPastDeadline: isPastDeadline,
           };
           missed.push(activityItem);
@@ -207,6 +275,20 @@ export default function AnalyticsIndividualInfo() {
       submitted,
       missed,
       late,
+    });
+
+    // Debug: Log the activity types found
+    console.log("🔍 Activity types found in submitted activities:");
+    submitted.forEach(activity => {
+      console.log(`- ${activity.title}: ${activity.activity_type}`);
+    });
+    console.log("🔍 Activity types found in late activities:");
+    late.forEach(activity => {
+      console.log(`- ${activity.title}: ${activity.activity_type}`);
+    });
+    console.log("🔍 Activity types found in missed activities:");
+    missed.forEach(activity => {
+      console.log(`- ${activity.title}: ${activity.activity_type}`);
     });
 
     setSubmittedActivities(submitted);
@@ -252,13 +334,22 @@ export default function AnalyticsIndividualInfo() {
 
   // Get activity type display name
   const getActivityTypeDisplay = (type) => {
+    if (!type) return "Activity";
+    
     const typeMap = {
       quiz: "Quiz",
       assignment: "Assignment",
       activity: "Activity",
       project: "Project",
+      laboratory: "Laboratory",
+      lab: "Lab",
+      exercise: "Exercise",
+      task: "Task"
     };
-    return typeMap[type] || "Activity";
+    
+    // Return the mapped value or capitalize the first letter of the type
+    return typeMap[type.toLowerCase()] || 
+           type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   };
 
   // Pagination calculations
@@ -733,12 +824,6 @@ export default function AnalyticsIndividualInfo() {
     printWindow.document.close();
   };
 
-  // Log the received student data for debugging
-  useEffect(() => {
-    console.log("Received student data:", student);
-    console.log("Received subject code:", subjectCode);
-  }, [student, subjectCode]);
-
   return (
     <div>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
@@ -770,7 +855,7 @@ export default function AnalyticsIndividualInfo() {
             <p className="text-sm sm:text-base lg:text-lg">
               Individual Student Information
             </p>
-            <Link to="/AnalyticsProf" className="lg:hidden">
+            <Link to="/AnalyticsProf">
               <img
                 src={BackButton}
                 alt="BackButton"
@@ -795,6 +880,11 @@ export default function AnalyticsIndividualInfo() {
               <p className="font-bold text-base sm:text-lg lg:text-xl">
                 {student.name}
               </p>
+              {section && (
+                <p className="text-xs text-gray-600 mt-1">
+                  Section: {section}
+                </p>
+              )}
             </div>
           </div>
 
@@ -937,7 +1027,6 @@ export default function AnalyticsIndividualInfo() {
                   currentPage={submittedCurrentPage}
                   totalPages={submittedTotalPages}
                   onPageChange={handleSubmittedPageChange}
-                  dataType="submitted"
                   dataLength={submittedActivities.length}
                 />
               </>
@@ -1029,7 +1118,6 @@ export default function AnalyticsIndividualInfo() {
                   currentPage={lateCurrentPage}
                   totalPages={lateTotalPages}
                   onPageChange={handleLatePageChange}
-                  dataType="late"
                   dataLength={lateActivities.length}
                 />
               </>
@@ -1113,7 +1201,6 @@ export default function AnalyticsIndividualInfo() {
                   currentPage={missedCurrentPage}
                   totalPages={missedTotalPages}
                   onPageChange={handleMissedPageChange}
-                  dataType="missed"
                   dataLength={missedActivities.length}
                 />
               </>
@@ -1132,9 +1219,14 @@ export default function AnalyticsIndividualInfo() {
               Attendance
             </p>
             <hr className="border-[#465746]/30 mb-3 sm:mb-4" />
+            {/* UPDATED ATTENDANCE LINK - FIXED */}
             <Link
               to={`/AnalyticsAttendanceInfo?student_id=${student.id}&subject_code=${subjectCode}`}
-              state={{ student: student }}
+              state={{ 
+                student: student, 
+                subjectCode: subjectCode, 
+                section: section 
+              }}
             >
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-center text-xs sm:text-sm lg:text-base">
                 <div className="p-2 sm:p-3 bg-green-50 rounded-md hover:bg-green-100 transition-colors cursor-pointer">

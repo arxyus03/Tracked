@@ -25,13 +25,22 @@ export default function ProfileStudent() {
           
           if (userIdFromStorage) {
             // Fetch complete user data from database
-            const response = await fetch(`https://tracked.6minds.site/Student/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`);
+            const userResponse = await fetch(`https://tracked.6minds.site/Student/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`);
             
-            if (response.ok) {
-              const data = await response.json();
+            // Fetch enrolled subjects
+            const subjectsResponse = await fetch(`https://tracked.6minds.site/Student/SubjectsDB/get_student_classes.php?student_id=${userIdFromStorage}`);
+            
+            if (userResponse.ok && subjectsResponse.ok) {
+              const userData = await userResponse.json();
+              const subjectsData = await subjectsResponse.json();
               
-              if (data.success) {
-                setUserData(data.user);
+              if (userData.success) {
+                // Add enrolled subjects to user data
+                const userWithSubjects = {
+                  ...userData.user,
+                  enrolled_subjects: subjectsData.success ? subjectsData.classes : []
+                };
+                setUserData(userWithSubjects);
               }
             }
           }
@@ -203,42 +212,22 @@ export default function ProfileStudent() {
               {/* Academic Performance Information Section */}
               <div>
                 <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Academic Performance Information</h2>
-                <div className="space-y-3 sm:space-y-2">
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">Subjects Enrolled :</span>
-                    <span>
-                      {/* Note: You'll need to add a backend function to fetch enrolled subjects */}
-                      N/A
-                    </span>
+                  <div className="space-y-3 sm:space-y-2">
+                    <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
+                      <span className="font-medium text-gray-600">Subjects Enrolled :</span>
+                      <span>
+                        {userData?.enrolled_subjects && userData.enrolled_subjects.length > 0 
+                          ? userData.enrolled_subjects.map((subject, index) => (
+                              <div key={index} className="mb-1">
+                                {subject.subject} ({subject.subject_code})
+                              </div>
+                            ))
+                          : "No subjects enrolled"
+                        }
+                      </span>
+                    </div>
                   </div>
-
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">Tasks Completed :</span>
-                    <span>
-                      {/* Note: You'll need to add a backend function to fetch task statistics */}
-                      N/A
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">Tasks Pending :</span>
-                    <span>
-                      {/* Note: You'll need to add a backend function to fetch task statistics */}
-                      N/A
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">Tasks Missed :</span>
-                    <span>
-                      {/* Note: You'll need to add a backend function to fetch task statistics */}
-                      N/A
-                    </span>
-                  </div>
-                </div>
               </div>
-
-              <hr className="opacity-10 border-[#465746] mb-6" />
 
               {/* Account Information Section */}
               <div>
@@ -266,25 +255,6 @@ export default function ProfileStudent() {
                   </div>
                 </div>
               </div>
-
-              {/* Action Buttons (commented out as in original) */}
-              {/* <div className="pt-4 border-t border-gray-200">
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                  <button 
-                    onClick={() => setPopupType("reset")} 
-                    className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center hover:bg-green-800 transition-colors text-sm sm:text-base cursor-pointer"
-                  >
-                    Reset Password
-                  </button>
-
-                  <button 
-                    onClick={() => setPopupType("disable")}  
-                    className="font-bold text-white py-2 px-4 bg-[#00874E] rounded-md shadow-md text-center hover:bg-green-800 transition-colors text-sm sm:text-base cursor-pointer"
-                  >
-                    Disable Account
-                  </button>
-                </div>
-              </div> */}
 
               {/* Popup Components */}
               {popupType === "reset" && (

@@ -39,6 +39,9 @@ export default function AnalyticsStudent() {
   const [attendanceCurrentPage, setAttendanceCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Search state for Activity List
+  const [activitySearchTerm, setActivitySearchTerm] = useState("");
+
   // Get student ID from localStorage
   useEffect(() => {
     const getStudentId = () => {
@@ -81,6 +84,11 @@ export default function AnalyticsStudent() {
     setActivityCurrentPage(1);
     setAttendanceCurrentPage(1);
   }, [selectedFilter, selectedSubject]);
+
+  // Reset search and pagination when search term changes
+  useEffect(() => {
+    setActivityCurrentPage(1);
+  }, [activitySearchTerm]);
 
   // Calculate attendance warnings
   const calculateAttendanceWarnings = useMemo(() => {
@@ -308,15 +316,29 @@ export default function AnalyticsStudent() {
     }
   }, [selectedFilter, activitiesData, selectedSubject]);
 
+  // Filter activities based on search term
+  const filteredActivities = useMemo(() => {
+    if (!activitySearchTerm.trim()) {
+      return displayedList;
+    }
+    
+    const searchTermLower = activitySearchTerm.toLowerCase().trim();
+    return displayedList.filter(activity => 
+      activity.task.toLowerCase().includes(searchTermLower) ||
+      activity.title.toLowerCase().includes(searchTermLower) ||
+      activity.deadline.toLowerCase().includes(searchTermLower)
+    );
+  }, [displayedList, activitySearchTerm]);
+
   const displayedLabel = selectedFilter === '' 
     ? 'All Activities' 
     : selectedFilter || 'Quizzes';
 
-  // Pagination calculations for activities
-  const activityTotalPages = Math.ceil(displayedList.length / itemsPerPage);
+  // Pagination calculations for activities (using filteredActivities)
+  const activityTotalPages = Math.ceil(filteredActivities.length / itemsPerPage);
   const activityStartIndex = (activityCurrentPage - 1) * itemsPerPage;
   const activityEndIndex = activityStartIndex + itemsPerPage;
-  const currentActivities = displayedList.slice(activityStartIndex, activityEndIndex);
+  const currentActivities = filteredActivities.slice(activityStartIndex, activityEndIndex);
 
   // Pagination calculations for attendance - FIXED
   const filteredAttendance = useMemo(() => {
@@ -378,7 +400,7 @@ export default function AnalyticsStudent() {
     return (
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-2">
         <div className="text-xs sm:text-sm text-gray-600">
-          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, dataType === 'activities' ? displayedList.length : filteredAttendance.length)} of {dataType === 'activities' ? displayedList.length : filteredAttendance.length} entries
+          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, dataType === 'activities' ? filteredActivities.length : filteredAttendance.length)} of {dataType === 'activities' ? filteredActivities.length : filteredAttendance.length} entries
         </div>
         
         <div className="flex items-center gap-1">
@@ -480,8 +502,6 @@ export default function AnalyticsStudent() {
             </div>
           </div>
 
-          <hr className="border-[#465746]/30 mb-4 sm:mb-5" />
-
           {/* Overall Attendance Warning Banner */}
           {overallWarning && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 sm:mb-5">
@@ -552,17 +572,6 @@ export default function AnalyticsStudent() {
                 )}
               </div>
             </div>
-
-            <div className="relative w-full lg:w-64 xl:w-80">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none bg-white text-xs sm:text-sm text-[#465746]"
-              />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
-              </button>
-            </div>
           </div>
 
           {/* Show message when no subject is selected */}
@@ -597,15 +606,33 @@ export default function AnalyticsStudent() {
           )}
 
           {/* ACTIVITY LIST - Only show if subject is selected */}
-          {/* ACTIVITY LIST - Only show if subject is selected */}
           {!loading && selectedSubject && (
             <div className="bg-[#fff] p-4 sm:p-5 rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 text-[#465746]">
-              <p className="font-bold mb-3 sm:mb-4 text-base sm:text-lg lg:text-xl">
-                {displayedLabel} - {getCurrentSubjectName()}
-              </p>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                <p className="font-bold text-base sm:text-lg lg:text-xl">
+                  {displayedLabel} - {getCurrentSubjectName()}
+                </p>
+                
+                {/* Activity List Search */}
+                <div className="relative w-full sm:w-64 lg:w-80">
+                  <input
+                    type="text"
+                    placeholder="Search activities..."
+                    value={activitySearchTerm}
+                    onChange={(e) => setActivitySearchTerm(e.target.value)}
+                    className="w-full h-9 sm:h-10 rounded-md px-3 py-2 pr-10 shadow-md outline-none bg-white text-xs sm:text-sm text-[#465746] border border-gray-300 focus:border-[#465746]"
+                  />
+                  <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </button>
+                </div>
+              </div>
+
               {currentActivities.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-[#465746]">No {displayedLabel.toLowerCase()} found for {getCurrentSubjectName()}.</p>
+                  <p className="text-[#465746]">
+                    {activitySearchTerm ? `No activities found for "${activitySearchTerm}"` : `No ${displayedLabel.toLowerCase()} found for ${getCurrentSubjectName()}.`}
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto -mx-4 sm:mx-0">

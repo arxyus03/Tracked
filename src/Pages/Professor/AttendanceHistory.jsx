@@ -150,7 +150,7 @@ export default function AttendanceHistory() {
                 <span className="font-semibold">Section:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
               </div>
-              <Link to={`/Attendance?code=${subjectCode}`} className="sm:hidden">
+              <Link to={`/Attendance?code=${subjectCode}`}>
                 <img 
                   src={BackButton} 
                   alt="Back" 

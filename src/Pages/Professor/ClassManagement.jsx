@@ -514,7 +514,7 @@ export default function ClassManagement() {
             <button
               onClick={() => setShowModal(false)}
               aria-label="Close modal"
-              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer sm:hidden"
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
             >
               <img
                 src={BackButton}

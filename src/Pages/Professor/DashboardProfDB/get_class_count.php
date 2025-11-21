@@ -25,7 +25,7 @@ try {
     
     $userId = $_GET['id'];
     
-    // Fetch user data from tracked_users table
+    // Fetch user data from tracked_users table - INCLUDING temporary_password
     $stmt = $conn->prepare("
         SELECT 
             tracked_ID,
@@ -41,6 +41,7 @@ try {
             tracked_gender,
             tracked_phone,
             tracked_Status,
+            temporary_password,
             created_at,
             updated_at
         FROM tracked_users 
@@ -53,9 +54,9 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($user) {
-        // Fetch handled subjects for this professor (only active classes)
+        // Fetch handled subjects for this professor (only active classes) with subject code
         $subjectStmt = $conn->prepare("
-            SELECT subject 
+            SELECT subject, subject_code 
             FROM classes 
             WHERE professor_ID = :id 
             AND status = 'Active'
@@ -67,15 +68,24 @@ try {
         
         $subjects = $subjectStmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Extract only subject names
+        // Format subjects as "Subject - Subject Code"
         $handledSubjects = [];
         foreach ($subjects as $subject) {
-            $handledSubjects[] = $subject['subject'];
+            $subjectName = $subject['subject'] ?? '';
+            $subjectCode = $subject['subject_code'] ?? '';
+            
+            if (!empty($subjectName)) {
+                if (!empty($subjectCode)) {
+                    $handledSubjects[] = $subjectName . ' - ' . $subjectCode;
+                } else {
+                    $handledSubjects[] = $subjectName;
+                }
+            }
         }
         
         // Add handled subjects to user data
         $user['handled_subjects'] = $handledSubjects;
-        $user['handled_subjects_count'] = count($subjects);
+        $user['handled_subjects_count'] = count($handledSubjects);
         
         echo json_encode([
             'success' => true,

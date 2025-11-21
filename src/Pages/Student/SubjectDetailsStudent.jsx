@@ -7,6 +7,7 @@ import ActivityCardStudent from "../../Components/ActivityCardStudent";
 
 import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
+import ArrowDown from "../../assets/ArrowDown(Light).svg";
 
 export default function SubjectDetailsStudent() {
   const location = useLocation();
@@ -18,6 +19,10 @@ export default function SubjectDetailsStudent() {
   const [classInfo, setClassInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState('');
+  
+  // Filter state
+  const [filterOption, setFilterOption] = useState("All");
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
 
   // Get student ID from localStorage
   useEffect(() => {
@@ -147,28 +152,42 @@ export default function SubjectDetailsStudent() {
     }
   };
 
-  // Get student status for an activity
+  // Get student status for an activity - Updated to match ActivityCardStudent logic
   const getStudentStatus = (activity) => {
-    // Check if activity has been submitted
     const isSubmitted = activity.submitted === 1 || activity.submitted === true || activity.submitted === '1';
     const isLate = activity.late === 1 || activity.late === true || activity.late === '1';
     
-    if (isSubmitted) {
-      return isLate ? 'Late' : 'Submitted';
-    }
+    // Check if deadline is overdue and not submitted
+    const isOverdue = activity.deadline && new Date(activity.deadline) < new Date() && !isSubmitted;
     
-    // Check if deadline has passed
-    if (activity.deadline) {
-      const now = new Date();
-      const deadline = new Date(activity.deadline);
-      
-      if (now > deadline) {
-        return 'Missed';
-      }
-    }
-    
-    return 'Pending';
+    if (isSubmitted && isLate) return "Late";
+    if (isSubmitted) return "Submitted";
+    if (isOverdue) return "Missed";
+    return "Pending";
   };
+
+  // Filter activities based on filter option
+  const filteredActivities = activities.filter(activity => {
+    if (filterOption === "All") return true;
+    
+    const status = getStudentStatus(activity);
+    return status === filterOption;
+  });
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
+        setFilterDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [filterDropdownOpen]);
 
   // Render empty state when no activities
   const renderEmptyState = () => (
@@ -181,10 +200,16 @@ export default function SubjectDetailsStudent() {
         />
       </div>
       <p className="text-gray-500 text-sm sm:text-base lg:text-lg mb-2">
-        No activities available yet.
+        {filterOption !== "All" 
+          ? `No ${filterOption.toLowerCase()} activities found` 
+          : "No activities available yet."
+        }
       </p>
       <p className="text-gray-400 text-xs sm:text-sm lg:text-base">
-        Check back later for new activities from your professor.
+        {filterOption !== "All" 
+          ? "Try selecting a different filter option." 
+          : "Check back later for new activities from your professor."
+        }
       </p>
     </div>
   );
@@ -244,7 +269,7 @@ export default function SubjectDetailsStudent() {
                 <span className="font-semibold">Section:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
               </div>
-              <Link to={"/StudentClassManagement"} className="sm:hidden">
+              <Link to={"/Subjects"}>
                 <img 
                   src={BackButton} 
                   alt="Back" 
@@ -256,12 +281,50 @@ export default function SubjectDetailsStudent() {
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
+          {/* Filter Section */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-5 sm:mb-6">
+            {/* Filter dropdown */}
+            <div className="relative sm:flex-initial filter-dropdown">
+              <button
+                onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
+                className="flex items-center justify-between w-full sm:w-auto font-bold px-4 py-2.5 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] active:border-[#00874E] transition-all duration-200 text-sm sm:text-base sm:min-w-[160px] cursor-pointer touch-manipulation"
+              >
+                <span>{filterOption}</span>
+                <img
+                  src={ArrowDown}
+                  alt=""
+                  className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {/* Dropdown options */}
+              {filterDropdownOpen && (
+                <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
+                  {["All", "Submitted", "Pending", "Late", "Missed"].map((option) => (
+                    <button
+                      key={option}
+                      className={`block px-4 py-2.5 w-full text-left hover:bg-gray-100 active:bg-gray-200 text-sm sm:text-base transition-colors duration-150 cursor-pointer touch-manipulation ${
+                        filterOption === option ? 'bg-gray-50 font-semibold' : ''
+                      }`}
+                      onClick={() => {
+                        setFilterOption(option);
+                        setFilterDropdownOpen(false);
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* ACTIVITY CARDS */}
           <div className="space-y-4 mt-4 sm:mt-5">
-            {activities.length === 0 ? (
+            {filteredActivities.length === 0 ? (
               renderEmptyState()
             ) : (
-              activities.map((activity) => (
+              filteredActivities.map((activity) => (
                 <ActivityCardStudent
                   key={activity.id}
                   activity={activity}

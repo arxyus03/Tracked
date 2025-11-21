@@ -589,7 +589,7 @@ const handleSaveSchoolWork = async () => {
                 <span className="font-semibold">Section:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
               </div>
-              <Link to={"/ClassManagement"} className="sm:hidden">
+              <Link to={"/ClassManagement"}>
                 <img 
                   src={BackButton} 
                   alt="Back" 

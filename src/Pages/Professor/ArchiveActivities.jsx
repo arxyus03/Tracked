@@ -353,7 +353,7 @@ export default function ArchiveActivities() {
               </div>
               
               {/* Mobile Back Button */}
-              <Link to={`/SubjectDetails?code=${subjectCode}`} className="sm:hidden">
+              <Link to={`/SubjectDetails?code=${subjectCode}`}>
                 <button 
                   className="flex items-center justify-center w-9 h-9 cursor-pointer transition-all duration-200 hover:scale-110"
                   aria-label="Back to Activities"

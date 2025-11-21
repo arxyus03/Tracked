@@ -7,21 +7,26 @@ export default function ActivityCardStudent({ activity, formatDate }) {
   const isSubmitted = activity.submitted === 1 || activity.submitted === true;
   const isLate = activity.late === 1 || activity.late === true;
 
+  // Check if deadline is overdue and not submitted
+  const isOverdue = activity.deadline && new Date(activity.deadline) < new Date() && !isSubmitted;
+  
+  // Check if activity is pending (not submitted and deadline not passed)
+  const isPending = !isSubmitted && !isOverdue;
+
   // Get status text based on submission status
   const getStatusText = () => {
     if (isSubmitted && isLate) return "Late";
     if (isSubmitted) return "Submitted";
-    return "Missed";
+    if (isOverdue) return "Missed";
+    return "Pending"; // Added Pending status
   };
 
   const getStatusColor = () => {
     if (isSubmitted && isLate) return "text-[#767EE0]";
     if (isSubmitted) return "text-[#00A15D]";
-    return "text-[#EF4444]";
+    if (isOverdue) return "text-[#EF4444]";
+    return "text-[#3B82F6]"; // Blue color for Pending
   };
-
-  // Check if deadline is overdue
-  const isOverdue = activity.deadline && new Date(activity.deadline) < new Date() && !isSubmitted;
 
   return (
     <div className="bg-white rounded-md shadow-md p-3 sm:p-4 mb-4 w-full mt-5 border-2 border-transparent hover:border-[#00874E] transition-all duration-200">
@@ -57,10 +62,18 @@ export default function ActivityCardStudent({ activity, formatDate }) {
                 )}
                 {activity.deadline && (
                   <div className="flex items-center gap-1">
-                    <span className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${isOverdue ? 'text-[#EF4444]' : 'text-[#465746]'}`}>
+                    <span className={`text-xs sm:text-sm font-semibold whitespace-nowrap ${
+                      isOverdue ? 'text-[#EF4444]' : 
+                      isPending ? 'text-[#3B82F6]' : 
+                      'text-[#465746]'
+                    }`}>
                       Deadline:
                     </span>
-                    <span className={`text-xs sm:text-sm ${isOverdue ? 'text-[#EF4444] font-semibold' : 'text-[#465746]'}`}>
+                    <span className={`text-xs sm:text-sm ${
+                      isOverdue ? 'text-[#EF4444] font-semibold' : 
+                      isPending ? 'text-[#3B82F6]' : 
+                      'text-[#465746]'
+                    }`}>
                       {formatDate(activity.deadline)}
                     </span>
                   </div>
@@ -69,7 +82,7 @@ export default function ActivityCardStudent({ activity, formatDate }) {
             </div>
           </div>
 
-          {/* Status section - UPDATED to show status like "Submitted", "Late", "Missed" */}
+          {/* Status section - UPDATED to include "Pending" status */}
           <div className="flex items-center gap-2 text-sm sm:text-base lg:text-[1.125rem]">
             <p className="font-bold whitespace-nowrap text-xs sm:text-sm">Status:</p>
             <p className={`whitespace-nowrap text-xs sm:text-sm lg:text-base font-semibold ${getStatusColor()}`}>
@@ -138,6 +151,17 @@ export default function ActivityCardStudent({ activity, formatDate }) {
                 <span className="text-[#465746]">{activity.grade} / {activity.points || 'N/A'}</span>
               </div>
             )}
+            
+            {/* Status Explanation */}
+            <div className="text-xs sm:text-sm flex items-start gap-2 mt-2 p-2 bg-gray-50 rounded-md">
+              <span className="font-semibold text-gray-600">Status Help:</span>
+              <span className="text-gray-600">
+                {getStatusText() === "Pending" && "This activity is awaiting your submission before the deadline."}
+                {getStatusText() === "Submitted" && "You have successfully submitted this activity."}
+                {getStatusText() === "Late" && "You submitted this activity after the deadline."}
+                {getStatusText() === "Missed" && "You missed the deadline for this activity."}
+              </span>
+            </div>
             
             {/* Submitted */}
             {activity.submitted_at && (

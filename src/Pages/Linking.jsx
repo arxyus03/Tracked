@@ -35,6 +35,7 @@ import ArchiveActivities from './Professor/ArchiveActivities.jsx';
 // Student Links
 import DashboardStudent from './Student/DashboardStudent.jsx';
 import Subjects from './Student/Subjects.jsx';
+import ArchiveClassStudent from './Student/ArchiveClassStudent.jsx';
 import AnalyticsStudent from './Student/AnalyticsStudent.jsx';
 import NotificationStudent from './Student/NotificationStudent.jsx';
 import ProfileStudent from './Student/ProfileStudent.jsx';
@@ -57,7 +58,7 @@ function Linking() {
     <Router basename="/">
       <Routes>
         {/* Starting Flow */} 
-        <Route path="https://tracked.6minds.site/" />  
+        <Route path="/" />  
         
         {/* Navigations for Landing */}
         <Route path="/Login" element={<Login />} />
@@ -94,6 +95,7 @@ function Linking() {
         {/* Navigations for Student */}
         <Route path="/DashboardStudent" element={<DashboardStudent />} />
         <Route path="/Subjects" element={<Subjects />} />
+        <Route path="/ArchiveClassStudent" element={<ArchiveClassStudent />} />
         <Route path="/AnalyticsStudent" element={<AnalyticsStudent />} />
         <Route path="/NotificationStudent" element={<NotificationStudent />} />
         <Route path="/ProfileStudent" element={<ProfileStudent />} />

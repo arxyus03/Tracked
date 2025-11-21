@@ -302,7 +302,7 @@ export default function ArchiveClass() {
               </div>
               
               {/* Mobile Back Button */}
-              <Link to="/ClassManagement" className="sm:hidden">
+              <Link to="/ClassManagement">
                 <button 
                   className="flex items-center justify-center w-9 h-9 cursor-pointer transition-all duration-200 hover:scale-110"
                   aria-label="Back to Classes"
