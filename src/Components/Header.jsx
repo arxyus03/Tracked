@@ -18,6 +18,7 @@ function Header({ setIsOpen }) {
   const [userId, setUserId] = useState("");
   const [userRole, setUserRole] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const today = new Date();
@@ -62,6 +63,52 @@ function Header({ setIsOpen }) {
       console.error("Error reading user from localStorage:", error);
     } 
   }, []);
+
+  // Load unread count from localStorage based on user role
+  useEffect(() => {
+    if (userRole) {
+      const count = getUnreadCountFromStorage();
+      setUnreadCount(count);
+    }
+  }, [userRole]);
+
+  // Listen for storage changes to update the counter in real-time
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const count = getUnreadCountFromStorage();
+      setUnreadCount(count);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [userRole]);
+
+  // Get unread count from localStorage based on user role
+  const getUnreadCountFromStorage = () => {
+    if (userRole === "Student") {
+      const studentCount = localStorage.getItem('studentUnreadCount');
+      return studentCount ? parseInt(studentCount) : 0;
+    } else if (userRole === "Professor") {
+      const professorCount = localStorage.getItem('professorUnreadCount');
+      return professorCount ? parseInt(professorCount) : 0;
+    }
+    return 0;
+  };
+
+  // Update unread count in localStorage and state
+  const updateUnreadCount = (count) => {
+    if (userRole === "Student") {
+      localStorage.setItem('studentUnreadCount', count.toString());
+    } else if (userRole === "Professor") {
+      localStorage.setItem('professorUnreadCount', count.toString());
+    }
+    setUnreadCount(count);
+    
+    // Trigger storage event for other tabs/windows
+    window.dispatchEvent(new Event('storage'));
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -137,8 +184,17 @@ function Header({ setIsOpen }) {
 
   const handleNotificationClick = () => {
     if (paths.notification !== "/#") {
+      // Reset counter to 0 when clicking on notifications
+      updateUnreadCount(0);
       navigate(paths.notification);
     }
+  };
+
+  // Format the count display - show max 99+
+  const formatCount = (count) => {
+    if (count === 0) return '0';
+    if (count > 99) return '99+';
+    return count.toString();
   };
 
   return (
@@ -176,10 +232,12 @@ function Header({ setIsOpen }) {
                   alt="Notification"
                   className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" 
                 />
-                {/* Notification badge */}
-                <div className="absolute -top-1 -right-1 bg-[#00874E] text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                  x
-                </div>
+                {/* Notification badge - only show if count > 0 */}
+                {unreadCount > 0 && (
+                  <div className="absolute -top-1 -right-1 bg-[#00874E] text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {formatCount(unreadCount)}
+                  </div>
+                )}
               </div>
               <p className="text-[#465746] font-medium text-sm sm:text-base">New</p>
             </div>

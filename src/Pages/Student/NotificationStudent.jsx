@@ -40,6 +40,29 @@ export default function NotificationStudent() {
     }
   }, [studentId]);
 
+  // Function to update unread count in localStorage
+  const updateUnreadCount = (count) => {
+    localStorage.setItem('studentUnreadCount', count.toString());
+    // Trigger storage event for Header to update
+    window.dispatchEvent(new Event('storage'));
+    console.log(`Updated student unread count to: ${count}`);
+  };
+
+  // Update unread count whenever announcements change
+  useEffect(() => {
+    if (announcements.length > 0) {
+      const unreadCount = announcements.filter(ann => !ann.isRead).length;
+      updateUnreadCount(unreadCount);
+    } else {
+      updateUnreadCount(0);
+    }
+  }, [announcements]);
+
+  // Reset counter to 0 when component mounts (user is viewing notifications page)
+  useEffect(() => {
+    updateUnreadCount(0);
+  }, []);
+
   const fetchStudentAnnouncements = async () => {
     try {
       setLoading(true);
@@ -65,6 +88,10 @@ export default function NotificationStudent() {
         setAnnouncements(data.announcements);
         setError(null);
         console.log(`Loaded ${data.announcements.length} announcements`); // Debug log
+        
+        // Log unread count for debugging
+        const unreadCount = data.announcements.filter(ann => !ann.isRead).length;
+        console.log(`Unread announcements: ${unreadCount}`);
       } else {
         throw new Error(data.message || 'Failed to fetch announcements');
       }
@@ -82,8 +109,9 @@ export default function NotificationStudent() {
       ann.id === announcementId ? { ...ann, isRead: true } : ann
     ));
     
-    // Here you can also make an API call to update read status in the database
     console.log(`Marked announcement ${announcementId} as read`);
+    
+    // Note: The useEffect above will automatically update the counter
   };
 
   const handleMarkAsUnread = (announcementId) => {
@@ -93,6 +121,8 @@ export default function NotificationStudent() {
     ));
     
     console.log(`Marked announcement ${announcementId} as unread`);
+    
+    // Note: The useEffect above will automatically update the counter
   };
 
   // Filter announcements based on search query and filter option
