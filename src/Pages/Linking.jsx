@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 // Admin Links
 import UserManagement from './Admin/UserManagement.jsx';
@@ -57,8 +57,8 @@ function Linking() {
   return (
     <Router basename="/">
       <Routes>
-        {/* Starting Flow */} 
-        <Route path="/" />  
+        {/* Redirect to Login */}
+        <Route path="/" element={<Navigate to="/Login" replace />} />
         
         {/* Navigations for Landing */}
         <Route path="/Login" element={<Login />} />

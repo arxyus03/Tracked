@@ -1,6 +1,7 @@
 import React from 'react'
 import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
+import Lottie from "lottie-react";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
@@ -14,6 +15,9 @@ import ProfessorAccounts from '../../assets/ProfessorAccounts.svg';
 import ActiveAccounts from '../../assets/ActiveAccounts.svg';
 import DisabledAccounts from '../../assets/DisabledAccounts.svg';
 import Details from '../../assets/Details(Light).svg';
+
+// Import the Lottie animation JSON file
+import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function Report() {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,6 +44,16 @@ export default function Report() {
   const [professorSearch, setProfessorSearch] = useState('');
   const [studentFilter, setStudentFilter] = useState('all');
   const [professorFilter, setProfessorFilter] = useState('all');
+
+  // Lottie animation options
+  const defaultLottieOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: loadingAnimation,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice'
+    }
+  };
 
   // Fetch widget data
   const fetchWidgetData = async () => {
@@ -134,8 +148,14 @@ export default function Report() {
           ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
         `}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 flex justify-center items-center h-64">
-            <div className="text-[#465746]">Loading reports...</div>
+          <div className="p-8 flex flex-col justify-center items-center h-64">
+            <div className="w-24 h-24 mb-4">
+              <Lottie 
+                {...defaultLottieOptions}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </div>
+            <div className="text-[#465746] text-lg font-medium">Loading reports...</div>
           </div>
         </div>
       </div>

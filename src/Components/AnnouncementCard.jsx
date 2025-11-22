@@ -98,7 +98,7 @@ export default function AnnouncementCard({
             <img 
               src={Edit} 
               alt="Edit" 
-              className="cursor-pointer hover:opacity-70 transition-opacity w-4 h-4 sm:w-5 sm:h-5"
+              className="cursor-pointer hover:opacity-70 transition-opacity w-5 h-5 sm:w-6 sm:h-6"
               onClick={(e) => {
                 e.stopPropagation();
                 if (onEdit) onEdit();
@@ -107,7 +107,7 @@ export default function AnnouncementCard({
             <img 
               src={Delete} 
               alt="Delete" 
-              className="cursor-pointer hover:opacity-70 transition-opacity w-4 h-4 sm:w-5 sm:h-5"
+              className="cursor-pointer hover:opacity-70 transition-opacity w-5 h-5 sm:w-6 sm:h-6"
               onClick={handleDeleteClick}
             />
             <img

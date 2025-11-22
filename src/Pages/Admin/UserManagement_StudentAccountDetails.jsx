@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import Lottie from "lottie-react";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
@@ -7,6 +8,9 @@ import Popup from "../../Components/Popup";
 
 import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
+
+// Import the Lottie animation JSON file
+import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function UserManagement_StudentAccountDetails() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,6 +27,16 @@ export default function UserManagement_StudentAccountDetails() {
   const [isFetching, setIsFetching] = useState(true);
 
   const location = useLocation();
+
+  // Lottie animation options
+  const defaultLottieOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: loadingAnimation,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice'
+    }
+  };
 
   // Get ID from query parameters
   const getStudentId = () => {
@@ -181,16 +195,52 @@ export default function UserManagement_StudentAccountDetails() {
 
   if (isFetching) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-500">
-        Loading student details...
+      <div>
+        <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`
+          transition-all duration-300
+          ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}
+        `}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+            <div className="flex flex-col justify-center items-center h-64">
+              <div className="w-24 h-24 mb-4">
+                <Lottie 
+                  {...defaultLottieOptions}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
+              <p className="text-[#465746] text-lg font-medium">Loading student details...</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!student) {
     return (
-      <div className="flex items-center justify-center h-screen text-gray-500">
-        Student not found.
+      <div>
+        <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`
+          transition-all duration-300
+          ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}
+        `}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+            <div className="flex flex-col justify-center items-center h-64">
+              <div className="text-[#465746] text-lg font-medium text-center">
+                <p>Student not found.</p>
+                <Link 
+                  to="/UserManagementStudentAccounts"
+                  className="text-[#00874E] hover:underline mt-2 inline-block"
+                >
+                  Return to Student Accounts
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -233,6 +283,19 @@ export default function UserManagement_StudentAccountDetails() {
           </div>
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+
+          {/* Loading State for Save Operation */}
+          {isLoading && (
+            <div className="flex flex-col justify-center items-center py-8 bg-white rounded-lg shadow-md mb-6">
+              <div className="w-16 h-16 mb-3">
+                <Lottie 
+                  {...defaultLottieOptions}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
+              <p className="text-[#465746] text-lg font-medium">Saving changes...</p>
+            </div>
+          )}
 
           {/* main content of ADMIN STUDENT ACCOUNT DETAILS */}
           <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-lg sm:rounded-xl space-y-5 sm:space-y-6 shadow-md text-[#465746]">
@@ -427,9 +490,21 @@ export default function UserManagement_StudentAccountDetails() {
                     <button
                       onClick={handleSaveClick}
                       disabled={isLoading}
-                      className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#006F3A] disabled:bg-gray-400 disabled:cursor-not-allowed text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                      className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#006F3A] disabled:bg-gray-400 disabled:cursor-not-allowed text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer flex items-center justify-center"
                     >
-                      {isLoading ? "Saving..." : "Save"}
+                      {isLoading ? (
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 mr-2">
+                            <Lottie 
+                              {...defaultLottieOptions}
+                              style={{ width: '100%', height: '100%' }}
+                            />
+                          </div>
+                          Saving...
+                        </div>
+                      ) : (
+                        "Save"
+                      )}
                     </button>
 
                     {/* Cancel Button */}
@@ -449,22 +524,6 @@ export default function UserManagement_StudentAccountDetails() {
                       className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#006F3A] text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
                     >
                       Edit
-                    </button>
-
-                    {/* Reset Password */}
-                    <button
-                      onClick={() => setPopupType("reset")}
-                      className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#006F3A] text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
-                    >
-                      Reset Password
-                    </button>
-
-                    {/* Disable Account */}
-                    <button
-                      onClick={() => setPopupType("disable")}
-                      className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#FF6666] rounded-md shadow-md text-center hover:bg-[#E55555] text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
-                    >
-                      Disable Account
                     </button>
                   </>
                 )}

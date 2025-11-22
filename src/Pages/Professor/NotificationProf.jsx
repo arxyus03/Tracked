@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import Sidebar from "../../Components/Sidebar";
@@ -14,15 +14,162 @@ export default function NotificationProf() {
   const [open, setOpen] = useState(false);
   const [filterOption, setFilterOption] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.id) {
+        throw new Error("User not found");
+      }
+
+      const formData = new FormData();
+      formData.append("professor_id", user.id);
+
+      const response = await fetch("https://tracked.6minds.site/Professor/NotificationDB/get_professor_notifications.php", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Load read status from localStorage
+        const readNotifications = JSON.parse(localStorage.getItem('professorReadNotifications') || '{}');
+        const notificationsWithReadStatus = data.notifications.map(notification => ({
+          ...notification,
+          isRead: readNotifications[notification.id] || false
+        }));
+        
+        setNotifications(notificationsWithReadStatus);
+        
+        // Update unread count in localStorage for Header
+        const unreadCount = notificationsWithReadStatus.filter(n => !n.isRead).length;
+        localStorage.setItem('professorUnreadCount', unreadCount.toString());
+        
+        // Trigger storage event to update Header counter
+        window.dispatchEvent(new Event('storage'));
+      } else {
+        throw new Error(data.message || "Failed to fetch notifications");
+      }
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching notifications:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    
+    // Refresh notifications every 30 seconds (changed from 5 minutes)
+    const interval = setInterval(fetchNotifications, 30 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle mark as read
+  const handleMarkAsRead = (notificationId) => {
+    const updatedNotifications = notifications.map(notification =>
+      notification.id === notificationId 
+        ? { ...notification, isRead: true }
+        : notification
+    );
+    
+    setNotifications(updatedNotifications);
+    
+    // Save to localStorage
+    const readNotifications = JSON.parse(localStorage.getItem('professorReadNotifications') || '{}');
+    readNotifications[notificationId] = true;
+    localStorage.setItem('professorReadNotifications', JSON.stringify(readNotifications));
+    
+    // Update unread count
+    const unreadCount = updatedNotifications.filter(n => !n.isRead).length;
+    localStorage.setItem('professorUnreadCount', unreadCount.toString());
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  // Handle mark as unread
+  const handleMarkAsUnread = (notificationId) => {
+    const updatedNotifications = notifications.map(notification =>
+      notification.id === notificationId 
+        ? { ...notification, isRead: false }
+        : notification
+    );
+    
+    setNotifications(updatedNotifications);
+    
+    // Save to localStorage
+    const readNotifications = JSON.parse(localStorage.getItem('professorReadNotifications') || '{}');
+    localStorage.setItem('professorReadNotifications', JSON.stringify(readNotifications));
+    
+    // Update unread count
+    const unreadCount = updatedNotifications.filter(n => !n.isRead).length;
+    localStorage.setItem('professorUnreadCount', unreadCount.toString());
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  // Filter notifications based on filter option and search query
+  const filteredNotifications = notifications.filter(notification => {
+    // Filter by read status
+    if (filterOption === "Unread" && notification.isRead) return false;
+    if (filterOption === "Read" && !notification.isRead) return false;
+    
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        notification.title.toLowerCase().includes(query) ||
+        notification.description.toLowerCase().includes(query) ||
+        notification.subject?.toLowerCase().includes(query) ||
+        notification.section?.toLowerCase().includes(query)
+      );
+    }
+    
+    return true;
+  });
+
+  // Sort by newest first (latest to oldest) - FIXED
+  const sortedNotifications = [...filteredNotifications].sort((a, b) => 
+    new Date(b.created_at) - new Date(a.created_at)
+  );
+
+  if (loading) {
+    return (
+      <div>
+        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen}/>
+          <div className="p-8 flex justify-center items-center h-64">
+            <div className="text-lg">Loading notifications...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen}/>
+          <div className="p-8 flex justify-center items-center h-64">
+            <div className="text-red-500 text-lg">Error: {error}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div
-        className={`transition-all duration-300 ${
-          isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
-        }`}
-      >
+      <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen}/>
 
         {/* content of NOTIFICATION*/}
@@ -104,24 +251,27 @@ export default function NotificationProf() {
 
           {/* Notification Cards */}
           <div className="space-y-4 sm:space-y-5">
-            <NotificationCard
-              title="New Account Created"
-              description="An account for John Doe has been successfully created."
-              date="September 27, 2025"
-              isRead={false}
-            />
-            <NotificationCard
-              title="Password Changed"
-              description="Jane Doe changed their password successfully."
-              date="September 25, 2025"
-              isRead={true}
-            />
-            <NotificationCard
-              title="Profile Updated"
-              description="Mary Smith has updated her profile information."
-              date="September 24, 2025"
-              isRead={true}
-            />
+            {sortedNotifications.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No notifications found.
+              </div>
+            ) : (
+              sortedNotifications.map((notification) => (
+                <NotificationCard
+                  key={notification.id}
+                  title={notification.title}
+                  description={notification.description}
+                  date={new Date(notification.created_at).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                  isRead={notification.isRead}
+                  onMarkAsRead={() => handleMarkAsRead(notification.id)}
+                  onMarkAsUnread={() => handleMarkAsUnread(notification.id)}
+                />
+              ))
+            )}
           </div>
         </div>
       </div>

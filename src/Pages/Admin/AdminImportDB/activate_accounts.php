@@ -208,7 +208,7 @@ function sendTemporaryPasswordEmail($user_Email, $user_firstname, $user_ID, $pla
                 </div>
                 
                 <p style="color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 15px;">
-                    You can now access your account at: <a href="https://tracked.6minds.site/Login"> https://tracked.6minds.site/Login </a>
+                    You can now access your account at: <a href="https://tracked.6minds.site"> https://tracked.6minds.site </a>
                 </p>
                 
                 <p style="color: #666; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
@@ -223,7 +223,7 @@ function sendTemporaryPasswordEmail($user_Email, $user_firstname, $user_ID, $pla
             </div>
         </div>';
 
-        $mail->AltBody = "Welcome to TrackED!\n\nDear " . $user_firstname . ",\n\nYour TrackED account has been successfully activated.\n\nLogin Credentials:\nUser ID: " . $user_ID . "\nTemporary Password: " . $plain_password . "\n\nImportant: For security reasons, please change your password after your first login. You can use the 'Forgot Password' feature if needed, using this temporary password as your current password.\n\nLogin URL: https://tracked.6minds.site/Login\n\nThis is a system generated message. Please do not reply.";
+        $mail->AltBody = "Welcome to TrackED!\n\nDear " . $user_firstname . ",\n\nYour TrackED account has been successfully activated.\n\nLogin Credentials:\nUser ID: " . $user_ID . "\nTemporary Password: " . $plain_password . "\n\nImportant: For security reasons, please change your password after your first login. You can use the 'Forgot Password' feature if needed, using this temporary password as your current password.\n\nLogin URL: https://tracked.6minds.site\n\nThis is a system generated message. Please do not reply.";
 
         return $mail->send();
     } catch (Exception $e) {

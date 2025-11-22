@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import NotificationCard from "../../Components/NotificationCardStudent";
@@ -12,135 +14,128 @@ export default function NotificationStudent() {
   const [open, setOpen] = useState(false);
   const [filterOption, setFilterOption] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [announcements, setAnnouncements] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
-  // Get current student ID from localStorage
-  const [studentId, setStudentId] = useState("");
-
-  useEffect(() => {
-    // Get user data from localStorage
-    const userData = JSON.parse(localStorage.getItem('user'));
-    console.log("User data from localStorage:", userData); // Debug log
-    
-    if (userData && userData.id) {
-      setStudentId(userData.id);
-      console.log("Student ID set to:", userData.id); // Debug log
-    } else {
-      setError("User not logged in. Please log in again.");
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (studentId) {
-      console.log("Fetching announcements for student:", studentId); // Debug log
-      fetchStudentAnnouncements();
-    }
-  }, [studentId]);
-
-  // Function to update unread count in localStorage
-  const updateUnreadCount = (count) => {
-    localStorage.setItem('studentUnreadCount', count.toString());
-    // Trigger storage event for Header to update
-    window.dispatchEvent(new Event('storage'));
-    console.log(`Updated student unread count to: ${count}`);
-  };
-
-  // Update unread count whenever announcements change
-  useEffect(() => {
-    if (announcements.length > 0) {
-      const unreadCount = announcements.filter(ann => !ann.isRead).length;
-      updateUnreadCount(unreadCount);
-    } else {
-      updateUnreadCount(0);
-    }
-  }, [announcements]);
-
-  // Reset counter to 0 when component mounts (user is viewing notifications page)
-  useEffect(() => {
-    updateUnreadCount(0);
-  }, []);
-
-  const fetchStudentAnnouncements = async () => {
+  // Fetch notifications
+  const fetchNotifications = async () => {
     try {
       setLoading(true);
-      
-      const formData = new FormData();
-      formData.append('student_id', studentId);
-      
-      console.log("Sending request to PHP with student ID:", studentId); // Debug log
-      
-      const response = await fetch('https://tracked.6minds.site/Student/NotificationStudentDB/get_student_announcements.php', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.status}`);
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.id) {
+        throw new Error("User not found");
       }
-      
+
+      const formData = new FormData();
+      formData.append("student_id", user.id);
+
+      const response = await fetch("https://tracked.6minds.site/Student/NotificationStudentDB/get_student_notifications.php", {
+        method: "POST",
+        body: formData,
+      });
+
       const data = await response.json();
-      console.log("API Response:", data); // Debug log
-      
+
       if (data.success) {
-        setAnnouncements(data.announcements);
-        setError(null);
-        console.log(`Loaded ${data.announcements.length} announcements`); // Debug log
+        // Load read status from localStorage
+        const readNotifications = JSON.parse(localStorage.getItem('studentReadNotifications') || '{}');
+        const notificationsWithReadStatus = data.notifications.map(notification => ({
+          ...notification,
+          isRead: readNotifications[notification.id] || false
+        }));
         
-        // Log unread count for debugging
-        const unreadCount = data.announcements.filter(ann => !ann.isRead).length;
-        console.log(`Unread announcements: ${unreadCount}`);
+        setNotifications(notificationsWithReadStatus);
+        
+        // Update unread count in localStorage for Header
+        const unreadCount = notificationsWithReadStatus.filter(n => !n.isRead).length;
+        localStorage.setItem('studentUnreadCount', unreadCount.toString());
+        
+        // Trigger storage event to update Header counter
+        window.dispatchEvent(new Event('storage'));
       } else {
-        throw new Error(data.message || 'Failed to fetch announcements');
+        throw new Error(data.message || "Failed to fetch notifications");
       }
     } catch (err) {
-      console.error("Error fetching announcements:", err);
-      setError(`Failed to load announcements: ${err.message}`);
+      setError(err.message);
+      console.error("Error fetching notifications:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMarkAsRead = (announcementId) => {
-    // Update local state
-    setAnnouncements(prev => prev.map(ann => 
-      ann.id === announcementId ? { ...ann, isRead: true } : ann
-    ));
+  useEffect(() => {
+    fetchNotifications();
     
-    console.log(`Marked announcement ${announcementId} as read`);
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle mark as read
+  const handleMarkAsRead = (notificationId) => {
+    const updatedNotifications = notifications.map(notification =>
+      notification.id === notificationId 
+        ? { ...notification, isRead: true }
+        : notification
+    );
     
-    // Note: The useEffect above will automatically update the counter
+    setNotifications(updatedNotifications);
+    
+    // Save to localStorage
+    const readNotifications = JSON.parse(localStorage.getItem('studentReadNotifications') || '{}');
+    readNotifications[notificationId] = true;
+    localStorage.setItem('studentReadNotifications', JSON.stringify(readNotifications));
+    
+    // Update unread count
+    const unreadCount = updatedNotifications.filter(n => !n.isRead).length;
+    localStorage.setItem('studentUnreadCount', unreadCount.toString());
+    window.dispatchEvent(new Event('storage'));
   };
 
-  const handleMarkAsUnread = (announcementId) => {
-    // Update local state
-    setAnnouncements(prev => prev.map(ann => 
-      ann.id === announcementId ? { ...ann, isRead: false } : ann
-    ));
+  // Handle mark as unread
+  const handleMarkAsUnread = (notificationId) => {
+    const updatedNotifications = notifications.map(notification =>
+      notification.id === notificationId 
+        ? { ...notification, isRead: false }
+        : notification
+    );
     
-    console.log(`Marked announcement ${announcementId} as unread`);
+    setNotifications(updatedNotifications);
     
-    // Note: The useEffect above will automatically update the counter
+    // Save to localStorage
+    const readNotifications = JSON.parse(localStorage.getItem('studentReadNotifications') || '{}');
+    localStorage.setItem('studentReadNotifications', JSON.stringify(readNotifications));
+    
+    // Update unread count
+    const unreadCount = updatedNotifications.filter(n => !n.isRead).length;
+    localStorage.setItem('studentUnreadCount', unreadCount.toString());
+    window.dispatchEvent(new Event('storage'));
   };
 
-  // Filter announcements based on search query and filter option
-  const filteredAnnouncements = announcements.filter(announcement => {
-    const matchesSearch = announcement.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         announcement.instructions?.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter notifications based on filter option and search query
+  const filteredNotifications = notifications.filter(notification => {
+    // Filter by read status
+    if (filterOption === "Unread" && notification.isRead) return false;
+    if (filterOption === "Read" && !notification.isRead) return false;
     
-    if (filterOption === "All") return matchesSearch;
-    if (filterOption === "Unread") return matchesSearch && !announcement.isRead;
-    if (filterOption === "Read") return matchesSearch && announcement.isRead;
-    if (filterOption === "Newest") return matchesSearch;
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        notification.title.toLowerCase().includes(query) ||
+        notification.description.toLowerCase().includes(query) ||
+        notification.subject?.toLowerCase().includes(query) ||
+        notification.section?.toLowerCase().includes(query)
+      );
+    }
     
-    return matchesSearch;
+    return true;
   });
 
-  // Sort announcements by date (newest first)
-  const sortedAnnouncements = [...filteredAnnouncements].sort((a, b) => 
-    new Date(b.datePosted) - new Date(a.datePosted)
+  // Sort by newest first (latest to oldest) - FIXED
+  const sortedNotifications = [...filteredNotifications].sort((a, b) => 
+    new Date(b.created_at) - new Date(a.created_at)
   );
 
   if (loading) {
@@ -148,11 +143,9 @@ export default function NotificationStudent() {
       <div>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}>
-          <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
-          <div className="text-[#465746] p-4 sm:p-5 md:p-6 lg:p-8">
-            <div className="flex justify-center items-center h-64">
-              <div className="text-lg">Loading announcements...</div>
-            </div>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-8 flex justify-center items-center h-64">
+            <div className="text-lg">Loading notifications...</div>
           </div>
         </div>
       </div>
@@ -164,11 +157,9 @@ export default function NotificationStudent() {
       <div>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}>
-          <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
-          <div className="text-[#465746] p-4 sm:p-5 md:p-6 lg:p-8">
-            <div className="flex justify-center items-center h-64">
-              <div className="text-lg text-red-500">{error}</div>
-            </div>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-8 flex justify-center items-center h-64">
+            <div className="text-red-500 text-lg">Error: {error}</div>
           </div>
         </div>
       </div>
@@ -178,12 +169,8 @@ export default function NotificationStudent() {
   return (
     <div>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div
-        className={`transition-all duration-300 ${
-          isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
-        }`}
-      >
-        <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Jane Doe" />
+      <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}>
+        <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
         {/* content of NOTIFICATION*/}
         <div className="text-[#465746] p-4 sm:p-5 md:p-6 lg:p-8">
@@ -195,7 +182,7 @@ export default function NotificationStudent() {
             </div>
             <div className='flex justify-between'>
               <div className="text-sm sm:text-base lg:text-lg">
-                <span>Class Announcements</span>
+                <span>Account Notification</span>
               </div>
               <div className="flex text-sm sm:text-base lg:text-lg">
                 <span> 2nd Semester 2024 - 2025  </span>
@@ -247,7 +234,7 @@ export default function NotificationStudent() {
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Search announcements..."
+                placeholder="Search notifications..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
@@ -262,29 +249,26 @@ export default function NotificationStudent() {
             </div>
           </div>
 
-          {/* Announcement Cards */}
+          {/* Notification Cards */}
           <div className="space-y-4 sm:space-y-5">
-            {sortedAnnouncements.length === 0 ? (
+            {sortedNotifications.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {searchQuery || filterOption !== "All" 
-                  ? "No announcements match your search criteria." 
-                  : "No announcements available for your classes."}
+                No notifications found.
               </div>
             ) : (
-              sortedAnnouncements.map((announcement) => (
+              sortedNotifications.map((notification) => (
                 <NotificationCard
-                  key={announcement.id}
-                  subject={announcement.subject}
-                  title={announcement.title}
-                  postedBy={announcement.postedBy}
-                  datePosted={announcement.datePosted}
-                  deadline={announcement.deadline}
-                  instructions={announcement.instructions}
-                  link={announcement.link}
-                  section={announcement.section}
-                  isRead={announcement.isRead || false}
-                  onMarkAsRead={() => handleMarkAsRead(announcement.id)}
-                  onMarkAsUnread={() => handleMarkAsUnread(announcement.id)}
+                  key={notification.id}
+                  title={notification.title}
+                  description={notification.description}
+                  date={new Date(notification.created_at).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                  isRead={notification.isRead}
+                  onMarkAsRead={() => handleMarkAsRead(notification.id)}
+                  onMarkAsUnread={() => handleMarkAsUnread(notification.id)}
                 />
               ))
             )}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Lottie from "lottie-react";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
@@ -8,12 +9,25 @@ import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import Student from "../../assets/Student(Light).svg";
 import Professor from "../../assets/Professor(Light).svg";
 
+// Import the Lottie animation JSON file
+import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
+
 export default function UserManagement() {
   const [isOpen, setIsOpen] = useState(false);
   const [professorCount, setProfessorCount] = useState(0);
   const [studentCount, setStudentCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Lottie animation options
+  const defaultLottieOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: loadingAnimation,
+    rendererSettings: {
+      preserveAspectRatio: 'xMidYMid slice'
+    }
+  };
 
   useEffect(() => {
     const fetchUserCounts = async () => {
@@ -60,8 +74,14 @@ export default function UserManagement() {
         `}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
           <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-            <div className="flex justify-center items-center h-40">
-              <p className="text-[#465746]">Loading user counts...</p>
+            <div className="flex flex-col justify-center items-center h-40">
+              <div className="w-20 h-20 mb-4">
+                <Lottie 
+                  {...defaultLottieOptions}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
+              <p className="text-[#465746] text-lg font-medium">Loading user counts...</p>
             </div>
           </div>
         </div>
