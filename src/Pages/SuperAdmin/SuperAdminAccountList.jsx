@@ -26,7 +26,7 @@ export default function SuperAdminAccountList() {
 
   return (
     <div>
-      <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
+      <Sidebar role="superadmin" isOpen={isOpen} setIsOpen={setIsOpen} />
 
       <div
         className={`

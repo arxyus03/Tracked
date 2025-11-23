@@ -111,6 +111,12 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
         { label: "Import", icon: Import, path: "/Import" },
       ],
     },
+    superadmin: {
+      main: [
+        { label: "User Management", icon: ClassManagement, path: "/SuperAdminAccountList" },
+        { label: "Import", icon: Import, path: "/SuperAdminLanding" },
+      ],
+    },
   };
 
   const handleLinkClick = () => {

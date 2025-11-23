@@ -106,7 +106,7 @@ export default function SuperAdminAdminAccountDetails() {
   if (loading) {
     return (
       <div>
-        <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <Sidebar role="superadmin" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`
           transition-all duration-300
           ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}
