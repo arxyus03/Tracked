@@ -19,18 +19,20 @@ import ForgotPass from './Landing/ForgotPass.jsx';
 // Professor Links
 import DashboardProf from './Professor/DashboardProf.jsx';
 import ClassManagement from './Professor/ClassManagement.jsx';
+import Class from './Professor/AnnouncementTab.jsx';
 import AnalyticsProf from './Professor/AnalyticsProf.jsx';
-import Announcement from './Professor/Announcement.jsx';
+import ClassworkTab from './Professor/ClassworkTab.jsx';
 import NotificationProf from './Professor/NotificationProf.jsx';
 import ProfileProf from './Professor/ProfileProf.jsx';
 import AccountSettingProf from './Professor/AccountSettingProf.jsx';
-import SubjectDetails from './Professor/SubjectDetails.jsx';
-import Attendance from './Professor/Attendance.jsx';
+import SubjectDetails from './Professor/ClassworkTab.jsx';
+import Attendance from './Professor/AttendanceTab.jsx';
 import AttendanceHistory from './Professor/AttendanceHistory.jsx';
 import AnalyticsIndividualInfo from './Professor/AnalyticsIndividualInfo.jsx';
 import AnalyticsAttendanceInfo from './Professor/AnalyticsAttendanceInfo.jsx';
 import ArchiveClass from './Professor/ArchiveClass.jsx'; 
 import ArchiveActivities from './Professor/ArchiveActivities.jsx';
+import StudentList from './Professor/StudentList.jsx';
 
 // Student Links
 import DashboardStudent from './Student/DashboardStudent.jsx';
@@ -78,9 +80,10 @@ function Linking() {
         
         {/* Navigations for Professor */} 
         <Route path="/DashboardProf" element={<DashboardProf />} />  
-        <Route path="/ClassManagement" element={<ClassManagement />} />  
+        <Route path="/ClassManagement" element={<ClassManagement />} /> 
+        <Route path="/Class" element={<Class />} /> 
         <Route path="/AnalyticsProf" element={<AnalyticsProf />} />  
-        <Route path="/Announcement" element={<Announcement />} />  
+        <Route path="/ClassworkTab" element={<ClassworkTab />} />  
         <Route path="/NotificationProf" element={<NotificationProf />} />  
         <Route path="/ProfileProf" element={<ProfileProf/>} />  
         <Route path="/AccountSettingProf" element={<AccountSettingProf/>} />  
@@ -91,6 +94,7 @@ function Linking() {
         <Route path="/ArchiveActivities" element={<ArchiveActivities/>} /> 
         <Route path="/AnalyticsIndividualInfo" element={<AnalyticsIndividualInfo/>} /> 
         <Route path="/AnalyticsAttendanceInfo" element={<AnalyticsAttendanceInfo/>} /> 
+        <Route path="/StudentList" element={<StudentList/>} /> 
 
         {/* Navigations for Student */}
         <Route path="/DashboardStudent" element={<DashboardStudent />} />

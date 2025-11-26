@@ -1,18 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import AttendanceIcon from "../../assets/Attendance.svg";
-import BackButton from "../../assets/BackButton(Light).svg";
+import AttendanceIcon from '../../assets/Attendance(Light).svg';
+import BackButton from '../../assets/BackButton(Light).svg';
 import Search from "../../assets/Search.svg";
-import SuccessIcon from "../../assets/Success(Green).svg";
-import ErrorIcon from "../../assets/Error(Red).svg";
-import RemoveIcon from "../../assets/Remove(Red).svg";
+import SuccessIcon from '../../assets/Success(Green).svg';
+import ErrorIcon from '../../assets/Error(Red).svg';
+import RemoveIcon from '../../assets/Remove(Red).svg';
+import Archive from "../../assets/Archive(Light).svg"; 
+import HistoryIcon from '../../assets/History(Light).svg';
+import ClassManagementIcon from "../../assets/ClassManagement(Light).svg"; 
+import Announcement from "../../assets/Announcement(Light).svg";
+import Classwork from "../../assets/Classwork(Light).svg";
+
 
 export default function Attendance() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get("code");
@@ -205,48 +211,36 @@ export default function Attendance() {
           .includes(searchTerm.toLowerCase()))
   );
 
-  if (loading)
+  if (loading) {
     return (
       <div>
-        <Sidebar
-          role="teacher"
-          isOpen={isSidebarOpen}
-          setIsOpen={setIsSidebarOpen}
-        />
-        <div
-          className={`transition-all duration-300 ${
-            isSidebarOpen
-              ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]"
-              : "ml-0"
-          }`}
-        >
-          <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen} />
-          <div className="p-5 text-center">Loading...</div>
+        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-5 text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
+            <p className="mt-3 text-gray-600">Loading class details...</p>
+          </div>
         </div>
       </div>
     );
+  }
 
   return (
     <div>
-      <Sidebar
-        role="teacher"
-        isOpen={isSidebarOpen}
-        setIsOpen={setIsSidebarOpen}
-      />
-      <div
-        className={`transition-all duration-300 ${
-          isSidebarOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
-        }`}
-      >
-        <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen} />
+      <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
+      <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
+        <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+
         {/* Main Content */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+          
           {/* Page Header */}
-          <div className="mb-4 sm:mb-4">
+          <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img
                 src={AttendanceIcon}
-                alt="AttendanceIcon"
+                alt="Attendance"
                 className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
               <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
@@ -254,7 +248,7 @@ export default function Attendance() {
               </h1>
             </div>
             <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
-              Academic Management
+              Manage your class attendance
             </p>
           </div>
 
@@ -262,63 +256,121 @@ export default function Attendance() {
           <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
             <div className="flex flex-wrap items-center gap-1 sm:gap-3">
               <span className="font-semibold">SUBJECT CODE:</span>
-              <span>{classInfo?.subject_code || "Loading..."}</span>
+              <span>{classInfo?.subject_code || 'N/A'}</span>
             </div>
+
             <div className="flex flex-wrap items-center gap-1 sm:gap-3">
               <span className="font-semibold">SUBJECT:</span>
-              <span>{classInfo?.subject || "Loading..."}</span>
+              <span>{classInfo?.subject || 'N/A'}</span>
             </div>
+
             <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Section:</span>
-                <span>{classInfo?.section || "Loading..."}</span>
+                <span>{classInfo?.section || 'N/A'}</span>
               </div>
-              <Link
-                to={`/SubjectDetails?code=${subjectCode}`}
-              >
-                <img
-                  src={BackButton}
-                  alt="Back"
-                  className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity"
-                />
-              </Link>
+              <div className="w-full flex justify-end">
+                <Link to="/ClassManagement">
+                  <img 
+                    src={BackButton} 
+                    alt="Back" 
+                    className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity" 
+                  />
+                </Link>
+              </div>
             </div>
           </div>
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          {/* Search and History */}
-          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-4 sm:mt-5 gap-3">
-            <div className="relative flex-1 max-w-full sm:max-w-md">
-              <input
-                type="text"
-                placeholder="Search by name, student number, or year & section..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 sm:h-10 lg:h-11 rounded-md pl-3 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm"
-              />
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#465746]"
-              >
-                <img
-                  src={Search}
-                  alt="Search"
-                  className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
-                />
-              </button>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full mt-4 sm:mt-5 gap-3">
+            {/* Navigation buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              {/* Announcement Button - Full width on mobile, auto on larger */}
+              <Link to={`/Class?code=${subjectCode}`} className="flex-1 min-w-0">
+                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full sm:w-auto">
+                  <img 
+                    src={Announcement} 
+                    alt="" 
+                    className="h-4 w-4 sm:h-5 sm:w-5"
+                  />
+                  <span className="sm:inline">ANNOUNCEMENT</span>
+                </button>
+              </Link>
+
+              {/* Classwork and Attendance - Side by side on all screens */}
+              <div className="flex gap-3 w-full sm:w-auto">
+                <Link to={`/ClassworkTab?code=${subjectCode}`} className="flex-1 min-w-0">
+                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full">
+                    <img 
+                      src={Classwork} 
+                      alt="" 
+                      className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
+                    />
+                    <span className="whitespace-nowrap truncate">CLASS WORK</span>
+                  </button>
+                </Link>
+
+                <Link to={`/Attendance?code=${subjectCode}`} className="flex-1 sm:flex-initial">
+                  <button className="flex items-center justify-center gap-2 px-5 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer">
+                    <img 
+                      src={AttendanceIcon}
+                      alt="" 
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                    />
+                    ATTENDANCE
+                  </button>
+                </Link>
+              </div>
             </div>
-            <div className="flex items-center justify-end gap-3">
+
+            {/* Action buttons - Right aligned on mobile */}
+            <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+              <Link to={`/StudentList?code=${subjectCode}`}>
+                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer">
+                  <img 
+                    src={ClassManagementIcon} 
+                    alt="ClassManagement" 
+                    className="h-5 w-5 sm:h-6 sm:w-6" 
+                  />
+                </button>
+              </Link>
+              
               <Link to={`/AttendanceHistory?code=${subjectCode}`}>
-                <button className="font-bold px-4 sm:px-5 py-2 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 text-sm sm:text-base lg:text-[1.125rem] whitespace-nowrap cursor-pointer">
-                  History
+                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer">
+                  <img 
+                    src={HistoryIcon} 
+                    alt="History" 
+                    className="h-5 w-5 sm:h-6 sm:w-6" 
+                  />
                 </button>
               </Link>
             </div>
           </div>
 
+          {/* Search Bar */}
+          <div className="mt-6 sm:mt-8">
+            <div className="relative max-w-md">
+              <input
+                type="text"
+                placeholder="Search by name, student number, or year & section..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
+              />
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <img
+                  src={Search}
+                  alt="Search"
+                  className="h-5 w-5 sm:h-6 sm:w-6"
+                />
+              </button>
+            </div>
+          </div>
+
           {/* Attendance Table */}
-          <div className="rounded-md overflow-hidden shadow-md mt-4 sm:mt-5 bg-[#fff]">
+          <div className="mt-6 sm:mt-8 bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <div className="sm:hidden text-xs text-gray-500 py-2 text-center bg-gray-50">
                 ← Swipe to see all columns →
@@ -342,6 +394,9 @@ export default function Attendance() {
                       <th className="px-2 py-2 text-[#00A15D] text-center w-14 sm:w-16 md:w-20">
                         Present
                       </th>
+                      <th className="px-2 py-2 text-center w-14 sm:w-16 md:w-20">
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -349,26 +404,26 @@ export default function Attendance() {
                       filteredStudents.map((student, index) => (
                         <tr
                           key={student.tracked_ID}
-                          className="hover:bg-gray-50 text-xs sm:text-sm lg:text-base"
+                          className="hover:bg-gray-50 text-xs sm:text-sm lg:text-base border-b border-gray-200"
                         >
-                          <td className="px-2 sm:px-3 md:px-4 py-2">
+                          <td className="px-2 sm:px-3 md:px-4 py-3">
                             {index + 1}
                           </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2">
+                          <td className="px-2 sm:px-3 md:px-4 py-3">
                             {student.tracked_ID}
                           </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2">
+                          <td className="px-2 sm:px-3 md:px-4 py-3">
                             {formatName(
                               `${student.tracked_firstname} ${
                                 student.tracked_middlename || ""
                               } ${student.tracked_lastname}`
                             )}
                           </td>
-                          <td className="px-2 sm:px-3 md:px-4 py-2">
+                          <td className="px-2 sm:px-3 md:px-4 py-3">
                             {student.tracked_yearandsec || "N/A"}
                           </td>
 
-                          <td className="px-2 py-2 w-14 sm:w-16 md:w-20">
+                          <td className="px-2 py-3 w-14 sm:w-16 md:w-20">
                             <div className="flex justify-center items-center">
                               <input
                                 type="radio"
@@ -387,7 +442,7 @@ export default function Attendance() {
                               />
                             </div>
                           </td>
-                          <td className="px-2 py-2 w-14 sm:w-16 md:w-20">
+                          <td className="px-2 py-3 w-14 sm:w-16 md:w-20">
                             <div className="flex justify-center items-center">
                               <input
                                 type="radio"
@@ -406,7 +461,7 @@ export default function Attendance() {
                               />
                             </div>
                           </td>
-                          <td className="px-2 py-2 w-14 sm:w-16 md:w-20">
+                          <td className="px-2 py-3 w-14 sm:w-16 md:w-20">
                             <div className="flex justify-center items-center">
                               <input
                                 type="radio"
@@ -425,18 +480,21 @@ export default function Attendance() {
                               />
                             </div>
                           </td>
-                          <td className="px-2 py-2 w-14 sm:w-16 md:w-20">
+                          <td className="px-2 py-3 w-14 sm:w-16 md:w-20">
                             <div className="flex justify-center items-center">
                               <button
                                 onClick={(e) => handleRemoveStudent(student, e)}
-                                className="bg-white rounded-md w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11 shadow-md flex items-center justify-center border-2 border-transparent hover:border-red-500 hover:scale-105 transition-all duration-200 cursor-pointer"
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors group relative"
                                 title="Remove student"
                               >
                                 <img
                                   src={RemoveIcon}
                                   alt="Remove student"
-                                  className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                                  className="h-5 w-5"
                                 />
+                                <span className="absolute opacity-0 group-hover:opacity-100 bg-gray-800 text-white text-xs rounded py-1 px-2 -mt-8 -ml-4 transition-opacity">
+                                  Remove
+                                </span>
                               </button>
                             </div>
                           </td>
@@ -459,29 +517,29 @@ export default function Attendance() {
               </div>
             </div>
 
-            {/* Buttons */}
-            <div className="p-3 sm:p-4 md:p-5 pt-0">
-              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+            {/* Action Buttons */}
+            <div className="p-4 sm:p-5 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row justify-end gap-3">
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-[#979797] text-[#fff] font-bold text-sm sm:text-base rounded-md border-transparent border-2 hover:border-[#007846] transition-all cursor-pointer"
+                    className="w-full sm:w-auto px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-md transition-all duration-200 cursor-pointer"
                   >
-                    Edit
+                    Edit Attendance
                   </button>
                 ) : (
                   <>
                     <button
                       onClick={handleMarkAllPresent}
-                      className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-[#979797] text-[#fff] font-bold text-sm sm:text-base rounded-md border-transparent border-2 hover:border-[#007846] transition-all cursor-pointer"
+                      className="w-full sm:w-auto px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-md transition-all duration-200 cursor-pointer"
                     >
-                      Mark All as Present
+                      Mark All Present
                     </button>
                     <button
                       onClick={handleSaveAttendance}
-                      className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-[#00A15D] text-[#fff] font-bold text-sm sm:text-base rounded-md border-transparent border-2 hover:border-[#007846] transition-all cursor-pointer"
+                      className="w-full sm:w-auto px-6 py-3 bg-[#00A15D] hover:bg-[#00874E] text-white font-semibold rounded-md transition-all duration-200 cursor-pointer"
                     >
-                      Save
+                      Save Attendance
                     </button>
                   </>
                 )}

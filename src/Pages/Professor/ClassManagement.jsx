@@ -328,7 +328,7 @@ export default function ClassManagement() {
 
     return classesToRender.map((classItem, index) => (
       <Link 
-        to={`/SubjectDetails?code=${classItem.subject_code}`} 
+        to={`/Class?code=${classItem.subject_code}`} 
         key={classItem.subject_code}
         className="block"
       >

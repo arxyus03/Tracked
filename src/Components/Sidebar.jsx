@@ -14,14 +14,67 @@ import Profile from "../assets/Profile.svg";
 import AccountSettings from "../assets/Settings.svg";
 import LogOut from "../assets/LogOut.svg";
 import TextLogo from "../assets/New-FullWhite-TrackEdLogo.svg";
+import ArrowDown from "../assets/ArrowDown(Dark).svg";
 
 export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpen: setIsOpenProp }) {
   const [localOpen, setLocalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [teacherClasses, setTeacherClasses] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [classesDropdownOpen, setClassesDropdownOpen] = useState(false);
 
   const isControlled = typeof isOpenProp !== "undefined" && typeof setIsOpenProp === "function";
   const isOpen = isControlled ? isOpenProp : localOpen;
   const setIsOpen = isControlled ? setIsOpenProp : setLocalOpen;
+
+  // Get professor ID from localStorage
+  const getProfessorId = () => {
+    try {
+      const userDataString = localStorage.getItem('user');
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        return userData.id;
+      }
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+    }
+    return null;
+  };
+
+  // Fetch teacher's classes
+  const fetchTeacherClasses = async () => {
+    if (role !== "teacher") return;
+    
+    try {
+      setLoadingClasses(true);
+      const professorId = getProfessorId();
+      
+      if (!professorId) {
+        console.error('No professor ID found');
+        setLoadingClasses(false);
+        return;
+      }
+      
+      const response = await fetch(`https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setTeacherClasses(result.classes || []);
+        } else {
+          console.error('Error fetching classes:', result.message);
+          setTeacherClasses([]);
+        }
+      } else {
+        throw new Error('Failed to fetch classes');
+      }
+    } catch (error) {
+      console.error('Error fetching teacher classes:', error);
+      setTeacherClasses([]);
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
 
   // Check screen size and set initial state
   useEffect(() => {
@@ -39,6 +92,13 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [isControlled]);
+
+  // Fetch classes when component mounts and when role is teacher
+  useEffect(() => {
+    if (role === "teacher") {
+      fetchTeacherClasses();
+    }
+  }, [role]);
 
   // Handle outside clicks on mobile only
   useEffect(() => {
@@ -91,12 +151,17 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
         { label: "Account Setting", icon: AccountSettings, path: "/AccountSetting" },
       ],
     },
+
     teacher: {
       main: [
         { label: "Dashboard", icon: Dashboard, path: "/DashboardProf" },
-        { label: "Class Management", icon: ClassManagement, path: "/ClassManagement" },
+        { 
+          label: "Class Management", 
+          icon: ClassManagement, 
+          path: "/ClassManagement",
+          hasDropdown: true
+        },
         { label: "Analytics", icon: Analytics, path: "/AnalyticsProf" },
-        { label: "Announcement", icon: Announcement, path: "/Announcement" },
       ],
       extras: [
         { label: "Notification", icon: Notification, path: "/NotificationProf" },
@@ -104,6 +169,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
         { label: "Account Setting", icon: AccountSettings, path: "/AccountSettingProf" },
       ],
     },
+
     admin: {
       main: [
         { label: "User Management", icon: ClassManagement, path: "/UserManagement" },
@@ -111,6 +177,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
         { label: "Import", icon: Import, path: "/Import" },
       ],
     },
+
     superadmin: {
       main: [
         { label: "User Management", icon: ClassManagement, path: "/SuperAdminAccountList" },
@@ -121,6 +188,11 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
 
   const handleLinkClick = () => {
     if (isMobile) setIsOpen(false);
+  };
+
+  const handleClassClick = () => {
+    if (isMobile) setIsOpen(false);
+    setClassesDropdownOpen(false);
   };
 
   const navItemBase =
@@ -158,17 +230,94 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
           <nav className="flex-1 overflow-y-auto overflow-x-hidden px-4">
             <div className="flex flex-col gap-1 py-2">
               {menus[role]?.main?.map((item, index) => (
-                <NavLink
-                  key={`${item.label}-${index}`}
-                  to={item.path}
-                  onClick={handleLinkClick}
-                  className={({ isActive }) =>
-                    `${navItemBase} ${isActive ? "bg-[#00A15D]" : ""}`
-                  }
-                >
-                  <img src={item.icon} alt="icons" className="h-5 w-5 mr-3 flex-shrink-0" />
-                  <span className="text-white text-sm sm:text-[1rem] truncate">{item.label}</span>
-                </NavLink>
+                <div key={`${item.label}-${index}`}>
+                  {item.hasDropdown && role === "teacher" ? (
+                    // Class Management with dropdown
+                    <div className="mb-1">
+                      <button
+                        onClick={() => setClassesDropdownOpen(!classesDropdownOpen)}
+                        className={`${navItemBase} w-full justify-between ${
+                          classesDropdownOpen ? "bg-[#00A15D]" : ""
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <img src={item.icon} alt="icons" className="h-5 w-5 mr-3 flex-shrink-0" />
+                          <span className="text-white text-sm sm:text-[1rem] truncate">{item.label}</span>
+                        </div>
+                        <img 
+                          src={ArrowDown} 
+                          alt=""
+                          className={`h-3 w-3 transition-transform duration-200 ${
+                            classesDropdownOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      
+                      {/* Classes Dropdown */}
+                      {classesDropdownOpen && (
+                        <div className="ml-4 mt-1 mb-2 border-l-2 border-white/20 pl-2">
+                          {loadingClasses ? (
+                            <div className="px-4 py-2">
+                              <div className="text-white text-xs opacity-70">Loading classes...</div>
+                            </div>
+                          ) : teacherClasses.length > 0 ? (
+                            teacherClasses.map((classItem) => (
+                              <NavLink
+                                key={classItem.subject_code}
+                                to={`/Class?code=${classItem.subject_code}`}
+                                onClick={handleClassClick}
+                                className={({ isActive }) =>
+                                  `flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D] transition-colors duration-150 mb-1 ${
+                                    isActive ? "bg-[#00A15D]" : ""
+                                  }`
+                                }
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium truncate">{classItem.subject}</div>
+                                  <div className="text-white/70 text-xs truncate">
+                                    {classItem.section} • {classItem.subject_code}
+                                  </div>
+                                </div>
+                              </NavLink>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2">
+                              <div className="text-white text-xs opacity-70">No classes created</div>
+                              <NavLink
+                                to="/ClassManagement"
+                                onClick={handleClassClick}
+                                className="text-white/80 text-xs hover:text-white underline transition-colors mt-1 inline-block"
+                              >
+                                Create your first class
+                              </NavLink>
+                            </div>
+                          )}
+                          
+                          {/* Always show link to Class Management page */}
+                          <NavLink
+                            to="/ClassManagement"
+                            onClick={handleClassClick}
+                            className="flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D] transition-colors duration-150 mt-1 border-t border-white/20 pt-2"
+                          >
+                            <div className="font-medium">Manage All Classes</div>
+                          </NavLink>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    // Regular navigation item
+                    <NavLink
+                      to={item.path}
+                      onClick={handleLinkClick}
+                      className={({ isActive }) =>
+                        `${navItemBase} ${isActive ? "bg-[#00A15D]" : ""}`
+                      }
+                    >
+                      <img src={item.icon} alt="icons" className="h-5 w-5 mr-3 flex-shrink-0" />
+                      <span className="text-white text-sm sm:text-[1rem] truncate">{item.label}</span>
+                    </NavLink>
+                  )}
+                </div>
               ))}
             </div>
 

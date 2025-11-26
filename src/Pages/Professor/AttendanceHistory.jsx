@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-
 import AttendanceCard from "../../Components/AttendanceCard";
+import RemoveStudent from "../../Components/RemoveStudent"; // Add this import
 
 import AttendanceHistoryIcon from '../../assets/AttendanceHistory.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
@@ -20,6 +20,8 @@ export default function AttendanceHistory() {
   const [classInfo, setClassInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showRemoveStudentModal, setShowRemoveStudentModal] = useState(false); // Add this state
+  const [selectedStudent, setSelectedStudent] = useState(null); // Add this state
 
   // Get professor ID from localStorage
   const getProfessorId = () => {
@@ -94,6 +96,32 @@ export default function AttendanceHistory() {
       student.user_ID.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+
+  // Handle opening remove student modal
+  const handleOpenRemoveStudent = (student) => {
+    setSelectedStudent(student);
+    setShowRemoveStudentModal(true);
+  };
+
+  // Handle closing remove student modal
+  const handleCloseRemoveStudent = () => {
+    setShowRemoveStudentModal(false);
+    setSelectedStudent(null);
+  };
+
+  // Handle removing student (you'll need to implement this logic)
+  const handleRemoveStudent = async (student) => {
+    try {
+      // Implement your remove student logic here
+      console.log('Removing student:', student);
+      
+      // After successful removal, refresh the attendance history
+      await fetchAttendanceHistory();
+      setShowRemoveStudentModal(false);
+    } catch (error) {
+      console.error('Error removing student:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -195,6 +223,7 @@ export default function AttendanceHistory() {
                   students={record.students}
                   rawDate={record.raw_date}
                   subjectCode={subjectCode}
+                  onRemoveStudent={handleOpenRemoveStudent} // Pass the handler
                 />
               ))
             ) : (
@@ -205,6 +234,14 @@ export default function AttendanceHistory() {
           </div>
         </div>
       </div>
+
+      {/* Remove Student Modal */}
+      <RemoveStudent
+        isOpen={showRemoveStudentModal}
+        onClose={handleCloseRemoveStudent}
+        onConfirm={handleRemoveStudent}
+        student={selectedStudent}
+      />
     </div>
   );
 }
