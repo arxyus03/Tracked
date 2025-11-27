@@ -41,11 +41,15 @@ try {
         exit();
     }
 
+    // DEBUG: Log the received parameters
+    error_log("Received professor_ID: " . $professor_ID);
+    error_log("Received classroom_ID: " . $classroom_ID);
+
     // Build query based on whether classroom_ID is provided
     if (empty($classroom_ID)) {
         // Get all announcements for the professor across all classes
         $query = "SELECT 
-                    a.announcement_ID,
+                    a.announcement_ID as id,
                     a.title,
                     a.description,
                     a.link,
@@ -73,7 +77,11 @@ try {
 
         if ($check_result->num_rows === 0) {
             $response['success'] = false;
-            $response['message'] = "Professor does not have access to this classroom";
+            $response['message'] = "Professor does not have access to this classroom or classroom does not exist";
+            $response['debug'] = array(
+                'professor_ID' => $professor_ID,
+                'classroom_ID' => $classroom_ID
+            );
             echo json_encode($response);
             $check_stmt->close();
             exit();
@@ -82,7 +90,7 @@ try {
 
         // Get announcements for specific classroom
         $query = "SELECT 
-                    a.announcement_ID,
+                    a.announcement_ID as id,
                     a.title,
                     a.description,
                     a.link,
@@ -105,8 +113,15 @@ try {
     $stmt->execute();
     $result = $stmt->get_result();
 
+    // DEBUG: Log number of rows found
+    $num_rows = $result->num_rows;
+    error_log("Number of announcements found: " . $num_rows);
+
     $announcements = array();
     while ($row = $result->fetch_assoc()) {
+        // DEBUG: Log each row
+        error_log("Announcement row: " . print_r($row, true));
+        
         // Format dates for display
         $row['datePosted'] = date('F j, Y', strtotime($row['created_at']));
         
@@ -119,13 +134,13 @@ try {
         }
 
         $announcements[] = array(
-            'id' => $row['announcement_ID'],
+            'id' => $row['id'],
             'subject' => $row['subject'],
             'title' => $row['title'],
             'postedBy' => $row['posted_by'],
             'datePosted' => $row['datePosted'],
             'deadline' => $row['deadline'],
-            'instructions' => $row['description'],
+            'instructions' => $row['description'], // Map to frontend expected field
             'link' => $row['link'] ?: '#',
             'section' => $row['section'],
             'subject_code' => $row['subject_code']
@@ -134,12 +149,18 @@ try {
 
     $response['success'] = true;
     $response['announcements'] = $announcements;
+    $response['debug'] = array(
+        'total_announcements' => count($announcements),
+        'professor_ID' => $professor_ID,
+        'classroom_ID' => $classroom_ID
+    );
 
     $stmt->close();
 
 } catch (Exception $e) {
     $response['success'] = false;
     $response['message'] = "Server error: " . $e->getMessage();
+    error_log("Error in get_announcements.php: " . $e->getMessage());
 }
 
 echo json_encode($response);

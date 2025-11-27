@@ -9,7 +9,7 @@ import Profile from "../../assets/Profile(Dark).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
 
 export default function ProfileProf() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 

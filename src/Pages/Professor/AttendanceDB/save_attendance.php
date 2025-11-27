@@ -112,7 +112,7 @@ try {
                 $emailTitle = "Late Arrival Recorded";
                 $emailMessage = "You were marked as late in " . $class['subject'] . " (" . $class['section'] . ") on " . 
                                date('M j, Y', strtotime($input['attendance_date'])) . ".\n\n" .
-                               "Remember that 3 late marks count as 1 absence.";
+                               "Remember that three (3) late marks count as one (1) absent.";
                 
                 $emailSent = sendStudentEmailNotification(
                     $student['tracked_email'],

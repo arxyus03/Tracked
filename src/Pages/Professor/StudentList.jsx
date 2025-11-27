@@ -18,7 +18,7 @@ export default function StudentList() {
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get('code');
   
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [kickModal, setKickModal] = useState({ isOpen: false, student: null });
   const [activeDropdown, setActiveDropdown] = useState(null);

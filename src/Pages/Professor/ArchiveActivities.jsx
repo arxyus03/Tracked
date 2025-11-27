@@ -11,7 +11,7 @@ import UnarchiveIcon from "../../assets/Unarchive.svg";
 import ActivityIcon from '../../assets/SubjectDetails.svg';
 
 export default function ArchiveActivities() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [archivedActivities, setArchivedActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);

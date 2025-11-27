@@ -11,7 +11,7 @@ import DeleteIcon from "../../assets/Delete.svg";
 import UnarchiveIcon from "../../assets/Unarchive.svg";
 
 export default function ArchiveClass() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [archivedClasses, setArchivedClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);

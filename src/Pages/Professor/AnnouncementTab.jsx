@@ -25,7 +25,7 @@ export default function AnnouncementTab() {
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get('code');
   
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   
   // ANNOUNCEMENT STATES (from Announcement page)
   const [showModal, setShowModal] = useState(false);
@@ -58,17 +58,35 @@ export default function AnnouncementTab() {
   const [classInfo, setClassInfo] = useState(null);
   const [loadingClassInfo, setLoadingClassInfo] = useState(true);
 
-  // Get professor ID from localStorage
+  // ✅ NEW: Posting state
+  const [postingAnnouncement, setPostingAnnouncement] = useState(false);
+
+  // Get professor ID from localStorage - FIXED VERSION
   const getProfessorId = () => {
     try {
       const userDataString = localStorage.getItem('user');
+      console.log('User data from localStorage:', userDataString);
+      
       if (userDataString) {
         const userData = JSON.parse(userDataString);
-        return userData.id;
+        console.log('Parsed user data:', userData);
+        
+        // Try different possible ID fields
+        const professorId = userData.id || userData.tracked_ID || userData.user_ID;
+        console.log('Extracted professor ID:', professorId);
+        
+        if (!professorId) {
+          console.error('No professor ID found in user data');
+          return null;
+        }
+        
+        return professorId;
       }
     } catch (error) {
       console.error('Error parsing user data:', error);
     }
+    
+    console.error('No user data found in localStorage');
     return null;
   };
 
@@ -116,10 +134,14 @@ export default function AnnouncementTab() {
         return;
       }
 
+      console.log('Fetching class details for:', { professorId, subjectCode });
+
       const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
+        console.log('Class details response:', result);
+        
         if (result.success) {
           setClassInfo(result.class_data);
           // Set the selected subject for announcements to the current class
@@ -134,7 +156,7 @@ export default function AnnouncementTab() {
           });
         }
       } else {
-        console.error('Failed to fetch class details');
+        console.error('Failed to fetch class details, status:', response.status);
         // Set default class info if API fails
         setClassInfo({
           subject_code: subjectCode,
@@ -167,10 +189,14 @@ export default function AnnouncementTab() {
         return;
       }
       
+      console.log('Fetching classes for professor:', professorId);
+      
       const response = await fetch(`https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
+        console.log('Classes response:', result);
+        
         if (result.success) {
           setClasses(result.classes);
         } else {
@@ -178,7 +204,7 @@ export default function AnnouncementTab() {
           setClasses([]);
         }
       } else {
-        throw new Error('Failed to fetch classes');
+        throw new Error(`Failed to fetch classes: ${response.status}`);
       }
     } catch (error) {
       console.error('Error fetching classes:', error);
@@ -188,37 +214,62 @@ export default function AnnouncementTab() {
     }
   };
 
-  // Fetch announcements from database - UPDATED to filter by current class
+  // Fetch announcements from database - UPDATED to handle actual backend response
   const fetchAnnouncements = async () => {
     try {
       setLoadingAnnouncements(true);
       const professorId = getProfessorId();
       
-      if (!professorId || !subjectCode) {
-        console.error('No professor ID or subject code found');
+      if (!professorId) {
+        console.error('No professor ID found');
         setLoadingAnnouncements(false);
         return;
       }
       
-      // Fetch announcements only for the current classroom/section
-      const response = await fetch(`https://tracked.6minds.site/Professor/AnnouncementDB/get_announcements.php?professor_ID=${professorId}&classroom_ID=${subjectCode}`);
+      console.log('Fetching announcements for:', { professorId, subjectCode });
+      
+      // Build URL with parameters
+      const url = `https://tracked.6minds.site/Professor/AnnouncementDB/get_announcements.php?professor_ID=${professorId}${subjectCode ? `&classroom_ID=${subjectCode}` : ''}`;
+      
+      console.log('Fetching from URL:', url);
+      
+      const response = await fetch(url);
+      
+      console.log('Announcements response status:', response.status);
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Fetched announcements for class:', subjectCode, result);
+        console.log('Fetched announcements:', result);
+        
         if (result.success) {
-          // Add read status to announcements (default to unread)
-          const announcementsWithReadStatus = result.announcements.map(announcement => ({
+          // Transform backend data to match frontend expectations
+          const transformedAnnouncements = result.announcements.map(announcement => ({
             ...announcement,
-            isRead: false // Default to unread
+            // Map 'description' from backend to 'instructions' for frontend
+            instructions: announcement.description,
+            // Ensure all required fields are present
+            isRead: false, // Default to unread
+            // Use the actual fields from backend response
+            id: announcement.id || announcement.announcement_ID,
+            subject: announcement.subject,
+            title: announcement.title,
+            postedBy: announcement.postedBy || announcement.posted_by,
+            datePosted: announcement.datePosted,
+            deadline: announcement.deadline,
+            link: announcement.link || '#',
+            section: announcement.section,
+            subject_code: announcement.subject_code
           }));
-          setAnnouncements(announcementsWithReadStatus);
+          
+          setAnnouncements(transformedAnnouncements);
         } else {
           console.error('Error fetching announcements:', result.message);
           setAnnouncements([]);
         }
       } else {
-        throw new Error('Failed to fetch announcements');
+        const errorText = await response.text();
+        console.error('Failed to fetch announcements:', errorText);
+        setAnnouncements([]);
       }
     } catch (error) {
       console.error('Error fetching announcements:', error);
@@ -228,7 +279,7 @@ export default function AnnouncementTab() {
     }
   };
 
-  // Get unique subjects from classes - FIXED VERSION
+  // Get unique subjects from classes
   const getUniqueSubjects = () => {
     // Use a Map to ensure uniqueness by subject_code while keeping the first occurrence
     const subjectMap = new Map();
@@ -336,6 +387,9 @@ export default function AnnouncementTab() {
     });
 
     try {
+      // ✅ NEW: Set posting state
+      setPostingAnnouncement(true);
+
       if (editingAnnouncement) {
         // Update existing announcement
         const updateData = {
@@ -408,6 +462,9 @@ export default function AnnouncementTab() {
     } catch (error) {
       console.error('Error posting announcement:', error);
       alert('Error posting announcement. Please try again.');
+    } finally {
+      // ✅ NEW: Reset posting state
+      setPostingAnnouncement(false);
     }
   };
 
@@ -424,6 +481,10 @@ export default function AnnouncementTab() {
 
   // Handle delete announcement
   const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this announcement?')) {
+      return;
+    }
+
     try {
       const professorId = getProfessorId();
       
@@ -459,28 +520,38 @@ export default function AnnouncementTab() {
     // Use the announcement's subject code directly
     setSelectedSubject(announcement.subject_code || subjectCode);
     setTitle(announcement.title);
-    setDescription(announcement.instructions);
+    setDescription(announcement.instructions || announcement.description);
     setLink(announcement.link === "#" ? "" : announcement.link);
     
     // Convert deadline back to datetime-local format if it exists
     if (announcement.deadline && announcement.deadline !== "No deadline") {
-      // Parse the formatted deadline back to datetime-local format
-      const deadlineParts = announcement.deadline.split(' | ');
-      if (deadlineParts.length === 2) {
-        const datePart = deadlineParts[0];
-        const timePart = deadlineParts[1];
-        const date = new Date(datePart);
-        if (timePart) {
-          const [time, modifier] = timePart.split(' ');
-          let [hours, minutes] = time.split(':');
-          if (modifier === 'pm' && hours !== '12') {
-            hours = parseInt(hours) + 12;
-          } else if (modifier === 'am' && hours === '12') {
-            hours = '00';
+      try {
+        // Parse the formatted deadline back to datetime-local format
+        const deadlineParts = announcement.deadline.split(' | ');
+        if (deadlineParts.length === 2) {
+          const datePart = deadlineParts[0];
+          const timePart = deadlineParts[1];
+          
+          // Parse the formatted date (e.g., "January 20, 2024")
+          const date = new Date(datePart);
+          if (timePart) {
+            const [time, modifier] = timePart.split(' ');
+            let [hours, minutes] = time.split(':');
+            
+            if (modifier === 'pm' && hours !== '12') {
+              hours = parseInt(hours) + 12;
+            } else if (modifier === 'am' && hours === '12') {
+              hours = '00';
+            }
+            
+            date.setHours(parseInt(hours), parseInt(minutes));
           }
-          date.setHours(parseInt(hours), parseInt(minutes));
+          
+          setDeadline(date.toISOString().slice(0, 16));
         }
-        setDeadline(date.toISOString().slice(0, 16));
+      } catch (error) {
+        console.error('Error parsing deadline:', error);
+        setDeadline("");
       }
     } else {
       setDeadline("");
@@ -510,6 +581,23 @@ export default function AnnouncementTab() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, [filterDropdownOpen]);
+
+  // Debug: Log current state
+  useEffect(() => {
+    console.log('Current state:', {
+      professorId: getProfessorId(),
+      subjectCode,
+      classInfo,
+      announcementsCount: announcements.length,
+      classesCount: classes.length,
+      loading: {
+        overall: loading,
+        announcements: loadingAnnouncements,
+        classes: loadingClasses,
+        classInfo: loadingClassInfo
+      }
+    });
+  }, [loading, loadingAnnouncements, loadingClasses, loadingClassInfo, announcements, classes, classInfo, subjectCode]);
 
   // Show loading only if all data is still loading
   const isLoading = loading && loadingAnnouncements;
@@ -752,6 +840,14 @@ export default function AnnouncementTab() {
                     : "No announcements found for this class"
                   }
                 </p>
+                {!searchQuery && filterOption === "All" && (
+                  <button 
+                    onClick={() => setShowModal(true)}
+                    className="mt-4 px-6 py-2 bg-[#00A15D] text-white rounded-md hover:bg-[#00874E] transition-colors cursor-pointer"
+                  >
+                    Create Your First Announcement
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -777,7 +873,9 @@ export default function AnnouncementTab() {
         getUniqueSubjects={getUniqueSubjects}
         loadingClasses={loadingClasses}
         getCurrentDateTime={getCurrentDateTime}
-        currentClassInfo={classInfo} // Pass current class info to restrict subject selection
+        currentSubjectCode={subjectCode} // Pass current subject code
+        restrictToCurrentSubject={true} // Restrict to current class
+        postingAnnouncement={postingAnnouncement} // Pass posting state
       />
     </div>
   );

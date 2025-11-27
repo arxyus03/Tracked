@@ -11,7 +11,7 @@ import ArrowLeft from '../../assets/ArrowLeft.svg';
 import ArrowRight from '../../assets/ArrowRight.svg';
 
 export default function AnalyticsIndividualInfo() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [submittedActivities, setSubmittedActivities] = useState([]);
   const [missedActivities, setMissedActivities] = useState([]);
   const [lateActivities, setLateActivities] = useState([]);

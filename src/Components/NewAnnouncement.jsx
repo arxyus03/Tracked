@@ -19,8 +19,9 @@ const NewAnnouncement = ({
   setDeadline, 
   getUniqueSubjects, 
   getCurrentDateTime,
-  currentSubjectCode, // Add this prop
-  restrictToCurrentSubject = false // Add this prop with default value
+  currentSubjectCode,
+  restrictToCurrentSubject = false,
+  postingAnnouncement = false // ✅ NEW: Add posting state prop with default
 }) => {
   const [subjectDropdownOpen, setSubjectDropdownOpen] = useState(false);
 
@@ -175,9 +176,21 @@ const NewAnnouncement = ({
           {/* Post Button */}
           <button
             onClick={handlePost}
-            className="w-full bg-[#00A15D] hover:bg-[#00874E] active:bg-[#006B3D] text-white font-bold py-3 rounded-md transition-all duration-200 text-base cursor-pointer touch-manipulation active:scale-98"
+            disabled={postingAnnouncement} // ✅ NEW: Disable when posting
+            className={`w-full text-white font-bold py-3 rounded-md transition-all duration-200 text-base cursor-pointer touch-manipulation active:scale-98 ${
+              postingAnnouncement 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-[#00A15D] hover:bg-[#00874E] active:bg-[#006B3D]'
+            }`}
           >
-            {editingAnnouncement ? "Update Announcement" : "Post Announcement"}
+            {postingAnnouncement ? (
+              <div className="flex items-center justify-center">
+                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent mr-2"></div>
+                Posting...
+              </div>
+            ) : (
+              editingAnnouncement ? "Update Announcement" : "Post Announcement"
+            )}
           </button>
         </div>
       </div>

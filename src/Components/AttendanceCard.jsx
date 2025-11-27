@@ -460,11 +460,11 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                         </span>
                       ) : (
                         <div className="flex flex-col gap-1 ml-2">
-                          {/* Attendance radio buttons for mobile editing with labels */}
+                          {/* Attendance radio buttons for mobile editing with labels - Updated order */}
                           {[
-                            { status: 'absent', label: 'Absent', color: '#EF4444' },
+                            { status: 'present', label: 'Present', color: '#00A15D' },
                             { status: 'late', label: 'Late', color: '#767EE0' },
-                            { status: 'present', label: 'Present', color: '#00A15D' }
+                            { status: 'absent', label: 'Absent', color: '#EF4444' }
                           ].map(({ status, label, color }) => (
                             <label key={status} className="flex items-center gap-1 cursor-pointer">
                               <input
@@ -510,9 +510,9 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                     <th className="px-2 sm:px-3 md:px-4 py-2 text-right">Status</th>
                   ) : (
                     <>
-                      <th className="px-2 py-2 text-[#EF4444] text-center w-20">Absent</th>
-                      <th className="px-2 py-2 text-[#767EE0] text-center w-20">Late</th>
                       <th className="px-2 py-2 text-[#00A15D] text-center w-20">Present</th>
+                      <th className="px-2 py-2 text-[#767EE0] text-center w-20">Late</th>
+                      <th className="px-2 py-2 text-[#EF4444] text-center w-20">Absent</th>
                     </>
                   )}
                 </tr>
@@ -541,19 +541,19 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                           </td>
                         ) : (
                           <>
-                            {/* Absent Column */}
+                            {/* Present Column */}
                             <td className="px-2 py-2 w-20">
                               <div className="flex justify-center items-center">
                                 <input
                                   type="radio"
                                   name={`attendance-${studentNumber}`}
-                                  checked={currentStatus === "absent"}
-                                  onChange={() => handleAttendanceChange(studentNumber, "absent")}
-                                  className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#EF4444] rounded-md checked:bg-[#EF4444] cursor-pointer"
+                                  checked={currentStatus === "present"}
+                                  onChange={() => handleAttendanceChange(studentNumber, "present")}
+                                  className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#00A15D] rounded-md checked:bg-[#00A15D] cursor-pointer"
                                 />
                               </div>
                             </td>
-                            
+
                             {/* Late Column */}
                             <td className="px-2 py-2 w-20">
                               <div className="flex justify-center items-center">
@@ -566,16 +566,16 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                                 />
                               </div>
                             </td>
-                            
-                            {/* Present Column */}
+
+                            {/* Absent Column */}
                             <td className="px-2 py-2 w-20">
                               <div className="flex justify-center items-center">
                                 <input
                                   type="radio"
                                   name={`attendance-${studentNumber}`}
-                                  checked={currentStatus === "present"}
-                                  onChange={() => handleAttendanceChange(studentNumber, "present")}
-                                  className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#00A15D] rounded-md checked:bg-[#00A15D] cursor-pointer"
+                                  checked={currentStatus === "absent"}
+                                  onChange={() => handleAttendanceChange(studentNumber, "absent")}
+                                  className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#EF4444] rounded-md checked:bg-[#EF4444] cursor-pointer"
                                 />
                               </div>
                             </td>

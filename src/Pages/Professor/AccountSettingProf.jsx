@@ -11,7 +11,7 @@ import SuccessIcon from '../../assets/Success(Green).svg';
 import ErrorIcon from '../../assets/Error(Red).svg';
 
 export default function AccountSettingProf() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   

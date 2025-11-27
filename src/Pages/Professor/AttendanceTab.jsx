@@ -15,12 +15,9 @@ import HistoryIcon from '../../assets/History(Light).svg';
 import ClassManagementIcon from "../../assets/ClassManagement(Light).svg"; 
 import Announcement from "../../assets/Announcement(Light).svg";
 import Classwork from "../../assets/Classwork(Light).svg";
-import EmailIcon from '../../assets/Email(Light).svg'; // Add this import
-import WarningIcon from '../../assets/Warning(Yellow).svg'; // Add this import
-
 
 export default function Attendance() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get("code");
@@ -39,8 +36,8 @@ export default function Attendance() {
   const [studentToRemove, setStudentToRemove] = useState(null);
   const [modalMessage, setModalMessage] = useState("");
 
-  // ✅ NEW: Email notification states
-  const [sendingEmails, setSendingEmails] = useState(false);
+  // Email notification states for save_attendance
+  const [sendingEmails,] = useState(false);
   const [emailResults, setEmailResults] = useState(null);
 
   const getProfessorId = () => {
@@ -141,7 +138,7 @@ export default function Attendance() {
       if (result.success) {
         setIsEditing(false);
         
-        // ✅ NEW: Show email notification results if any
+        // Show email notification results if any
         if (result.email_notifications && 
             (result.email_notifications.absent || result.email_notifications.late)) {
           const absentCount = result.email_notifications.absent ? result.email_notifications.absent.length : 0;
@@ -166,75 +163,6 @@ export default function Attendance() {
       console.error("Error saving attendance:", error);
       setModalMessage("Error saving attendance");
       setShowErrorModal(true);
-    }
-  };
-
-  // ✅ NEW: Send attendance warnings to at-risk students
-  const handleSendAttendanceWarnings = async () => {
-    setSendingEmails(true);
-    try {
-      const response = await fetch(
-        "https://tracked.6minds.site/Professor/AttendanceDB/send_attendance_warnings.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subject_code: subjectCode
-          }),
-        }
-      );
-
-      const result = await response.json();
-      if (result.success) {
-        setEmailResults(result);
-        setModalMessage(`Attendance warnings sent to ${result.students_at_risk} at-risk students.`);
-        setShowSuccessModal(true);
-      } else {
-        setModalMessage(result.message || "Error sending attendance warnings");
-        setShowErrorModal(true);
-      }
-    } catch (error) {
-      console.error("Error sending attendance warnings:", error);
-      setModalMessage("Error sending attendance warnings");
-      setShowErrorModal(true);
-    } finally {
-      setSendingEmails(false);
-    }
-  };
-
-  // ✅ NEW: Send today's attendance reports
-  const handleSendDailyReports = async () => {
-    setSendingEmails(true);
-    try {
-      const today = new Date().toISOString().split("T")[0];
-      
-      const response = await fetch(
-        "https://tracked.6minds.site/Professor/AttendanceDB/send_daily_attendance_report.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            subject_code: subjectCode,
-            attendance_date: today
-          }),
-        }
-      );
-
-      const result = await response.json();
-      if (result.success) {
-        setEmailResults(result);
-        setModalMessage(`Daily attendance reports sent to ${result.notifications_sent} students.`);
-        setShowSuccessModal(true);
-      } else {
-        setModalMessage(result.message || "Error sending daily reports");
-        setShowErrorModal(true);
-      }
-    } catch (error) {
-      console.error("Error sending daily reports:", error);
-      setModalMessage("Error sending daily reports");
-      setShowErrorModal(true);
-    } finally {
-      setSendingEmails(false);
     }
   };
 
@@ -418,33 +346,8 @@ export default function Attendance() {
 
             {/* Action buttons - Right aligned on mobile */}
             <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
-              {/* ✅ NEW: Email Notification Buttons */}
-              <button 
-                onClick={handleSendDailyReports}
-                disabled={sendingEmails}
-                className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Send Today's Attendance Reports"
-              >
-                <img 
-                  src={EmailIcon} 
-                  alt="Send Reports" 
-                  className="h-5 w-5 sm:h-6 sm:w-6" 
-                />
-              </button>
+              {/* Removed: Daily Reports and Send Warnings buttons */}
               
-              <button 
-                onClick={handleSendAttendanceWarnings}
-                disabled={sendingEmails}
-                className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Send Attendance Warnings"
-              >
-                <img 
-                  src={WarningIcon} 
-                  alt="Send Warnings" 
-                  className="h-5 w-5 sm:h-6 sm:w-6" 
-                />
-              </button>
-
               <Link to={`/StudentList?code=${subjectCode}`}>
                 <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer" title="Student List">
                   <img 
@@ -513,14 +416,14 @@ export default function Attendance() {
                       <th className="px-2 sm:px-3 md:px-4 py-2">
                         Year & Section
                       </th>
-                      <th className="px-2 py-2 text-[#EF4444] text-center w-14 sm:w-16 md:w-20">
-                        Absent
+                      <th className="px-2 py-2 text-[#00A15D] text-center w-14 sm:w-16 md:w-20">
+                        Present
                       </th>
                       <th className="px-2 py-2 text-[#767EE0] text-center w-14 sm:w-16 md:w-20">
                         Late
                       </th>
-                      <th className="px-2 py-2 text-[#00A15D] text-center w-14 sm:w-16 md:w-20">
-                        Present
+                      <th className="px-2 py-2 text-[#EF4444] text-center w-14 sm:w-16 md:w-20">
+                        Absent
                       </th>
                     </tr>
                   </thead>
@@ -552,19 +455,19 @@ export default function Attendance() {
                             <div className="flex justify-center items-center">
                               <input
                                 type="radio"
-                                title="Absent"
+                                title="Present"
                                 name={`attendance-${student.tracked_ID}`}
                                 checked={
-                                  attendance[student.tracked_ID] === "absent"
+                                  attendance[student.tracked_ID] === "present"
                                 }
                                 onChange={() =>
                                   handleAttendanceChange(
                                     student.tracked_ID,
-                                    "absent"
+                                    "present"
                                   )
                                 }
                                 disabled={!isEditing}
-                                className="appearance-none w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 border-2 border-[#EF4444] rounded-md checked:bg-[#EF4444] cursor-pointer disabled:cursor-not-allowed"
+                                className="appearance-none w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 border-2 border-[#00A15D] rounded-md checked:bg-[#00A15D] cursor-pointer disabled:cursor-not-allowed"
                               />
                             </div>
                           </td>
@@ -592,19 +495,19 @@ export default function Attendance() {
                             <div className="flex justify-center items-center">
                               <input
                                 type="radio"
-                                title="Present"
+                                title="Absent"
                                 name={`attendance-${student.tracked_ID}`}
                                 checked={
-                                  attendance[student.tracked_ID] === "present"
+                                  attendance[student.tracked_ID] === "absent"
                                 }
                                 onChange={() =>
                                   handleAttendanceChange(
                                     student.tracked_ID,
-                                    "present"
+                                    "absent"
                                   )
                                 }
                                 disabled={!isEditing}
-                                className="appearance-none w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 border-2 border-[#00A15D] rounded-md checked:bg-[#00A15D] cursor-pointer disabled:cursor-not-allowed"
+                                className="appearance-none w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 border-2 border-[#EF4444] rounded-md checked:bg-[#EF4444] cursor-pointer disabled:cursor-not-allowed"
                               />
                             </div>
                           </td>
@@ -648,7 +551,7 @@ export default function Attendance() {
                 {!isEditing ? (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="w-full sm:w-auto px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-md transition-all duration-200 cursor-pointer"
+                    className="w-full sm:w-auto px-6 py-3 bg-[#00A15D] hover:bg-[#00874E] text-white font-semibold rounded-md transition-all duration-200 cursor-pointer"
                   >
                     Edit Attendance
                   </button>
@@ -656,7 +559,7 @@ export default function Attendance() {
                   <>
                     <button
                       onClick={handleMarkAllPresent}
-                      className="w-full sm:w-auto px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-md transition-all duration-200 cursor-pointer"
+                      className="w-full sm:w-auto px-6 py-3 bg-[#00A15D] hover:bg-[#00874E] text-white font-semibold rounded-md transition-all duration-200 cursor-pointer"
                     >
                       Mark All Present
                     </button>
@@ -686,7 +589,7 @@ export default function Attendance() {
             <h3 className="text-xl font-bold text-gray-800 mb-2">Success!</h3>
             <p className="text-gray-600 mb-6">{modalMessage}</p>
             
-            {/* ✅ NEW: Show email results details */}
+            {/* Show email results details */}
             {emailResults && (
               <div className="mb-4 p-3 bg-gray-50 rounded-md text-left">
                 <h4 className="font-semibold text-sm mb-2">Email Results:</h4>

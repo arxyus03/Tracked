@@ -257,7 +257,7 @@ export default function ClassworkTab() {
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get('code');
   
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
@@ -266,11 +266,18 @@ export default function ClassworkTab() {
   const [editingActivity, setEditingActivity] = useState(null);
   const [activityToArchive, setActivityToArchive] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false); // Add duplicate modal state
-  const [duplicateMessage, setDuplicateMessage] = useState(""); // Add duplicate message state
+  
+  // Separate state variables for each modal type
+  const [showCreateSuccessModal, setShowCreateSuccessModal] = useState(false);
+  const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
+  const [showGradeSuccessModal, setShowGradeSuccessModal] = useState(false);
+  const [showArchiveSuccessModal, setShowArchiveSuccessModal] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateMessage, setDuplicateMessage] = useState("");
+  
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
+  const [creatingActivity, setCreatingActivity] = useState(false);
   
   const activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Announcement"];
 
@@ -423,6 +430,9 @@ export default function ClassworkTab() {
     }
 
     try {
+      // Set creating state
+      setCreatingActivity(true);
+
       const professorId = getProfessorId();
       if (!professorId) {
         alert("Error: Professor ID not found");
@@ -477,9 +487,9 @@ export default function ClassworkTab() {
         await fetchActivities();
         setShowCreateModal(false);
         
-        setShowSuccessModal(true);
+        setShowCreateSuccessModal(true);
         setTimeout(() => {
-          setShowSuccessModal(false);
+          setShowCreateSuccessModal(false);
         }, 2000);
       } else {
         alert('Error creating activity: ' + result.message);
@@ -487,6 +497,9 @@ export default function ClassworkTab() {
     } catch (error) {
       console.error('Network error creating activity:', error);
       alert('Network error creating activity. Please try again.');
+    } finally {
+      // Reset creating state
+      setCreatingActivity(false);
     }
   };
 
@@ -524,9 +537,9 @@ export default function ClassworkTab() {
         setShowEditModal(false);
         setEditingActivity(null);
         
-        setShowSuccessModal(true);
+        setShowEditSuccessModal(true);
         setTimeout(() => {
-          setShowSuccessModal(false);
+          setShowEditSuccessModal(false);
         }, 2000);
       } else {
         alert('Error updating activity: ' + result.message);
@@ -564,9 +577,9 @@ export default function ClassworkTab() {
         setShowArchiveModal(false);
         setActivityToArchive(null);
         
-        setShowSuccessModal(true);
+        setShowArchiveSuccessModal(true);
         setTimeout(() => {
-          setShowSuccessModal(false);
+          setShowArchiveSuccessModal(false);
         }, 2000);
       } else {
         alert('Error archiving activity: ' + result.message);
@@ -613,9 +626,9 @@ export default function ClassworkTab() {
         ));
         
         setShowSubmissionsModal(false);
-        setShowSuccessModal(true);
+        setShowGradeSuccessModal(true);
         setTimeout(() => {
-          setShowSuccessModal(false);
+          setShowGradeSuccessModal(false);
         }, 2000);
       } else {
         alert('Error saving grades: ' + result.message);
@@ -927,6 +940,7 @@ export default function ClassworkTab() {
         activityTypes={activityTypes}
         getCurrentDateTime={getCurrentDateTime}
         subjectCode={subjectCode}
+        creatingActivity={creatingActivity}
       />
 
       <ClassWorkEdit
@@ -954,12 +968,33 @@ export default function ClassworkTab() {
         professorName={classInfo?.professor_name}
       />
 
-      {/* Success Modal */}
+      {/* Separate Success Modals for Different Operations */}
       <ClassWorkSuccess
-        isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        message="Operation completed successfully!"
+        isOpen={showCreateSuccessModal}
+        onClose={() => setShowCreateSuccessModal(false)}
+        message="Activity created successfully!"
         type="success"
+      />
+
+      <ClassWorkSuccess
+        isOpen={showEditSuccessModal}
+        onClose={() => setShowEditSuccessModal(false)}
+        message="Activity updated successfully!"
+        type="edit"
+      />
+
+      <ClassWorkSuccess
+        isOpen={showGradeSuccessModal}
+        onClose={() => setShowGradeSuccessModal(false)}
+        message="Grades saved successfully!"
+        type="grade"
+      />
+
+      <ClassWorkSuccess
+        isOpen={showArchiveSuccessModal}
+        onClose={() => setShowArchiveSuccessModal(false)}
+        message="Activity archived successfully!"
+        type="archive"
       />
 
       {/* Duplicate Activity Modal */}

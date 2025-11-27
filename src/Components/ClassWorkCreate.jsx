@@ -6,9 +6,11 @@ const ClassWorkCreate = ({
   isOpen, 
   onClose, 
   onCreateActivity,
+  onDuplicateTask,
   activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Announcement"],
   getCurrentDateTime,
-  subjectCode
+  subjectCode,
+  creatingActivity = false
 }) => {
   const [activityType, setActivityType] = useState("");
   const [taskNumber, setTaskNumber] = useState("");
@@ -139,6 +141,9 @@ const ClassWorkCreate = ({
   };
 
   const handleCreate = () => {
+    // Don't allow creating if already in progress
+    if (creatingActivity) return;
+
     // Validate required fields
     if (!activityType || !taskNumber || !title) {
       alert("Please fill in all required fields (Activity Type, Task Number, and Title)");
@@ -150,9 +155,12 @@ const ClassWorkCreate = ({
       const existingTaskNumbers = getExistingTaskNumbers();
       const message = `"${activityType} ${taskNumber}" has already been created.\n\nExisting ${activityType}s: ${existingTaskNumbers.join(', ')}`;
       
-      // This will be handled by the parent component using ClassWorkSuccess with type="duplicate"
-      // For now, we'll use alert as fallback
-      alert(message);
+      // Call the duplicate handler if provided, otherwise use alert
+      if (onDuplicateTask) {
+        onDuplicateTask(message);
+      } else {
+        alert(message);
+      }
       return;
     }
 
@@ -291,7 +299,7 @@ const ClassWorkCreate = ({
                     e.preventDefault();
                   }
                 }}
-                className={`w-full border-2 rounded-md px-3 sm:px-4 py-25 sm:py-3 outline-none text-xs sm:text-sm focus:border-[#00874E] transition-colors ${
+                className={`w-full border-2 rounded-md px-3 sm:px-4 py-2.5 sm:py-3 outline-none text-xs sm:text-sm focus:border-[#00874E] transition-colors ${
                   isDuplicate 
                     ? 'border-red-500 bg-red-50' 
                     : 'border-gray-300'
@@ -481,13 +489,25 @@ const ClassWorkCreate = ({
         <div className="mt-4 sm:mt-5 lg:mt-6">
           <button
             onClick={handleCreate}
+            disabled={creatingActivity || isDuplicate}
             className={`w-full font-bold py-2.5 sm:py-3 rounded-md transition-all duration-200 text-sm sm:text-base cursor-pointer touch-manipulation active:scale-98 ${
               isDuplicate
                 ? 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white'
+                : creatingActivity
+                ? 'bg-gray-400 cursor-not-allowed text-white'
                 : 'bg-[#00A15D] hover:bg-[#00874E] active:bg-[#006B3D] text-white'
             }`}
           >
-            {isDuplicate ? '⚠️ Task Number Exists - Click to See Details' : 'Create Activity'}
+            {creatingActivity ? (
+              <div className="flex items-center justify-center">
+                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent mr-2"></div>
+                Creating...
+              </div>
+            ) : isDuplicate ? (
+              '⚠️ Task Number Exists - Click to See Details'
+            ) : (
+              'Create Activity'
+            )}
           </button>
         </div>
       </div>

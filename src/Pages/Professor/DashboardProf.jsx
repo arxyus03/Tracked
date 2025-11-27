@@ -14,7 +14,7 @@ import Details from '../../assets/Details(Light).svg';
 import Archive from '../../assets/Archive(Light).svg';
 
 export default function DashboardProf() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [userName, setUserName] = useState("Professor");
   const [userId, setUserId] = useState("");
   const [userEmail, setUserEmail] = useState("");

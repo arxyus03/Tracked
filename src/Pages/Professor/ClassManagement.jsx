@@ -15,7 +15,7 @@ import ArchiveWarningIcon from "../../assets/Warning(Yellow).svg";
 import SuccessIcon from '../../assets/Success(Green).svg';
 
 export default function ClassManagement() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
