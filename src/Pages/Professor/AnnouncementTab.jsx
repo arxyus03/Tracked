@@ -840,14 +840,6 @@ export default function AnnouncementTab() {
                     : "No announcements found for this class"
                   }
                 </p>
-                {!searchQuery && filterOption === "All" && (
-                  <button 
-                    onClick={() => setShowModal(true)}
-                    className="mt-4 px-6 py-2 bg-[#00A15D] text-white rounded-md hover:bg-[#00874E] transition-colors cursor-pointer"
-                  >
-                    Create Your First Announcement
-                  </button>
-                )}
               </div>
             )}
           </div>
