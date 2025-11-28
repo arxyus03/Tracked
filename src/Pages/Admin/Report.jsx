@@ -45,6 +45,11 @@ export default function Report() {
   const [studentFilter, setStudentFilter] = useState('all');
   const [professorFilter, setProfessorFilter] = useState('all');
 
+  // State for semester toggles
+  const [firstSemester, setFirstSemester] = useState(true);
+  const [secondSemester, setSecondSemester] = useState(false);
+  const [summer, setSummer] = useState(false);
+
   // Lottie animation options
   const defaultLottieOptions = {
     loop: true,
@@ -138,6 +143,26 @@ export default function Report() {
     setProfessorFilter(filterType);
     setProfessorFilterOpen(false);
   };
+
+  // Toggle switch component
+  const ToggleSwitch = ({ isOn, onToggle, label }) => (
+    <div className="flex items-center justify-between">
+      <span className="text-xs sm:text-sm text-[#465746] font-medium">{label}</span>
+      <button
+        onClick={onToggle}
+        className={`relative inline-flex h-4 w-8 sm:h-5 sm:w-10 items-center rounded-full transition-colors focus:outline-none ${
+          isOn ? 'bg-[#00874E]' : 'bg-gray-300'
+        }`}
+        title={`Turn ${label} ${isOn ? 'off' : 'on'}`}
+      >
+        <span
+          className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+            isOn ? 'translate-x-4 sm:translate-x-5' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -317,6 +342,30 @@ export default function Report() {
                 </div>
               </div>
 
+              {/* NEW: Semester Toggles Widget */}
+              <div className='bg-[#fff] h-24 sm:h-32 md:h-36 lg:h-40 rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 text-[#465746] shadow-md'> 
+                <div className='font-bold text-[10px] sm:text-sm md:text-base lg:text-[1.125rem] h-full flex flex-col'>
+                  <p className='mb-1 sm:mb-2'> Semester Settings </p>
+                  <div className='flex flex-col space-y-1 sm:space-y-2 mt-auto'>
+                    <ToggleSwitch 
+                      isOn={firstSemester} 
+                      onToggle={() => setFirstSemester(!firstSemester)}
+                      label="First Semester"
+                    />
+                    <ToggleSwitch 
+                      isOn={secondSemester} 
+                      onToggle={() => setSecondSemester(!secondSemester)}
+                      label="Second Semester"
+                    />
+                    <ToggleSwitch 
+                      isOn={summer} 
+                      onToggle={() => setSummer(!summer)}
+                      label="Summer"
+                    />
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -333,6 +382,7 @@ export default function Report() {
               <button
                 onClick={() => setStudentFilterOpen(!studentFilterOpen)}
                 className="flex items-center justify-between font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md w-full sm:w-40 lg:w-44 shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
+                title="Filter student accounts"
               >
                 <span>Filter</span>
                 <img src={ArrowDown} alt="ArrowDown" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ml-2" />
@@ -343,18 +393,21 @@ export default function Report() {
                   <button 
                     className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                     onClick={() => handleStudentFilterSelect('all')}
+                    title="Show all students"
                   >
                     All
                   </button>
                   <button 
                     className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                     onClick={() => handleStudentFilterSelect('active')}
+                    title="Show active students only"
                   >
                     Active
                   </button>
                   <button 
                     className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                     onClick={() => handleStudentFilterSelect('deactivated')}
+                    title="Show deactivated students only"
                   >
                     Deactivated
                   </button>
@@ -370,8 +423,12 @@ export default function Report() {
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
                 className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm border-2 border-transparent focus:border-[#00874E] transition-all duration-200"
+                title="Search students by name, ID, email, or section"
               />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
+              <button 
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]"
+                title="Search students"
+              >
                 <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
               </button>
             </div>
@@ -413,8 +470,9 @@ export default function Report() {
                         <Link to={`/UserManagementStudentAccountDetails?id=${student.tracked_ID}`}>
                           <img 
                             src={Details} 
-                            alt="Details" 
-                            className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 transition-opacity" 
+                            alt="View student details" 
+                            className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 transition-opacity"
+                            title="View student details"
                           />
                         </Link>
                       </td>
@@ -437,8 +495,9 @@ export default function Report() {
                       <Link to={`/UserManagementStudentAccountDetails?id=${student.tracked_ID}`}>
                         <img 
                           src={Details} 
-                          alt="Details" 
-                          className="h-5 w-5" 
+                          alt="View student details" 
+                          className="h-5 w-5"
+                          title="View student details"
                         />
                       </Link>
                     </div>
@@ -495,6 +554,7 @@ export default function Report() {
                 <button
                   onClick={() => setProfessorFilterOpen(!professorFilterOpen)}
                   className="flex items-center justify-between font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md w-full sm:w-40 lg:w-44 shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
+                  title="Filter professor accounts"
                 >
                   <span>Filter</span>
                   <img src={ArrowDown} alt="ArrowDown" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ml-2" />
@@ -505,18 +565,21 @@ export default function Report() {
                     <button 
                       className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                       onClick={() => handleProfessorFilterSelect('all')}
+                      title="Show all professors"
                     >
                       All
                     </button>
                     <button 
                       className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                       onClick={() => handleProfessorFilterSelect('active')}
+                      title="Show active professors only"
                     >
                       Active
                     </button>
                     <button 
                       className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                       onClick={() => handleProfessorFilterSelect('deactivated')}
+                      title="Show deactivated professors only"
                     >
                       Deactivated
                     </button>
@@ -532,8 +595,12 @@ export default function Report() {
                 value={professorSearch}
                 onChange={(e) => setProfessorSearch(e.target.value)}
                 className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm border-2 border-transparent focus:border-[#00874E] transition-all duration-200"
+                title="Search professors by name, ID, or email"
               />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
+              <button 
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]"
+                title="Search professors"
+              >
                 <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
               </button>
             </div>
@@ -573,8 +640,9 @@ export default function Report() {
                         <Link to={`/UserManagementProfessorAccountsDetails?id=${professor.tracked_ID}`}>
                           <img 
                             src={Details} 
-                            alt="Details" 
-                            className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 transition-opacity" 
+                            alt="View professor details" 
+                            className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 transition-opacity"
+                            title="View professor details"
                           />
                         </Link>
                       </td>
@@ -597,8 +665,9 @@ export default function Report() {
                       <Link to={`/UserManagementProfessorAccountsDetails?id=${professor.tracked_ID}`}>
                         <img 
                           src={Details} 
-                          alt="Details" 
-                          className="h-5 w-5" 
+                          alt="View professor details" 
+                          className="h-5 w-5"
+                          title="View professor details"
                         />
                       </Link>
                     </div>

@@ -275,7 +275,10 @@ export default function StudentList() {
               <p className="text-sm">{error}</p>
             </div>
             <Link to="/ClassManagement">
-              <button className="bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-2 px-4 rounded transition-colors">
+              <button 
+                className="bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-2 px-4 rounded transition-colors"
+                title="Return to class management page"
+              >
                 Back to Class Management
               </button>
             </Link>
@@ -332,8 +335,9 @@ export default function StudentList() {
                 <Link to={`/Class?code=${subjectCode}`}>
                   <img 
                     src={BackButton} 
-                    alt="Back" 
-                    className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity" 
+                    alt="Back to Class Details" 
+                    className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity"
+                    title="Back to Class Details"
                   />
                 </Link>
               </div>
@@ -371,7 +375,7 @@ export default function StudentList() {
             <div className="bg-white p-4 sm:p-5 rounded-lg shadow-md border border-gray-200 sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-purple-100 rounded-lg">
-                  <img src={PersonIcon} alt="Active" className="h-6 w-6" />
+                  <img src={PersonIcon} alt="Active Members" className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="text-gray-600 text-sm font-semibold">Class Members</p>
@@ -392,8 +396,12 @@ export default function StudentList() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
+                title="Search for teachers or students by name"
               />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+              <button 
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                title="Search"
+              >
                 <img
                   src={Search}
                   alt="Search"
@@ -410,34 +418,38 @@ export default function StudentList() {
                 src={TeacherIcon}
                 alt="Teachers"
                 className="h-6 w-6 sm:h-7 sm:w-7"
+                title="Teachers section"
               />
               <h2 className="font-bold text-lg sm:text-xl lg:text-2xl text-[#465746]">
                 Teachers
               </h2>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {filteredTeachers.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 bg-white rounded-lg shadow-md">
+                <div className="text-center py-6 text-gray-500 bg-white rounded-lg shadow-md text-sm">
                   No teachers found matching your search
                 </div>
               ) : (
                 filteredTeachers.map((teacher) => (
-                  <div key={teacher.id} className="bg-white p-4 sm:p-5 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+                  <div key={teacher.id} className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 min-w-0 flex-1">
-                        <div className="flex-shrink-0 h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                          <img src={PersonIcon} alt="Person" className="h-6 w-6 text-blue-600" />
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div 
+                          className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center"
+                          title="Teacher profile"
+                        >
+                          <img src={PersonIcon} alt="Person" className="h-5 w-5 text-blue-600" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900 text-base sm:text-lg truncate">
+                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                             {teacher.name}
                           </h3>
-                          <p className="text-[#00874E] text-sm font-medium mt-1">
+                          <p className="text-[#00874E] text-xs font-medium mt-0.5">
                             {teacher.role}
                           </p>
                           {teacher.email && (
-                            <p className="text-gray-500 text-sm mt-1 truncate">
+                            <p className="text-gray-500 text-xs mt-0.5 truncate">
                               {teacher.email}
                             </p>
                           )}
@@ -457,34 +469,38 @@ export default function StudentList() {
                 src={StudentIcon}
                 alt="Students"
                 className="h-6 w-6 sm:h-7 sm:w-7"
+                title="Students section"
               />
               <h2 className="font-bold text-lg sm:text-xl lg:text-2xl text-[#465746]">
                 Students
               </h2>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {filteredStudents.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 bg-white rounded-lg shadow-md">
+                <div className="text-center py-6 text-gray-500 bg-white rounded-lg shadow-md text-sm">
                   {searchQuery ? "No students found matching your search" : "No students enrolled in this class"}
                 </div>
               ) : (
                 filteredStudents.map((student) => (
-                  <div key={student.id} className="bg-white p-4 sm:p-5 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+                  <div key={student.id} className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-4 min-w-0 flex-1">
-                        <div className="flex-shrink-0 h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                          <img src={PersonIcon} alt="Person" className="h-6 w-6 text-green-600" />
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div 
+                          className="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center"
+                          title="Student profile"
+                        >
+                          <img src={PersonIcon} alt="Person" className="h-5 w-5 text-green-600" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-gray-900 text-base sm:text-lg truncate">
+                          <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
                             {student.name}
                           </h3>
-                          <p className="text-gray-500 text-sm mt-1">
+                          <p className="text-gray-500 text-xs mt-0.5">
                             Student • {student.yearSection || 'N/A'}
                           </p>
                           {student.email && (
-                            <p className="text-gray-500 text-sm mt-1 truncate">
+                            <p className="text-gray-500 text-xs mt-0.5 truncate">
                               {student.email}
                             </p>
                           )}
@@ -499,18 +515,20 @@ export default function StudentList() {
                             setActiveDropdown(activeDropdown === student.id ? null : student.id);
                           }}
                           className="p-2 hover:bg-gray-200 rounded-full transition-colors cursor-pointer"
+                          title="Student options"
                         >
-                          <img src={Details} alt="More options" className="h-5 w-5" />
+                          <img src={Details} alt="More options" className="h-4 w-4" />
                         </button>
                         
                         {activeDropdown === student.id && (
-                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                          <div className="absolute right-0 mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-10">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleKickStudent(student);
                               }}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
+                              className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-gray-100 transition-colors"
+                              title="Remove this student from the class"
                             >
                               Remove Student
                             </button>

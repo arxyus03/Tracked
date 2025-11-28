@@ -15,6 +15,9 @@ import HistoryIcon from '../../assets/History(Light).svg';
 import ClassManagementIcon from "../../assets/ClassManagement(Light).svg"; 
 import Announcement from "../../assets/Announcement(Light).svg";
 import Classwork from "../../assets/Classwork(Light).svg";
+// Import the new icons for Grade and Analytics
+import GradeIcon from "../../assets/Grade(Light).svg";
+import AnalyticsIcon from "../../assets/Analytics(Light).svg";
 
 export default function Attendance() {
   const [isOpen, setIsOpen] = useState(true);
@@ -305,40 +308,64 @@ export default function Attendance() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full mt-4 sm:mt-5 gap-3">
             {/* Navigation buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
               {/* Announcement Button - Full width on mobile, auto on larger */}
-              <Link to={`/Class?code=${subjectCode}`} className="flex-1 min-w-0">
-                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full sm:w-auto" title="Announcement">
+              <Link to={`/Class?code=${subjectCode}`} className="flex-1 sm:flex-initial">
+                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto" title="Announcement">
                   <img 
                     src={Announcement} 
                     alt="" 
                     className="h-4 w-4 sm:h-5 sm:w-5"
                   />
-                  <span className="sm:inline">ANNOUNCEMENT</span>
+                  <span className="sm:inline">Announcement</span>
                 </button>
               </Link>
 
-              {/* Classwork and Attendance - Side by side on all screens */}
-              <div className="flex gap-3 w-full sm:w-auto">
-                <Link to={`/ClassworkTab?code=${subjectCode}`} className="flex-1 min-w-0">
-                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full" title="Class Work">
+              {/* Classwork, Attendance, Grade and Analytics - Grid on mobile, row on desktop */}
+              <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-4 sm:w-auto">
+                <Link to={`/ClassworkTab?code=${subjectCode}`} className="min-w-0">
+                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full" title="Class Work">
                     <img 
                       src={Classwork} 
                       alt="" 
                       className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
                     />
-                    <span className="whitespace-nowrap truncate">CLASS WORK</span>
+                    <span className="whitespace-nowrap truncate">Class work</span>
                   </button>
                 </Link>
 
-                <Link to={`/Attendance?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-5 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer" title="Attendance">
+                <Link to={`/Attendance?code=${subjectCode}`} className="sm:flex-initial">
+                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#fff4e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffebd4] transition-all duration-300 cursor-pointer w-full sm:w-auto" title="Attendance">
                     <img 
                       src={AttendanceIcon}
                       alt="" 
                       className="h-4 w-4 sm:h-5 sm:w-5"
                     />
-                    ATTENDANCE
+                    <span className="sm:inline">Attendance</span>
+                  </button>
+                </Link>
+
+                {/* NEW: Grade Button */}
+                <Link to={`/GradeTab?code=${subjectCode}`} className="sm:flex-initial">
+                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#ffe6e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffd4d4] transition-all duration-300 cursor-pointer w-full sm:w-auto" title="Grade">
+                    <img 
+                      src={GradeIcon} 
+                      alt="" 
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                    />
+                    <span className="sm:inline">Grade</span>
+                  </button>
+                </Link>
+
+                {/* NEW: Analytics Button */}
+                <Link to={`/AnalyticsTab?code=${subjectCode}`} className="sm:flex-initial">
+                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto" title="Analytics">
+                    <img 
+                      src={AnalyticsIcon} 
+                      alt="" 
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                    />
+                    <span className="sm:inline">Analytics</span>
                   </button>
                 </Link>
               </div>

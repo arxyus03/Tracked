@@ -14,7 +14,7 @@ const ClassWorkSubmission = ({
   isOpen, 
   onClose, 
   onSave,
-  professorName // Add this prop
+  professorName
 }) => {
   const [filter, setFilter] = useState("All");
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
@@ -37,7 +37,6 @@ const ClassWorkSubmission = ({
   useEffect(() => {
     if (activity && activity.students) {
       setLocalStudents([...activity.students]);
-      // Auto-select first student on mobile if none selected
       if (isMobile && activity.students.length > 0 && !selectedStudent) {
         setSelectedStudent({ 
           id: activity.students[0].user_ID, 
@@ -56,7 +55,6 @@ const ClassWorkSubmission = ({
     "Not Graded"
   ];
 
-  // Helper function to calculate student status
   const calculateStudentStatus = (student, activity) => {
     const now = new Date();
     const deadline = activity.deadline ? new Date(activity.deadline) : null;
@@ -70,7 +68,6 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Calculate status counts using the helper function
   const statusCounts = {
     assigned: localStudents.filter(student => calculateStudentStatus(student, activity) === 'Assigned').length,
     submitted: localStudents.filter(student => 
@@ -101,10 +98,20 @@ const ClassWorkSubmission = ({
   });
 
   const handleGradeChange = (studentId, value) => {
-    const wholeNumberValue = value.replace(/[.,]/g, '');
+    const maxPoints = activity.points || 100;
+    let numericValue = value.replace(/[^0-9]/g, '');
+    
+    if (numericValue !== '' && parseInt(numericValue) > maxPoints) {
+      numericValue = maxPoints.toString();
+    }
+    
+    if (numericValue.length > 3) {
+      numericValue = numericValue.slice(0, 3);
+    }
+    
     setLocalStudents(prev => prev.map(student =>
       student.user_ID === studentId
-        ? { ...student, grade: wholeNumberValue }
+        ? { ...student, grade: numericValue }
         : student
     ));
   };
@@ -119,24 +126,18 @@ const ClassWorkSubmission = ({
           const now = new Date();
           const deadline = activity.deadline ? new Date(activity.deadline) : null;
           
-          // Determine if student should be marked as submitted
-          // If they have a grade and weren't previously submitted, mark as submitted
           const hasGrade = student.grade && student.grade !== '';
           const shouldMarkAsSubmitted = hasGrade && !student.submitted;
-          
-          // Determine if submission is late
           const isLate = shouldMarkAsSubmitted && deadline && deadline < now;
           
           return {
             user_ID: student.user_ID,
             grade: student.grade || null,
-            submitted: student.submitted || shouldMarkAsSubmitted, // Mark as submitted if graded
-            late: student.late || isLate // Mark as late if past deadline
+            submitted: student.submitted || shouldMarkAsSubmitted,
+            late: student.late || isLate
           };
         })
       };
-
-      console.log('Save data:', saveData);
 
       const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/update_activity_grades.php', {
         method: 'POST',
@@ -154,7 +155,6 @@ const ClassWorkSubmission = ({
       console.log('Save result:', result);
 
       if (result.success) {
-        // Update local students with new submission status
         const updatedStudents = localStudents.map(student => {
           const hasGrade = student.grade && student.grade !== '';
           const shouldMarkAsSubmitted = hasGrade && !student.submitted;
@@ -170,8 +170,6 @@ const ClassWorkSubmission = ({
         });
         
         setLocalStudents(updatedStudents);
-        
-        // Update parent component
         onSave(updatedStudents);
         
         setShowSuccessModal(true);
@@ -190,14 +188,11 @@ const ClassWorkSubmission = ({
   const handleEmailStudent = (studentEmail, studentName) => {
     if (studentEmail) {
       const subject = `Regarding ${activity.title}`;
-      // Extract professor surname from full name
       const professorSurname = professorName ? professorName.split(' ').pop() : 'Professor';
       const body = `Dear ${studentName},\n\nI would like to discuss your submission for "${activity.title}".\n\nBest regards,\nProf. ${professorSurname}`;
       
-      // Gmail compose URL
       const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(studentEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       
-      // Open Gmail in a new tab
       window.open(gmailUrl, '_blank', 'noopener,noreferrer');
     } else {
       alert('No email address found for this student.');
@@ -263,23 +258,57 @@ const ClassWorkSubmission = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Pie chart data for selected student
+  // Enhanced analytics with performance feedback (emojis removed)
   const getStudentAnalytics = (student) => {
     if (!student) return null;
     
     const totalPoints = activity.points || 100;
     const studentGrade = student.grade ? parseFloat(student.grade) : 0;
     const remainingPoints = Math.max(0, totalPoints - studentGrade);
+    const percentage = totalPoints > 0 ? Math.round((studentGrade / totalPoints) * 100) : 0;
+    
+    // Determine performance level and feedback (emojis removed)
+    let performanceLevel, feedback, color;
+    
+    if (percentage >= 95) {
+      performanceLevel = "Perfect Score!";
+      feedback = "Outstanding work! Student has mastered this material.";
+      color = "#10B981"; // Green
+    } else if (percentage >= 85) {
+      performanceLevel = "Excellent";
+      feedback = "Great job! Minor improvements could make it perfect.";
+      color = "#34D399"; // Light Green
+    } else if (percentage >= 75) {
+      performanceLevel = "Good";
+      feedback = "Solid understanding. Focus on details and accuracy.";
+      color = "#F59E0B"; // Yellow
+    } else if (percentage >= 65) {
+      performanceLevel = "Average";
+      feedback = "Needs improvement. Review key concepts and practice more.";
+      color = "#F97316"; // Orange
+    } else if (percentage >= 50) {
+      performanceLevel = "Below Average";
+      feedback = "Requires attention. Consider additional support and review.";
+      color = "#EF4444"; // Red
+    } else {
+      performanceLevel = "Needs Help";
+      feedback = "Significant improvement needed. Schedule a meeting to discuss.";
+      color = "#DC2626"; // Dark Red
+    }
     
     return {
       data: [
-        { label: 'Earned', value: studentGrade, color: '#10B981' },
-        { label: 'Remaining', value: remainingPoints, color: '#EF4444' }
+        { label: 'Earned', value: studentGrade, color: color },
+        { label: 'Remaining', value: remainingPoints, color: '#E5E7EB' } // Light gray for remaining
       ],
-      percentage: totalPoints > 0 ? Math.round((studentGrade / totalPoints) * 100) : 0
+      percentage,
+      performanceLevel,
+      feedback,
+      totalPoints
     };
   };
 
+  // Enhanced pie chart with better design and fixed text placement
   const renderPieChart = (analytics) => {
     if (!analytics) return null;
     
@@ -287,40 +316,83 @@ const ClassWorkSubmission = ({
     const total = data.reduce((sum, item) => sum + item.value, 0);
     
     let cumulativePercent = 0;
+    const chartSize = isMobile ? 120 : 180;
+    const radius = 15.91549430918954;
     
     return (
-      <svg width={isMobile ? "100" : "200"} height={isMobile ? "100" : "200"} viewBox="0 0 42 42" className="mx-auto">
-        {data.map((segment, index) => {
-          const percent = (segment.value / total) * 100;
-          const dashArray = `${percent} ${100 - percent}`;
-          const dashOffset = -cumulativePercent;
-          cumulativePercent += percent;
+      <div className="relative">
+        <svg width={chartSize} height={chartSize} viewBox="0 0 42 42" className="mx-auto drop-shadow-sm">
+          {/* Background circle */}
+          <circle
+            cx="21"
+            cy="21"
+            r={radius}
+            fill="transparent"
+            stroke="#F3F4F6"
+            strokeWidth="3"
+          />
           
-          return (
-            <circle
-              key={index}
-              cx="21"
-              cy="21"
-              r="15.91549430918954"
-              fill="transparent"
-              stroke={segment.color}
-              strokeWidth="3"
-              strokeDasharray={dashArray}
-              strokeDashoffset={dashOffset}
-              transform="rotate(-90 21 21)"
-            />
-          );
-        })}
-        <text x="21" y="21" textAnchor="middle" dominantBaseline="middle" className={`${isMobile ? 'text-[.3rem]' : 'text-[.5rem]'} font-bold fill-gray-700`}>
-          {percentage}%
-        </text>
-      </svg>
+          {/* Data segments */}
+          {data.map((segment, index) => {
+            if (segment.value === 0) return null;
+            
+            const percent = (segment.value / total) * 100;
+            const dashArray = `${percent} ${100 - percent}`;
+            const dashOffset = -cumulativePercent;
+            cumulativePercent += percent;
+            
+            return (
+              <circle
+                key={index}
+                cx="21"
+                cy="21"
+                r={radius}
+                fill="transparent"
+                stroke={segment.color}
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={dashArray}
+                strokeDashoffset={dashOffset}
+                transform="rotate(-90 21 21)"
+                className="transition-all duration-500 ease-out"
+              />
+            );
+          })}
+          
+          {/* Center text - Smaller text to prevent overlap */}
+          <text 
+            x="21" 
+            y={isMobile ? "18" : "18"} 
+            textAnchor="middle" 
+            dominantBaseline="middle" 
+            className={`${isMobile ? 'text-[.35rem]' : 'text-[.5rem]'} font-bold fill-gray-700`}
+          >
+            {percentage}%
+          </text>
+          <text 
+            x="21" 
+            y={isMobile ? "23" : "25"} 
+            textAnchor="middle" 
+            dominantBaseline="middle" 
+            className={`${isMobile ? 'text-[.25rem]' : 'text-[.28rem]'} fill-gray-500`}
+          >
+            Score
+          </text>
+        </svg>
+      </div>
     );
   };
 
   // Handle status rectangle clicks
   const handleStatusClick = (status) => {
     setFilter(status);
+  };
+
+  // Format deadline with date and time
+  const formatDeadline = (deadline) => {
+    if (!deadline) return 'No deadline';
+    const date = new Date(deadline);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   if (!isOpen || !activity) return null;
@@ -343,8 +415,7 @@ const ClassWorkSubmission = ({
                 {activity.activity_type} #{activity.task_number} 
               </p>
               <p className="text-xs sm:text-sm text-red-600 font-bold mt-1">
-                • Due {activity.deadline ? new Date(activity.deadline)
-                .toLocaleDateString() : 'No deadline'}
+                • Deadline {formatDeadline(activity.deadline)}
               </p>
             </div>
             <button
@@ -358,7 +429,7 @@ const ClassWorkSubmission = ({
           {/* Main Content */}
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} flex-1 overflow-hidden`}>
             {/* Left Panel - Entire content scrolls together */}
-            <div className={`${isMobile ? 'w-full' : 'w-1/2'} ${isMobile ? 'flex-1' : ''} border-r border-gray-200 flex flex-col overflow-y-auto`}>
+            <div className={`${isMobile ? 'w-full' : 'w-1/2'} ${isMobile ? 'flex-1' : ''} border-r border-gray-200 flex flex-col overflow-hidden`}>
               
               {/* Instructions */}
               <div className="p-3 sm:p-4 md:p-6 border-b border-gray-200">
@@ -462,10 +533,10 @@ const ClassWorkSubmission = ({
                 </div>
               </div>
 
-              {/* Students List - No individual scrolling */}
-              <div className="flex-1">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[500px]">
+              {/* Students List - No horizontal scroll */}
+              <div className="flex-1 overflow-y-auto">
+                <div className="w-full">
+                  <table className="w-full">
                     <thead className="bg-gray-50 sticky top-0">
                       <tr>
                         <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -488,6 +559,7 @@ const ClassWorkSubmission = ({
                         const hasPhoto = !!studentPhoto;
                         const isSelected = selectedStudent?.id === student.user_ID;
                         const status = calculateStudentStatus(student, activity);
+                        const maxPoints = activity.points || 100;
 
                         return (
                           <tr 
@@ -495,11 +567,11 @@ const ClassWorkSubmission = ({
                             className={`hover:bg-gray-50 cursor-pointer ${isSelected ? 'bg-blue-50' : ''}`}
                             onClick={() => setSelectedStudent({ id: student.user_ID, name: student.user_Name })}
                           >
-                            <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 whitespace-nowrap">
-                              <div className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-[120px] sm:max-w-none">
+                            <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
+                              <div className="text-xs sm:text-sm font-medium text-gray-900 break-words">
                                 {student.user_Name}
                               </div>
-                              <div className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-none">
+                              <div className="text-xs text-gray-500 break-words">
                                 {student.user_Email || 'No email'}
                               </div>
                             </td>
@@ -522,15 +594,16 @@ const ClassWorkSubmission = ({
                                 <input
                                   type="number"
                                   min="0"
-                                  max={activity.points || 100}
+                                  max={maxPoints}
                                   value={student.grade || ''}
                                   onChange={(e) => handleGradeChange(student.user_ID, e.target.value)}
-                                  className="w-10 sm:w-12 px-1.5 sm:px-2 py-0.5 sm:py-1 border border-gray-300 rounded text-xs focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  className="w-12 sm:w-14 px-1.5 sm:px-2 py-0.5 sm:py-1 border border-gray-300 rounded text-xs focus:border-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   onClick={(e) => e.stopPropagation()}
                                   step="1"
+                                  placeholder="0"
                                 />
-                                {activity.points && (
-                                  <span className="text-xs text-gray-500 ml-1">/ {activity.points}</span>
+                                {maxPoints && (
+                                  <span className="text-xs text-gray-500 ml-1">/ {maxPoints}</span>
                                 )}
                               </div>
                             </td>
@@ -601,36 +674,68 @@ const ClassWorkSubmission = ({
               </div>
             </div>
 
-            {/* Right Panel - Analytics - Scrollable on mobile */}
+            {/* Right Panel - Enhanced Analytics */}
             <div className={`${isMobile ? 'w-full border-t border-gray-200' : 'w-1/2'} ${isMobile ? 'max-h-96 overflow-y-auto' : ''} p-3 sm:p-4 md:p-6`}>
               {selectedStudent ? (
                 <div className={`${isMobile ? 'min-h-0' : 'h-full'} flex flex-col`}>
                   <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
-                    Analytics - {selectedStudent.name}
+                    Performance Analytics - {selectedStudent.name}
                   </h3>
                   
-                  {/* Pie Chart */}
+                  {/* Enhanced Pie Chart with Performance Feedback */}
                   <div className={`${isMobile ? 'flex-shrink-0' : 'flex-1'} flex flex-col items-center justify-center mb-4 sm:mb-6`}>
                     {studentAnalytics ? (
                       <>
                         {renderPieChart(studentAnalytics)}
-                        <div className="mt-3 sm:mt-4 md:mt-6 text-center">
-                          <p className="text-xs sm:text-sm text-gray-600 mb-2">
-                            Grade Distribution
-                          </p>
-                          <div className="flex justify-center gap-2 sm:gap-3 md:gap-4 mt-2">
-                            {studentAnalytics.data.map((item, index) => (
-                              <div key={index} className="flex items-center gap-1">
-                                <div 
-                                  className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" 
-                                  style={{ backgroundColor: item.color }}
-                                ></div>
-                                <span className="text-xs text-gray-600">
-                                  {item.label}: {item.value}
-                                </span>
-                              </div>
-                            ))}
+                        
+                        {/* Performance Feedback */}
+                        <div className="mt-4 sm:mt-6 text-center">
+                          <div className={`inline-block px-3 py-2 rounded-lg ${
+                            studentAnalytics.percentage >= 85 ? 'bg-green-50 border border-green-200' :
+                            studentAnalytics.percentage >= 70 ? 'bg-yellow-50 border border-yellow-200' :
+                            studentAnalytics.percentage >= 50 ? 'bg-orange-50 border border-orange-200' :
+                            'bg-red-50 border border-red-200'
+                          }`}>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {studentAnalytics.performanceLevel}
+                            </p>
+                            <p className="text-xs text-gray-600 max-w-xs">
+                              {studentAnalytics.feedback}
+                            </p>
                           </div>
+                        </div>
+
+                        {/* Enhanced Score Breakdown */}
+                        <div className="mt-4 sm:mt-6 w-full max-w-xs">
+                          <div className="grid grid-cols-2 gap-3 text-center">
+                            <div className="bg-blue-50 rounded-lg p-3">
+                              <p className="text-xs text-blue-600 font-medium">Current Score</p>
+                              <p className="text-lg font-bold text-blue-800">
+                                {studentAnalytics.data[0].value}/{studentAnalytics.totalPoints}
+                              </p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-3">
+                              <p className="text-xs text-gray-600 font-medium">Points Available</p>
+                              <p className="text-lg font-bold text-gray-800">
+                                {studentAnalytics.data[1].value}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Progress Legend */}
+                        <div className="mt-4 flex justify-center gap-3">
+                          {studentAnalytics.data.map((item, index) => (
+                            <div key={index} className="flex items-center gap-1">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: item.color }}
+                              ></div>
+                              <span className="text-xs text-gray-600">
+                                {item.label}: {item.value}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </>
                     ) : (
@@ -644,7 +749,7 @@ const ClassWorkSubmission = ({
                   <div className="mt-3 sm:mt-4 md:mt-6 p-2 sm:p-3 md:p-4 bg-gray-50 rounded-lg">
                     <h4 className="font-medium text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Student Details</h4>
                     <div className="space-y-1 text-xs sm:text-sm text-gray-600">
-                      <p className="truncate">Email: {localStudents.find(s => s.user_ID === selectedStudent.id)?.user_Email || 'N/A'}</p>
+                      <p className="break-words">Email: {localStudents.find(s => s.user_ID === selectedStudent.id)?.user_Email || 'N/A'}</p>
                       <p>Status: {calculateStudentStatus(
                         localStudents.find(s => s.user_ID === selectedStudent.id), 
                         activity
@@ -653,7 +758,6 @@ const ClassWorkSubmission = ({
                     </div>
                   </div>
 
-                  {/* Additional information that might appear on scroll */}
                   {isMobile && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                       <p className="text-xs text-blue-700 text-center">
@@ -735,7 +839,7 @@ const ClassWorkSubmission = ({
         isOpen={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         subjectCode={activity?.subject_code}
-        professorName={professorName} // Pass professor name
+        professorName={professorName}
       />
 
       {/* Success Modal */}

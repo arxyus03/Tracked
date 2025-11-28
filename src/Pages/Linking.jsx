@@ -27,6 +27,8 @@ import ProfileProf from './Professor/ProfileProf.jsx';
 import AccountSettingProf from './Professor/AccountSettingProf.jsx';
 import SubjectDetails from './Professor/ClassworkTab.jsx';
 import Attendance from './Professor/AttendanceTab.jsx';
+import GradeTab from './Professor/GradeTab.jsx';
+import AnalyticsTab from './Professor/AnalyticsTab.jsx';
 import AttendanceHistory from './Professor/AttendanceHistory.jsx';
 import AnalyticsIndividualInfo from './Professor/AnalyticsIndividualInfo.jsx';
 import AnalyticsAttendanceInfo from './Professor/AnalyticsAttendanceInfo.jsx';
@@ -100,6 +102,8 @@ function Linking() {
         <Route path="/AnalyticsIndividualInfo" element={<AnalyticsIndividualInfo/>} /> 
         <Route path="/AnalyticsAttendanceInfo" element={<AnalyticsAttendanceInfo/>} /> 
         <Route path="/StudentList" element={<StudentList/>} /> 
+        <Route path="/GradeTab" element={<GradeTab/>} /> 
+        <Route path="/AnalyticsTab" element={<AnalyticsTab/>} /> 
 
         {/* Navigations for Student */}
         <Route path="/DashboardStudent" element={<DashboardStudent />} />

@@ -135,6 +135,8 @@ const StudentActivitiesDetails = ({
         return activities.filter(activity => activity.status === 'Submitted' || activity.status === 'Late');
       case 'Missing':
         return activities.filter(activity => activity.status === 'Missed');
+      case 'Assigned':
+        return activities.filter(activity => activity.status === 'Assigned');
       case 'All':
       default:
         return activities;
@@ -289,12 +291,15 @@ const StudentActivitiesDetails = ({
                       {selectedStudent.user_Email}
                     </p>
                     {studentStats && (
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-600">
+                      <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-gray-600">
                         <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                           Submitted: {studentStats.submittedActivities}
                         </span>
                         <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
                           Missed: {studentStats.missedActivities}
+                        </span>
+                        <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
+                          Assigned: {studentStats.assignedActivities}
                         </span>
                         <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
                           Total: {studentStats.totalActivities}
@@ -319,7 +324,7 @@ const StudentActivitiesDetails = ({
 
                       {filterDropdownOpen && (
                         <div className="absolute top-full mt-1 right-0 xs:left-0 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden min-w-[120px]">
-                          {["All", "Submitted", "Missing"].map((option) => (
+                          {["All", "Submitted", "Missing", "Assigned"].map((option) => (
                             <button
                               key={option}
                               className={`block w-full text-left px-3 sm:px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer transition-colors ${
@@ -400,7 +405,9 @@ const StudentActivitiesDetails = ({
                           <img src={Nothing} alt="No activities" className="w-30 h-30 sm:w-40 sm:h-40" /> : 
                           activityFilter === "Submitted" ? 
                           <img src={NoSubmission} alt="No submissions" className="w-30 h-30 sm:w-40 sm:h-40" /> : 
-                          <img src={Missing} alt="No missing" className="w-30 h-30 sm:w-40 sm:h-40" />
+                          activityFilter === "Assigned" ?
+                          <img src={Nothing} alt="No assigned" className="w-30 h-30 sm:w-40 sm:h-40" /> :
+                          <img src={Missing} alt="No missing" className="w-30 h-30 sm:w-40 sm-h-40" />
                         }
                       </div>
                       <p>
@@ -408,6 +415,8 @@ const StudentActivitiesDetails = ({
                           ? "No activities found for this student." 
                           : activityFilter === "Submitted"
                           ? "No submitted activities found."
+                          : activityFilter === "Assigned"
+                          ? "No assigned activities found."
                           : "No missing activities found."
                         }
                       </p>

@@ -19,6 +19,9 @@ import ArrowDown from "../../assets/ArrowDown(Light).svg";
 import SuccessIcon from '../../assets/Success(Green).svg';
 import ArchiveWarningIcon from '../../assets/Warning(Yellow).svg';
 import Search from "../../assets/Search.svg";
+// Import the new icons for Grade and Analytics
+import GradeIcon from "../../assets/Grade(Light).svg";
+import AnalyticsIcon from "../../assets/Analytics(Light).svg";
 
 export default function AnnouncementTab() {
   const location = useLocation();
@@ -633,6 +636,7 @@ export default function AnnouncementTab() {
                 src={AnnouncementIcon}
                 alt="Announcement"
                 className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
+                title="Announcements section"
               />
               <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
                 Announcement
@@ -664,8 +668,9 @@ export default function AnnouncementTab() {
                 <Link to={"/ClassManagement"}>
                   <img 
                     src={BackButton} 
-                    alt="Back" 
-                    className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity" 
+                    alt="Back to Class Management" 
+                    className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity"
+                    title="Back to Class Management"
                   />
                 </Link>
               </div>
@@ -680,37 +685,76 @@ export default function AnnouncementTab() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
               {/* Announcement Button - Full width on mobile, auto on larger */}
               <Link to={`/Class?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full sm:w-auto">
+                <button 
+                  className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto"
+                  title="View class announcements"
+                >
                   <img 
                     src={Announcement} 
-                    alt="" 
+                    alt="Announcements" 
                     className="h-4 w-4 sm:h-5 sm:w-5"
                   />
-                  <span className="sm:inline">ANNOUNCEMENT</span>
+                  <span className="sm:inline">Announcement</span>
                 </button>
               </Link>
 
-              {/* Classwork and Attendance - Side by side on all screens */}
-              <div className="flex gap-3 w-full sm:w-auto">
-                <Link to={`/ClassworkTab?code=${subjectCode}`} className="flex-1 min-w-0">
-                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full">
+              {/* Classwork, Attendance, Grade and Analytics - Grid on mobile, row on desktop */}
+              <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-4 sm:w-auto">
+                <Link to={`/ClassworkTab?code=${subjectCode}`} className="min-w-0">
+                  <button 
+                    className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full"
+                    title="Manage classwork and assignments"
+                  >
                     <img 
                       src={Classwork} 
-                      alt="" 
+                      alt="Classwork" 
                       className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
                     />
-                    <span className="whitespace-nowrap truncate">CLASS WORK</span>
+                    <span className="whitespace-nowrap truncate">Class work</span>
                   </button>
                 </Link>
 
-                <Link to={`/Attendance?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full sm:w-auto">
+                <Link to={`/Attendance?code=${subjectCode}`} className="sm:flex-initial">
+                  <button 
+                    className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#fff4e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffebd4] transition-all duration-300 cursor-pointer w-full sm:w-auto"
+                    title="Take and view attendance"
+                  >
                     <img 
                       src={Attendance} 
-                      alt="" 
+                      alt="Attendance" 
                       className="h-4 w-4 sm:h-5 sm:w-5"
                     />
-                    <span className="sm:inline">ATTENDANCE</span>
+                    <span className="sm:inline">Attendance</span>
+                  </button>
+                </Link>
+
+                {/* NEW: Grade Button */}
+                <Link to={`/GradeTab?code=${subjectCode}`} className="sm:flex-initial">
+                  <button 
+                    className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#ffe6e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffd4d4] transition-all duration-300 cursor-pointer w-full sm:w-auto"
+                    title="Manage student grades"
+                  >
+                    <img 
+                      src={GradeIcon} 
+                      alt="Grades" 
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                    />
+                    <span className="sm:inline">Grade</span>
+                  </button>
+                </Link>
+
+                {/* NEW: Analytics Button */}
+                <Link to={`/AnalyticsTab?code=${subjectCode}`} className="sm:flex-initial">
+                  <button 
+                    className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto"
+                    title="View class analytics and insights"
+                  >
+                    <img 
+                      src={AnalyticsIcon} 
+                      alt="Analytics" 
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                    />
+                    <span className="sm:inline">Analytics</span>
                   </button>
                 </Link>
               </div>
@@ -719,10 +763,13 @@ export default function AnnouncementTab() {
             {/* Action buttons - Icons only on mobile/tablet, unchanged on desktop */}
             <div className="flex items-center gap-2 justify-end sm:justify-start mt-3 sm:mt-0">
               <Link to={`/StudentList?code=${subjectCode}`}>
-                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:px-2">
+                <button 
+                  className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:px-2"
+                  title="View and manage class list"
+                >
                   <img 
                     src={ClassManagementIcon} 
-                    alt="ClassManagement" 
+                    alt="Class Management" 
                     className="h-5 w-5 sm:h-6 sm:w-6" 
                   />
                 </button>
@@ -730,10 +777,12 @@ export default function AnnouncementTab() {
 
               <button 
                 onClick={() => setShowModal(true)}
-                className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:px-2">
+                className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:px-2"
+                title="Create new announcement"
+              >
                 <img 
                   src={Add} 
-                  alt="Add" 
+                  alt="Add Announcement" 
                   className="h-5 w-5 sm:h-6 sm:w-6" 
                 />
               </button>
@@ -747,11 +796,12 @@ export default function AnnouncementTab() {
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
                 className="flex items-center justify-between w-full sm:w-auto font-bold px-4 py-2.5 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] active:border-[#00874E] transition-all duration-200 text-sm sm:text-base sm:min-w-[160px] cursor-pointer touch-manipulation"
+                title="Filter announcements by status"
               >
                 <span>{filterOption}</span>
                 <img
                   src={ArrowDown}
-                  alt=""
+                  alt="Filter options"
                   className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`}
                 />
               </button>
@@ -769,6 +819,7 @@ export default function AnnouncementTab() {
                         setFilterOption(option);
                         setFilterDropdownOpen(false);
                       }}
+                      title={`Show ${option.toLowerCase()} announcements`}
                     >
                       {option}
                     </button>
@@ -786,8 +837,12 @@ export default function AnnouncementTab() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
+                  title="Search announcements by title, subject, or content"
                 />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <button 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  title="Search announcements"
+                >
                   <img
                     src={Search}
                     alt="Search"

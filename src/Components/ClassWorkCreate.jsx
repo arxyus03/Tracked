@@ -7,7 +7,7 @@ const ClassWorkCreate = ({
   onClose, 
   onCreateActivity,
   onDuplicateTask,
-  activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Announcement"],
+  activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory"],
   getCurrentDateTime,
   subjectCode,
   creatingActivity = false
@@ -28,6 +28,9 @@ const ClassWorkCreate = ({
   
   const [activityTypeDropdownOpen, setActivityTypeDropdownOpen] = useState(false);
   const [assignToDropdownOpen, setAssignToDropdownOpen] = useState(false);
+
+  // Filter out "Announcement" from activity types to ensure it's completely removed
+  const filteredActivityTypes = activityTypes.filter(type => type !== "Announcement");
 
   // Fetch real students and existing activities when component opens
   useEffect(() => {
@@ -260,7 +263,7 @@ const ClassWorkCreate = ({
               </button>
               {activityTypeDropdownOpen && (
                 <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-xl border border-gray-200 z-10 overflow-hidden max-h-40 overflow-y-auto">
-                  {activityTypes.map((type) => (
+                  {filteredActivityTypes.map((type) => (
                     <button
                       key={type}
                       onClick={(e) => {

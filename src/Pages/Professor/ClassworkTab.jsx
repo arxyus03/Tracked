@@ -21,6 +21,9 @@ import ArrowDown from "../../assets/ArrowDown(Light).svg";
 import Search from "../../assets/Search.svg";
 import StudentsIcon from "../../assets/Person.svg";
 import ClassManagementIcon from "../../assets/ClassManagement(Light).svg";
+// Import the new icons for Grade and Analytics
+import GradeIcon from "../../assets/Grade(Light).svg";
+import AnalyticsIcon from "../../assets/Analytics(Light).svg";
 
 // New Small Activity Card Component
 const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) => {
@@ -129,6 +132,40 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
     }
   };
 
+  // Updated: Check if activity is fully graded (excluding 0 grades)
+  const isFullyGraded = (activity) => {
+    if (!activity.students || activity.students.length === 0) return false;
+    
+    const submittedStudents = activity.students.filter(student => student.submitted);
+    if (submittedStudents.length === 0) return false;
+    
+    // Check if all submitted students have valid grades that are NOT 0
+    return submittedStudents.every(student => {
+      const grade = student.grade;
+      // Consider null, undefined, empty string, and 0 as "not graded"
+      return grade != null && 
+             grade !== '' && 
+             grade !== undefined && 
+             grade !== 0 && 
+             grade !== '0';
+    });
+  };
+
+  // Updated: Check if activity has any grades (excluding 0 grades)
+  const hasSomeGrades = (activity) => {
+    if (!activity.students || activity.students.length === 0) return false;
+    
+    return activity.students.some(student => {
+      const grade = student.grade;
+      // Consider null, undefined, empty string, and 0 as "not graded"
+      return grade != null && 
+             grade !== '' && 
+             grade !== undefined && 
+             grade !== 0 && 
+             grade !== '0';
+    });
+  };
+
   const submittedCount = activity.students ? activity.students.filter(s => s.submitted).length : 0;
   const totalCount = activity.students ? activity.students.length : 0;
   const submissionRate = totalCount > 0 ? (submittedCount / totalCount) * 100 : 0;
@@ -155,9 +192,21 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
     onOpenSubmissions(activity);
   };
 
+  // Determine card background based on status
+  const getCardBackground = () => {
+    if (isFullyGraded(activity)) {
+      return 'bg-green-50 border-green-200';
+    } else if (isDeadlinePassed(activity.deadline)) {
+      return 'bg-red-50 border-red-200';
+    } else if (hasSomeGrades(activity)) {
+      return 'bg-yellow-50 border-yellow-200';
+    }
+    return 'bg-white border-gray-200';
+  };
+
   return (
     <div 
-      className="bg-white rounded-lg shadow-md border border-gray-200 p-4 hover:shadow-lg transition-shadow cursor-pointer"
+      className={`rounded-lg shadow-md border p-4 hover:shadow-lg transition-shadow cursor-pointer ${getCardBackground()}`}
       onClick={handleCardClick}
     >
       <div className="flex items-start justify-between">
@@ -168,6 +217,34 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
               {activity.activity_type}
             </span>
             <span className="text-sm text-gray-500">#{activity.task_number}</span>
+            
+            {/* Status badges */}
+            {isFullyGraded(activity) && (
+              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded flex items-center gap-1">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Graded
+              </span>
+            )}
+            
+            {isDeadlinePassed(activity.deadline) && !isFullyGraded(activity) && (
+              <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded flex items-center gap-1">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                Past Due
+              </span>
+            )}
+            
+            {hasSomeGrades(activity) && !isFullyGraded(activity) && (
+              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded flex items-center gap-1">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Partially Graded
+              </span>
+            )}
           </div>
           
           <h3 className="font-semibold text-gray-900 text-lg mb-2 truncate">
@@ -227,24 +304,35 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons with Tooltips */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => onEdit(activity)}
-              className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
-              title="Edit Activity"
-            >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-            <button
-              onClick={() => onArchive(activity)}
-              className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
-              title="Archive Activity"
-            >
-              <img src={Archive} alt="Archive" className="w-5 h-5" />
-            </button>
+            {/* Edit Button with Tooltip */}
+            <div className="relative group">
+              <button
+                onClick={() => onEdit(activity)}
+                className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Edit Activity
+              </div>
+            </div>
+
+            {/* Archive Button with Tooltip */}
+            <div className="relative group">
+              <button
+                onClick={() => onArchive(activity)}
+                className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
+              >
+                <img src={Archive} alt="Archive" className="w-5 h-5" />
+              </button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Archive Activity
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -279,7 +367,7 @@ export default function ClassworkTab() {
   const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
   const [creatingActivity, setCreatingActivity] = useState(false);
   
-  const activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Announcement"];
+  const activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory"];
 
   // Search and Filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -394,6 +482,53 @@ export default function ClassworkTab() {
       .filter(activity => activity.activity_type === activityType)
       .map(activity => activity.task_number)
       .sort((a, b) => a - b);
+  };
+
+  // Updated: Check if activity is fully graded (excluding 0 grades)
+  const isFullyGraded = (activity) => {
+    if (!activity.students || activity.students.length === 0) return false;
+    
+    const submittedStudents = activity.students.filter(student => student.submitted);
+    if (submittedStudents.length === 0) return false;
+    
+    // Check if all submitted students have valid grades that are NOT 0
+    return submittedStudents.every(student => {
+      const grade = student.grade;
+      // Consider null, undefined, empty string, and 0 as "not graded"
+      return grade != null && 
+             grade !== '' && 
+             grade !== undefined && 
+             grade !== 0 && 
+             grade !== '0';
+    });
+  };
+
+  // Updated: Check if activity has any grades (excluding 0 grades)
+  const hasSomeGrades = (activity) => {
+    if (!activity.students || activity.students.length === 0) return false;
+    
+    return activity.students.some(student => {
+      const grade = student.grade;
+      // Consider null, undefined, empty string, and 0 as "not graded"
+      return grade != null && 
+             grade !== '' && 
+             grade !== undefined && 
+             grade !== 0 && 
+             grade !== '0';
+    });
+  };
+
+  // Check if deadline is passed
+  const isDeadlinePassed = (deadline) => {
+    if (!deadline || deadline === "No deadline") return false;
+    
+    try {
+      const deadlineDate = new Date(deadline);
+      const now = new Date();
+      return deadlineDate < now;
+    } catch {
+      return false;
+    }
   };
 
   // Handle create activity from modal
@@ -646,11 +781,31 @@ export default function ClassworkTab() {
     
     let matchesFilter = true;
     if (filterOption !== "All") {
-      matchesFilter = activity.activity_type === filterOption;
+      switch (filterOption) {
+        case "Graded":
+          matchesFilter = isFullyGraded(activity);
+          break;
+        case "Past Deadline":
+          matchesFilter = isDeadlinePassed(activity.deadline);
+          break;
+        default:
+          matchesFilter = activity.activity_type === filterOption;
+      }
     }
     
     return matchesSearch && matchesFilter;
   });
+
+  // Group activities by status for visual separation
+  const groupedActivities = {
+    graded: filteredActivities.filter(activity => isFullyGraded(activity)),
+    pastDeadline: filteredActivities.filter(activity => 
+      isDeadlinePassed(activity.deadline) && !isFullyGraded(activity)
+    ),
+    other: filteredActivities.filter(activity => 
+      !isFullyGraded(activity) && !isDeadlinePassed(activity.deadline)
+    )
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -735,16 +890,16 @@ export default function ClassworkTab() {
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img
-                src={SubjectDetailsIcon}
+                src={Classwork}
                 alt="Class"
                 className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
               <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
-                Class Management
+                Class Work
               </h1>
             </div>
             <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
-              Manage your class activities and assignments
+              Manage and create your class works
             </p>
           </div>
 
@@ -785,37 +940,61 @@ export default function ClassworkTab() {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
               {/* Announcement Button - Full width on mobile, auto on larger */}
               <Link to={`/Class?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full sm:w-auto">
+                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto">
                   <img 
                     src={Announcement} 
                     alt="" 
                     className="h-4 w-4 sm:h-5 sm:w-5"
                   />
-                  <span className="sm:inline">ANNOUNCEMENT</span>
+                  <span className="sm:inline">Announcement</span>
                 </button>
               </Link>
 
-              {/* Classwork and Attendance - Side by side on all screens */}
-              <div className="flex gap-3 w-full sm:w-auto">
-                <Link to={`/ClassworkTab?code=${subjectCode}`} className="flex-1 min-w-0">
-                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full">
+              {/* Classwork, Attendance, Grade and Analytics - Grid on mobile, row on desktop */}
+              <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-4 sm:w-auto">
+                <Link to={`/ClassworkTab?code=${subjectCode}`} className="min-w-0">
+                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full">
                     <img 
                       src={Classwork} 
                       alt="" 
                       className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
                     />
-                    <span className="whitespace-nowrap truncate">CLASS WORK</span>
+                    <span className="whitespace-nowrap truncate">Class work</span>
                   </button>
                 </Link>
 
-                <Link to={`/Attendance?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-white font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer w-full sm:w-auto">
+                <Link to={`/Attendance?code=${subjectCode}`} className="sm:flex-initial">
+                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#fff4e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffebd4] transition-all duration-300 cursor-pointer w-full sm:w-auto">
                     <img 
                       src={Attendance} 
                       alt="" 
                       className="h-4 w-4 sm:h-5 sm:w-5"
                     />
-                    <span className="sm:inline">ATTENDANCE</span>
+                    <span className="sm:inline">Attendance</span>
+                  </button>
+                </Link>
+
+                {/* NEW: Grade Button */}
+                <Link to={`/GradeTab?code=${subjectCode}`} className="sm:flex-initial">
+                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#ffe6e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffd4d4] transition-all duration-300 cursor-pointer w-full sm:w-auto">
+                    <img 
+                      src={GradeIcon} 
+                      alt="" 
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                    />
+                    <span className="sm:inline">Grade</span>
+                  </button>
+                </Link>
+
+                {/* NEW: Analytics Button */}
+                <Link to={`/AnalyticsTab?code=${subjectCode}`} className="sm:flex-initial">
+                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto">
+                    <img 
+                      src={AnalyticsIcon} 
+                      alt="" 
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                    />
+                    <span className="sm:inline">Analytics</span>
                   </button>
                 </Link>
               </div>
@@ -824,34 +1003,49 @@ export default function ClassworkTab() {
             {/* Action buttons - Icons only on mobile/tablet, unchanged on desktop */}
             <div className="flex items-center gap-2 justify-end sm:justify-start mt-3 sm:mt-0 w-full sm:w-auto">
               <Link to={`/StudentList?code=${subjectCode}`}>
-                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
-                  <img 
-                    src={ClassManagementIcon} 
-                    alt="ClassManagement" 
-                    className="h-5 w-5 sm:h-6 sm:w-6" 
-                  />
-                </button>
+                <div className="relative group">
+                  <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
+                    <img 
+                      src={ClassManagementIcon} 
+                      alt="ClassManagement" 
+                      className="h-5 w-5 sm:h-6 sm:w-6" 
+                    />
+                  </button>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    Student List
+                  </div>
+                </div>
               </Link>
 
               <Link to={`/ArchiveActivities?code=${subjectCode}`}>
-                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
+                <div className="relative group">
+                  <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
+                    <img 
+                      src={Archive} 
+                      alt="Archive" 
+                      className="h-5 w-5 sm:h-6 sm:w-6" 
+                    />
+                  </button>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    Archived Activities
+                  </div>
+                </div>
+              </Link>
+
+              <div className="relative group">
+                <button 
+                  onClick={() => setShowCreateModal(true)}
+                  className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
                   <img 
-                    src={Archive} 
-                    alt="Archive" 
+                    src={Add} 
+                    alt="Add" 
                     className="h-5 w-5 sm:h-6 sm:w-6" 
                   />
                 </button>
-              </Link>
-
-              <button 
-                onClick={() => setShowCreateModal(true)}
-                className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
-                <img 
-                  src={Add} 
-                  alt="Add" 
-                  className="h-5 w-5 sm:h-6 sm:w-6" 
-                />
-              </button>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                  Create Activity
+                </div>
+              </div>
             </div>
           </div>
 
@@ -874,7 +1068,7 @@ export default function ClassworkTab() {
               {/* Dropdown options */}
               {filterDropdownOpen && (
                 <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
-                  {["All", ...activityTypes].map((option) => (
+                  {["All", ...activityTypes, "Graded", "Past Deadline"].map((option) => (
                     <button
                       key={option}
                       className={`block px-4 py-2.5 w-full text-left hover:bg-gray-100 active:bg-gray-200 text-sm sm:text-base transition-colors duration-150 cursor-pointer touch-manipulation ${
@@ -913,21 +1107,81 @@ export default function ClassworkTab() {
             </div>
           </div>
 
-          {/* SMALL ACTIVITY CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 sm:mt-5">
-            {filteredActivities.length === 0 ? (
-              renderEmptyState()
-            ) : (
-              filteredActivities.map((activity) => (
-                <SmallActivityCard
-                  key={activity.id}
-                  activity={activity}
-                  onEdit={handleEditSchoolWork}
-                  onArchive={handleArchiveSchoolWork}
-                  onOpenSubmissions={handleOpenSubmissions}
-                />
-              ))
+          {/* SMALL ACTIVITY CARDS WITH VISUAL SEPARATION */}
+          <div className="mt-4 sm:mt-5">
+            {/* Other Activities Section */}
+            {groupedActivities.other.length > 0 && (
+              <>
+                <div className="mb-4 mt-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                    Active Activities
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groupedActivities.other.map((activity) => (
+                    <SmallActivityCard
+                      key={activity.id}
+                      activity={activity}
+                      onEdit={handleEditSchoolWork}
+                      onArchive={handleArchiveSchoolWork}
+                      onOpenSubmissions={handleOpenSubmissions}
+                    />
+                  ))}
+                </div>
+              </>
             )}
+
+            {/* Graded Activities Section */}
+            {groupedActivities.graded.length > 0 && (
+              <>
+                <div className="mb-4 mt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                    Graded Activities
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {groupedActivities.graded.map((activity) => (
+                    <SmallActivityCard
+                      key={activity.id}
+                      activity={activity}
+                      onEdit={handleEditSchoolWork}
+                      onArchive={handleArchiveSchoolWork}
+                      onOpenSubmissions={handleOpenSubmissions}
+                    />
+                  ))}
+                </div>
+                <hr className="my-6 border-gray-300" />
+              </>
+            )}
+
+            {/* Past Deadline Activities Section */}
+            {groupedActivities.pastDeadline.length > 0 && (
+              <>
+                <div className="mb-4 mt-[-1rem]">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                    Past Deadline
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {groupedActivities.pastDeadline.map((activity) => (
+                    <SmallActivityCard
+                      key={activity.id}
+                      activity={activity}
+                      onEdit={handleEditSchoolWork}
+                      onArchive={handleArchiveSchoolWork}
+                      onOpenSubmissions={handleOpenSubmissions}
+                    />
+                  ))}
+                </div>
+                <hr className="my-6 border-gray-300" />
+              </>
+            )}
+
+            {/* Empty State */}
+            {filteredActivities.length === 0 && renderEmptyState()}
           </div>
         </div>
       </div>
