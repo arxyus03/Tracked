@@ -14,16 +14,30 @@ function Header({ setIsOpen }) {
   const [weekday, setWeekday] = useState("");
   const [fullDate, setFullDate] = useState("");
   const [year, setYear] = useState("");
+  const [currentTime, setCurrentTime] = useState("");
   const [userName, setUserName] = useState("");
   const [userId, setUserId] = useState("");
   const [userRole, setUserRole] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    const today = new Date();
-    setWeekday(today.toLocaleDateString("en-US", { weekday: "long" }));
-    setFullDate(today.toLocaleDateString("en-US", { month: "long", day: "numeric" }));
-    setYear(today.getFullYear());
+    const updateDateTime = () => {
+      const today = new Date();
+      setWeekday(today.toLocaleDateString("en-US", { weekday: "long" }));
+      setFullDate(today.toLocaleDateString("en-US", { month: "long", day: "numeric" }));
+      setYear(today.getFullYear());
+      setCurrentTime(today.toLocaleTimeString("en-US", { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      }));
+    };
+
+    // Initial update
+    updateDateTime();
+
+    // Update time every minute
+    const timeInterval = setInterval(updateDateTime, 60000);
 
     // Get user data from localStorage - updated to match new Login.php structure
     try {
@@ -60,7 +74,10 @@ function Header({ setIsOpen }) {
       }
     } catch (error) {
       console.error("Error reading user from localStorage:", error);
-    } 
+    }
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(timeInterval);
   }, []);
 
   // Close dropdown when clicking outside
@@ -149,10 +166,12 @@ function Header({ setIsOpen }) {
           />
 
           <div className="flex flex-wrap items-center text-xs sm:text-base md:text-lg">
-            <p className="text-[#465746] font-bold mr-2">{weekday}</p>
+            <p className="text-[#465746] mr-2 font-bold mr-2">{weekday}</p>
             <p className="text-[#465746] mr-2 hidden sm:block">|</p>
-            <p className="text-[#465746] mr-1">{fullDate}{","}</p>
-            <p className="text-[#465746]">{year}</p>
+            <p className="text-[#465746] mr-1 font-medium">{fullDate}{","}</p>
+            <p className="text-[#465746] mr-2 font-medium">{year}</p>
+            <p className="text-[#465746] mr-2 hidden sm:block">|</p>
+            <p className="text-[#465746] font-medium">{currentTime}</p>
           </div>
         </div>
 

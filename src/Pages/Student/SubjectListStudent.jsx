@@ -277,7 +277,7 @@ export default function StudentListStudent() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Section:</span>
+                <span className="font-semibold">SECTION:</span>
                 <span>{classInfo?.section || 'N/A'}</span>
               </div>
               <div className="w-full sm:w-auto flex justify-end">

@@ -16,6 +16,9 @@ $password = 'Tracked@2025';
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Set database connection to UTC timezone
+    $pdo->exec("SET time_zone = '+00:00'");
 } catch(PDOException $e) {
     echo json_encode(["success" => false, "message" => "Database connection failed: " . $e->getMessage()]);
     exit;
@@ -40,7 +43,7 @@ try {
         exit;
     }
 
-    // Get activities for this subject with formatted deadline - REMOVED GRADE FROM SELECT
+    // Get activities for this subject with UTC formatted timestamps and missing status
     $stmt = $pdo->prepare("
         SELECT 
             a.id,
@@ -51,12 +54,15 @@ try {
             a.instruction,
             a.link,
             a.points,
-            DATE_FORMAT(a.deadline, '%Y-%m-%d %H:%i:%s') as deadline,
-            a.created_at,
-            a.updated_at,
-            COALESCE(ag.submitted, 0) as submitted, 
-            COALESCE(ag.late, 0) as late, 
-            ag.submitted_at
+            DATE_FORMAT(a.deadline, '%Y-%m-%dT%H:%i:%sZ') as deadline,
+            DATE_FORMAT(a.created_at, '%Y-%m-%dT%H:%i:%sZ') as created_at,
+            DATE_FORMAT(a.updated_at, '%Y-%m-%dT%H:%i:%sZ') as updated_at,
+            COALESCE(ag.submitted, 0) as submitted,
+            DATE_FORMAT(ag.submitted_at, '%Y-%m-%dT%H:%i:%sZ') as submitted_at,
+            CASE 
+                WHEN COALESCE(ag.submitted, 0) = 0 AND a.deadline IS NOT NULL AND a.deadline < UTC_TIMESTAMP() THEN 1
+                ELSE 0
+            END as missing
         FROM activities a 
         LEFT JOIN activity_grades ag ON a.id = ag.activity_ID AND ag.student_ID = ?
         WHERE a.subject_code = ? AND (a.archived = 0 OR a.archived IS NULL)

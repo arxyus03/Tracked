@@ -158,11 +158,7 @@ export default function SubjectAnnouncementStudent() {
 
   // Sort announcements based on filter option
   const sortedAnnouncements = [...filteredAnnouncements].sort((a, b) => {
-    if (filterOption === "Newest") {
-      // Sort by date posted (newest first)
-      return new Date(b.datePosted) - new Date(a.datePosted);
-    }
-    // For other filters, maintain original order or sort by unread first
+    // For all filters, maintain original order or sort by unread first
     if (filterOption === "All") {
       // Put unread announcements first
       if (a.isRead && !b.isRead) return 1;
@@ -238,19 +234,19 @@ export default function SubjectAnnouncementStudent() {
             <div className="flex items-center mb-2">
               <img
                 src={Announcement}
-                alt="Subject Announcements"
+                alt="Class Announcements"
                 className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
               <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
-                Subject Announcements
+                Class Announcements
               </h1>
             </div>
             <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
-              View subject announcements
+              View Class announcements
             </p>
           </div>
 
-          {/* Subject Information */}
+          {/* Class Information */}
           <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
             <div className="flex flex-wrap items-center gap-1 sm:gap-3">
               <span className="font-semibold">SUBJECT CODE:</span>
@@ -264,7 +260,7 @@ export default function SubjectAnnouncementStudent() {
 
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Section:</span>
+                <span className="font-semibold">SECTION:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
               </div>
               <Link to={"/Subjects"}>
@@ -326,7 +322,7 @@ export default function SubjectAnnouncementStudent() {
                       alt="" 
                       className="h-4 w-4 sm:h-5 sm:w-5"
                     />
-                    <span className="sm:inline">Analytics</span>
+                    <span className="sm:inline">Reports</span>
                   </button>
                 </Link>
               </div>
@@ -365,7 +361,7 @@ export default function SubjectAnnouncementStudent() {
               {/* Dropdown options - Updated for Announcements */}
               {filterDropdownOpen && (
                 <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
-                  {["All", "Unread", "Read", "Newest"].map((option) => (
+                  {["All", "Unread", "Read"].map((option) => (
                     <button
                       key={option}
                       className={`block px-4 py-2.5 w-full text-left hover:bg-gray-100 active:bg-gray-200 text-sm sm:text-base transition-colors duration-150 cursor-pointer touch-manipulation ${

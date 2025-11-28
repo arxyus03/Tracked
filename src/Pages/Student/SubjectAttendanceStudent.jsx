@@ -430,7 +430,7 @@ export default function SubjectAttendanceStudent() {
 
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Section:</span>
+                <span className="font-semibold">SECTION:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
               </div>
               <Link to={"/Subjects"}>
@@ -492,7 +492,7 @@ export default function SubjectAttendanceStudent() {
                       alt="" 
                       className="h-4 w-4 sm:h-5 sm:w-5"
                     />
-                    <span className="sm:inline">Analytics</span>
+                    <span className="sm:inline">Reports</span>
                   </button>
                 </Link>
               </div>
@@ -613,7 +613,7 @@ export default function SubjectAttendanceStudent() {
                   </span>
                 </div>
                 <div className="p-2 sm:p-3 bg-violet-50 rounded-md border border-violet-100">
-                  <p className="font-semibold text-[#9C27B0] mb-1 sm:mb-2">Total Days</p>
+                  <p className="font-semibold text-[#9C27B0] mb-1 sm:mb-2">Total Classes</p>
                   <span className="text-lg sm:text-xl lg:text-2xl font-bold">
                     {attendance.total}
                   </span>
@@ -625,7 +625,7 @@ export default function SubjectAttendanceStudent() {
             <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 p-4 sm:p-5 text-[#465746]">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-base sm:text-lg lg:text-xl font-bold">
-                  Attendance Tracking - {getCurrentSubjectName()}
+                  Attendance Tracking
                 </p>
                 {overallWarning && (
                   <div className="flex items-center bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
@@ -639,9 +639,12 @@ export default function SubjectAttendanceStudent() {
               <p className="text-xs sm:text-sm lg:text-base mb-3 sm:mb-4">
                 Note: Students with 
                 <span className='text-[#FF6666] font-bold'> 3 (Three) accumulated absences </span>
-                will be dropped from the course. 
+                will be 
+                <span className='text-[#FF6666] font-bold'> dropped </span>
+                from the class.
                 <span className='text-[#F59E0B] font-bold'> 3 (Three) late arrivals </span>
-                are equivalent to one absent.
+                are equivalent to
+                <span className='text-[#F59E0B] font-bold'> 1 (One) absent. </span>
               </p>
               <hr className="border-[#465746]/30 mb-3 sm:mb-4" />
               
@@ -668,7 +671,7 @@ export default function SubjectAttendanceStudent() {
                           <tr key={subject.subject_code} className={`border-b ${subject.isAtRisk ? 'bg-red-50' : subject.hasWarning ? 'bg-yellow-50' : 'hover:bg-gray-50'}`}>
                             <td className="px-2 sm:px-4 py-2 sm:py-3">
                               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                                <span className="font-medium">{subject.subject_name} ({subject.section})</span>
+                                <span className="font-medium">{subject.subject_name}</span>
                                 {subject.warningMessage && (
                                   <div className={`text-xs sm:text-sm ${subject.isAtRisk ? 'text-red-600' : 'text-yellow-600'}`}>
                                     <span className='font-bold'>⚠️ {subject.isAtRisk ? 'CRITICAL' : 'Warning'}:</span>

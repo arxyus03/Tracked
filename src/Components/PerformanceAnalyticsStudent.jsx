@@ -4,20 +4,22 @@ import ArrowDown from "../assets/ArrowDown(Light).svg";
 import PieIcon from "../assets/Pie(Light).svg";
 import Search from "../assets/Search.svg";
 import CheckSubmitted from "../assets/CheckTable(Green).svg";
-import CheckLate from "../assets/PendingTable(Yellow).svg";
 import CheckPending from "../assets/LateTable(Blue).svg";
 import Cross from "../assets/CrossTable(Red).svg";
 import ArrowLeft from '../assets/ArrowLeft.svg';
 import ArrowRight from '../assets/ArrowRight.svg';
 import TrendingUp from "../assets/TrendingUp.svg";
 import TrendingDown from "../assets/TrendingDown.svg";
-import AlertTriangle from "../assets/Warning(Yellow).svg";
+import AlertTriangleGreen from "../assets/Warning(Green).svg";
+import AlertTriangleYellow from "../assets/Warning(Yellow).svg";
+import AlertTriangleRed from "../assets/Warning(Red).svg";
 
 export default function PerformanceAnalyticsStudent({
   quizzesList = [],
   assignmentsList = [],
   activitiesList = [],
   projectsList = [],
+  laboratoriesList = [], // Added laboratoriesList prop
   selectedFilter,
   setSelectedFilter,
   currentSubject,
@@ -28,7 +30,8 @@ export default function PerformanceAnalyticsStudent({
   const assignmentsCount = assignmentsList.length;
   const activitiesCount = activitiesList.length;
   const projectsCount = projectsList.length;
-  const totalTasksCount = quizzesCount + assignmentsCount + activitiesCount + projectsCount;
+  const laboratoriesCount = laboratoriesList.length; // Added laboratories count
+  const totalTasksCount = quizzesCount + assignmentsCount + activitiesCount + projectsCount + laboratoriesCount;
 
   const [animationProgress, setAnimationProgress] = useState(0);
 
@@ -44,29 +47,34 @@ export default function PerformanceAnalyticsStudent({
       border: "border-l-[#2c5530]",
       hover: "hover:bg-[#2c5530]/10 hover:border-l-[#2c5530]"
     },
-    Quizzes: { 
-      text: "text-[#8B4513]", 
-      border: "border-l-[#8B4513]",
-      hover: "hover:bg-[#8B4513]/10 hover:border-l-[#8B4513]"
-    },
-    Assignment: { 
-      text: "text-[#A0522D]", 
-      border: "border-l-[#A0522D]",
-      hover: "hover:bg-[#A0522D]/10 hover:border-l-[#A0522D]"
-    },
     Activities: { 
       text: "text-[#B8860B]", 
       border: "border-l-[#B8860B]",
       hover: "hover:bg-[#B8860B]/10 hover:border-l-[#B8860B]"
     },
-    Projects: { 
+    Assignment: { 
       text: "text-[#D2691E]", 
       border: "border-l-[#D2691E]",
       hover: "hover:bg-[#D2691E]/10 hover:border-l-[#D2691E]"
+    },
+    Quizzes: { 
+      text: "text-[#A0522D]", 
+      border: "border-l-[#A0522D]",
+      hover: "hover:bg-[#A0522D]/10 hover:border-l-[#A0522D]"
+    },
+    Laboratory: {
+      text: "text-[#8B4513]", 
+      border: "border-l-[#8B4513]",
+      hover: "hover:bg-[#8B4513]/10 hover:border-l-[#8B4513]"
+    },
+    Projects: { 
+      text: "text-[#5D4037]", 
+      border: "border-l-[#5D4037]",
+      hover: "hover:bg-[#5D4037]/10 hover:border-l-[#5D4037]"
     }
   };
 
-  // FIXED: Updated utility function to count Submitted, Assigned, Missed
+  // FIXED: Updated utility function to count Submitted, Assigned, Missed (removed late)
   const sumStatusCounts = (list) => {
     let submitted = 0, assigned = 0, missed = 0;
     
@@ -75,11 +83,10 @@ export default function PerformanceAnalyticsStudent({
       const isMissing = it.missing === 1 || it.missing === true;
       
       if (isSubmitted) {
-        submitted++; // Count as submitted regardless of late status
+        submitted++;
       } else if (isMissing) {
         missed++;
       } else {
-        // If not submitted and not missing, it's assigned
         assigned++;
       }
     });
@@ -87,40 +94,36 @@ export default function PerformanceAnalyticsStudent({
     return { submitted, assigned, missed };
   };
 
-  // ADVANCED ANALYTICS CALCULATIONS
+  // ADVANCED ANALYTICS CALCULATIONS (removed late references)
   const calculateAdvancedAnalytics = useMemo(() => {
     const allActivities = [
       ...quizzesList,
       ...assignmentsList,
       ...activitiesList,
-      ...projectsList
+      ...projectsList,
+      ...laboratoriesList
     ];
 
-    // Basic metrics
+    // Basic metrics (removed lateActivities)
     const totalActivities = allActivities.length;
     const submittedActivities = allActivities.filter(a => a.submitted).length;
-    const lateActivities = allActivities.filter(a => a.late).length;
     const missedActivities = allActivities.filter(a => a.missing).length;
     const assignedActivities = allActivities.filter(a => !a.submitted && !a.missing).length;
 
-    // Performance score (0-100)
+    // Performance score (0-100) - simplified without late factor
     const completionRate = totalActivities > 0 ? (submittedActivities / totalActivities) * 100 : 0;
-    const timelinessRate = submittedActivities > 0 ? 
-      ((submittedActivities - lateActivities) / submittedActivities) * 100 : 100;
     
-    // Weighted performance score (completion 60%, timeliness 40%)
-    const performanceScore = Math.round(
-      (completionRate * 0.6) + (timelinessRate * 0.4)
-    );
+    // Performance score based only on completion rate
+    const performanceScore = Math.round(completionRate);
 
-    // Risk assessment
+    // Risk assessment (removed late factor)
     let riskLevel = "LOW";
     let riskScore = 0;
     
     if (missedActivities > totalActivities * 0.3) {
       riskLevel = "HIGH";
       riskScore = 80;
-    } else if (missedActivities > totalActivities * 0.15 || lateActivities > totalActivities * 0.25) {
+    } else if (missedActivities > totalActivities * 0.15) {
       riskLevel = "MEDIUM";
       riskScore = 50;
     } else {
@@ -128,7 +131,7 @@ export default function PerformanceAnalyticsStudent({
       riskScore = 20;
     }
 
-    // Trend analysis (simple time-based analysis)
+    // Trend analysis
     const activitiesWithDates = allActivities
       .filter(a => a.deadline && a.deadline !== 'No deadline')
       .map(a => ({
@@ -144,34 +147,28 @@ export default function PerformanceAnalyticsStudent({
     const trend = recentCompletionRate > completionRate ? "improving" : 
                  recentCompletionRate < completionRate ? "declining" : "stable";
 
-    // Predictive grade (simplified)
-    const predictiveGrade = Math.max(0, Math.min(100, 
-      performanceScore + (trend === "improving" ? 5 : trend === "declining" ? -5 : 0)
-    ));
-
     // Activity type performance
     const typePerformance = {
-      quizzes: calculateTypePerformance(quizzesList),
-      assignments: calculateTypePerformance(assignmentsList),
       activities: calculateTypePerformance(activitiesList),
+      assignments: calculateTypePerformance(assignmentsList),
+      quizzes: calculateTypePerformance(quizzesList),
+      laboratories: calculateTypePerformance(laboratoriesList),
       projects: calculateTypePerformance(projectsList)
     };
 
-    // Submission patterns
+    // Submission patterns (removed late analysis)
     const submissionPatterns = analyzeSubmissionPatterns(allActivities);
 
     return {
       // Basic metrics
       totalActivities,
       submittedActivities,
-      lateActivities,
       missedActivities,
       assignedActivities,
       
       // Performance metrics
       performanceScore,
       completionRate: Math.round(completionRate),
-      timelinessRate: Math.round(timelinessRate),
       
       // Risk assessment
       riskLevel,
@@ -181,8 +178,9 @@ export default function PerformanceAnalyticsStudent({
       trend,
       recentCompletionRate: Math.round(recentCompletionRate),
       
-      // Predictive analytics
-      predictiveGrade: Math.round(predictiveGrade),
+      // Activity progress
+      activityProgress: `${submittedActivities}/${totalActivities}`,
+      activityProgressPercentage: totalActivities > 0 ? Math.round((submittedActivities / totalActivities) * 100) : 0,
       
       // Comparative analytics
       typePerformance,
@@ -190,46 +188,41 @@ export default function PerformanceAnalyticsStudent({
       // Behavioral analytics
       submissionPatterns,
       
-      // Insights
+      // Insights (updated to remove late references)
       insights: generateInsights({
         performanceScore,
         riskLevel,
         trend,
         missedActivities,
-        lateActivities,
-        completionRate
+        completionRate,
+        submittedActivities,
+        totalActivities
       })
     };
-  }, [quizzesList, assignmentsList, activitiesList, projectsList]);
+  }, [quizzesList, assignmentsList, activitiesList, projectsList, laboratoriesList]);
 
   // Helper function for type performance
   function calculateTypePerformance(activityList) {
     if (activityList.length === 0) return { score: 0, completion: 0 };
     
     const completed = activityList.filter(a => a.submitted).length;
-    const onTime = activityList.filter(a => a.submitted && !a.late).length;
     
     return {
       score: Math.round((completed / activityList.length) * 100),
-      completion: Math.round((completed / activityList.length) * 100),
-      timeliness: completed > 0 ? Math.round((onTime / completed) * 100) : 100
+      completion: Math.round((completed / activityList.length) * 100)
     };
   }
 
-  // Analyze submission patterns
+  // Analyze submission patterns (removed late analysis)
   function analyzeSubmissionPatterns(activities) {
     const submittedActivities = activities.filter(a => a.submitted && a.deadline && a.deadline !== 'No deadline');
     
     if (submittedActivities.length === 0) {
       return {
         averageSubmissionTime: "No data",
-        lateSubmissionRate: 0,
         submissionConsistency: "No data"
       };
     }
-
-    const lateSubmissions = submittedActivities.filter(a => a.late).length;
-    const lateSubmissionRate = Math.round((lateSubmissions / submittedActivities.length) * 100);
 
     // Simple consistency measure
     const submissionDates = submittedActivities.map(a => new Date(a.deadline).getTime());
@@ -237,20 +230,19 @@ export default function PerformanceAnalyticsStudent({
     const consistency = dateVariation < (30 * 24 * 60 * 60 * 1000) ? "Consistent" : "Variable";
 
     return {
-      lateSubmissionRate,
       submissionConsistency: consistency,
       totalSubmitted: submittedActivities.length
     };
   }
 
-  // Generate actionable insights
+  // Generate actionable insights (removed late references)
   function generateInsights(metrics) {
     const insights = [];
 
     if (metrics.performanceScore < 60) {
       insights.push({
         type: "warning",
-        message: "Your current performance is below satisfactory levels. Focus on completing pending assignments.",
+        message: "Your current performance is below satisfactory levels. Focus on completing pending activities.",
         suggestion: "Prioritize missed activities and create a study schedule."
       });
     }
@@ -258,7 +250,7 @@ export default function PerformanceAnalyticsStudent({
     if (metrics.riskLevel === "HIGH") {
       insights.push({
         type: "critical",
-        message: "High risk of course failure detected. Immediate action required.",
+        message: "High risk of subject failure detected. Immediate action required.",
         suggestion: "Contact your professor and develop a recovery plan."
       });
     }
@@ -266,16 +258,8 @@ export default function PerformanceAnalyticsStudent({
     if (metrics.missedActivities > 0) {
       insights.push({
         type: "info",
-        message: `You have ${metrics.missedActivities} missed assignment(s).`,
-        suggestion: "Check if late submissions are allowed and prioritize completion."
-      });
-    }
-
-    if (metrics.lateActivities > 0) {
-      insights.push({
-        type: "warning",
-        message: `${metrics.lateActivities} submission(s) were late.`,
-        suggestion: "Improve time management by starting assignments earlier."
+        message: `You have ${metrics.missedActivities} missed activity(ies).`,
+        suggestion: "Check if submissions are still possible and prioritize completion."
       });
     }
 
@@ -290,6 +274,15 @@ export default function PerformanceAnalyticsStudent({
         type: "warning",
         message: "Recent performance shows a declining trend.",
         suggestion: "Identify challenges and seek help if needed."
+      });
+    }
+
+    // Add insight about activity completion progress
+    if (metrics.submittedActivities < metrics.totalActivities && metrics.submittedActivities > 0) {
+      insights.push({
+        type: "info",
+        message: `You've completed ${metrics.submittedActivities} out of ${metrics.totalActivities} activities.`,
+        suggestion: "Focus on completing the remaining assigned activities to improve your performance."
       });
     }
 
@@ -311,10 +304,11 @@ export default function PerformanceAnalyticsStudent({
       const a = sumStatusCounts(assignmentsList);
       const act = sumStatusCounts(activitiesList);
       const p = sumStatusCounts(projectsList);
+      const lab = sumStatusCounts(laboratoriesList);
       return {
-        submitted: q.submitted + a.submitted + act.submitted + p.submitted,
-        assigned:   q.assigned   + a.assigned   + act.assigned   + p.assigned,
-        missed:    q.missed    + a.missed    + act.missed    + p.missed,
+        submitted: q.submitted + a.submitted + act.submitted + p.submitted + lab.submitted,
+        assigned:   q.assigned   + a.assigned   + act.assigned   + p.assigned + lab.assigned,
+        missed:    q.missed    + a.missed    + act.missed    + p.missed + lab.missed,
       };
     } else if (selectedFilter === "Quizzes") {
       return sumStatusCounts(quizzesList);
@@ -324,10 +318,12 @@ export default function PerformanceAnalyticsStudent({
       return sumStatusCounts(activitiesList);
     } else if (selectedFilter === "Projects") {
       return sumStatusCounts(projectsList);
+    } else if (selectedFilter === "Laboratory") {
+      return sumStatusCounts(laboratoriesList);
     } else {
       return { submitted: 0, assigned: 0, missed: 0 };
     }
-  }, [selectedFilter, quizzesList, assignmentsList, activitiesList, projectsList]);
+  }, [selectedFilter, quizzesList, assignmentsList, activitiesList, projectsList, laboratoriesList]);
 
   // Fixed: Combine all activities when "Overall" is selected
   const displayedList = useMemo(() => {
@@ -337,19 +333,20 @@ export default function PerformanceAnalyticsStudent({
       return activitiesList || [];
     } else if (selectedFilter === 'Projects') {
       return projectsList || [];
+    } else if (selectedFilter === 'Laboratory') {
+      return laboratoriesList || [];
     } else if (selectedFilter === '') {
-      // Overall view - combine all activity types
       return [
         ...(quizzesList || []),
         ...(assignmentsList || []),
         ...(activitiesList || []),
-        ...(projectsList || [])
+        ...(projectsList || []),
+        ...(laboratoriesList || [])
       ];
     } else {
-      // Default to quizzes (for backward compatibility)
       return quizzesList || [];
     }
-  }, [selectedFilter, quizzesList, assignmentsList, activitiesList, projectsList]);
+  }, [selectedFilter, quizzesList, assignmentsList, activitiesList, projectsList, laboratoriesList]);
 
   // Filter activities based on search term
   const filteredActivities = useMemo(() => {
@@ -381,6 +378,8 @@ export default function PerformanceAnalyticsStudent({
       return activityTypeColors.Activities.text;
     } else if (selectedFilter === 'Projects') {
       return activityTypeColors.Projects.text;
+    } else if (selectedFilter === 'Laboratory') {
+      return activityTypeColors.Laboratory.text;
     } else {
       return activityTypeColors.Overall.text;
     }
@@ -438,7 +437,7 @@ export default function PerformanceAnalyticsStudent({
     }, stepDuration);
 
     return () => clearInterval(timer);
-  }, [selectedFilter, quizzesList, assignmentsList, activitiesList, projectsList]);
+  }, [selectedFilter, quizzesList, assignmentsList, activitiesList, projectsList, laboratoriesList]);
 
   const toggleFilter = (label) => {
     if (label === "Overall") {
@@ -474,10 +473,20 @@ export default function PerformanceAnalyticsStudent({
   // Risk level color coding
   const getRiskColor = (level) => {
     switch (level) {
-      case "HIGH": return "text-red-600 bg-red-50 border-red-200";
-      case "MEDIUM": return "text-yellow-600 bg-yellow-50 border-yellow-200";
-      case "LOW": return "text-green-600 bg-green-50 border-green-200";
+      case "HIGH": return "text-red-800 bg-red-50 border-red-200";
+      case "MEDIUM": return "text-yellow-800 bg-yellow-50 border-yellow-200";
+      case "LOW": return "text-green-800 bg-green-50 border-green-200";
       default: return "text-gray-600 bg-gray-50 border-gray-200";
+    }
+  };
+
+  // Get appropriate AlertTriangle icon based on risk level
+  const getRiskIcon = (level) => {
+    switch (level) {
+      case "HIGH": return AlertTriangleRed;
+      case "MEDIUM": return AlertTriangleYellow;
+      case "LOW": return AlertTriangleGreen;
+      default: return AlertTriangleYellow;
     }
   };
 
@@ -485,7 +494,7 @@ export default function PerformanceAnalyticsStudent({
   const TrendIndicator = ({ trend }) => {
     if (trend === "improving") {
       return (
-        <div className="flex items-center text-green-600">
+        <div className="flex items-center text-yellow-600">
           <img src={TrendingUp} alt="Improving" className="w-4 h-4 mr-1" />
           <span className="text-sm">Improving</span>
         </div>
@@ -499,7 +508,7 @@ export default function PerformanceAnalyticsStudent({
       );
     }
     return (
-      <div className="flex items-center text-gray-600">
+      <div className="flex items-center text-green-600">
         <span className="text-sm">Stable</span>
       </div>
     );
@@ -577,17 +586,55 @@ export default function PerformanceAnalyticsStudent({
 
   return (
     <div>
-      {/* ADVANCED ANALYTICS DASHBOARD */}
+      {/* ADVANCED REPORTS DASHBOARD */}
       <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 p-4 sm:p-5 text-[#465746]">
         <div className="flex items-center mb-4">
           <img src={PieIcon} alt="Analytics" className="h-6 w-6 mr-2" />
-          <h2 className="text-lg font-bold">Advanced Performance Analytics</h2>
+          <h2 className="text-lg font-bold">Advanced Performance Reports</h2>
         </div>
 
-        {/* Key Metrics Grid */}
+        {/* Key Metrics Grid - REORDERED as requested */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Risk Level - NOW FIRST with button-like styling */}
+          <div 
+            className={`p-4 rounded-lg border transition-all duration-500 ${getRiskColor(calculateAdvancedAnalytics.riskLevel)}`}
+            style={{
+              opacity: animationProgress,
+              transform: `translateX(${-20 * (1 - animationProgress)}px)`
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Risk Level</p>
+                <p className="text-xl font-bold">{calculateAdvancedAnalytics.riskLevel}</p>
+              </div>
+              {/* Button-like AlertTriangle with border */}
+              <div className={`w-10 h-10 rounded-md border-2 flex items-center justify-center ${
+                calculateAdvancedAnalytics.riskLevel === "HIGH" ? "border-red-300" :
+                calculateAdvancedAnalytics.riskLevel === "MEDIUM" ? "border-yellow-300" :
+                "border-green-300"
+              }`}>
+                <img 
+                  src={getRiskIcon(calculateAdvancedAnalytics.riskLevel)} 
+                  alt="Risk Level" 
+                  className="w-6 h-6" 
+                />
+              </div>
+            </div>
+            <p className="text-xs mt-1 opacity-75">
+              {calculateAdvancedAnalytics.missedActivities} missed activities
+            </p>
+          </div>
+
           {/* Performance Score */}
-          <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+          <div 
+            className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 transition-all duration-500"
+            style={{
+              opacity: animationProgress,
+              transform: `translateY(${-20 * (1 - animationProgress)}px)`,
+              transitionDelay: '100ms'
+            }}
+          >
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm text-green-800 font-medium">Performance Score</p>
@@ -597,46 +644,59 @@ export default function PerformanceAnalyticsStudent({
             </div>
             <div className="w-full bg-green-200 rounded-full h-2 mt-2">
               <div 
-                className="bg-green-600 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${calculateAdvancedAnalytics.performanceScore}%` }}
+                className="bg-green-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                style={{ 
+                  width: `${calculateAdvancedAnalytics.performanceScore * animationProgress}%`,
+                  transitionDelay: '200ms'
+                }}
               ></div>
             </div>
           </div>
 
           {/* Completion Rate */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+          <div 
+            className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 transition-all duration-500"
+            style={{
+              opacity: animationProgress,
+              transform: `translateY(${20 * (1 - animationProgress)}px)`,
+              transitionDelay: '200ms'
+            }}
+          >
             <p className="text-sm text-blue-800 font-medium">Completion Rate</p>
             <p className="text-2xl font-bold text-blue-900">{calculateAdvancedAnalytics.completionRate}%</p>
             <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
               <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${calculateAdvancedAnalytics.completionRate}%` }}
+                className="bg-blue-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                style={{ 
+                  width: `${calculateAdvancedAnalytics.completionRate * animationProgress}%`,
+                  transitionDelay: '300ms'
+                }}
               ></div>
             </div>
           </div>
 
-          {/* Risk Level */}
-          <div className={`p-4 rounded-lg border ${getRiskColor(calculateAdvancedAnalytics.riskLevel)}`}>
-            <div className="flex items-center">
-              {calculateAdvancedAnalytics.riskLevel === "HIGH" && (
-                <img src={AlertTriangle} alt="Alert" className="w-5 h-5 mr-2 text-red-600" />
-              )}
-              <div>
-                <p className="text-sm font-medium">Risk Level</p>
-                <p className="text-xl font-bold">{calculateAdvancedAnalytics.riskLevel}</p>
-              </div>
+          {/* Activity Progress */}
+          <div 
+            className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200 transition-all duration-500"
+            style={{
+              opacity: animationProgress,
+              transform: `translateX(${20 * (1 - animationProgress)}px)`,
+              transitionDelay: '300ms'
+            }}
+          >
+            <p className="text-sm text-purple-800 font-medium">Activity Progress</p>
+            <p className="text-2xl font-bold text-purple-900">{calculateAdvancedAnalytics.activityProgress}</p>
+            <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
+              <div 
+                className="bg-purple-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                style={{ 
+                  width: `${calculateAdvancedAnalytics.activityProgressPercentage * animationProgress}%`,
+                  transitionDelay: '400ms'
+                }}
+              ></div>
             </div>
             <p className="text-xs mt-1 opacity-75">
-              {calculateAdvancedAnalytics.missedActivities} missed activities
-            </p>
-          </div>
-
-          {/* Predictive Grade */}
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
-            <p className="text-sm text-purple-800 font-medium">Predictive Grade</p>
-            <p className="text-2xl font-bold text-purple-900">{calculateAdvancedAnalytics.predictiveGrade}%</p>
-            <p className="text-xs mt-1 opacity-75">
-              Based on current trends
+              Submitted / Total Activities
             </p>
           </div>
         </div>
@@ -644,25 +704,11 @@ export default function PerformanceAnalyticsStudent({
         {/* Performance by Activity Type */}
         <div className="mb-6">
           <h3 className="text-md font-semibold mb-3">Performance by Activity Type</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Object.entries(calculateAdvancedAnalytics.typePerformance).map(([type, data]) => {
-              // Get the corresponding color from activityTypeColors
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {Object.entries(calculateAdvancedAnalytics.typePerformance).map(([type, data], index) => {
+              // Get the corresponding color from activityTypeColors - Lightest to Darkest
               const getTypeColor = (activityType) => {
                 switch (activityType.toLowerCase()) {
-                  case 'quizzes':
-                    return {
-                      bg: 'bg-[#8B4513]/10',
-                      border: 'border-[#8B4513]/30',
-                      text: 'text-[#8B4513]',
-                      progress: 'bg-[#8B4513]'
-                    };
-                  case 'assignments':
-                    return {
-                      bg: 'bg-[#A0522D]/10',
-                      border: 'border-[#A0522D]/30',
-                      text: 'text-[#A0522D]',
-                      progress: 'bg-[#A0522D]'
-                    };
                   case 'activities':
                     return {
                       bg: 'bg-[#B8860B]/10',
@@ -670,12 +716,33 @@ export default function PerformanceAnalyticsStudent({
                       text: 'text-[#B8860B]',
                       progress: 'bg-[#B8860B]'
                     };
-                  case 'projects':
+                  case 'assignments':
                     return {
                       bg: 'bg-[#D2691E]/10',
                       border: 'border-[#D2691E]/30',
                       text: 'text-[#D2691E]',
                       progress: 'bg-[#D2691E]'
+                    };
+                  case 'quizzes':
+                    return {
+                      bg: 'bg-[#A0522D]/10',
+                      border: 'border-[#A0522D]/30',
+                      text: 'text-[#A0522D]',
+                      progress: 'bg-[#A0522D]'
+                    };
+                  case 'laboratories':
+                    return {
+                      bg: 'bg-[#8B4513]/10',
+                      border: 'border-[#8B4513]/30',
+                      text: 'text-[#8B4513]',
+                      progress: 'bg-[#8B4513]'
+                    };
+                  case 'projects':
+                    return {
+                      bg: 'bg-[#5D4037]/10',
+                      border: 'border-[#5D4037]/30',
+                      text: 'text-[#5D4037]',
+                      progress: 'bg-[#5D4037]'
                     };
                   default:
                     return {
@@ -688,15 +755,28 @@ export default function PerformanceAnalyticsStudent({
               };
 
               const colors = getTypeColor(type);
+              // Staggered animation delay based on index
+              const animationDelay = index * 100; // 100ms delay between each card
               
               return (
-                <div key={type} className={`p-3 rounded-lg border ${colors.bg} ${colors.border}`}>
+                <div 
+                  key={type} 
+                  className={`p-3 rounded-lg border ${colors.bg} ${colors.border} transition-all duration-500`}
+                  style={{
+                    opacity: animationProgress,
+                    transform: `translateY(${10 * (1 - animationProgress)}px)`,
+                    transition: `opacity 0.5s ease-out ${animationDelay}ms, transform 0.5s ease-out ${animationDelay}ms`
+                  }}
+                >
                   <p className={`text-sm font-medium capitalize ${colors.text}`}>{type}</p>
                   <p className={`text-lg font-bold ${colors.text}`}>{data.score}%</p>
                   <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
                     <div 
-                      className={`h-1.5 rounded-full ${colors.progress}`}
-                      style={{ width: `${data.score}%` }}
+                      className={`h-1.5 rounded-full ${colors.progress} transition-all duration-800 ease-out`}
+                      style={{ 
+                        width: `${data.score * animationProgress}%`,
+                        transition: `width 0.8s ease-out ${animationDelay + 200}ms`
+                      }}
                     ></div>
                   </div>
                 </div>
@@ -705,9 +785,13 @@ export default function PerformanceAnalyticsStudent({
           </div>
         </div>
 
-        {/* Actionable Insights */}
+        {/* Performance Insights */}
         <div>
-          <h3 className="text-md font-semibold mb-3">Actionable Insights</h3>
+          <h3 
+            className="text-md font-semibold mb-3"
+          >
+            Performance Insights
+          </h3>
           <div className="space-y-3">
             {calculateAdvancedAnalytics.insights.map((insight, index) => (
               <div 
@@ -721,7 +805,13 @@ export default function PerformanceAnalyticsStudent({
               >
                 <div className="flex items-start">
                   {insight.type === 'critical' && (
-                    <img src={AlertTriangle} alt="Critical" className="w-5 h-5 mr-3 mt-0.5 text-red-600 flex-shrink-0" />
+                    <img src={AlertTriangleRed} alt="Critical" className="w-5 h-5 mr-3 mt-0.5 text-red-600 flex-shrink-0" />
+                  )}
+                  {insight.type === 'warning' && (
+                    <img src={AlertTriangleYellow} alt="Warning" className="w-5 h-5 mr-3 mt-0.5 text-yellow-600 flex-shrink-0" />
+                  )}
+                  {insight.type === 'positive' && (
+                    <img src={AlertTriangleGreen} alt="Positive" className="w-5 h-5 mr-3 mt-0.5 text-green-600 flex-shrink-0" />
                   )}
                   <div>
                     <p className={`font-medium ${
@@ -732,7 +822,7 @@ export default function PerformanceAnalyticsStudent({
                     }`}>
                       {insight.message}
                     </p>
-                    <p className="text-sm mt-1 opacity-75">{insight.suggestion}</p>
+                    <p className="text-sm mt-1 opacity-90">{insight.suggestion}</p>
                   </div>
                 </div>
               </div>
@@ -768,6 +858,24 @@ export default function PerformanceAnalyticsStudent({
               <span className={getTaskItemStyles("Overall").count}>{totalTasksCount}</span>
             </div>
 
+            {/* Activities */}
+            <div
+              onClick={() => toggleFilter("Activities")}
+              className={getTaskItemStyles("Activities").container}
+            >
+              <span className={getTaskItemStyles("Activities").text}>Activities:</span>
+              <span className={getTaskItemStyles("Activities").count}>{activitiesCount}</span>
+            </div>
+
+            {/* Assignment */}
+            <div
+              onClick={() => toggleFilter("Assignment")}
+              className={getTaskItemStyles("Assignment").container}
+            >
+              <span className={getTaskItemStyles("Assignment").text}>Assignments:</span>
+              <span className={getTaskItemStyles("Assignment").count}>{assignmentsCount}</span>
+            </div>
+
             {/* Quizzes */}
             <div
               onClick={() => toggleFilter("Quizzes")}
@@ -777,22 +885,13 @@ export default function PerformanceAnalyticsStudent({
               <span className={getTaskItemStyles("Quizzes").count}>{quizzesCount}</span>
             </div>
 
-            {/* Assignment */}
+            {/* Laboratories */}
             <div
-              onClick={() => toggleFilter("Assignment")}
-              className={getTaskItemStyles("Assignment").container}
+              onClick={() => toggleFilter("Laboratory")}
+              className={getTaskItemStyles("Laboratory").container}
             >
-              <span className={getTaskItemStyles("Assignment").text}>Assignment:</span>
-              <span className={getTaskItemStyles("Assignment").count}>{assignmentsCount}</span>
-            </div>
-
-            {/* Activities */}
-            <div
-              onClick={() => toggleFilter("Activities")}
-              className={getTaskItemStyles("Activities").container}
-            >
-              <span className={getTaskItemStyles("Activities").text}>Activities:</span>
-              <span className={getTaskItemStyles("Activities").count}>{activitiesCount}</span>
+              <span className={getTaskItemStyles("Laboratory").text}>Laboratories:</span>
+              <span className={getTaskItemStyles("Laboratory").count}>{laboratoriesCount}</span>
             </div>
 
             {/* Projects */}
@@ -878,7 +977,7 @@ export default function PerformanceAnalyticsStudent({
                     fontSize=".125rem"
                     fill="#465746"
                   >
-                    {statusTotal === 0 ? "No data" : "Overview"}
+                    {statusTotal === 0 ? "No activities found" : "Overview"}
                   </text>
                 </svg>
               </div>
@@ -948,7 +1047,7 @@ export default function PerformanceAnalyticsStudent({
                 </thead>
                 <tbody>
                   {currentActivities.map(item => {
-                    // Determine status for each item
+                    // Determine status for each item (removed late logic)
                     const isSubmitted = item.submitted === 1 || item.submitted === true;
                     const isMissing = item.missing === 1 || item.missing === true;
                     const isAssigned = !isSubmitted && !isMissing;

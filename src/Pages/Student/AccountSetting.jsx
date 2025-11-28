@@ -255,7 +255,11 @@ export default function AccountSetting() {
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px]" : "ml-0"}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Loading..." />
-          <div className="p-6 text-center text-[#465746]">Loading account settings...</div>
+          <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+            <div className="bg-white p-8 rounded-lg shadow-md text-center text-[#465746]">
+              <p>Loading account settings...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -272,7 +276,7 @@ export default function AccountSetting() {
         />
 
         {/* Main content */}
-        <div className="p-4 sm:p-6 lg:p-8">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img src={Settings} alt="Settings" className="h-6 w-6 sm:h-7 sm:w-7 mr-3" />
@@ -281,47 +285,47 @@ export default function AccountSetting() {
             <p className="text-sm sm:text-base lg:text-lg text-[#465746]">Update your Information</p>
           </div>
 
-          <hr className="border-[#465746]/30 mb-6" />
+          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mt-5">
             {/* Update Account Info */}
-            <div className="bg-white rounded-md shadow-md p-5 space-y-4">
+            <div className="bg-white rounded-md shadow-md p-4 sm:p-5 md:p-6 space-y-4">
               <p className="text-base sm:text-lg font-bold text-[#465746]">Update Account Information</p>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-[#465746]">Email Address:</label>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Email Address:</label>
                   <input
                     type="email"
                     value={email}
                     onChange={handleEmailChange}
                     placeholder="your.email@cvsu.edu.ph"
-                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-[#465746]">Phone Number:</label>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Phone Number:</label>
                   <input
                     type="text"
                     value={phone}
                     onChange={handlePhoneChange}
                     placeholder="09XXXXXXXXX"
-                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
                     maxLength="11"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-[#465746]">Password (to confirm):</label>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Password (to confirm):</label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
                     required
                   />
                 </div>
@@ -329,7 +333,7 @@ export default function AccountSetting() {
                 <button
                   onClick={handleUpdateAccountInfo}
                   disabled={isSubmitting}
-                  className={`w-full bg-[#00A15D] text-white font-bold py-2 rounded-md hover:bg-green-800 transition-all ${
+                  className={`w-full sm:w-auto bg-[#00A15D] text-white font-bold py-2 px-6 sm:px-8 rounded-md hover:bg-green-800 transition-colors duration-200 text-sm sm:text-base ${
                     isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                   }`}
                 >
@@ -339,42 +343,42 @@ export default function AccountSetting() {
             </div>
 
             {/* Change Password */}
-            <div className="bg-white rounded-md shadow-md p-5 space-y-4">
+            <div className="bg-white rounded-md shadow-md p-4 sm:p-5 md:p-6 space-y-4">
               <p className="text-base sm:text-lg font-bold text-[#465746]">Change Password</p>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-[#465746]">Current Password:</label>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Current Password:</label>
                   <input
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
-                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-[#465746]">New Password:</label>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">New Password:</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Enter new password"
-                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-[#465746]">Re-Enter New Password:</label>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Re-Enter New Password:</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm new password"
-                    className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
                     required
                   />
                 </div>
@@ -382,7 +386,7 @@ export default function AccountSetting() {
                 <button
                   onClick={handleChangePassword}
                   disabled={isSubmitting}
-                  className={`w-full bg-[#00A15D] text-white font-bold py-2 rounded-md hover:bg-green-800 transition-all ${
+                  className={`w-full sm:w-auto bg-[#00A15D] text-white font-bold py-2 px-6 sm:px-8 rounded-md hover:bg-green-800 transition-colors duration-200 text-sm sm:text-base ${
                     isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                   }`}
                 >

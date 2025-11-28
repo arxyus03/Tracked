@@ -65,8 +65,11 @@ try {
                 a.description,
                 a.link,
                 a.deadline,
-                a.created_at,
-                CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by,
+                DATE_FORMAT(a.created_at, '%Y-%m-%dT%H:%i:%sZ') as created_at_utc,
+                DATE_FORMAT(a.deadline, '%Y-%m-%dT%H:%i:%sZ') as deadline_utc,
+                CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by_fullname,
+                t.tracked_lastname,
+                t.tracked_gender,
                 c.subject,
                 c.section,
                 c.subject_code
@@ -83,25 +86,18 @@ try {
 
     $announcements = array();
     while ($row = $result->fetch_assoc()) {
-        // Format dates for display
-        $row['datePosted'] = date('F j, Y', strtotime($row['created_at']));
+        // Format posted_by with Ma'am/Sir + surname
+        $postedBy = formatPostedBy($row['tracked_gender'], $row['tracked_lastname']);
         
-        if ($row['deadline']) {
-            $deadline_date = date('F j, Y', strtotime($row['deadline']));
-            $deadline_time = date('g:ia', strtotime($row['deadline']));
-            $row['deadline'] = $deadline_date . ' | ' . $deadline_time;
-        } else {
-            $row['deadline'] = null;
-        }
-
+        // Return raw UTC timestamps - frontend will convert to local time
         $announcements[] = array(
             'id' => $row['id'],
             'subject' => $row['subject'],
             'title' => $row['title'],
-            'postedBy' => $row['posted_by'],
-            'datePosted' => $row['datePosted'],
-            'deadline' => $row['deadline'],
-            'instructions' => $row['description'], // Map to frontend expected field
+            'postedBy' => $postedBy,
+            'datePosted' => $row['created_at_utc'], // Raw UTC timestamp
+            'deadline' => $row['deadline_utc'], // Raw UTC timestamp
+            'instructions' => $row['description'],
             'link' => $row['link'] ?: '#',
             'section' => $row['section'],
             'subject_code' => $row['subject_code']
@@ -121,4 +117,18 @@ try {
 
 echo json_encode($response);
 $conn->close();
+
+// Function to format posted by name with Ma'am/Sir
+function formatPostedBy($gender, $lastname) {
+    if (empty($lastname)) {
+        return 'Unknown';
+    }
+    
+    $title = 'Sir'; // Default to Sir
+    if (strtolower($gender) === 'female') {
+        $title = 'Ma\'am';
+    }
+    
+    return $title . ' ' . $lastname;
+}
 ?>

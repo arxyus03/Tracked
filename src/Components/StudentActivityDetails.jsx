@@ -13,6 +13,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, onImageUpload, stud
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
+        timeZone: 'UTC',
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -31,36 +32,47 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, onImageUpload, stud
     try {
       const deadlineDate = new Date(deadline);
       const now = new Date();
-      const timeDiff = deadlineDate - now;
+      const timeDiff = deadlineDate.getTime() - now.getTime();
       const hoursDiff = timeDiff / (1000 * 60 * 60);
       
-      return hoursDiff <= 24 && hoursDiff > 0; // Within 24 hours but not passed
+      return hoursDiff <= 24 && hoursDiff > 0;
     } catch {
       return false;
     }
   };
 
-  // Check if deadline is passed
   const isDeadlinePassed = (deadline) => {
     if (!deadline || deadline === "No deadline") return false;
     
     try {
       const deadlineDate = new Date(deadline);
       const now = new Date();
-      return deadlineDate < now;
+      return deadlineDate.getTime() < now.getTime();
     } catch {
       return false;
     }
   };
 
-  // Get deadline text color class
+  // Get activity type color
+  const getActivityTypeColor = (type) => {
+    const colors = {
+      'Assignment': 'bg-blue-100 text-blue-800',
+      'Quiz': 'bg-purple-100 text-purple-800',
+      'Activity': 'bg-green-100 text-green-800',
+      'Project': 'bg-orange-100 text-orange-800',
+      'Laboratory': 'bg-red-100 text-red-800'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-800';
+  };
+
+  // Get deadline text color class - UPDATED with green for ongoing deadlines
   const getDeadlineColorClass = (deadline) => {
     if (isDeadlinePassed(deadline)) {
       return 'text-red-600 font-bold';
     } else if (isDeadlineUrgent(deadline)) {
       return 'text-red-500 font-semibold';
     }
-    return 'text-gray-600';
+    return 'text-green-600 font-semibold'; // Green for ongoing deadlines
   };
 
   const handleFileUpload = () => {
@@ -109,15 +121,11 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, onImageUpload, stud
                 {activity.title}
               </h2>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span className={`px-2 py-1 ${
-                  activity.activity_type === 'Assignment' ? 'bg-blue-100 text-blue-800' :
-                  activity.activity_type === 'Quiz' ? 'bg-purple-100 text-purple-800' :
-                  activity.activity_type === 'Activity' ? 'bg-green-100 text-green-800' :
-                  'bg-gray-100 text-gray-800'
-                } text-xs font-medium rounded flex-shrink-0`}>
+                <span className={`px-2 py-1 ${getActivityTypeColor(activity.activity_type)} text-xs font-medium rounded flex-shrink-0`}>
                   {activity.activity_type}
                 </span>
-                <span className="text-sm text-gray-500 flex-shrink-0">#{activity.task_number}</span>
+                {/* Made task number bold */}
+                <span className="text-sm text-gray-500 font-bold flex-shrink-0">#{activity.task_number}</span>
               </div>
             </div>
             <button
@@ -204,7 +212,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, onImageUpload, stud
                   {/* Professor's Submission Card */}
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <h4 className="font-medium text-green-900 mb-3 flex items-center gap-2">
-                      <span>Professor's Submission</span>
+                      <span>Professor's Submission of your work</span>
                       {hasTeacherImage && (
                         <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
                           Available
@@ -227,7 +235,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, onImageUpload, stud
                           </button>
                         </div>
                         <p className="text-xs text-green-700">
-                          Your professor has provided this reference material to help with your submission.
+                          Your professor has provided this reference of your work to help with your submission.
                         </p>
                       </div>
                     ) : (
@@ -235,9 +243,9 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, onImageUpload, stud
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
                           <img src={Add} alt="No file" className="w-6 h-6 text-green-400" />
                         </div>
-                        <p className="text-green-700 text-sm font-medium">No professor submission yet</p>
+                        <p className="text-green-700 text-sm font-medium">No professor submission of your work yet</p>
                         <p className="text-green-600 text-xs mt-1">
-                          Check back later for reference materials from your professor.
+                          Check back later for your work submitted by your professor.
                         </p>
                       </div>
                     )}

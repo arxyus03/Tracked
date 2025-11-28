@@ -182,7 +182,8 @@ export default function SubjectAnalyticsStudent() {
             quizzes: [],
             assignments: [],
             activities: [],
-            projects: []
+            projects: [],
+            laboratories: []
           };
 
           data.activities.forEach(activity => {
@@ -227,7 +228,7 @@ export default function SubjectAnalyticsStudent() {
                 organizedData.projects.push(activityItem);
                 break;
               case 'laboratory':
-                organizedData.activities.push(activityItem);
+                organizedData.laboratories.push(activityItem);
                 break;
               default:
                 organizedData.activities.push(activityItem);
@@ -298,11 +299,11 @@ export default function SubjectAnalyticsStudent() {
                 className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3" 
               />
               <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
-                Analytics
+                Reports
               </h1>
             </div>
             <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
-              View subject analytics and performance
+              View Class Reports
             </p>
           </div>
 
@@ -320,7 +321,7 @@ export default function SubjectAnalyticsStudent() {
 
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Section:</span>
+                <span className="font-semibold">SECTION:</span>
                 <span>{currentSubject?.section || 'Loading...'}</span>
               </div>
               <Link to={"/Subjects"}>
@@ -382,7 +383,7 @@ export default function SubjectAnalyticsStudent() {
                       alt="" 
                       className="h-4 w-4 sm:h-5 sm:w-5"
                     />
-                    <span className="sm:inline">Analytics</span>
+                    <span className="sm:inline">Reports</span>
                   </button>
                 </Link>
               </div>
@@ -442,6 +443,7 @@ export default function SubjectAnalyticsStudent() {
               assignmentsList={activitiesData.assignments}
               activitiesList={activitiesData.activities}
               projectsList={activitiesData.projects}
+              laboratoriesList={activitiesData.laboratories}
               selectedFilter={selectedFilter}
               setSelectedFilter={setSelectedFilter}
               currentSubject={currentSubject}
