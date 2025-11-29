@@ -4,18 +4,17 @@ import Lottie from "lottie-react";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
+import AdminProfAccountStatus from "../../Components/AdminProfAccountStatus";
+import AdminProfAccountBackup from "../../Components/AdminProfAccountBackup";
+import AdminProfAccountRestore from "../../Components/AdminProfAccountRestore";
 
 import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
 import Search from "../../assets/Search.svg";
-import Archive from "../../assets/Archive(Light).svg";
-import ArchiveRow from "../../assets/ArchiveRow(Light).svg";
 import Details from "../../assets/Details(Light).svg";
-import ArchiveWarningIcon from "../../assets/Warning(Yellow).svg";
-import Restore from "../../assets/Unarchive.svg";
-import SuccessIcon from "../../assets/Success(Green).svg";
-import ErrorIcon from "../../assets/Error(Red).svg";
+import BackupIcon from "../../assets/Backup(Light).svg";
+import RestoreIcon from "../../assets/Restore(Light).svg"; 
 
 // Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
@@ -29,8 +28,9 @@ export default function UserManagementProfessorAccounts() {
 
   const [professors, setProfessors] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true); // Add loading state
-  const [setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const itemsPerPage = 10;
 
   // New state for backup/restore modals
@@ -38,8 +38,8 @@ export default function UserManagementProfessorAccounts() {
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [backupModalContent, setBackupModalContent] = useState(null);
   const [restoreModalContent, setRestoreModalContent] = useState(null);
-  const [isBackingUp, setIsBackingUp] = useState(false); // Add backup loading state
-  const [isRestoring, setIsRestoring] = useState(false); // Add restore loading state
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
 
   // Lottie animation options
   const defaultLottieOptions = {
@@ -50,6 +50,21 @@ export default function UserManagementProfessorAccounts() {
       preserveAspectRatio: 'xMidYMid slice'
     }
   };
+
+  // Set sidebar open by default on laptop/desktop, closed on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch professors from backend
   useEffect(() => {
@@ -145,7 +160,6 @@ export default function UserManagementProfessorAccounts() {
           message: `Professors restored successfully!`,
           filename: data.filename
         });
-        // Refresh the professor list
         fetchProfessors();
       } else {
         setRestoreModalContent({
@@ -179,11 +193,39 @@ export default function UserManagementProfessorAccounts() {
     setRestoreModalContent(null);
   };
 
-  // Filter professors based on selected filter
+  // Filter professors based on selected filter and search term
   const filteredProfessors = professors.filter(prof => {
-    if (selectedFilter === "All") return true;
-    return prof.tracked_Status === selectedFilter;
+    if (selectedFilter !== "All" && prof.tracked_Status !== selectedFilter) {
+      return false;
+    }
+
+    if (searchTerm.trim() !== "") {
+      const searchLower = searchTerm.toLowerCase();
+      const fullName = `${prof.tracked_firstname} ${prof.tracked_middlename} ${prof.tracked_lastname}`.toLowerCase();
+      const professorId = prof.tracked_ID?.toLowerCase();
+      const email = prof.tracked_email?.toLowerCase();
+
+      if (!fullName.includes(searchLower) && 
+          !professorId.includes(searchLower) && 
+          !email.includes(searchLower)) {
+        return false;
+      }
+    }
+
+    return true;
   });
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // Clear search
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
 
   // Pagination setup
   const indexOfLast = currentPage * itemsPerPage;
@@ -222,7 +264,6 @@ export default function UserManagementProfessorAccounts() {
       const data = await response.json();
       
       if (data.success) {
-        // Update local state
         setProfessors(prevProfessors => 
           prevProfessors.map(prof => 
             prof.tracked_ID === selectedProfessor.tracked_ID 
@@ -230,7 +271,6 @@ export default function UserManagementProfessorAccounts() {
               : prof
           )
         );
-        console.log("Status updated successfully:", data.message);
       } else {
         console.error("Failed to update status:", data.message);
         alert(`Failed to update professor status: ${data.message}`);
@@ -244,22 +284,6 @@ export default function UserManagementProfessorAccounts() {
     }
   };
 
-  const getModalContent = () => {
-    if (!selectedProfessor) return null;
-    
-    const isDeactivating = selectedProfessor.tracked_Status === "Active";
-    const action = isDeactivating ? "Deactivate" : "Activate";
-    
-    return {
-      title: `${action} Account?`,
-      message: `Are you sure you want to ${action.toLowerCase()} this professor account?`,
-      confirmText: action,
-      confirmColor: isDeactivating ? "bg-[#FF6666] hover:bg-[#FF5555]" : "bg-[#00A15D] hover:bg-[#00874E]"
-    };
-  };
-
-  const modalContent = getModalContent();
-
   // Toggle button component
   const StatusToggleButton = ({ status, onClick }) => {
     const isActive = status === "Active";
@@ -270,7 +294,6 @@ export default function UserManagementProfessorAccounts() {
         className={`cursor-pointer relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none ${
           isActive ? 'bg-[#00A15D]' : 'bg-[#FF6666]'
         }`}
-        // title={isActive ? "Deactivate" : "Activate"}
       >
         <span
           className={`cursor-pointer inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${
@@ -295,25 +318,29 @@ export default function UserManagementProfessorAccounts() {
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           {/* "Header" */}
           <div className="mb-4 sm:mb-6">
-            <div className="flex items-center mb-2">
-              <img
-                src={ClassManagementLight}
-                alt="ClassManagement"
-                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
-              />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
-                User Management
-              </h1>
-            </div>
-            <div className="flex items-center justify-between text-sm sm:text-base lg:text-lg text-[#465746]">
-              <span>Professor Account Administration</span>
-              <Link to="/UserManagement">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <img
+                  src={ClassManagementLight}
+                  alt="ClassManagement"
+                  className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
+                />
+                <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
+                  User Management
+                </h1>
+              </div>
+              
+              {/* Back Button - Visible on all screens */}
+              <Link to="/UserManagement" className="flex items-center text-[#465746] hover:text-[#00874E] transition-colors duration-200">
                 <img
                   src={BackButton}
                   alt="BackButton"
-                  className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 hover:opacity-70 transition-opacity sm:hidden"
+                  className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 hover:opacity-70 transition-opacity"
                 />
               </Link>
+            </div>
+            <div className="text-sm sm:text-base lg:text-lg text-[#465746]">
+              <span>Professor Account Administration</span>
             </div>
           </div>
 
@@ -360,7 +387,7 @@ export default function UserManagementProfessorAccounts() {
                             onClick={() => {
                               setSelectedFilter(f);
                               setOpen(false);
-                              setCurrentPage(1); // Reset to first page when filter changes
+                              setCurrentPage(1);
                             }}
                           >
                             {f}
@@ -370,10 +397,11 @@ export default function UserManagementProfessorAccounts() {
                     )}
                   </div>
 
+                  {/* Backup Button with Icon and Lighter Green Background */}
                   <button 
                     onClick={handleBackup}
                     disabled={isBackingUp}
-                    className={`font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer flex items-center justify-center min-w-[80px] ${
+                    className={`font-bold px-3 sm:px-4 py-2 bg-[#4CAF50] text-white rounded-md shadow-md border-2 border-transparent hover:bg-[#45a049] hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer flex items-center justify-center min-w-[100px] ${
                       isBackingUp ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -388,14 +416,22 @@ export default function UserManagementProfessorAccounts() {
                         Backing up...
                       </div>
                     ) : (
-                      "Backup"
+                      <div className="flex items-center">
+                        <img 
+                          src={BackupIcon} 
+                          alt="Backup" 
+                          className="h-4 w-4 sm:h-5 sm:w-5 mr-2" 
+                        />
+                        Backup
+                      </div>
                     )}
                   </button>
 
+                  {/* Restore Button with Icon and Lighter Green Background */}
                   <button 
                     onClick={handleRestore}
                     disabled={isRestoring}
-                    className={`font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer flex items-center justify-center min-w-[80px] ${
+                    className={`font-bold px-3 sm:px-4 py-2 bg-[#4CAF50] text-white rounded-md shadow-md border-2 border-transparent hover:bg-[#45a049] hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer flex items-center justify-center min-w-[100px] ${
                       isRestoring ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -410,38 +446,49 @@ export default function UserManagementProfessorAccounts() {
                         Restoring...
                       </div>
                     ) : (
-                      "Restore"
+                      <div className="flex items-center">
+                        <img 
+                          src={RestoreIcon} 
+                          alt="Restore" 
+                          className="h-4 w-4 sm:h-5 sm:w-5 mr-2" 
+                        />
+                        Restore
+                      </div>
                     )}
                   </button>
                   
                 </div>
 
-                {/* Search and Archive Buttons */}
+                {/* Search Bar - Made Wider */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="relative flex-1 sm:max-w-xs lg:max-w-md">
+                  <div className="relative flex-1 sm:w-96 md:w-[500px] lg:w-[600px] xl:w-[700px]">
                     <input
                       type="text"
-                      placeholder="Search..."
+                      placeholder="Search by name, professor ID, or email..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
                       className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm border-2 border-transparent focus:border-[#00874E] transition-all duration-200"
                     />
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
-                      <img
-                        src={Search}
-                        alt="Search"
-                        className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
-                      />
-                    </button>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                      {searchTerm && (
+                        <button
+                          onClick={handleClearSearch}
+                          className="text-gray-500 hover:text-[#465746] mr-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                      <button className="text-gray-500 hover:text-[#465746]">
+                        <img
+                          src={Search}
+                          alt="Search"
+                          className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                        />
+                      </button>
+                    </div>
                   </div>
-
-                  {/* <Link to="/AdminAccountArchive">
-                    <button className="font-bold py-2 bg-[#fff] rounded-md w-9 sm:w-10 lg:w-11 h-9 sm:h-10 lg:h-11 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#00874E] transition-all duration-200 cursor-pointer">
-                      <img
-                        src={Archive}
-                        alt="Archive"
-                        className="h-5 w-5 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
-                      />
-                    </button>
-                  </Link> */}
                 </div>
               </div>
 
@@ -487,7 +534,6 @@ export default function UserManagementProfessorAccounts() {
                                 status={prof.tracked_Status}
                                 onClick={() => handleStatusChange(prof)}
                               />
-                              {/* UPDATED: Use query parameter instead of URL parameter */}
                               <Link 
                                 to={`/UserManagementProfessorAccountsDetails?id=${prof.tracked_ID}`}
                               >
@@ -524,7 +570,6 @@ export default function UserManagementProfessorAccounts() {
                             status={prof.tracked_Status}
                             onClick={() => handleStatusChange(prof)}
                           />
-                          {/* UPDATED: Use query parameter instead of URL parameter */}
                           <Link to={`/UserManagementProfessorAccountsDetails?id=${prof.tracked_ID}`}>
                             <img src={Details} alt="Details" className="h-5 w-5 hover:opacity-70 transition-opacity duration-200" />
                           </Link>
@@ -564,7 +609,9 @@ export default function UserManagementProfessorAccounts() {
                 {/* No results message */}
                 {currentProfessors.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    No professors found matching the current filter.
+                    {searchTerm || selectedFilter !== "All" 
+                      ? "No professors found matching the current filters." 
+                      : "No professors found."}
                   </div>
                 )}
 
@@ -630,228 +677,29 @@ export default function UserManagementProfessorAccounts() {
             </>
           )}
 
-          {/* Status Change Confirmation Modal */}
-          {showArchiveModal && selectedProfessor && modalContent && (
-            <div
-              className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
-              onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                  setShowArchiveModal(false);
-                  setSelectedProfessor(null);
-                }
-              }}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
-                <div className="text-center">
-                  {/* Warning Icon */}
-                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
-                    <img 
-                      src={ArchiveWarningIcon} 
-                      alt="Warning" 
-                      className="h-8 w-8" 
-                    />
-                  </div>
+          {/* Modal Components */}
+          <AdminProfAccountStatus
+            show={showArchiveModal}
+            professor={selectedProfessor}
+            onClose={() => {
+              setShowArchiveModal(false);
+              setSelectedProfessor(null);
+            }}
+            onConfirm={confirmStatusChange}
+          />
 
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    {modalContent.title}
-                  </h3>
-                  
-                  <div className="mt-4 mb-6">
-                    <p className="text-sm text-gray-600 mb-3">
-                      {modalContent.message}
-                    </p>
-                    <div className="bg-gray-50 rounded-lg p-4 text-left">
-                      <p className="text-base sm:text-lg font-semibold text-gray-900 break-words">
-                        {selectedProfessor.tracked_firstname} {selectedProfessor.tracked_lastname}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        ID: {selectedProfessor.tracked_ID}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Email: {selectedProfessor.tracked_email}
-                      </p>
-                    </div>
-                  </div>
+          <AdminProfAccountBackup
+            show={showBackupModal}
+            content={backupModalContent}
+            onClose={closeBackupModal}
+          />
 
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={() => {
-                        setShowArchiveModal(false);
-                        setSelectedProfessor(null);
-                      }}
-                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={confirmStatusChange}
-                      className={`flex-1 ${modalContent.confirmColor} text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer`}
-                    >
-                      {modalContent.confirmText}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <style>{`
-                .overlay-fade { animation: overlayFade .18s ease-out both; }
-                @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
-
-                .modal-pop {
-                  transform-origin: top center;
-                  animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
-                }
-                @keyframes popIn {
-                  from { opacity: 0; transform: translateY(-8px) scale(.98); }
-                  to   { opacity: 1; transform: translateY(0)   scale(1);    }
-                }
-              `}</style>  
-            </div>
-          )}
-
-          {/* Backup Result Modal */}
-          {showBackupModal && backupModalContent && (
-            <div
-              className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
-              onClick={closeBackupModal}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div 
-                className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  {/* Icon */}
-                  <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 ${
-                    backupModalContent.type === 'success' ? 'bg-green-100' : 'bg-red-100'
-                  }`}>
-                    <img 
-                      src={backupModalContent.type === 'success' ? SuccessIcon : ErrorIcon} 
-                      alt={backupModalContent.type === 'success' ? 'Success' : 'Error'} 
-                      className="h-8 w-8" 
-                    />
-                  </div>
-
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    {backupModalContent.title}
-                  </h3>
-                  
-                  <div className="mt-4 mb-6">
-                    <p className="text-sm text-gray-600 mb-3">
-                      {backupModalContent.message}
-                    </p>
-                    {backupModalContent.filename && (
-                      <div className="bg-gray-50 rounded-lg p-4 text-left">
-                        <div className="space-y-2">
-                          <p className="text-sm text-gray-600 break-words">
-                            <span className="font-semibold">File:</span> {backupModalContent.filename}
-                          </p>
-                          {backupModalContent.filepath && (
-                            <p className="text-xs text-gray-500 break-words">
-                              <span className="font-semibold">Location:</span> {backupModalContent.filepath}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-center">
-                    <button
-                      onClick={closeBackupModal}
-                      className="px-6 py-3 bg-[#00874E] hover:bg-[#00743E] text-white font-bold rounded-md transition-all duration-200 cursor-pointer"
-                    >
-                      OK
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Restore Modal */}
-          {showRestoreModal && restoreModalContent && (
-            <div
-              className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
-              onClick={closeRestoreModal}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div 
-                className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  {/* Icon */}
-                  {restoreModalContent.type === 'confirmation' ? (
-                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
-                      <img 
-                        src={ArchiveWarningIcon} 
-                        alt="Warning" 
-                        className="h-8 w-8" 
-                      />
-                    </div>
-                  ) : (
-                    <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 ${
-                      restoreModalContent.type === 'success' ? 'bg-green-100' : 'bg-red-100'
-                    }`}>
-                      <img 
-                        src={restoreModalContent.type === 'success' ? SuccessIcon : ErrorIcon} 
-                        alt={restoreModalContent.type === 'success' ? 'Success' : 'Error'} 
-                        className="h-8 w-8" 
-                      />
-                    </div>
-                  )}
-
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    {restoreModalContent.title}
-                  </h3>
-                  
-                  <div className="mt-4 mb-6">
-                    <p className="text-sm text-gray-600 mb-3">
-                      {restoreModalContent.message}
-                    </p>
-                    {restoreModalContent.filename && (
-                      <div className="bg-gray-50 rounded-lg p-4 text-left">
-                        <p className="text-sm text-gray-600">
-                          <strong>Restored from:</strong> {restoreModalContent.filename}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {restoreModalContent.type === 'confirmation' ? (
-                      <>
-                        <button
-                          onClick={closeRestoreModal}
-                          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
-                        >
-                          {restoreModalContent.cancelText}
-                        </button>
-                        <button
-                          onClick={confirmRestore}
-                          className="flex-1 bg-[#00874E] hover:bg-[#00743E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
-                        >
-                          {restoreModalContent.confirmText}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={closeRestoreModal}
-                        className="flex-1 bg-[#00874E] hover:bg-[#00743E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
-                      >
-                        OK
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <AdminProfAccountRestore
+            show={showRestoreModal}
+            content={restoreModalContent}
+            onClose={closeRestoreModal}
+            onConfirm={confirmRestore}
+          />
         </div>
       </div>
     </div>

@@ -9,6 +9,8 @@ import UserManagementStudentAccounts from './Admin/UserManagement_StudentAccount
 import UserManagementStudentAccountDetails from './Admin/UserManagement_StudentAccountDetails.jsx';
 import AdminAccountArchive from './Admin/AdminAccountArchive.jsx';
 import Import from './Admin/AdminImport.jsx';
+import UserManagementStudentSections from './Admin/UserManagementStudentSections.jsx';
+
 
 // Landing Links
 import Login from './Landing/Login.jsx';
@@ -84,6 +86,8 @@ function Linking() {
         <Route path="/Report" element={<Report />} />
         <Route path="/AdminAccountArchive" element={<AdminAccountArchive />} />
         <Route path="/Import" element={<Import/>} />
+        <Route path="/UserManagementStudentSections" element={<UserManagementStudentSections/>} />
+        
         
         {/* Navigations for Professor */} 
         <Route path="/DashboardProf" element={<DashboardProf />} />  

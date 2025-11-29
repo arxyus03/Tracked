@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Lottie from "lottie-react";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
+import AdminStudentAccountStatus from "../../Components/AdminStudentAccountStatus";
+import AdminStudentAccountBackup from "../../Components/AdminStudentAccountBackup";
+import AdminStudentAccountRestore from "../../Components/AdminStudentAccountRestore";
 
 import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
 import Search from "../../assets/Search.svg";
-import Archive from "../../assets/Archive(Light).svg";
-import ArchiveRow from "../../assets/ArchiveRow(Light).svg";
 import Details from "../../assets/Details(Light).svg";
-import ArchiveWarningIcon from "../../assets/Warning(Yellow).svg";
-import Restore from "../../assets/Unarchive.svg";
-import SuccessIcon from "../../assets/Success(Green).svg";
-import ErrorIcon from "../../assets/Error(Red).svg";
+import BackupIcon from "../../assets/Backup(Light).svg";
+import RestoreIcon from "../../assets/Restore(Light).svg";
 
 // Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
@@ -31,6 +30,7 @@ export default function UserManagementStudentAccounts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const itemsPerPage = 10;
 
   // New state for backup/restore modals
@@ -41,12 +41,14 @@ export default function UserManagementStudentAccounts() {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
-  // New state for Year and Section dropdowns
+  // New state for Year dropdown only (section removed)
   const [yearOpen, setYearOpen] = useState(false);
-  const [sectionOpen, setSectionOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState("All");
-  const [selectedSection, setSelectedSection] = useState("All");
-  const [availableSections, setAvailableSections] = useState(['All']);
+
+  // Get the section from URL parameters
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const selectedSection = queryParams.get('section') || 'All';
 
   // Lottie animation options
   const defaultLottieOptions = {
@@ -58,30 +60,25 @@ export default function UserManagementStudentAccounts() {
     }
   };
 
+  // Set sidebar open by default on laptop/desktop, closed on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Fetch students from backend
   useEffect(() => {
     fetchStudents();
   }, []);
-
-  // Extract available sections from students data
-  useEffect(() => {
-    if (students.length > 0) {
-      // Extract unique sections from tracked_yearandsec
-      const sections = [...new Set(students
-        .map(stud => {
-          const yearSec = stud.tracked_yearandsec;
-          // Extract section (everything after first character)
-          if (yearSec && yearSec.length > 1) {
-            return yearSec.substring(1);
-          }
-          return null;
-        })
-        .filter(section => section !== null && section !== '')
-      )].sort();
-
-      setAvailableSections(['All', ...sections]);
-    }
-  }, [students]);
 
   const fetchStudents = () => {
     setLoading(true);
@@ -89,7 +86,6 @@ export default function UserManagementStudentAccounts() {
     fetch("https://tracked.6minds.site/Admin/StudentAccountsDB/get_students.php")
       .then((res) => res.json())
       .then((data) => {
-        // Handle different response formats
         if (Array.isArray(data)) {
           setStudents(data);
         } else if (data.success && data.student) {
@@ -219,7 +215,7 @@ export default function UserManagementStudentAccounts() {
     setRestoreModalContent(null);
   };
 
-  // Filter students based on selected filters
+  // Filter students based on selected filters and search term
   const filteredStudents = students.filter(stud => {
     // Status filter
     if (selectedFilter !== "All" && stud.tracked_Status !== selectedFilter) {
@@ -234,7 +230,7 @@ export default function UserManagementStudentAccounts() {
       }
     }
 
-    // Section filter
+    // Section filter from URL
     if (selectedSection !== "All") {
       const studentSection = stud.tracked_yearandsec?.substring(1);
       if (studentSection !== selectedSection) {
@@ -242,8 +238,36 @@ export default function UserManagementStudentAccounts() {
       }
     }
 
+    // Search filter
+    if (searchTerm.trim() !== "") {
+      const searchLower = searchTerm.toLowerCase();
+      const fullName = `${stud.tracked_firstname} ${stud.tracked_middlename} ${stud.tracked_lastname}`.toLowerCase();
+      const studentId = stud.tracked_ID?.toLowerCase();
+      const email = stud.tracked_email?.toLowerCase();
+      const yearSection = stud.tracked_yearandsec?.toLowerCase();
+
+      if (!fullName.includes(searchLower) && 
+          !studentId.includes(searchLower) && 
+          !email.includes(searchLower) &&
+          !yearSection.includes(searchLower)) {
+        return false;
+      }
+    }
+
     return true;
   });
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // Clear search
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
 
   // Pagination setup
   const indexOfLast = currentPage * itemsPerPage;
@@ -289,7 +313,6 @@ export default function UserManagementStudentAccounts() {
               : stud
           )
         );
-        console.log("Status updated successfully:", data.message);
       } else {
         console.error("Failed to update status:", data.message);
         alert(`Failed to update student status: ${data.message}`);
@@ -302,22 +325,6 @@ export default function UserManagementStudentAccounts() {
       setSelectedStudent(null);
     }
   };
-
-  const getModalContent = () => {
-    if (!selectedStudent) return null;
-    
-    const isDeactivating = selectedStudent.tracked_Status === "Active";
-    const action = isDeactivating ? "Deactivate" : "Activate";
-    
-    return {
-      title: `${action} Account?`,
-      message: `Are you sure you want to ${action.toLowerCase()} this student account?`,
-      confirmText: action,
-      confirmColor: isDeactivating ? "bg-[#FF6666] hover:bg-[#FF5555]" : "bg-[#00A15D] hover:bg-[#00874E]"
-    };
-  };
-
-  const modalContent = getModalContent();
 
   // Toggle button component
   const StatusToggleButton = ({ status, onClick }) => {
@@ -353,25 +360,34 @@ export default function UserManagementStudentAccounts() {
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           {/* "Header" */}
           <div className="mb-4 sm:mb-6">
-            <div className="flex items-center mb-2">
-              <img
-                src={ClassManagementLight}
-                alt="ClassManagement"
-                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
-              />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
-                User Management
-              </h1>
-            </div>
-            <div className="flex items-center justify-between text-sm sm:text-base lg:text-lg text-[#465746]">
-              <span>Student Account Administration</span>
-              <Link to="/UserManagement">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <img
+                  src={ClassManagementLight}
+                  alt="ClassManagement"
+                  className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
+                />
+                <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
+                  User Management
+                </h1>
+              </div>
+              
+              {/* Back Button - Visible on all screens */}
+              <Link to="/UserManagementStudentSections" className="flex items-center text-[#465746] hover:text-[#00874E] transition-colors duration-200">
                 <img
                   src={BackButton}
                   alt="BackButton"
-                  className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 hover:opacity-70 transition-opacity sm:hidden"
+                  className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 hover:opacity-70 transition-opacity"
                 />
               </Link>
+            </div>
+            <div className="text-sm sm:text-base lg:text-lg text-[#465746]">
+              <span>Student Account Administration</span>
+            </div>
+            
+            {/* Section Information */}
+            <div className="mt-2 text-md sm:text-base text-[#465746] font-medium">
+              <span className="font-bold">Section: {selectedSection}</span>
             </div>
           </div>
 
@@ -474,43 +490,11 @@ export default function UserManagementStudentAccounts() {
                     )}
                   </div>
 
-                  {/* Section Filter Dropdown */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setSectionOpen(!sectionOpen)}
-                      className="flex items-center justify-between font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md w-28 sm:w-36 lg:w-40 shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
-                    >
-                      <span>Section: {selectedSection}</span>
-                      <img
-                        src={ArrowDown}
-                        alt="ArrowDown"
-                        className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ml-2"
-                      />
-                    </button>
-
-                    {sectionOpen && (
-                      <div className="absolute top-full mt-1 bg-white rounded-md w-28 sm:w-36 lg:w-40 shadow-lg border border-gray-200 z-10">
-                        {availableSections.map((section) => (
-                          <button
-                            key={section}
-                            className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
-                            onClick={() => {
-                              setSelectedSection(section);
-                              setSectionOpen(false);
-                              setCurrentPage(1);
-                            }}
-                          >
-                            {section}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
+                  {/* Backup Button with Background Color */}
                   <button 
                     onClick={handleBackup}
                     disabled={isBackingUp}
-                    className={`font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer flex items-center justify-center min-w-[80px] ${
+                    className={`font-bold px-3 sm:px-4 py-2 bg-[#4CAF50] text-white rounded-md shadow-md border-2 border-transparent hover:bg-[#45a049] hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer flex items-center justify-center min-w-[80px] ${
                       isBackingUp ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -525,14 +509,22 @@ export default function UserManagementStudentAccounts() {
                         Backing up...
                       </div>
                     ) : (
-                      "Backup"
+                      <>
+                        <img 
+                          src={BackupIcon} 
+                          alt="Backup" 
+                          className="h-4 w-4 sm:h-5 sm:w-5 mr-2" 
+                        />
+                        Backup
+                      </>
                     )}
                   </button>
 
+                  {/* Restore Button with Background Color */}
                   <button 
                     onClick={handleRestore}
                     disabled={isRestoring}
-                    className={`font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer flex items-center justify-center min-w-[80px] ${
+                    className={`font-bold px-3 sm:px-4 py-2 bg-[#4CAF50] text-white rounded-md shadow-md border-2 border-transparent hover:bg-[#45a049] hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer flex items-center justify-center min-w-[80px] ${
                       isRestoring ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -547,26 +539,47 @@ export default function UserManagementStudentAccounts() {
                         Restoring...
                       </div>
                     ) : (
-                      "Restore"
+                      <>
+                        <img 
+                          src={RestoreIcon} 
+                          alt="Restore" 
+                          className="h-4 w-4 sm:h-5 sm:w-5 mr-2" 
+                        />
+                        Restore
+                      </>
                     )}
                   </button>
                 </div>
 
-                {/* Search and Archive Buttons */}
+                {/* Search Bar - Made wider */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="relative flex-1 sm:max-w-xs lg:max-w-md">
+                  <div className="relative flex-1 sm:w-96 md:w-[500px] lg:w-[600px] xl:w-[700px]">
                     <input
                       type="text"
-                      placeholder="Search..."
+                      placeholder="Search by name, student ID, email, or year and section..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
                       className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm border-2 border-transparent focus:border-[#00874E] transition-all duration-200"
                     />
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
-                      <img
-                        src={Search}
-                        alt="Search"
-                        className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
-                      />
-                    </button>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+                      {searchTerm && (
+                        <button
+                          onClick={handleClearSearch}
+                          className="text-gray-500 hover:text-[#465746] mr-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                      <button className="text-gray-500 hover:text-[#465746]">
+                        <img
+                          src={Search}
+                          alt="Search"
+                          className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -699,7 +712,9 @@ export default function UserManagementStudentAccounts() {
                 {/* No results message */}
                 {currentStudents.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    No students found matching the current filters.
+                    {searchTerm || selectedFilter !== "All" || selectedYear !== "All" 
+                      ? "No students found matching the current filters." 
+                      : "No students found."}
                   </div>
                 )}
 
@@ -765,231 +780,29 @@ export default function UserManagementStudentAccounts() {
             </>
           )}
 
-          {/* Status Change Confirmation Modal */}
-          {showArchiveModal && selectedStudent && modalContent && (
-            <div
-              className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
-              onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                  setShowArchiveModal(false);
-                  setSelectedStudent(null);
-                }
-              }}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
-                <div className="text-center">
-                  {/* Warning Icon */}
-                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
-                    <img 
-                      src={ArchiveWarningIcon} 
-                      alt="Warning" 
-                      className="h-8 w-8" 
-                    />
-                  </div>
+          {/* Modal Components */}
+          <AdminStudentAccountStatus
+            show={showArchiveModal}
+            student={selectedStudent}
+            onClose={() => {
+              setShowArchiveModal(false);
+              setSelectedStudent(null);
+            }}
+            onConfirm={confirmStatusChange}
+          />
 
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    {modalContent.title}
-                  </h3>
-                  
-                  <div className="mt-4 mb-6">
-                    <p className="text-sm text-gray-600 mb-3">
-                      {modalContent.message}
-                    </p>
-                    <div className="bg-gray-50 rounded-lg p-4 text-left">
-                      <p className="text-base sm:text-lg font-semibold text-gray-900 break-words">
-                        {selectedStudent.tracked_firstname} {selectedStudent.tracked_middlename} {selectedStudent.tracked_lastname}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        ID: {selectedStudent.tracked_ID}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Email: {selectedStudent.tracked_email}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Year & Section: {selectedStudent.tracked_yearandsec}
-                      </p>
-                    </div>
-                  </div>
+          <AdminStudentAccountBackup
+            show={showBackupModal}
+            content={backupModalContent}
+            onClose={closeBackupModal}
+          />
 
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={() => {
-                        setShowArchiveModal(false);
-                        setSelectedStudent(null);
-                      }}
-                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={confirmStatusChange}
-                      className={`flex-1 ${modalContent.confirmColor} text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer`}
-                    >
-                      {modalContent.confirmText}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <style>{`
-                .overlay-fade { animation: overlayFade .18s ease-out both; }
-                @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
-
-                .modal-pop {
-                  transform-origin: top center;
-                  animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
-                }
-                @keyframes popIn {
-                  from { opacity: 0; transform: translateY(-8px) scale(.98); }
-                  to   { opacity: 1; transform: translateY(0)   scale(1);    }
-                }
-              `}</style>
-            </div>
-          )}
-
-          {/* Backup Result Modal */}
-          {showBackupModal && backupModalContent && (
-            <div
-              className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
-              onClick={closeBackupModal}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div 
-                className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  {/* Icon */}
-                  <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 ${
-                    backupModalContent.type === 'success' ? 'bg-green-100' : 'bg-red-100'
-                  }`}>
-                    <img 
-                      src={backupModalContent.type === 'success' ? SuccessIcon : ErrorIcon} 
-                      alt={backupModalContent.type === 'success' ? 'Success' : 'Error'} 
-                      className="h-8 w-8" 
-                    />
-                  </div>
-
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    {backupModalContent.title}
-                  </h3>
-                  
-                  <div className="mt-4 mb-6">
-                    <p className="text-sm text-gray-600 mb-3">
-                      {backupModalContent.message}
-                    </p>
-                    {backupModalContent.filename && (
-                      <div className="bg-gray-50 rounded-lg p-4 text-left">
-                        <div className="space-y-2">
-                          <p className="text-sm text-gray-600 break-words">
-                            <span className="font-semibold">File:</span> {backupModalContent.filename}
-                          </p>
-                          {backupModalContent.filepath && (
-                            <p className="text-xs text-gray-500 break-words">
-                              <span className="font-semibold">Location:</span> {backupModalContent.filepath}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-center">
-                    <button
-                      onClick={closeBackupModal}
-                      className="px-6 py-3 bg-[#00874E] hover:bg-[#00743E] text-white font-bold rounded-md transition-all duration-200 cursor-pointer"
-                    >
-                      OK
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Restore Modal */}
-          {showRestoreModal && restoreModalContent && (
-            <div
-              className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
-              onClick={closeRestoreModal}
-              role="dialog"
-              aria-modal="true"
-            >
-              <div 
-                className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  {/* Icon */}
-                  {restoreModalContent.type === 'confirmation' ? (
-                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
-                      <img 
-                        src={ArchiveWarningIcon} 
-                        alt="Warning" 
-                        className="h-8 w-8" 
-                      />
-                    </div>
-                  ) : (
-                    <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 ${
-                      restoreModalContent.type === 'success' ? 'bg-green-100' : 'bg-red-100'
-                    }`}>
-                      <img 
-                        src={restoreModalContent.type === 'success' ? SuccessIcon : ErrorIcon} 
-                        alt={restoreModalContent.type === 'success' ? 'Success' : 'Error'} 
-                        className="h-8 w-8" 
-                      />
-                    </div>
-                  )}
-
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    {restoreModalContent.title}
-                  </h3>
-                  
-                  <div className="mt-4 mb-6">
-                    <p className="text-sm text-gray-600 mb-3">
-                      {restoreModalContent.message}
-                    </p>
-                    {restoreModalContent.filename && (
-                      <div className="bg-gray-50 rounded-lg p-4 text-left">
-                        <p className="text-sm text-gray-600">
-                          <strong>Restored from:</strong> {restoreModalContent.filename}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {restoreModalContent.type === 'confirmation' ? (
-                      <>
-                        <button
-                          onClick={closeRestoreModal}
-                          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
-                        >
-                          {restoreModalContent.cancelText}
-                        </button>
-                        <button
-                          onClick={confirmRestore}
-                          className="flex-1 bg-[#00874E] hover:bg-[#00743E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
-                        >
-                          {restoreModalContent.confirmText}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={closeRestoreModal}
-                        className="flex-1 bg-[#00874E] hover:bg-[#00743E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
-                      >
-                        OK
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <AdminStudentAccountRestore
+            show={showRestoreModal}
+            content={restoreModalContent}
+            onClose={closeRestoreModal}
+            onConfirm={confirmRestore}
+          />
         </div>
       </div>
     </div>
