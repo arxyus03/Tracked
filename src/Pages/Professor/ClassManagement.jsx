@@ -112,7 +112,7 @@ export default function ClassManagement() {
       }
       
       // Using localhost endpoint from first component
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
       
       console.log('Response status:', response.status);
       
@@ -212,7 +212,7 @@ export default function ClassManagement() {
       const professorId = getProfessorId();
       
       // Using localhost endpoint from first component's structure
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/archive_class.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveClassDB/archive_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -346,7 +346,7 @@ export default function ClassManagement() {
       };
 
       // Using localhost endpoint from first component
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/create_class.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/ClassManagementDB/create_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

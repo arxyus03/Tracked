@@ -1,5 +1,5 @@
 import React from 'react';
-import Cross from "../assets/Cross(Light).svg";
+import Cross from "../../assets/Cross(Light).svg";
 
 const RemoveStudent = ({ isOpen, onClose, onConfirm, student }) => {
   if (!isOpen || !student) return null;

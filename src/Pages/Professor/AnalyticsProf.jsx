@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
+
 import ActivityOverview from "../../Components/ActivityOverview";
 
 import Analytics from '../../assets/Analytics(Light).svg';
@@ -55,11 +56,11 @@ export default function AnalyticsProf() {
   const [rankingCurrentPage, setRankingCurrentPage] = useState(1);
   const [sectionPage, setSectionPage] = useState(1);
   const itemsPerPage = 10;
-  const sectionsPerPage = 20; // Show 20 sections per page for better performance with 50+ sections
+  const sectionsPerPage = 20;
 
   // Updated colors for charts with proper color coding
-  const ATTENDANCE_COLORS = ['#00C853', '#FFD600', '#FF3D00']; // Green (Submitted/Present), Yellow (Late), Red (Absent)
-  const ACTIVITIES_COLORS = ['#00C853', '#FFD600', '#2962FF', '#FF3D00']; // Green (Submitted), Yellow (Late), Blue (Pending), Red (Missing)
+  const ATTENDANCE_COLORS = ['#00C853', '#FFD600', '#FF3D00']; 
+  const ACTIVITIES_COLORS = ['#00C853', '#2962FF', '#2196F3', '#FF3D00']; 
   
   // Colors for section comparison (up to 20 distinct colors for many sections)
   const SECTION_COLORS = [
@@ -155,7 +156,7 @@ export default function AnalyticsProf() {
     const fetchClasses = async () => {
       setClassesLoading(true);
       try {
-        const apiUrl = `http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`;
+        const apiUrl = `https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`;
         console.log('API URL:', apiUrl);
         
         const response = await fetch(apiUrl);
@@ -286,7 +287,7 @@ export default function AnalyticsProf() {
       console.log('Found subject code:', subjectCode, 'for', selectedSubject);
 
       // Fetch attendance data
-      const attendanceUrl = `http://localhost/TrackEd/src/Pages/Professor/AttendanceDB/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professorId}`;
+      const attendanceUrl = `https://tracked.6minds.site/Professor/AttendanceDB/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professorId}`;
       console.log('Attendance URL:', attendanceUrl);
 
       const attendanceResponse = await fetch(attendanceUrl);
@@ -299,7 +300,7 @@ export default function AnalyticsProf() {
       console.log('Attendance data received:', attendanceData);
 
       // Fetch activities data
-      const activitiesUrl = `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`;
+      const activitiesUrl = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`;
       console.log('Activities URL:', activitiesUrl);
 
       const activitiesResponse = await fetch(activitiesUrl);
@@ -362,7 +363,7 @@ export default function AnalyticsProf() {
         const section = classItem.section;
 
         try {
-          const activitiesUrl = `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`;
+          const activitiesUrl = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`;
           console.log(`API URL for section ${section}:`, activitiesUrl);
           
           const activitiesResponse = await fetch(activitiesUrl);
@@ -457,7 +458,7 @@ export default function AnalyticsProf() {
           comparisonResults.push(result);
           
           // Update activity type counts
-          const { typeStats, submitted, total } = result;
+          const { typeStats, total } = result;
           
           activityTypeCounts.all.quizzes += typeStats.quiz.total;
           activityTypeCounts.all.assignments += typeStats.assignment.total;
@@ -578,9 +579,9 @@ export default function AnalyticsProf() {
   // Calculate activities summary
   const calculateActivitiesSummary = (activities) => {
     let totalSubmitted = 0;
-    let totalMissing = 0;
+    let totalMissed = 0; // Changed from missing
     let totalLate = 0;
-    let totalPending = 0;
+    let totalAssigned = 0; // Changed from pending
     let totalEntries = 0;
 
     activities.forEach(activity => {
@@ -602,9 +603,9 @@ export default function AnalyticsProf() {
           }
         } else {
           if (isPastDeadline) {
-            totalMissing++;
+            totalMissed++; // Changed from missing
           } else {
-            totalPending++;
+            totalAssigned++; // Changed from pending
           }
         }
       });
@@ -614,8 +615,8 @@ export default function AnalyticsProf() {
     
     console.log('Activities summary:', {
       submitted: totalSubmitted,
-      missing: totalMissing,
-      pending: totalPending,
+      missed: totalMissed,
+      assigned: totalAssigned,
       late: totalLate,
       total: totalEntries,
       submissionRate: submissionRate
@@ -623,8 +624,8 @@ export default function AnalyticsProf() {
 
     return {
       submitted: totalSubmitted,
-      missing: totalMissing,
-      pending: totalPending,
+      missed: totalMissed, // Changed from missing
+      assigned: totalAssigned, // Changed from pending
       late: totalLate,
       total: totalEntries,
       submissionRate: submissionRate
@@ -768,14 +769,6 @@ export default function AnalyticsProf() {
     console.log('Student performance calculated:', studentArray.length, 'students');
     
     return studentArray;
-  };
-
-  // Helper function to get subject code from class object
-  const getSubjectCode = (subjectName) => {
-    const classItem = classes.find(cls => cls.subject === subjectName);
-    const code = classItem ? classItem.subject_code : '';
-    console.log('Getting subject code for', subjectName, ':', code);
-    return code;
   };
 
   // Get current subject code for display
@@ -972,7 +965,6 @@ export default function AnalyticsProf() {
     }
 
     const students = analyticsData.studentPerformance;
-    const total = students.length;
     
     // Categorize students by performance
     const excellent = students.filter(s => s.submissionRate >= 90).length;
@@ -1000,7 +992,6 @@ export default function AnalyticsProf() {
 
     const suggestions = [];
     const sections = comparisonData.sections;
-    const totalSections = sections.length;
 
     // Find sections with low submission rates (<60%)
     const lowPerformingSections = sections.filter(s => s.submissionRate < 60);
@@ -1164,7 +1155,7 @@ export default function AnalyticsProf() {
   };
 
   // Custom tooltip for line chart
-  const CustomLineTooltip = ({ active, payload, label }) => {
+  const CustomLineTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -1193,7 +1184,7 @@ export default function AnalyticsProf() {
   };
 
   // Custom label for pie chart
-  const CustomPerformancePieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+  const CustomPerformancePieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.7;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -1230,9 +1221,6 @@ export default function AnalyticsProf() {
   const rankingEndIndex = rankingStartIndex + itemsPerPage;
   const currentRanking = sortedRankingData.slice(rankingStartIndex, rankingEndIndex);
 
-  // Pagination calculations for sections
-  const sectionTotalPages = comparisonData ? Math.ceil(comparisonData.sections.length / sectionsPerPage) : 1;
-
   // Pagination handlers
   const handleAttendancePageChange = (page) => {
     console.log('Changing attendance page to:', page);
@@ -1268,8 +1256,8 @@ export default function AnalyticsProf() {
   const activitiesChartData = analyticsData ? [
     { name: 'Submitted', value: analyticsData.activitiesSummary.submitted },
     { name: 'Late', value: analyticsData.activitiesSummary.late },
-    { name: 'Pending', value: analyticsData.activitiesSummary.pending },
-    { name: 'Missing', value: analyticsData.activitiesSummary.missing }
+    { name: 'Assigned', value: analyticsData.activitiesSummary.assigned },
+    { name: 'Missed', value: analyticsData.activitiesSummary.missed }
   ] : [];
 
   // Check if charts have data
@@ -1280,7 +1268,7 @@ export default function AnalyticsProf() {
   const hasStudentAttendanceData = currentAttendance.length > 0;
 
   // Enhanced CustomPieLabel with better styling
-  const CustomPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+  const CustomPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.7;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -1370,26 +1358,26 @@ export default function AnalyticsProf() {
   const getActivitiesActions = () => {
     if (!analyticsData) return [];
     
-    const { submitted, pending, missing, late, total } = analyticsData.activitiesSummary;
+    const { submitted, assigned, missed, late, total } = analyticsData.activitiesSummary;
     const actions = [];
     
-    if (pending > submitted) {
-      actions.push("Many activities are still pending - consider extending deadlines or offering help sessions");
+    if (assigned > submitted) {
+      actions.push("Many activities are still assigned - consider extending deadlines or offering help sessions");
     }
     
-    if (missing > total * 0.2) {
-      actions.push("High number of missing submissions - reach out to students who need support");
+    if (missed > total * 0.2) {
+      actions.push("High number of missed submissions - reach out to students who need support");
     }
     
     if (late > submitted * 0.3) {
       actions.push("Many late submissions - review submission policies and provide clear deadlines");
     }
     
-    if (pending > 0) {
-      actions.push("Send reminders for pending activities approaching their deadlines");
+    if (assigned > 0) {
+      actions.push("Send reminders for assigned activities approaching their deadlines");
     }
     
-    if (submitted > total * 0.8 && missing < total * 0.1) {
+    if (submitted > total * 0.8 && missed < total * 0.1) {
       actions.push("Excellent submission rate! Consider providing positive feedback to the class");
     }
 
@@ -1449,7 +1437,7 @@ export default function AnalyticsProf() {
   );
 
   // No Data Message Component
-  const NoDataMessage = ({ message, icon }) => (
+  const NoDataMessage = ({ message }) => (
     <div className="flex flex-col items-center justify-center h-64 sm:h-80 text-gray-500 p-4">
       <img src={NoDataIcon} alt="No data" className="w-30 h-30 mb-3 opacity-50" />
       <p className="text-lg font-medium text-center">{message}</p>
@@ -1903,82 +1891,96 @@ export default function AnalyticsProf() {
           </div>
         );
       
-      case 'Student Attendance':
-        return (
-          <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md p-4 sm:p-5 text-[#465746]">
-            <p className="text-base sm:text-lg lg:text-xl font-bold">
-              Student Attendance Tracking - {selectedSubject} (Section {selectedSection})
-            </p>
-            <hr className="border-[#465746]/30 my-3 sm:my-4" />
-            
-            {hasStudentAttendanceData ? (
-              <>
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-                    <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">No.</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student No.</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student Name</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Submitted</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Present</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Absent</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late Sub</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#F59E0B]">Pending</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Missed</th>
-                          <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">Details</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {currentAttendance.map((student, index) => (
-                          <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="px-2 sm:px-4 py-2 sm:py-3">{attendanceStartIndex + index + 1}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.id}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.name}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.submittedCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D]">{student.presentCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3]">{student.lateCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.absentCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3]">{student.lateSubmissionCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#F59E0B]">{student.pendingCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.missingCount}</td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3">
-                              <Link 
-                                to={`/AnalyticsIndividualInfo?student_id=${student.id}&subject_code=${getCurrentSubjectCode()}&section=${selectedSection}`}
-                                state={{ 
-                                  student: student,
-                                  subjectCode: getCurrentSubjectCode(),
-                                  section: selectedSection
-                                }}
-                              >
-                                <img src={Details} alt="Details" className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-70" />
-                              </Link>
-                            </td>
+        case 'Student Attendance':
+          return (
+            <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md p-4 sm:p-5 text-[#465746]">
+              <p className="text-base sm:text-lg lg:text-xl font-bold">
+                Student Attendance & Submission Tracking - {selectedSubject} (Section {selectedSection})
+              </p>
+              <hr className="border-[#465746]/30 my-3 sm:my-4" />
+              
+              {hasStudentAttendanceData ? (
+                <>
+                  <div className="overflow-x-auto -mx-4 sm:mx-0">
+                    <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+                      <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">No.</th>
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student No.</th>
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold whitespace-nowrap">Student Name</th>
+                            {/* Attendance Columns */}
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Present</th>
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Late</th>
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Absent</th>
+                            {/* Submission Columns */}
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#00A15D]">Submitted</th>
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#2196F3]">Assigned</th>
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold text-[#FF6666]">Missed</th>
+                            <th className="px-2 sm:px-4 py-2 sm:py-3 text-left font-bold">Details</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {currentAttendance.map((student, index) => (
+                            <tr key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="px-2 sm:px-4 py-2 sm:py-3">{attendanceStartIndex + index + 1}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.id}</td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">{student.name}</td>
+                              {/* Attendance Data */}
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D] font-medium">
+                                {student.presentCount || 0}
+                              </td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3] font-medium">
+                                {student.lateCount || 0}
+                              </td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666] font-medium">
+                                {student.absentCount || 0}
+                              </td>
+                              {/* Submission Data */}
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#00A15D] font-medium">
+                                {student.submittedCount || 0}
+                              </td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#2196F3] font-medium">
+                                {student.pendingCount || 0} {/* This is now "Assigned" */}
+                              </td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666] font-medium">
+                                {student.missingCount || 0} {/* This is now "Missed" */}
+                              </td>
+                              <td className="px-2 sm:px-4 py-2 sm:py-3">
+                                <Link 
+                                  to={`/AnalyticsIndividualInfo?student_id=${student.id}&subject_code=${getCurrentSubjectCode()}&section=${selectedSection}`}
+                                  state={{ 
+                                    student: student,
+                                    subjectCode: getCurrentSubjectCode(),
+                                    section: selectedSection
+                                  }}
+                                >
+                                  <img src={Details} alt="Details" className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:opacity-70" />
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
 
-                {/* Attendance Tracking Pagination */}
-                <Pagination
-                  currentPage={attendanceCurrentPage}
-                  totalPages={attendanceTotalPages}
-                  onPageChange={handleAttendancePageChange}
-                  dataType="attendance"
-                  totalItems={analyticsData?.studentPerformance?.length || 0}
-                />
-              </>
-            ) : (
-              <div className="py-10 text-center">
-                <NoDataMessage message="No student attendance data available" />
-              </div>
-            )}
-          </div>
-        );
+                  {/* Attendance Tracking Pagination */}
+                  <Pagination
+                    currentPage={attendanceCurrentPage}
+                    totalPages={attendanceTotalPages}
+                    onPageChange={handleAttendancePageChange}
+                    dataType="attendance"
+                    totalItems={analyticsData?.studentPerformance?.length || 0}
+                  />
+                </>
+              ) : (
+                <div className="py-10 text-center">
+                  <NoDataMessage message="No student attendance data available" />
+                </div>
+              )}
+            </div>
+          );
       
       case 'Section Comparison':
         return (
@@ -2086,7 +2088,7 @@ export default function AnalyticsProf() {
                 
                 {/* Section Selection Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-60 overflow-y-auto p-2">
-                  {getPaginatedSections().map((section, index) => (
+                  {getPaginatedSections().map((section) => (
                     <button
                       key={section.section}
                       onClick={() => handleSectionSelection(section.section)}
@@ -2156,7 +2158,7 @@ export default function AnalyticsProf() {
                       />
                       <Tooltip content={<CustomLineTooltip />} />
                       <Legend />
-                      {sectionComparisonLineData.map((section, index) => (
+                      {sectionComparisonLineData.map((section) => (
                         <Line
                           key={section.section}
                           type="monotone"
@@ -2200,7 +2202,7 @@ export default function AnalyticsProf() {
                         </tr>
                       </thead>
                       <tbody>
-                        {comparisonData.sections.map((section, index) => (
+                        {comparisonData.sections.map((section) => (
                           <tr key={section.section} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="px-3 py-2 font-medium">Section {section.section}</td>
                             <td className="px-3 py-2">
@@ -2283,7 +2285,7 @@ export default function AnalyticsProf() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value, name, props) => [
+                        formatter={(value, name) => [
                           `${value} students (${((value / studentPerformancePieData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(1)}%)`,
                           name
                         ]}
@@ -2425,25 +2427,6 @@ export default function AnalyticsProf() {
                 <img 
                   src={ClassworkTabIcon} 
                   alt="Classwork" 
-                  className="h-5 w-5 sm:h-6 sm:w-6" 
-                />
-              </Link>
-              
-              {/* Attendance Button */}
-              <Link
-                to={`/Attendance?code=${getCurrentSubjectCode()}`}
-                state={{
-                  subjectCode: getCurrentSubjectCode(),
-                  section: selectedSection,
-                  subjectName: selectedSubject,
-                  shortSubjectName: getCurrentSubjectCode()
-                }}
-                className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer"
-                title="Attendance"
-              >
-                <img 
-                  src={AttendanceNavIcon} 
-                  alt="Attendance" 
                   className="h-5 w-5 sm:h-6 sm:w-6" 
                 />
               </Link>

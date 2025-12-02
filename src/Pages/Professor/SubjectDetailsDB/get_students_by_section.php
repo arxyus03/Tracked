@@ -8,9 +8,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') exit(0);
 
 // Localhost MySQL connection - consistent with your other files
 $host = 'localhost';
-$dbname = 'tracked';
-$username = 'root';
-$password = '';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);

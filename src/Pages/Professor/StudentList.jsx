@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import KickStudentList from "../../Components/KickStudentList";
+
+import KickStudentList from "../../Components/StudentListComponents/KickStudentList";
 
 import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
 import BackButton from '../../assets/BackButton(Light).svg';

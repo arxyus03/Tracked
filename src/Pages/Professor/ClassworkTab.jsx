@@ -4,11 +4,11 @@ import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import ClassWorkCreate from "../../Components/ClassWorkCreate";
-import ClassWorkEdit from "../../Components/ClassWorkEdit";
-import ClassWorkArchive from "../../Components/ClassWorkArchive";
-import ClassWorkSubmission from "../../Components/ClassWorkSubmission";
-import ClassWorkSuccess from "../../Components/ClassWorkSuccess";
+import ClassWorkCreate from "../../Components/ClassworkTabComponents/ClassWorkCreate";
+import ClassWorkEdit from "../../Components/ClassworkTabComponents/ClassWorkEdit";
+import ClassWorkArchive from "../../Components/ClassworkTabComponents/ClassWorkArchive";
+import ClassWorkSubmission from "../../Components/ClassworkTabComponents/ClassWorkSubmission";
+import ClassWorkSuccess from "../../Components/ClassworkTabComponents/ClassWorkSuccess";
 
 import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
@@ -492,7 +492,7 @@ export default function ClassworkTab() {
       }
 
       // Using localhost endpoint from first component
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -517,7 +517,7 @@ export default function ClassworkTab() {
       }
 
       // Using localhost endpoint from first component
-      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
+      const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -573,20 +573,6 @@ export default function ClassworkTab() {
     if (!activity.students || activity.students.length === 0) return false;
     
     return activity.students.every(student => {
-      const grade = student.grade;
-      return grade != null && 
-             grade !== '' && 
-             grade !== undefined && 
-             grade !== 0 && 
-             grade !== '0';
-    });
-  };
-
-  // Check if activity has any grades (excluding 0 grades)
-  const hasSomeGrades = (activity) => {
-    if (!activity.students || activity.students.length === 0) return false;
-    
-    return activity.students.some(student => {
       const grade = student.grade;
       return grade != null && 
              grade !== '' && 
@@ -681,7 +667,7 @@ export default function ClassworkTab() {
       console.log('Creating activity with data:', apiData);
 
       // Using localhost endpoint from first component
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/create_activity.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/create_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -770,7 +756,7 @@ export default function ClassworkTab() {
       console.log('Updating activity with data:', updatedActivityData);
 
       // Using localhost endpoint from first component
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/update_activity.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/update_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -819,7 +805,7 @@ export default function ClassworkTab() {
       }
       
       // Using localhost endpoint from first component
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveActivitiesDB/archive_activity.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveActivitiesDB/archive_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -868,7 +854,7 @@ export default function ClassworkTab() {
       console.log('Saving grades for activity:', selectedActivity.id, 'Students:', updatedStudents);
       
       // Using localhost endpoint from first component
-      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/update_activity_grades.php', {
+      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/update_activity_grades.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

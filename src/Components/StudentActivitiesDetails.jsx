@@ -4,7 +4,7 @@ import EmailIcon from "../assets/Email(Light).svg";
 import ArrowDown from "../assets/ArrowDown(Light).svg";
 import Nothing from "../assets/Nothing.svg";
 import NoSubmission from "../assets/NoSubmission.svg";
-import Missing from "../assets/Missing.svg";
+import Missed from "../assets/Missing.svg";
 
 const StudentActivitiesDetails = ({ 
   activity, 
@@ -133,7 +133,7 @@ const StudentActivitiesDetails = ({
     switch (activityFilter) {
       case 'Submitted':
         return activities.filter(activity => activity.status === 'Submitted' || activity.status === 'Late');
-      case 'Missing':
+      case 'Missed':
         return activities.filter(activity => activity.status === 'Missed');
       case 'Assigned':
         return activities.filter(activity => activity.status === 'Assigned');
@@ -324,7 +324,7 @@ const StudentActivitiesDetails = ({
 
                       {filterDropdownOpen && (
                         <div className="absolute top-full mt-1 right-0 xs:left-0 bg-white rounded-md shadow-lg border border-gray-200 z-10 overflow-hidden min-w-[120px]">
-                          {["All", "Submitted", "Missing", "Assigned"].map((option) => (
+                          {["All", "Submitted", "Missed", "Assigned"].map((option) => (
                             <button
                               key={option}
                               className={`block w-full text-left px-3 sm:px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer transition-colors ${
@@ -407,7 +407,7 @@ const StudentActivitiesDetails = ({
                           <img src={NoSubmission} alt="No submissions" className="w-30 h-30 sm:w-40 sm:h-40" /> : 
                           activityFilter === "Assigned" ?
                           <img src={Nothing} alt="No assigned" className="w-30 h-30 sm:w-40 sm:h-40" /> :
-                          <img src={Missing} alt="No missing" className="w-30 h-30 sm:w-40 sm-h-40" />
+                          <img src={Missed} alt="No missed" className="w-30 h-30 sm:w-40 sm-h-40" />
                         }
                       </div>
                       <p>
@@ -417,7 +417,7 @@ const StudentActivitiesDetails = ({
                           ? "No submitted activities found."
                           : activityFilter === "Assigned"
                           ? "No assigned activities found."
-                          : "No missing activities found."
+                          : "No missed activities found."
                         }
                       </p>
                     </div>

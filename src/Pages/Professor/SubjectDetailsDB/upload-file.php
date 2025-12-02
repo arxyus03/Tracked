@@ -21,9 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Database configuration
 $host = 'localhost';
-$username = 'root';
-$password = '';
-$dbname = 'tracked';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 // Create uploads directory if it doesn't exist
 $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/TrackEd/uploads/';

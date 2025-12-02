@@ -49,7 +49,7 @@ export default function AnalyticsTab() {
   const fetchClassInfo = async () => {
     try {
       const response = await fetch(
-        `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_students_by_section.php?subject_code=${subjectCode}`
+        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_students_by_section.php?subject_code=${subjectCode}`
       );
       const result = await response.json();
       if (result.success) {
@@ -63,25 +63,33 @@ export default function AnalyticsTab() {
   };
 
   const fetchAttendanceData = async () => {
-    try {
-      const professor_ID = localStorage.getItem('professor_ID') || '1';
-      
-      const response = await fetch(
-        `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professor_ID}`
-      );
-      
-      const result = await response.json();
-      console.log("Attendance API response:", result);
-      
-      if (result.success && result.attendance_history) {
-        setAttendanceData(result.attendance_history);
-      } else {
-        setAttendanceData(null);
+      try {
+          const professor_ID = localStorage.getItem('professor_ID') || '1';
+          
+          console.log("Fetching attendance data for:", {
+              subjectCode,
+              professor_ID
+          });
+          
+          const response = await fetch(
+              `https://tracked.6minds.site/Professor/AttendanceDB/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professor_ID}`
+          );
+          
+          const result = await response.json();
+          console.log("Attendance API response:", result);
+          
+          if (result.success && result.attendance_history) {
+              console.log(`Found ${result.attendance_history.length} attendance records`);
+              console.log("Sample attendance record:", result.attendance_history[0]);
+              setAttendanceData(result.attendance_history);
+          } else {
+              console.warn("No attendance data found:", result.message);
+              setAttendanceData(null);
+          }
+      } catch (error) {
+          console.error("Error fetching attendance data:", error);
+          setAttendanceData(null);
       }
-    } catch (error) {
-      console.error("Error fetching attendance data:", error);
-      setAttendanceData(null);
-    }
   };
 
   const fetchAnalyticsData = async () => {
@@ -91,8 +99,16 @@ export default function AnalyticsTab() {
       console.log("Fetching analytics for subject:", subjectCode);
       
       const response = await fetch(
-        `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`
+        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`
       );
+      
+      // Check if response is HTML instead of JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Received HTML instead of JSON:", text.substring(0, 500));
+        throw new Error("Server returned HTML instead of JSON");
+      }
       
       const result = await response.json();
       console.log("Analytics API response:", result);
@@ -109,6 +125,7 @@ export default function AnalyticsTab() {
       }
     } catch (error) {
       console.error("Error fetching analytics data:", error);
+      setError(error.message);
       setAnalyticsData(null);
     } finally {
       setLoading(false);
@@ -116,21 +133,29 @@ export default function AnalyticsTab() {
   };
 
   const processAnalyticsData = (activities, students) => {
-    if ((!activities || activities.length === 0) && (!attendanceData || attendanceData.length === 0)) {
+    // Ensure activities and students are arrays
+    const safeActivities = Array.isArray(activities) ? activities : [];
+    const safeStudents = Array.isArray(students) ? students : [];
+    
+    if ((safeActivities.length === 0) && (!attendanceData || attendanceData.length === 0)) {
       setAnalyticsData(null);
       setFailingStudents([]);
       return;
     }
 
-    console.log("Processing analytics data...");
+    console.log("Processing analytics data...", { 
+      activitiesCount: safeActivities.length, 
+      studentsCount: safeStudents.length,
+      attendanceCount: attendanceData ? attendanceData.length : 0 
+    });
     
-    const studentPerformance = calculateStudentPerformance(activities, students);
+    const studentPerformance = calculateStudentPerformance(safeActivities, safeStudents);
     
     const failing = studentPerformance
       .filter(student => student.averageGrade < 60)
       .map(student => ({
         studentId: student.studentId,
-        studentName: student.studentName, // Keep student name for recommendations
+        studentName: student.studentName,
         averageGrade: student.averageGrade,
         submissionRate: student.submissionRate,
         gradedActivities: student.gradedActivities,
@@ -141,11 +166,11 @@ export default function AnalyticsTab() {
     
     setFailingStudents(failing);
     
-    const lineChartData = prepareLineChartData(activities, studentPerformance);
+    const lineChartData = prepareLineChartData(safeActivities, studentPerformance);
     const pieChartData = preparePieChartData(studentPerformance);
     const barChartData = prepareBarChartData(studentPerformance, barChartSort);
-    const activityTypeData = prepareActivityTypeData(activities, students);
-    const assessmentTypeBarData = prepareAssessmentTypeBarData(activities, students);
+    const activityTypeData = prepareActivityTypeData(safeActivities, safeStudents);
+    const assessmentTypeBarData = prepareAssessmentTypeBarData(safeActivities, safeStudents);
 
     setAnalyticsData({
       studentPerformance,
@@ -154,55 +179,67 @@ export default function AnalyticsTab() {
       barChartData,
       activityTypeData,
       assessmentTypeBarData,
-      activities,
-      students,
+      activities: safeActivities,
+      students: safeStudents,
       attendanceData,
-      summary: calculateSummary(studentPerformance, activities, attendanceData)
+      summary: calculateSummary(studentPerformance, safeActivities, attendanceData)
     });
   };
 
   const calculateAttendanceRecord = (studentId) => {
-    if (!attendanceData) return null;
-    
-    const attendanceSummary = {
-      totalDays: attendanceData.length,
-      present: 0,
-      late: 0,
-      absent: 0,
-      excused: 0,
-      records: []
-    };
-    
-    attendanceData.forEach(dateRecord => {
-      const studentRecord = dateRecord.students.find(s => s.student_ID === studentId);
-      const status = studentRecord ? studentRecord.status.toLowerCase() : 'absent';
+      if (!attendanceData || attendanceData.length === 0) {
+          console.log("No attendance data available for student:", studentId);
+          return null;
+      }
       
-      attendanceSummary.records.push({
-        date: dateRecord.date,
-        rawDate: dateRecord.raw_date,
-        status: status
+      console.log("Calculating attendance for student:", studentId, "Total dates:", attendanceData.length);
+      
+      const attendanceSummary = {
+          totalDays: attendanceData.length,
+          present: 0,
+          late: 0,
+          absent: 0,
+          records: []
+      };
+      
+      attendanceData.forEach(dateRecord => {
+          // Find student's attendance record for this date
+          const studentRecord = dateRecord.students.find(s => 
+              s.student_ID == studentId || 
+              s.user_ID == studentId
+          );
+          
+          let status = 'absent'; // Default status
+          
+          if (studentRecord) {
+              status = studentRecord.status ? studentRecord.status.toLowerCase() : 'absent';
+          }
+          
+          console.log(`Date: ${dateRecord.date}, Student: ${studentId}, Status: ${status}`);
+          
+          attendanceSummary.records.push({
+              date: dateRecord.date,
+              rawDate: dateRecord.raw_date,
+              status: status
+          });
+          
+        switch (status) {
+          case 'present':
+          case 'on-time':
+            attendanceSummary.present++;
+            break;
+          case 'late':
+            attendanceSummary.late++;
+            break;
+          case 'absent':
+          default:
+            attendanceSummary.absent++;
+            break;
+        }
       });
       
-      switch (status) {
-        case 'present':
-        case 'on-time':
-          attendanceSummary.present++;
-          break;
-        case 'late':
-          attendanceSummary.late++;
-          break;
-        case 'absent':
-          attendanceSummary.absent++;
-          break;
-        case 'excused':
-          attendanceSummary.excused++;
-          break;
-        default:
-          attendanceSummary.absent++;
-      }
-    });
-    
-    return attendanceSummary;
+      console.log("Attendance summary for student", studentId, ":", attendanceSummary);
+      return attendanceSummary;
   };
 
   const calculateStudentPerformance = (activities, students) => {
@@ -317,7 +354,7 @@ export default function AnalyticsTab() {
       students.forEach(student => {
         const attendanceSummary = calculateAttendanceRecord(student.user_ID);
         if (attendanceSummary && attendanceSummary.totalDays > 0) {
-          const attendanceRate = ((attendanceSummary.present + attendanceSummary.excused) / attendanceSummary.totalDays) * 100;
+          const attendanceRate = (attendanceSummary.present / attendanceSummary.totalDays) * 100;
           typeData['Attendance'].total += attendanceRate;
           typeData['Attendance'].count += 1;
         }
@@ -325,7 +362,7 @@ export default function AnalyticsTab() {
     }
 
     return Object.entries(typeData)
-      .filter(([type, data]) => data.count > 0)
+      .filter(([data]) => data.count > 0)
       .map(([type, data]) => ({
         type: type,
         average: Math.round((data.total / data.count) * 100) / 100,
@@ -457,74 +494,88 @@ export default function AnalyticsTab() {
   };
 
   const prepareActivityTypeData = (activities, students) => {
-    const typeData = {};
-    
-    [...ACTIVITY_TYPES].forEach(type => {
-      typeData[type] = [];
-    });
-
-    const activitiesByType = {};
-    activities.forEach(activity => {
-      const type = activity.activity_type || 'Other';
-      if (!activitiesByType[type]) {
-        activitiesByType[type] = [];
-      }
-      activitiesByType[type].push(activity);
-    });
-
-    Object.keys(activitiesByType).forEach(type => {
-      const typeActivities = activitiesByType[type];
+      const typeData = {};
       
-      const typePerformance = students.map(student => {
-        const gradedActivities = typeActivities.filter(activity => {
-          const studentData = activity.students?.find(s => s.user_ID === student.user_ID);
-          return studentData && studentData.submitted && studentData.grade !== null;
-        });
+      [...ACTIVITY_TYPES].forEach(type => {
+          typeData[type] = [];
+      });
 
-        const total = gradedActivities.reduce((sum, activity) => {
-          const studentData = activity.students?.find(s => s.user_ID === student.user_ID);
-          return sum + (parseFloat(studentData?.grade) || 0);
-        }, 0);
+      // Process regular activities
+      const activitiesByType = {};
+      activities.forEach(activity => {
+          const type = activity.activity_type || 'Other';
+          if (!activitiesByType[type]) {
+              activitiesByType[type] = [];
+          }
+          activitiesByType[type].push(activity);
+      });
 
-        const maxPossible = gradedActivities.reduce((sum, activity) => 
-          sum + (parseFloat(activity.points) || 0), 0);
+      Object.keys(activitiesByType).forEach(type => {
+          const typeActivities = activitiesByType[type];
+          
+          const typePerformance = students.map(student => {
+              const gradedActivities = typeActivities.filter(activity => {
+                  const studentData = activity.students?.find(s => s.user_ID === student.user_ID);
+                  return studentData && studentData.submitted && studentData.grade !== null;
+              });
 
-        const average = maxPossible > 0 ? (total / maxPossible) * 100 : 0;
+              if (gradedActivities.length === 0) {
+                  return null; // Skip students with no grades in this type
+              }
 
-        return {
-          studentName: student.user_ID,
-          fullName: student.user_Name,
-          average: Math.round(average * 100) / 100,
-          activityCount: gradedActivities.length
-        };
-      }).filter(student => student.average > 0 && student.activityCount > 0)
-        .sort((a, b) => b.average - a.average)
-        .slice(0, 8);
+              const total = gradedActivities.reduce((sum, activity) => {
+                  const studentData = activity.students?.find(s => s.user_ID === student.user_ID);
+                  return sum + (parseFloat(studentData?.grade) || 0);
+              }, 0);
 
-      typeData[type] = typePerformance;
-    });
+              const maxPossible = gradedActivities.reduce((sum, activity) => 
+                  sum + (parseFloat(activity.points) || 0), 0);
 
-    if (attendanceData && students.length > 0) {
-      const attendancePerformance = students.map(student => {
-        const attendanceSummary = calculateAttendanceRecord(student.user_ID);
-        const attendanceRate = attendanceSummary ? 
-          ((attendanceSummary.present + attendanceSummary.excused) / attendanceSummary.totalDays) * 100 : 0;
-        
-        return {
-          studentName: student.user_ID,
-          fullName: student.user_Name,
-          average: Math.round(attendanceRate * 100) / 100,
-          activityCount: attendanceSummary ? attendanceSummary.totalDays : 0,
-          attendanceSummary: attendanceSummary
-        };
-      }).filter(student => student.average > 0 && student.activityCount > 0)
-        .sort((a, b) => b.average - a.average)
-        .slice(0, 8);
+              const average = maxPossible > 0 ? (total / maxPossible) * 100 : 0;
 
-      typeData['Attendance'] = attendancePerformance;
-    }
+              return {
+                  studentName: student.user_ID,
+                  fullName: student.user_Name,
+                  average: Math.round(average * 100) / 100,
+                  activityCount: gradedActivities.length
+              };
+          }).filter(student => student !== null && student.average > 0)
+            .sort((a, b) => b.average - a.average)
+            .slice(0, 8);
 
-    return typeData;
+          typeData[type] = typePerformance;
+      });
+
+      // Process attendance data separately
+      if (attendanceData && students.length > 0) {
+          console.log("Processing attendance data for activity type chart");
+          const attendancePerformance = students.map(student => {
+              const attendanceSummary = calculateAttendanceRecord(student.user_ID);
+              
+              if (!attendanceSummary || attendanceSummary.totalDays === 0) {
+                  return null;
+              }
+              
+              // Calculate attendance rate
+              const totalAttended = attendanceSummary.present + attendanceSummary.excused;
+              const attendanceRate = (totalAttended / attendanceSummary.totalDays) * 100;
+              
+              return {
+                  studentName: student.user_ID,
+                  fullName: student.user_Name,
+                  average: Math.round(attendanceRate * 100) / 100,
+                  activityCount: attendanceSummary.totalDays,
+                  attendanceSummary: attendanceSummary
+              };
+          }).filter(student => student !== null && student.activityCount > 0)
+            .sort((a, b) => b.average - a.average)
+            .slice(0, 8);
+
+          console.log("Attendance performance data:", attendancePerformance);
+          typeData['Attendance'] = attendancePerformance;
+      }
+
+      return typeData;
   };
 
   const filteredLineChartData = analyticsData?.lineChartData.filter(item => 
@@ -646,7 +697,7 @@ export default function AnalyticsTab() {
           {failingStudents.map((student) => {
             const attendanceSummary = calculateAttendanceRecord(student.studentId);
             const attendanceRate = attendanceSummary ? 
-              ((attendanceSummary.present + attendanceSummary.excused) / attendanceSummary.totalDays) * 100 : 0;
+              (attendanceSummary.present / attendanceSummary.totalDays) * 100 : 0;
             
             return (
               <div key={student.studentId} className="bg-white rounded p-3 border border-amber-100">
@@ -698,7 +749,7 @@ export default function AnalyticsTab() {
                 {attendanceSummary && attendanceSummary.totalDays > 0 && (
                   <div className="mt-2 pt-2 border-t border-gray-100">
                     <p className="text-xs font-medium text-gray-700 mb-1">Attendance Breakdown:</p>
-                    <div className="grid grid-cols-4 gap-1 text-xs text-center">
+                    <div className="grid grid-cols-3 gap-1 text-xs text-center">
                       <div className="bg-green-100 text-green-800 p-1 rounded">
                         <div className="font-bold">{attendanceSummary.present}</div>
                         <div>Present</div>
@@ -710,10 +761,6 @@ export default function AnalyticsTab() {
                       <div className="bg-red-100 text-red-800 p-1 rounded">
                         <div className="font-bold">{attendanceSummary.absent}</div>
                         <div>Absent</div>
-                      </div>
-                      <div className="bg-blue-100 text-blue-800 p-1 rounded">
-                        <div className="font-bold">{attendanceSummary.excused}</div>
-                        <div>Excused</div>
                       </div>
                     </div>
                   </div>
@@ -744,7 +791,7 @@ export default function AnalyticsTab() {
                     {student.averageGrade < 50 && (
                       <li>Provide additional resources or tutoring sessions</li>
                     )}
-                    {Object.entries(student.performanceByType).some(([_, grade]) => grade < 60) && (
+                    {Object.entries(student.performanceByType).some(([grade]) => grade < 60) && (
                       <li>Review specific activity types where student is struggling</li>
                     )}
                     {attendanceRate < 70 && student.submissionRate < 70 && (
@@ -812,6 +859,9 @@ export default function AnalyticsTab() {
           <div className="p-5 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
             <p className="mt-3 text-gray-600">Loading Student Progress Analytics...</p>
+            {error && (
+              <p className="mt-2 text-sm text-red-600">Error: {error}</p>
+            )}
           </div>
         </div>
       </div>
@@ -1398,7 +1448,7 @@ export default function AnalyticsTab() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                          label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="count"
@@ -1560,7 +1610,7 @@ export default function AnalyticsTab() {
                     </ResponsiveContainer>
                   </div>
                   
-                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="bg-green-50 border border-green-100 rounded p-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-green-800">High Attendance</span>
@@ -1595,34 +1645,17 @@ export default function AnalyticsTab() {
                       <p className="text-xs text-yellow-600 mt-1">students</p>
                     </div>
                     
-                    <div className="bg-orange-50 border border-orange-100 rounded p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-orange-800">Low</span>
-                        <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
-                          50-69%
-                        </span>
-                      </div>
-                      <p className="text-2xl font-bold text-orange-700 mt-1">
-                        {
-                          analyticsData.activityTypeData['Attendance']?.filter(
-                            item => item.average >= 50 && item.average < 70
-                          ).length || 0
-                        }
-                      </p>
-                      <p className="text-xs text-orange-600 mt-1">students</p>
-                    </div>
-                    
                     <div className="bg-red-50 border border-red-100 rounded p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-red-800">Critical</span>
+                        <span className="text-sm font-medium text-red-800">Low</span>
                         <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">
-                          {'<'}50%
+                          {'<'}70%
                         </span>
                       </div>
                       <p className="text-2xl font-bold text-red-700 mt-1">
                         {
                           analyticsData.activityTypeData['Attendance']?.filter(
-                            item => item.average < 50
+                            item => item.average < 70
                           ).length || 0
                         }
                       </p>
@@ -1773,6 +1806,18 @@ export default function AnalyticsTab() {
                   <p className="mb-4 text-gray-600 max-w-md mx-auto">
                     Create activities and grade student submissions to generate comprehensive academic analytics.
                   </p>
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-red-600 font-medium">Error loading data:</p>
+                      <p className="text-sm text-red-500">{error}</p>
+                      <button 
+                        onClick={fetchAnalyticsData}
+                        className="mt-2 px-4 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Link to={`/ClassworkTab?code=${subjectCode}`}>
                       <button className="px-6 py-2 bg-[#00874E] text-white rounded hover:bg-[#006e3d] transition-colors">

@@ -1,5 +1,5 @@
 import React from 'react';
-import ArchiveWarningIcon from '../assets/Warning(Yellow).svg';
+import ArchiveWarningIcon from '../../assets/Warning(Yellow).svg';
 
 const ClassWorkArchive = ({ 
   isOpen, 

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import jsPDF from 'jspdf';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
 import BackButton from '../../assets/BackButton(Light).svg';
-import Search from "../../assets/Search.svg";
 import ClassManagementIcon from '../../assets/ClassManagement(Light).svg'; 
 import Announcement from '../../assets/Announcement(Light).svg';
 import Classwork from '../../assets/Classwork(Light).svg';
@@ -22,17 +22,17 @@ export default function GradeTab() {
 
   const [classInfo, setClassInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // REAL grade data loaded from backend
   const [gradeData, setGradeData] = useState([]);
-
+ 
   // Fetch class info - use useCallback to prevent infinite re-renders
   const fetchClassInfo = useCallback(async () => {
     try {
       const response = await fetch(
-        `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_students_by_section.php?subject_code=${subjectCode}`
+        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_students_by_section.php?subject_code=${subjectCode}`
       );
       
       if (!response.ok) {
@@ -69,7 +69,7 @@ export default function GradeTab() {
       });
 
       const response = await fetch(
-        `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_grade_summary.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}`
+        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_grade_summary.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}`
       );
 
       if (!response.ok) {
@@ -180,8 +180,275 @@ export default function GradeTab() {
     };
   }, [subjectCode, fetchClassInfo, fetchGradeSummary]);
 
+  const downloadTableAsPDF = async () => {
+    if (isDownloading || gradeData.length === 0) return;
+    
+    setIsDownloading(true);
+    
+    try {
+      // Calculate totals
+      const totalAssigned = gradeData.reduce((sum, item) => sum + item.assignedWorks, 0);
+      const totalSubmissions = gradeData.reduce((sum, item) => sum + item.submissions, 0);
+      const totalScores = gradeData.reduce((sum, item) => sum + item.totalScores, 0);
+      const sumGradedWorks = gradeData.reduce((sum, item) => sum + item.sumGradedWorks, 0);
+      const overallPercentage = totalScores > 0 ? ((sumGradedWorks / totalScores) * 100).toFixed(1) : "0.0";
+      
+      // Create PDF in LANDSCAPE mode for the wide table
+      const pdf = new jsPDF('landscape', 'pt', 'a4');
+      
+      // Set margins - smaller margins in landscape
+      const margin = 30;
+      let yPosition = margin;
+      const pageWidth = pdf.internal.pageSize.width;
+      const pageHeight = pdf.internal.pageSize.height;
+      
+      // Add main title
+      pdf.setFontSize(20);
+      pdf.setTextColor(70, 87, 70); // #465746
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('GRADE SUMMARY REPORT', pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 30;
+      
+      // Subject info in a clean layout
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(0, 0, 0);
+      
+      // First row: Subject and Code on left, Section and Date on right
+      pdf.text(`Subject: ${classInfo?.subject || 'N/A'}`, margin, yPosition);
+      pdf.text(`Code: ${classInfo?.subject_code || 'N/A'}`, margin + 200, yPosition);
+      pdf.text(`Section: ${classInfo?.section || 'N/A'}`, pageWidth - margin - 250, yPosition);
+      pdf.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth - margin, yPosition, { align: 'right' });
+      yPosition += 18;
+      
+      // Second row: Professor
+      pdf.text(`Professor: ${classInfo?.professor_name || classInfo?.professor_ID || 'N/A'}`, margin, yPosition);
+      yPosition += 30;
+      
+      // Add a thin separator line
+      pdf.setDrawColor(70, 87, 70, 0.3);
+      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 20;
+      
+      // Define table structure - 7 columns with proper headers
+      const headers = [
+        'Class Works',
+        'Assigned Works',
+        'Submissions',
+        'Missed Submissions',
+        'Total Scores',
+        'Sum of Graded Works',
+        'Percentage'
+      ];
+      
+      // Calculate column widths for landscape (more space available)
+      const colWidths = [100, 85, 85, 100, 85, 110, 85];
+      const totalTableWidth = colWidths.reduce((sum, width) => sum + width, 0);
+      
+      // Center the table horizontally
+      const tableStartX = (pageWidth - totalTableWidth) / 2;
+      
+      // Draw table headers - FIXED: White text on dark background
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFillColor(70, 87, 70); // Dark green background
+      
+      // Draw header background (single rectangle for the whole header row)
+      pdf.rect(tableStartX, yPosition, totalTableWidth, 25, 'F');
+      
+      // Draw header text with WHITE color
+      pdf.setTextColor(255, 255, 255); // WHITE TEXT
+      
+      let currentX = tableStartX;
+      headers.forEach((header, index) => {
+        pdf.text(
+          header,
+          currentX + colWidths[index] / 2,
+          yPosition + 16,
+          { align: 'center' }
+        );
+        
+        // Draw header cell borders (light gray)
+        pdf.setDrawColor(200, 200, 200);
+        pdf.rect(currentX, yPosition, colWidths[index], 25);
+        
+        currentX += colWidths[index];
+      });
+      
+      yPosition += 25; // Move down after header
+      
+      // Draw table data rows
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(0, 0, 0); // Black text for data
+      
+      gradeData.forEach((item, index) => {
+        // Check if we need a new page
+        if (yPosition > pageHeight - 80) {
+          pdf.addPage('landscape');
+          yPosition = margin;
+        }
+        
+        // Alternate row background
+        if (index % 2 === 0) {
+          pdf.setFillColor(248, 249, 250); // Light gray
+        } else {
+          pdf.setFillColor(255, 255, 255); // White
+        }
+        
+        // Draw row background
+        pdf.rect(tableStartX, yPosition, totalTableWidth, 20, 'F');
+        
+        // Draw row data
+        currentX = tableStartX;
+        
+        // Column 1: Class Works
+        pdf.text(item.activityType, currentX + 5, yPosition + 14);
+        currentX += colWidths[0];
+        
+        // Column 2: Assigned Works (centered)
+        pdf.text(item.assignedWorks.toString(), currentX + colWidths[1] / 2, yPosition + 14, { align: 'center' });
+        currentX += colWidths[1];
+        
+        // Column 3: Submissions (centered)
+        pdf.text(item.submissions.toString(), currentX + colWidths[2] / 2, yPosition + 14, { align: 'center' });
+        currentX += colWidths[2];
+        
+        // Column 4: Missed Submissions (centered)
+        pdf.text(item.missedSubmissions.toString(), currentX + colWidths[3] / 2, yPosition + 14, { align: 'center' });
+        currentX += colWidths[3];
+        
+        // Column 5: Total Scores (centered)
+        pdf.text(item.totalScores.toString(), currentX + colWidths[4] / 2, yPosition + 14, { align: 'center' });
+        currentX += colWidths[4];
+        
+        // Column 6: Sum of Graded Works (centered)
+        pdf.text(item.sumGradedWorks.toString(), currentX + colWidths[5] / 2, yPosition + 14, { align: 'center' });
+        currentX += colWidths[5];
+        
+        // Column 7: Percentage with color coding (centered)
+        const percentageValue = parseFloat(item.percentage);
+        if (percentageValue >= 70) {
+          pdf.setTextColor(34, 139, 34); // Green
+        } else if (percentageValue >= 50) {
+          pdf.setTextColor(218, 165, 32); // Yellow/Orange
+        } else {
+          pdf.setTextColor(220, 53, 69); // Red
+        }
+        pdf.text(item.percentage, currentX + colWidths[6] / 2, yPosition + 14, { align: 'center' });
+        pdf.setTextColor(0, 0, 0); // Reset color to black
+        
+        // Draw cell borders
+        pdf.setDrawColor(200, 200, 200);
+        let borderX = tableStartX;
+        colWidths.forEach((width) => {
+          pdf.rect(borderX, yPosition, width, 20);
+          borderX += width;
+        });
+        
+        yPosition += 20; // Row height
+      });
+      
+      yPosition += 25;
+      
+      // Draw summary separator line
+      pdf.setDrawColor(70, 87, 70, 0.3);
+      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
+      yPosition += 20;
+      
+      // Summary section title
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(70, 87, 70);
+      pdf.text('SUMMARY', margin, yPosition);
+      yPosition += 25;
+      
+      // Summary statistics
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      
+      // Summary items in two columns
+      const leftColumn = margin;
+      const rightColumn = pageWidth / 2 + 50;
+      
+      // Left column items
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Total Assigned Works:', leftColumn, yPosition);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(totalAssigned.toString(), leftColumn + 150, yPosition);
+      pdf.setFont('helvetica', 'normal');
+      
+      pdf.text('Total Submissions:', leftColumn, yPosition + 20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(totalSubmissions.toString(), leftColumn + 150, yPosition + 20);
+      pdf.setFont('helvetica', 'normal');
+      
+      pdf.text('Total Scores:', leftColumn, yPosition + 40);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(totalScores.toString(), leftColumn + 150, yPosition + 40);
+      pdf.setFont('helvetica', 'normal');
+      
+      // Right column items
+      pdf.text('Sum of Graded Works:', rightColumn, yPosition);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(sumGradedWorks.toFixed(1), rightColumn + 150, yPosition);
+      pdf.setFont('helvetica', 'normal');
+      
+      pdf.text('Overall Percentage:', rightColumn, yPosition + 20);
+      
+      // Color code overall percentage
+      const overallValue = parseFloat(overallPercentage);
+      if (overallValue >= 70) {
+        pdf.setTextColor(34, 139, 34); // Green
+      } else if (overallValue >= 50) {
+        pdf.setTextColor(218, 165, 32); // Yellow/Orange
+      } else {
+        pdf.setTextColor(220, 53, 69); // Red
+      }
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${overallPercentage}%`, rightColumn + 150, yPosition + 20);
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFont('helvetica', 'normal');
+      
+      yPosition += 60;
+      
+      // Class info at the bottom
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'italic');
+      pdf.setTextColor(100, 100, 100);
+      
+      const classInfoLine = `Showing data for: ${classInfo?.subject || 'N/A'} (${classInfo?.subject_code || 'N/A'}) - Section ${classInfo?.section || 'N/A'}`;
+      const professorLine = `Professor: ${classInfo?.professor_name || `ID: ${classInfo?.professor_ID || 'N/A'}`}`;
+      
+      pdf.text(classInfoLine, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+      pdf.text(professorLine, pageWidth / 2, yPosition, { align: 'center' });
+      
+      // Add generation timestamp
+      yPosition += 20;
+      pdf.setFontSize(9);
+      pdf.text(
+        `Generated on: ${new Date().toLocaleString()}`,
+        pageWidth / 2,
+        yPosition,
+        { align: 'center' }
+      );
+      
+      // Save the PDF
+      const fileName = `Grade_Report_${classInfo?.subject_code || 'subject'}_${classInfo?.section || 'section'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      pdf.save(fileName);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const handleDownload = () => {
-    alert("Download functionality (CSV/PDF) will be implemented here.");
+    downloadTableAsPDF();
   };
 
   // Show error state
@@ -347,20 +614,7 @@ export default function GradeTab() {
 
             {/* Action buttons - Right aligned on mobile */}
             <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
-              {/* Download Button */}
-              <button 
-                onClick={handleDownload}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white text-gray font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] hover:shadow-lg transition-all duration-200 cursor-pointer"
-                title="Download Grade Report"
-              >
-                <img 
-                  src={DownloadIcon} 
-                  alt="Download" 
-                  className="h-4 w-4 sm:h-5 sm:w-5" 
-                />
-                <span className="hidden sm:inline">Download</span>
-              </button>
-
+              {/* Student List Button */}
               <Link to={`/StudentList?code=${subjectCode}`}>
                 <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer" title="Student List">
                   <img 
@@ -373,22 +627,32 @@ export default function GradeTab() {
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="mt-6 sm:mt-8">
-            <div className="relative max-w-md">
-              <input
-                type="text"
-                placeholder="Search by activity type..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
-              />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" title="Search">
-                <img
-                  src={Search}
-                  alt="Search"
-                  className="h-5 w-5 sm:h-6 sm:w-6"
-                />
+          {/* Download Button Section - Replaces Search Bar */}
+          <div className="mt-6 sm:mt-8 flex justify-end">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleDownload}
+                disabled={isDownloading || gradeData.length === 0}
+                className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-white text-gray font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] hover:shadow-lg transition-all duration-200 cursor-pointer ${
+                  isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                title={gradeData.length === 0 ? "No data to download" : "Download Grade Report as PDF"}
+              >
+                {isDownloading ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-[#00874E] border-t-transparent rounded-full animate-spin"></div>
+                    <span>Generating PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <img 
+                      src={DownloadIcon} 
+                      alt="Download" 
+                      className="h-5 w-5 sm:h-6 sm:w-6" 
+                    />
+                    <span>Download PDF</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -19,9 +19,9 @@ date_default_timezone_set('UTC');
 
 // Localhost MySQL connection
 $host = 'localhost';
-$dbname = 'tracked';
-$username = 'root';
-$password = '';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);

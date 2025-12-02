@@ -13,7 +13,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Localhost configuration - Updated path for student files
-  const BACKEND_URL = 'http://localhost/TrackEd/src/Pages/Student/SubjectsDB';
+  const BACKEND_URL = 'https://tracked.6minds.site/Student/SubjectsDB';
 
   useEffect(() => {
     if (isOpen && activity && studentId) {
@@ -268,7 +268,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId }) => {
     }
   };
 
-  const currentStudentFile = studentFiles.length > 0 ? studentFiles[0] : null;
+  // Removed the unused currentStudentFile variable
 
   if (!isOpen || !activity) return null;
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import PersonIcon from '../assets/Person.svg';
+import PersonIcon from '../../assets/Person.svg';
 
 const KickStudentList = ({ isOpen, student, onClose, onConfirm }) => {
   if (!isOpen || !student) return null;

@@ -10,9 +10,9 @@ if (isset($_SERVER['HTTP_ORIGIN'])) {
 
 // Database configuration
 $host = 'localhost';
-$username = 'root';
-$password = '';
-$dbname = 'tracked';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 $activity_id = $_GET['activity_id'] ?? '';
 $student_id = $_GET['student_id'] ?? '';

@@ -11,9 +11,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Database configuration - UPDATE THESE VALUES FOR YOUR SETUP
 $host = 'localhost';
-$username = 'your_username'; // Change this
-$password = 'your_password'; // Change this
-$dbname = 'tracked'; // Your database name
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 $data = json_decode(file_get_contents('php://input'), true);
 

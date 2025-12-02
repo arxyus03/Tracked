@@ -14,7 +14,6 @@ export default function AnalyticsIndividualInfo() {
   const [isOpen, setIsOpen] = useState(true);
   const [submittedActivities, setSubmittedActivities] = useState([]);
   const [missedActivities, setMissedActivities] = useState([]);
-  const [lateActivities, setLateActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const location = useLocation();
@@ -22,7 +21,6 @@ export default function AnalyticsIndividualInfo() {
   // Pagination states
   const [submittedCurrentPage, setSubmittedCurrentPage] = useState(1);
   const [missedCurrentPage, setMissedCurrentPage] = useState(1);
-  const [lateCurrentPage, setLateCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   // Get student data and subject code from navigation state
@@ -30,7 +28,14 @@ export default function AnalyticsIndividualInfo() {
   const subjectCode = location.state?.subjectCode;
   const section = location.state?.section;
 
-  // Add safety check to handle cases where data might be missing
+  // Log the received student data for debugging - MOVED TO TOP
+  useEffect(() => {
+    console.log("Received student data:", student);
+    console.log("Received subject code:", subjectCode);
+    console.log("Received section:", section);
+  }, [student, subjectCode, section]);
+
+  // Add safety check to handle cases where data might be missing - MOVED TO TOP
   useEffect(() => {
     if (!student && location.state) {
       // Try to get data from location state if student is not available
@@ -41,55 +46,27 @@ export default function AnalyticsIndividualInfo() {
     }
   }, [location.state, student]);
 
-  // If no student data is passed, show a message or redirect
-  if (!student) {
-    return (
-      <div>
-        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div
-          className={
-            isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
-          }
-        >
-          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 text-center">
-            <p className="text-red-500 text-lg mb-4">No student data available.</p>
-            <p className="text-sm text-gray-600 mb-4">
-              This might happen if you navigated directly to this page or used the browser's back button.
-            </p>
-            <Link 
-              to="/AnalyticsProf" 
-              className="text-blue-500 hover:underline inline-block bg-blue-50 px-4 py-2 rounded-md"
-            >
-              Go back to Analytics
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Calculate attendance from student data
   const attendance = {
-    present: student.presentCount || 0,
-    late: student.lateCount || 0,
-    absent: student.absentCount || 0,
+    present: student?.presentCount || 0,
+    late: student?.lateCount || 0,
+    absent: student?.absentCount || 0,
     total:
-      (student.presentCount || 0) +
-      (student.lateCount || 0) +
-      (student.absentCount || 0),
+      (student?.presentCount || 0) +
+      (student?.lateCount || 0) +
+      (student?.absentCount || 0),
   };
 
   // Calculate submission rate
   const submissionRate =
-    student.totalActivities > 0
-      ? Math.round((student.submittedCount / student.totalActivities) * 100)
+    student?.totalActivities > 0
+      ? Math.round((student?.submittedCount / student?.totalActivities) * 100)
       : 0;
 
-  // Fetch student's specific activity data
+  // Fetch student's specific activity data - MOVED TO TOP
   useEffect(() => {
     const fetchStudentActivities = async () => {
-      if (!student.id || !subjectCode) {
+      if (!student?.id || !subjectCode) {
         console.log("❌ Missing student ID or subject code");
         setLoading(false);
         return;
@@ -134,33 +111,25 @@ export default function AnalyticsIndividualInfo() {
           console.log("❌ No activity data received or invalid format");
           setSubmittedActivities([]);
           setMissedActivities([]);
-          setLateActivities([]);
         }
       } catch (error) {
         console.error("💥 Error fetching student activities:", error);
         // Set empty arrays instead of throwing error
         setSubmittedActivities([]);
         setMissedActivities([]);
-        setLateActivities([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchStudentActivities();
-  }, [student.id, subjectCode]);
+  }, [student?.id, subjectCode]);
 
-  // Log the received student data for debugging
-  useEffect(() => {
-    console.log("Received student data:", student);
-    console.log("Received subject code:", subjectCode);
-    console.log("Received section:", section);
-  }, [student, subjectCode, section]);
-
+  // Process student activities function
+// Process student activities function
   const processStudentActivities = (activities, studentId) => {
     const submitted = [];
     const missed = [];
-    const late = [];
 
     activities.forEach((activity) => {
       // Check if activity.students exists and is an array
@@ -229,26 +198,21 @@ export default function AnalyticsIndividualInfo() {
             studentSubmission.late === true ||
             studentSubmission.late === 1 ||
             studentSubmission.late === "1",
-          activity_type: activityType, // Use the properly processed type
+          activity_type: activityType,
           isPastDeadline: isPastDeadline,
         };
 
         if (activityItem.submitted) {
-          if (activityItem.late) {
-            // Submitted but late
-            late.push(activityItem);
-          } else {
-            // Submitted on time
-            submitted.push(activityItem);
-          }
+          // Submitted activities - include both on-time and late
+          submitted.push(activityItem);
         } else if (isPastDeadline) {
           // Activity was not submitted AND past deadline = missed
           missed.push(activityItem);
         }
-        // If not submitted but within deadline, don't add to any list (it's pending)
       } else {
-        // Student not found in activity - only add to missed if past deadline
+        // Student not found in activity
         if (isPastDeadline) {
+          // Past deadline and no submission = missed
           const activityItem = {
             id: activity.id,
             task: activity.task_number || `Activity ${activity.id}`,
@@ -259,31 +223,24 @@ export default function AnalyticsIndividualInfo() {
             submitted_date: null,
             submitted: false,
             late: false,
-            activity_type: activityType, // Use the properly processed type
+            activity_type: activityType,
             isPastDeadline: isPastDeadline,
           };
           missed.push(activityItem);
         }
-        // If student not found but within deadline, don't add to missed (it's pending)
       }
     });
 
     console.log("📋 Processed student activities:", {
       submittedCount: submitted.length,
       missedCount: missed.length,
-      lateCount: late.length,
       submitted,
       missed,
-      late,
     });
 
     // Debug: Log the activity types found
     console.log("🔍 Activity types found in submitted activities:");
     submitted.forEach(activity => {
-      console.log(`- ${activity.title}: ${activity.activity_type}`);
-    });
-    console.log("🔍 Activity types found in late activities:");
-    late.forEach(activity => {
       console.log(`- ${activity.title}: ${activity.activity_type}`);
     });
     console.log("🔍 Activity types found in missed activities:");
@@ -293,8 +250,35 @@ export default function AnalyticsIndividualInfo() {
 
     setSubmittedActivities(submitted);
     setMissedActivities(missed);
-    setLateActivities(late);
   };
+
+  // If no student data is passed, show a message or redirect
+  if (!student) {
+    return (
+      <div>
+        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div
+          className={
+            isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
+          }
+        >
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-8 text-center">
+            <p className="text-red-500 text-lg mb-4">No student data available.</p>
+            <p className="text-sm text-gray-600 mb-4">
+              This might happen if you navigated directly to this page or used the browser's back button.
+            </p>
+            <Link 
+              to="/AnalyticsProf" 
+              className="text-blue-500 hover:underline inline-block bg-blue-50 px-4 py-2 rounded-md"
+            >
+              Go back to Analytics
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -363,11 +347,6 @@ export default function AnalyticsIndividualInfo() {
   const missedEndIndex = missedStartIndex + itemsPerPage;
   const currentMissed = missedActivities.slice(missedStartIndex, missedEndIndex);
 
-  const lateTotalPages = Math.ceil(lateActivities.length / itemsPerPage);
-  const lateStartIndex = (lateCurrentPage - 1) * itemsPerPage;
-  const lateEndIndex = lateStartIndex + itemsPerPage;
-  const currentLate = lateActivities.slice(lateStartIndex, lateEndIndex);
-
   // Pagination handlers
   const handleSubmittedPageChange = (page) => {
     setSubmittedCurrentPage(page);
@@ -375,10 +354,6 @@ export default function AnalyticsIndividualInfo() {
 
   const handleMissedPageChange = (page) => {
     setMissedCurrentPage(page);
-  };
-
-  const handleLatePageChange = (page) => {
-    setLateCurrentPage(page);
   };
 
   // Pagination Component
@@ -472,7 +447,6 @@ export default function AnalyticsIndividualInfo() {
         activities: {
           submitted: submittedActivities,
           missed: missedActivities,
-          late: lateActivities,
         },
         generatedAt: new Date().toLocaleString(),
       };
@@ -542,20 +516,6 @@ export default function AnalyticsIndividualInfo() {
       )}","${formatDateOnly(activity.due_date)}","${
         activity.grade || "N/A"
       }","${activity.points}","On Time"\n`;
-    });
-    csv += `\n`;
-
-    // Late Activities
-    csv += `LATE ACTIVITIES\n`;
-    csv += `Type,Task,Title,Submitted Date,Due Date,Grade,Points,Status\n`;
-    activities.late.forEach((activity) => {
-      csv += `"${getActivityTypeDisplay(activity.activity_type)}","${
-        activity.task
-      }","${activity.title}","${formatDate(
-        activity.submitted_date
-      )}","${formatDateOnly(activity.due_date)}","${
-        activity.grade || "N/A"
-      }","${activity.points}","Late"\n`;
     });
     csv += `\n`;
 
@@ -720,52 +680,6 @@ export default function AnalyticsIndividualInfo() {
         </div>
         
         <div class="section">
-          <div class="section-title late">Late Activities (${
-            activities.late.length
-          })</div>
-          ${
-            activities.late.length > 0
-              ? `
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Task</th>
-                  <th>Title</th>
-                  <th>Submitted Date</th>
-                  <th>Due Date</th>
-                  <th>Grade</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${activities.late
-                  .map(
-                    (activity) => `
-                  <tr>
-                    <td>${getActivityTypeDisplay(activity.activity_type)}</td>
-                    <td>${activity.task}</td>
-                    <td>${activity.title}</td>
-                    <td>${formatDate(activity.submitted_date)}</td>
-                    <td>${formatDateOnly(activity.due_date)}</td>
-                    <td>${
-                      activity.grade !== null
-                        ? `${activity.grade}/${activity.points}`
-                        : "Not graded"
-                    }</td>
-                    <td>Late</td>
-                  </tr>
-                `
-                  )
-                  .join("")}
-              </tbody>
-            </table>
-          `
-              : "<p>No late activities found.</p>"
-          }
-        </div>
-        
-        <div class="section">
           <div class="section-title missed">Missed Activities (${
             activities.missed.length
           })</div>
@@ -894,7 +808,7 @@ export default function AnalyticsIndividualInfo() {
               Performance Summary
             </p>
             <hr className="border-[#465746]/30 mb-3 sm:mb-4" />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-center text-xs sm:text-sm lg:text-base">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 text-center text-xs sm:text-sm lg:text-base">
               <div className="p-2 sm:p-3 bg-green-50 rounded-md">
                 <p className="font-semibold text-green-600 mb-1 sm:mb-2">
                   Submitted
@@ -909,22 +823,6 @@ export default function AnalyticsIndividualInfo() {
                 </p>
                 <span className="text-lg sm:text-xl lg:text-2xl font-bold">
                   {missedActivities.length}
-                </span>
-              </div>
-              <div className="p-2 sm:p-3 bg-yellow-50 rounded-md">
-                <p className="font-semibold text-yellow-500 mb-1 sm:mb-2">
-                  Late
-                </p>
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold">
-                  {lateActivities.length}
-                </span>
-              </div>
-              <div className="p-2 sm:p-3 bg-blue-50 rounded-md">
-                <p className="font-semibold text-blue-500 mb-1 sm:mb-2">
-                  Submission Rate
-                </p>
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold">
-                  {submissionRate}%
                 </span>
               </div>
             </div>
@@ -1034,97 +932,6 @@ export default function AnalyticsIndividualInfo() {
               <div className="text-center py-8 bg-gray-50 rounded-lg">
                 <p className="text-gray-500">
                   No submitted activities found for this student.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* LATE ACTIVITIES */}
-          <div className="bg-white p-4 sm:p-5 rounded-lg sm:rounded-xl shadow-md mb-4 sm:mb-5">
-            <p className="font-bold text-yellow-500 mb-3 text-base sm:text-lg lg:text-xl">
-              Late Activities ({lateActivities.length})
-            </p>
-            <p className="text-xs sm:text-sm text-gray-600 mb-2">
-              Activities submitted after the deadline
-            </p>
-            <hr className="border-[#465746]/30 mb-3 sm:mb-4" />
-
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Loading late activities...</p>
-              </div>
-            ) : currentLate.length > 0 ? (
-              <>
-                <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-                    <div className="overflow-hidden rounded-lg border border-gray-300">
-                      <table className="min-w-full text-left border-collapse text-xs sm:text-sm lg:text-base">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="p-2 sm:p-3 font-bold">Type</th>
-                            <th className="p-2 sm:p-3 font-bold">Task</th>
-                            <th className="p-2 sm:p-3 font-bold">Title</th>
-                            <th className="p-2 sm:p-3 font-bold whitespace-nowrap">
-                              Submitted Date
-                            </th>
-                            <th className="p-2 sm:p-3 font-bold whitespace-nowrap">
-                              Due Date
-                            </th>
-                            <th className="p-2 sm:p-3 text-center font-bold">
-                              Grade
-                            </th>
-                            <th className="p-2 sm:p-3 text-center font-bold">
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {currentLate.map((activity, index) => (
-                            <tr
-                              key={activity.id || index}
-                              className="hover:bg-gray-50 border-t border-gray-200"
-                            >
-                              <td className="p-2 sm:p-3 whitespace-nowrap">
-                                {getActivityTypeDisplay(activity.activity_type)}
-                              </td>
-                              <td className="p-2 sm:p-3 whitespace-nowrap">
-                                {activity.task}
-                              </td>
-                              <td className="p-2 sm:p-3">{activity.title}</td>
-                              <td className="p-2 sm:p-3 whitespace-nowrap">
-                                {formatDate(activity.submitted_date)}
-                              </td>
-                              <td className="p-2 sm:p-3 whitespace-nowrap">
-                                {formatDateOnly(activity.due_date)}
-                              </td>
-                              <td className="p-2 sm:p-3 text-center font-semibold">
-                                {activity.grade !== null
-                                  ? `${activity.grade}/${activity.points}`
-                                  : "Not graded"}
-                              </td>
-                              <td className="p-2 sm:p-3 text-center">
-                                <span className="text-yellow-600 font-semibold">
-                                  Late
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-                <Pagination
-                  currentPage={lateCurrentPage}
-                  totalPages={lateTotalPages}
-                  onPageChange={handleLatePageChange}
-                  dataLength={lateActivities.length}
-                />
-              </>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <p className="text-gray-500">
-                  No late activities found for this student.
                 </p>
               </div>
             )}

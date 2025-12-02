@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import NewAnnouncement from "../../Components/NewAnnouncement";
-import AnnouncementCard from "../../Components/AnnouncementCard";
+import NewAnnouncement from "../../Components/AnnouncementTabComponentsProf/NewAnnouncement";
+import AnnouncementCard from "../../Components/AnnouncementTabComponentsProf/AnnouncementCard";
 
 import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
 import BackButton from '../../assets/BackButton(Light).svg';

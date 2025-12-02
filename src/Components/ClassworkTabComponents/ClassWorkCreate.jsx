@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import BackButton from '../assets/BackButton(Light).svg';
-import ArrowDown from "../assets/ArrowDown(Light).svg";
+import BackButton from '../../assets/BackButton(Light).svg';
+import ArrowDown from "../../assets/ArrowDown(Light).svg";
 
 const ClassWorkCreate = ({ 
   isOpen, 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-import ArrowDown from "../assets/ArrowDown(Light).svg";
-import Edit from "../assets/Edit(Light).svg";
-import Delete from "../assets/Delete.svg";
+import ArrowDown from "../../assets/ArrowDown(Light).svg";
+import Edit from "../../assets/Edit(Light).svg";
+import Delete from "../../assets/Delete.svg";
 
 export default function AnnouncementCard({
   subject,

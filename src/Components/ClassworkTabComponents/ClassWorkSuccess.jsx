@@ -1,5 +1,5 @@
 import React from 'react';
-import SuccessIcon from '../assets/Success(Green).svg';
+import SuccessIcon from '../../assets/Success(Green).svg';
 
 const ClassWorkSuccess = ({ 
   isOpen, 

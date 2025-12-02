@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: http://localhost:3000'); // Your React app
+header('Access-Control-Allow-Origin: *'); // Your React app
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -9,11 +9,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Local database config (XAMPP default)
 $host = 'localhost';
-$username = 'root';
-$password = '';
-$dbname = 'tracked';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 $data = json_decode(file_get_contents('php://input'), true);
 

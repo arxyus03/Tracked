@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import ArrowDown from "../assets/ArrowDown(Light).svg"; 
-import Edit from "../assets/Edit(Light).svg";
-import SuccessIcon from "../assets/Success(Green).svg";
-import ErrorIcon from "../assets/Error(Red).svg";
+import ArrowDown from "../../assets/ArrowDown(Light).svg"; 
+import Edit from "../../assets/Edit(Light).svg";
+import SuccessIcon from "../../assets/Success(Green).svg";
+import ErrorIcon from "../../assets/Error(Red).svg";
 import jsPDF from "jspdf";
 
 function AttendanceCard({ date, students, rawDate, subjectCode }) {

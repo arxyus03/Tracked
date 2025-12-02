@@ -1,11 +1,11 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: http://localhost:3000');
+header('Access-Control-Allow-Origin: *');
 
 $host = 'localhost';
-$username = 'root';
-$password = '';
-$dbname = 'tracked';
+$dbname = 'u713320770_tracked';
+$username = 'u713320770_trackedDB';
+$password = 'Tracked@2025';
 
 $activity_id = $_GET['activity_id'] ?? '';
 

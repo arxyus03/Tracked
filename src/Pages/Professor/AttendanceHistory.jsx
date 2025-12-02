@@ -4,8 +4,8 @@ import jsPDF from 'jspdf';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import AttendanceCard from "../../Components/AttendanceCard";
-import RemoveStudent from "../../Components/RemoveStudent";
+import AttendanceCard from "../../Components/AttendanceHistoryComponents/AttendanceCard";
+import RemoveStudent from "../../Components/AttendanceHistoryComponents/RemoveStudent";
 
 import AttendanceHistoryIcon from '../../assets/AttendanceHistory.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
