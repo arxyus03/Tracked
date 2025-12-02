@@ -9,6 +9,7 @@ import Cross from "../assets/Cross(Light).svg";
 import Delete from "../assets/Delete.svg";
 import DetailsIcon from "../assets/Details(Light).svg";
 import ClockIcon from "../assets/Deadline.svg";
+import GoogleDriveIcon from "../assets/GoogleDrive.svg";
 import StudentActivitiesDetails from './StudentActivitiesDetails';
 import PhotoManagement from './PhotoManagement';
 
@@ -34,12 +35,21 @@ const ClassWorkSubmission = ({
   const [selectedStudentForPhoto, setSelectedStudentForPhoto] = useState(null);
   const [viewingPhoto, setViewingPhoto] = useState(null);
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
+  
+  // File Upload States
+  const [uploadedFilesList, setUploadedFilesList] = useState({});
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  
   const scrollContainerRef = useRef(null);
+
+  // Localhost configuration - Fixed for your setup
+  const BACKEND_URL = 'http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB';
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
     window.addEventListener('resize', checkMobile);
+    
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
@@ -50,10 +60,17 @@ const ClassWorkSubmission = ({
       const studentFiles = {};
       activity.students.forEach(student => {
         if (student.submitted_file) {
-          studentFiles[student.user_ID] = student.submitted_file;
+          studentFiles[student.user_ID] = {
+            url: student.submitted_file,
+            name: 'Student Submission',
+            uploadedBy: 'Student'
+          };
         }
       });
       setStudentUploadedFiles(studentFiles);
+      
+      // Load uploaded files
+      fetchAllUploadedFiles();
       
       if (isMobile && activity.students.length > 0 && !selectedStudent) {
         const firstStudent = activity.students[0];
@@ -78,6 +95,262 @@ const ClassWorkSubmission = ({
       }, 100);
     }
   }, [selectedStudent, isMobile]);
+
+  // ===========================
+  // FILE UPLOAD FUNCTIONS
+  // ===========================
+
+  // Upload file to server
+  const uploadFileToServer = async (file, studentId) => {
+    if (!file) return null;
+
+    setIsUploadingFile(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('activity_id', activity.id);
+      formData.append('student_id', studentId);
+      formData.append('file_type', 'professor');
+
+      const response = await fetch(`${BACKEND_URL}/upload-file.php`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local state
+        const newFile = {
+          id: result.file.id || Date.now(),
+          name: result.file.original_name,
+          fileName: result.file.file_name,
+          url: result.file.url,
+          size: result.file.size,
+          type: result.file.type,
+          uploaded_at: result.file.uploaded_at || new Date().toISOString(),
+          uploadedBy: 'Professor'
+        };
+
+        // Add to uploadedFilesList
+        setUploadedFilesList(prev => ({
+          ...prev,
+          [studentId]: [...(prev[studentId] || []), newFile]
+        }));
+
+        // Also update the uploadedFiles state for photo management
+        setUploadedFiles(prev => ({
+          ...prev,
+          [studentId]: {
+            ...prev[studentId],
+            url: result.file.url,
+            name: result.file.original_name,
+            uploadedBy: 'Professor'
+          }
+        }));
+
+        return newFile;
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Failed to upload file: ' + error.message);
+      return null;
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (studentId) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '*/*';
+    input.multiple = false;
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Check file size (max 25MB)
+      if (file.size > 25 * 1024 * 1024) {
+        alert('File size must be less than 25MB');
+        return;
+      }
+
+      try {
+        const uploadedFile = await uploadFileToServer(file, studentId);
+        if (uploadedFile) {
+          alert('File uploaded successfully!');
+          // Refresh uploaded files list
+          fetchUploadedFiles(studentId);
+        }
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Upload failed: ' + error.message);
+      }
+    };
+    
+    input.click();
+  };
+
+  // Fetch uploaded files for a student
+  const fetchUploadedFiles = async (studentId) => {
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/get-uploaded-files.php?activity_id=${activity.id}&student_id=${studentId}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      if (result.success) {
+        // Convert database format to local format
+        const filesMap = {};
+        result.files.forEach(file => {
+          if (!filesMap[file.student_id]) {
+            filesMap[file.student_id] = [];
+          }
+          filesMap[file.student_id].push({
+            id: file.id,
+            name: file.original_name || file.file_name,
+            fileName: file.file_name,
+            url: file.file_url,
+            size: file.file_size,
+            type: file.file_type,
+            uploaded_at: file.uploaded_at,
+            uploadedBy: file.uploaded_by || 'professor'
+          });
+        });
+        
+        setUploadedFilesList(prev => ({
+          ...prev,
+          ...filesMap
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching uploaded files:', error);
+    }
+  };
+
+  // Fetch all uploaded files for this activity
+  const fetchAllUploadedFiles = async () => {
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/get-uploaded-files.php?activity_id=${activity.id}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      if (result.success && result.files) {
+        const filesMap = {};
+        result.files.forEach(file => {
+          if (!filesMap[file.student_id]) {
+            filesMap[file.student_id] = [];
+          }
+          filesMap[file.student_id].push({
+            id: file.id,
+            name: file.original_name || file.file_name,
+            fileName: file.file_name,
+            url: file.file_url,
+            size: file.file_size,
+            type: file.file_type,
+            uploaded_at: file.uploaded_at,
+            uploadedBy: file.uploaded_by || 'professor'
+          });
+        });
+        
+        setUploadedFilesList(filesMap);
+        
+        // Also update the uploadedFiles state for existing photo management
+        Object.keys(filesMap).forEach(studentId => {
+          if (filesMap[studentId].length > 0) {
+            const latestFile = filesMap[studentId][0]; // Get most recent file
+            setUploadedFiles(prev => ({
+              ...prev,
+              [studentId]: {
+                url: latestFile.url,
+                name: latestFile.name,
+                uploadedBy: 'Professor'
+              }
+            }));
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error loading uploaded files:', error);
+    }
+  };
+
+  // Delete uploaded file
+  const handleDeleteFile = async (fileId, studentId) => {
+    if (!confirm('Are you sure you want to delete this file?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/delete-file.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ file_id: fileId })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Remove from local state
+        setUploadedFilesList(prev => ({
+          ...prev,
+          [studentId]: prev[studentId].filter(file => file.id !== fileId)
+        }));
+        
+        // Also update uploadedFiles if this was the only file
+        const remainingFiles = uploadedFilesList[studentId]?.filter(file => file.id !== fileId);
+        if (remainingFiles?.length === 0) {
+          setUploadedFiles(prev => {
+            const newState = { ...prev };
+            delete newState[studentId];
+            return newState;
+          });
+        }
+        
+        alert('File deleted successfully');
+      } else {
+        alert('Error deleting file: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert('Error deleting file. Please try again.');
+    }
+  };
+
+  // View uploaded file
+  const handleViewUploadedFile = (fileUrl) => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  // ===========================
+  // EXISTING FUNCTIONS
+  // ===========================
 
   const filterOptions = [
     "All",
@@ -196,8 +469,6 @@ const ClassWorkSubmission = ({
 
   const handleSave = async () => {
     try {
-      console.log('Saving grades for activity:', activity.id, 'Students:', localStudents);
-      
       const saveData = {
         activity_ID: activity.id,
         students: localStudents.map(student => {
@@ -213,7 +484,7 @@ const ClassWorkSubmission = ({
         })
       };
 
-      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/update_activity_grades.php', {
+      const response = await fetch(`${BACKEND_URL}/update_activity_grades.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,7 +497,6 @@ const ClassWorkSubmission = ({
       }
 
       const result = await response.json();
-      console.log('Save result:', result);
 
       if (result.success) {
         const updatedStudents = localStudents.map(student => {
@@ -275,64 +545,62 @@ const ClassWorkSubmission = ({
       id: studentId,
       name: studentName
     });
+    
+    // Fetch files for this student
+    fetchUploadedFiles(studentId);
+    
     setPhotoModalOpen(true);
   };
 
   const handleProfessorPhotoUpload = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const newFile = {
-          id: Date.now() + Math.random(),
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          url: URL.createObjectURL(file),
-          uploadDate: new Date().toISOString(),
-          uploadedBy: 'Professor'
-        };
-
-        setUploadedFiles(prev => ({
-          ...prev,
-          [selectedStudentForPhoto.id]: newFile
-        }));
-
-        console.log(`Uploaded professor photo for student ${selectedStudentForPhoto.name}:`, file);
-      }
-    };
-    input.click();
+    // This will now trigger the file upload dialog
+    handleFileUpload(selectedStudentForPhoto?.id);
   };
 
-  const handleViewProfessorPhoto = () => {
-    const photo = uploadedFiles[selectedStudentForPhoto.id];
-    if (photo) {
-      setViewingPhoto(photo);
-      setPhotoViewerOpen(true);
+  const handleDeleteProfessorPhoto = () => {
+    if (selectedStudentForPhoto?.id) {
+      const files = uploadedFilesList[selectedStudentForPhoto.id];
+      if (files && files.length > 0) {
+        const latestFile = files[0]; // Get most recent file
+        handleDeleteFile(latestFile.id, selectedStudentForPhoto.id);
+      } else {
+        alert('No files to delete');
+      }
     }
   };
 
   const handleViewStudentPhoto = () => {
     const photo = studentUploadedFiles[selectedStudentForPhoto.id];
     if (photo) {
-      setViewingPhoto(photo);
-      setPhotoViewerOpen(true);
+      if (photo.url && typeof photo.url === 'string' && photo.url.startsWith('http')) {
+        window.open(photo.url, '_blank', 'noopener,noreferrer');
+      } else {
+        setViewingPhoto({
+          url: photo.url || photo,
+          name: photo.name || 'Student Submission',
+          uploadedBy: 'Student'
+        });
+        setPhotoViewerOpen(true);
+      }
+    } else {
+      alert('Student has not submitted any file yet');
     }
   };
 
-  const handleDeleteProfessorPhoto = () => {
-    setUploadedFiles(prev => {
-      const newFiles = { ...prev };
-      delete newFiles[selectedStudentForPhoto.id];
-      return newFiles;
-    });
-    setPhotoViewerOpen(false);
+  const handleViewProfessorPhoto = () => {
+    if (selectedStudentForPhoto?.id) {
+      const files = uploadedFilesList[selectedStudentForPhoto.id];
+      if (files && files.length > 0) {
+        const latestFile = files[0]; // Get most recent file
+        handleViewUploadedFile(latestFile.url);
+      } else {
+        alert('No uploaded files found for this student');
+      }
+    }
   };
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (!bytes || bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -501,6 +769,26 @@ const ClassWorkSubmission = ({
     }
   };
 
+  // Check if student has uploaded files
+  const hasUploadedFiles = (studentId) => {
+    return uploadedFilesList[studentId] && uploadedFilesList[studentId].length > 0;
+  };
+
+  // Get file count for a student
+  const getFileCount = (studentId) => {
+    return uploadedFilesList[studentId] ? uploadedFilesList[studentId].length : 0;
+  };
+
+  // Get latest file name for display
+  const getLatestFileName = (studentId) => {
+    if (!hasUploadedFiles(studentId)) return '';
+    const files = uploadedFilesList[studentId];
+    const latestFile = files[0]; // Most recent first
+    return latestFile.name.length > 30 
+      ? latestFile.name.substring(0, 27) + '...' 
+      : latestFile.name;
+  };
+
   if (!isOpen || !activity) return null;
 
   const studentAnalytics = selectedStudent ? 
@@ -508,6 +796,25 @@ const ClassWorkSubmission = ({
 
   const professorPhoto = selectedStudentForPhoto ? uploadedFiles[selectedStudentForPhoto.id] : null;
   const studentPhoto = selectedStudentForPhoto ? studentUploadedFiles[selectedStudentForPhoto.id] : null;
+  const professorFiles = selectedStudentForPhoto ? uploadedFilesList[selectedStudentForPhoto.id] || [] : [];
+
+  // PhotoManagement props
+  const photoManagementProps = {
+    isOpen: photoModalOpen,
+    onClose: () => setPhotoModalOpen(false),
+    selectedStudent: selectedStudentForPhoto,
+    professorPhoto: professorPhoto,
+    studentPhoto: studentPhoto,
+    professorFiles: professorFiles,
+    onProfessorPhotoUpload: handleProfessorPhotoUpload,
+    onViewProfessorPhoto: handleViewProfessorPhoto,
+    onViewProfessorFile: (file) => handleViewUploadedFile(file.url),
+    onDeleteProfessorPhoto: handleDeleteProfessorPhoto,
+    onDeleteProfessorFile: (fileId) => handleDeleteFile(fileId, selectedStudentForPhoto?.id),
+    onViewStudentPhoto: handleViewStudentPhoto,
+    activity: activity,
+    formatFileSize: formatFileSize
+  };
 
   return (
     <>
@@ -533,12 +840,15 @@ const ClassWorkSubmission = ({
                 </span>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1 sm:p-2 hover:bg-gray-100 rounded-md transition-colors cursor-pointer flex-shrink-0 ml-2"
-            >
-              <img src={Cross} alt="Close" className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-            </button>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onClose}
+                className="p-1 sm:p-2 hover:bg-gray-100 rounded-md transition-colors cursor-pointer flex-shrink-0 ml-2"
+              >
+                <img src={Cross} alt="Close" className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+              </button>
+            </div>
           </div>
 
           {/* Mobile View Tabs */}
@@ -686,24 +996,27 @@ const ClassWorkSubmission = ({
                     <table className="w-full">
                       <thead className="bg-gray-50 sticky top-0">
                         <tr>
-                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[45%] sm:w-[40%]">
+                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[35%] sm:w-[30%]">
                             Student
                           </th>
-                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">
+                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">
                             Status
                           </th>
                           <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">
                             Grade
                           </th>
                           <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">
+                            Uploaded Files
+                          </th>
+                          <th className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">
                             Actions
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {filteredStudents.map((student) => {
-                          const hasProfessorPhoto = !!uploadedFiles[student.user_ID];
-                          const hasStudentPhoto = !!studentUploadedFiles[student.user_ID];
+                          const hasProfessorFiles = hasUploadedFiles(student.user_ID);
+                          const fileCount = getFileCount(student.user_ID);
                           const isSelected = selectedStudent?.id === student.user_ID;
                           const status = calculateStudentStatus(student, activity);
                           const maxPoints = activity.points || 100;
@@ -718,7 +1031,7 @@ const ClassWorkSubmission = ({
                               className={`hover:bg-gray-50 cursor-pointer ${isSelected ? 'bg-blue-50' : ''}`}
                               onClick={() => setSelectedStudent({ id: student.user_ID, name: student.user_Name })}
                             >
-                              <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 w-[45%] sm:w-[40%]">
+                              <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 w-[35%] sm:w-[30%]">
                                 <div className="text-xs sm:text-sm font-medium text-gray-900 break-words">
                                   {student.user_Name}
                                 </div>
@@ -726,7 +1039,7 @@ const ClassWorkSubmission = ({
                                   {student.user_Email || 'No email'}
                                 </div>
                               </td>
-                              <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 w-[20%] whitespace-nowrap">
+                              <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 w-[15%] whitespace-nowrap">
                                 <span className={`inline-flex px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-semibold rounded-full ${
                                   (() => {
                                     switch (status) {
@@ -759,16 +1072,42 @@ const ClassWorkSubmission = ({
                                 </div>
                               </td>
                               <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 w-[20%]" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center justify-start gap-1 sm:gap-1.5 flex-wrap">
-                                  {/* Folder Icon - Now opens the photo modal */}
+                                {hasProfessorFiles ? (
+                                  <div className="flex flex-col">
+                                    <div className="text-green-700 text-xs flex items-center gap-1">
+                                      <span className="font-medium">{fileCount} file{fileCount !== 1 ? 's' : ''}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-600 truncate mt-1" title={getLatestFileName(student.user_ID)}>
+                                      📄 {getLatestFileName(student.user_ID)}
+                                    </div>
+                                    <button
+                                      onClick={() => handleOpenPhotoModal(student.user_ID, student.user_Name)}
+                                      className="text-xs text-blue-600 hover:text-blue-800 mt-1 text-left"
+                                    >
+                                      Manage files →
+                                    </button>
+                                  </div>
+                                ) : (
                                   <button
-                                    onClick={() => handleOpenPhotoModal(student.user_ID, student.user_Name)}
+                                    onClick={() => handleFileUpload(student.user_ID)}
+                                    className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                                  >
+                                    <span className="text-gray-400">📤</span>
+                                    Upload file
+                                  </button>
+                                )}
+                              </td>
+                              <td className="px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4 w-[15%]" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex items-center justify-start gap-1 sm:gap-1.5 flex-wrap">
+                                  {/* Folder Icon - Now triggers file upload directly */}
+                                  <button
+                                    onClick={() => handleFileUpload(student.user_ID)}
                                     className="text-gray-400 hover:text-gray-600 cursor-pointer p-0.5"
-                                    title={hasProfessorPhoto ? "View/Upload Photos" : "Add/View Photos"}
+                                    title={hasProfessorFiles ? "Upload more files" : "Upload file"}
                                   >
                                     <img 
-                                      src={hasProfessorPhoto ? FolderGreen : Photo} 
-                                      alt="Photos" 
+                                      src={hasProfessorFiles ? FolderGreen : Photo} 
+                                      alt="Files" 
                                       className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-4.5 md:h-4.5" 
                                     />
                                   </button>
@@ -896,6 +1235,37 @@ const ClassWorkSubmission = ({
                             activity
                           )}</p>
                           <p>Current Grade: {localStudents.find(s => s.user_ID === selectedStudent.id)?.grade || 'Not graded'}</p>
+                          {hasUploadedFiles(selectedStudent.id) && (
+                            <div className="mt-2">
+                              <p className="font-medium">Uploaded Files:</p>
+                              <ul className="ml-4 list-disc">
+                                {uploadedFilesList[selectedStudent.id].slice(0, 2).map((file, index) => (
+                                  <li key={index}>
+                                    <a
+                                      href={file.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800"
+                                      title={file.name}
+                                    >
+                                      {file.name.length > 30 ? file.name.substring(0, 27) + '...' : file.name}
+                                    </a>
+                                  </li>
+                                ))}
+                                {uploadedFilesList[selectedStudent.id].length > 2 && (
+                                  <li className="text-gray-500">
+                                    +{uploadedFilesList[selectedStudent.id].length - 2} more files
+                                  </li>
+                                )}
+                              </ul>
+                              <button
+                                onClick={() => handleOpenPhotoModal(selectedStudent.id, selectedStudent.name)}
+                                className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                              >
+                                Manage all files →
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -938,17 +1308,7 @@ const ClassWorkSubmission = ({
       </div>
 
       {/* Photo Management Modal */}
-      <PhotoManagement
-        isOpen={photoModalOpen}
-        onClose={() => setPhotoModalOpen(false)}
-        selectedStudent={selectedStudentForPhoto}
-        professorPhoto={professorPhoto}
-        studentPhoto={studentPhoto}
-        onProfessorPhotoUpload={handleProfessorPhotoUpload}
-        onViewProfessorPhoto={handleViewProfessorPhoto}
-        onViewStudentPhoto={handleViewStudentPhoto}
-        activity={activity}
-      />
+      <PhotoManagement {...photoManagementProps} />
 
       {/* Photo Viewer Modal */}
       {photoViewerOpen && viewingPhoto && (
@@ -961,27 +1321,34 @@ const ClassWorkSubmission = ({
               <img src={Close} alt="Close" className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
-            {viewingPhoto.uploadedBy === 'Professor' && (
-              <button
-                onClick={handleDeleteProfessorPhoto}
-                className="absolute top-4 left-4 p-2 sm:p-3 transition-colors z-10 cursor-pointer"
-                title="Delete Photo"
-              >
-                <img src={Delete} alt="Delete" className="w-5 h-5 sm:w-6 sm:h-6" />
-              </button>
-            )}
-
             <div className="relative max-w-[95vw] max-h-[85vh] w-auto h-auto mx-4">
-              <img
-                src={viewingPhoto.url}
-                alt={viewingPhoto.name}
-                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-              />
+              {viewingPhoto.url && viewingPhoto.url.match(/\.(jpeg|jpg|gif|png|bmp)$/i) ? (
+                <img
+                  src={viewingPhoto.url}
+                  alt={viewingPhoto.name}
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                />
+              ) : (
+                <div className="bg-gray-800 p-8 rounded-lg shadow-2xl">
+                  <div className="text-white text-center">
+                    <div className="text-4xl mb-4">📄</div>
+                    <p className="text-lg font-medium">{viewingPhoto.name}</p>
+                    <p className="text-sm opacity-75 mt-2">{viewingPhoto.type || 'File'}</p>
+                    <a 
+                      href={viewingPhoto.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white"
+                    >
+                      Open File
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-md text-xs sm:text-sm backdrop-blur-sm max-w-[90vw] text-center">
-              {viewingPhoto.name} • {formatFileSize(viewingPhoto.size)} • 
-              {viewingPhoto.uploadedBy === 'Professor' ? 'Professor\'s Upload' : 'Student\'s Submission'}
+              {viewingPhoto.name} • {viewingPhoto.uploadedBy === 'Professor' ? 'Professor\'s Upload' : 'Student\'s Submission'}
             </div>
           </div>
         </div>

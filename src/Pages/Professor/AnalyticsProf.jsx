@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
@@ -44,15 +44,32 @@ export default function AnalyticsProf() {
   const [professorId, setProfessorId] = useState('');
   const [rankingSort, setRankingSort] = useState('highest'); // 'highest' or 'lowest'
   const [performanceFilter, setPerformanceFilter] = useState('top'); // 'top' or 'bottom'
-
+  
+  // New states for section comparison
+  const [comparisonData, setComparisonData] = useState(null);
+  const [activityTypeFilter, setActivityTypeFilter] = useState('all'); // 'all', 'quiz', 'assignment', 'activity', 'project'
+  const [selectedSectionsForComparison, setSelectedSectionsForComparison] = useState([]);
+  
   // Pagination states
   const [attendanceCurrentPage, setAttendanceCurrentPage] = useState(1);
   const [rankingCurrentPage, setRankingCurrentPage] = useState(1);
+  const [sectionPage, setSectionPage] = useState(1);
   const itemsPerPage = 10;
+  const sectionsPerPage = 20; // Show 20 sections per page for better performance with 50+ sections
 
   // Updated colors for charts with proper color coding
   const ATTENDANCE_COLORS = ['#00C853', '#FFD600', '#FF3D00']; // Green (Submitted/Present), Yellow (Late), Red (Absent)
   const ACTIVITIES_COLORS = ['#00C853', '#FFD600', '#2962FF', '#FF3D00']; // Green (Submitted), Yellow (Late), Blue (Pending), Red (Missing)
+  
+  // Colors for section comparison (up to 20 distinct colors for many sections)
+  const SECTION_COLORS = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+    '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2',
+    '#F9E79F', '#ABEBC6', '#FAD7A0', '#D5DBDB', '#F5B7B1',
+    '#A9DFBF', '#D2B4DE', '#FADBD8', '#D6EAF8', '#FCF3CF',
+    '#E8DAEF', '#D5F4E6', '#FDEBD0', '#EBDEF0', '#D6EAF8'
+  ];
 
   // Updated Tab color schemes with darker hover/selected colors
   const TAB_COLORS = {
@@ -83,6 +100,13 @@ export default function AnalyticsProf() {
       selected: '#e1bee7',
       border: '#9C27B0',
       icon: AttendanceTabIcon
+    },
+    'Section Comparison': {
+      bg: '#fff0f5',
+      hover: '#ffe4ec',
+      selected: '#ffd6e7',
+      border: '#FF4081',
+      icon: Analytics
     }
   };
 
@@ -91,7 +115,8 @@ export default function AnalyticsProf() {
     { id: 'Overview', name: 'Overview', type: 'internal' },
     { id: 'Performance & Ranking', name: 'Performance & Ranking', type: 'internal' },
     { id: 'Activities', name: 'Activities', type: 'internal' },
-    { id: 'Student Attendance', name: 'Student Attendance', type: 'internal' }
+    { id: 'Student Attendance', name: 'Student Attendance', type: 'internal' },
+    { id: 'Section Comparison', name: 'Section Comparison', type: 'internal' }
   ];
 
   // Get professor ID from localStorage
@@ -100,11 +125,14 @@ export default function AnalyticsProf() {
     if (userData) {
       try {
         const user = JSON.parse(userData);
+        console.log('Professor ID from localStorage:', user.id);
         setProfessorId(user.id || '');
       } catch {
+        console.error('Error parsing user data');
         setProfessorId('');
       }
     } else {
+      console.log('No user data in localStorage');
       setProfessorId('');
     }
   }, []);
@@ -113,32 +141,62 @@ export default function AnalyticsProf() {
   useEffect(() => {
     setAttendanceCurrentPage(1);
     setRankingCurrentPage(1);
+    setSectionPage(1);
   }, [selectedFilter, selectedSubject, selectedSection]);
 
   // Fetch classes for the professor when professorId is available
   useEffect(() => {
-    if (!professorId) return;
+    if (!professorId) {
+      console.log('No professor ID available');
+      return;
+    }
 
+    console.log('Fetching classes for professor:', professorId);
     const fetchClasses = async () => {
       setClassesLoading(true);
       try {
-        const apiUrl = `https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`;
+        const apiUrl = `http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`;
+        console.log('API URL:', apiUrl);
+        
         const response = await fetch(apiUrl);
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('API response data:', data);
         
         if (data.success) {
           const classesData = data.classes || [];
+          console.log('Classes data:', classesData);
+          console.log('Number of classes:', classesData.length);
+          
+          // Log each class to see structure
+          classesData.forEach((cls, index) => {
+            console.log(`Class ${index + 1}:`, {
+              subject_code: cls.subject_code,
+              subject: cls.subject, // This is the field name from your database
+              section: cls.section,
+              year_level: cls.year_level,
+              status: cls.status
+            });
+          });
+          
           setClasses(classesData);
           
           // Don't set any default selections - let the user choose
           setSelectedSubject("");
           setSelectedSection("");
         } else {
+          console.log('API returned success: false', data.message);
           setClasses([]);
           setSelectedSubject("");
           setSelectedSection("");
         }
-      } catch {
+      } catch (error) {
+        console.error('Error fetching classes:', error);
         setClasses([]);
         setSelectedSubject("");
         setSelectedSection("");
@@ -150,34 +208,86 @@ export default function AnalyticsProf() {
     fetchClasses();
   }, [professorId]);
 
-  // Get unique sections from classes
-  const sections = useMemo(() => {
-    const uniqueSections = [...new Set(classes.map(cls => cls.section).filter(Boolean))];
-    return uniqueSections;
+  // Get unique subjects from classes
+  const subjects = useMemo(() => {
+    console.log('Processing subjects from classes:', classes);
+    
+    // Use 'subject' field as shown in your API response
+    const subjectNames = classes.map(cls => cls.subject).filter(Boolean);
+    console.log('Subject names found:', subjectNames);
+    
+    const uniqueSubjects = [...new Set(subjectNames)];
+    console.log('Unique subjects:', uniqueSubjects);
+    
+    return uniqueSubjects;
   }, [classes]);
 
-  // Get subjects based on selected section filter
-  const getFilteredSubjects = useMemo(() => {
-    if (!selectedSection) return []; // Return empty if no section selected
-    return classes.filter(cls => cls.section === selectedSection);
-  }, [classes, selectedSection]);
+  // Get sections based on selected subject
+  const getFilteredSections = useMemo(() => {
+    if (!selectedSubject) {
+      console.log('No subject selected');
+      return [];
+    }
+    const filtered = classes.filter(cls => cls.subject === selectedSubject);
+    console.log('Filtered sections for subject', selectedSubject, ':', filtered);
+    return filtered;
+  }, [classes, selectedSubject]);
 
-  // Fetch analytics data when subject changes
+  // Get unique sections for the selected subject
+  const sectionsForSelectedSubject = useMemo(() => {
+    const sections = [...new Set(getFilteredSections.map(cls => cls.section).filter(Boolean))];
+    console.log('Sections for selected subject:', sections);
+    return sections;
+  }, [getFilteredSections]);
+
+  // Fetch analytics data when subject and section change
   useEffect(() => {
-    if (selectedSubject && professorId) {
+    if (selectedSubject && selectedSection && professorId) {
+      console.log('Fetching analytics for:', selectedSubject, 'Section', selectedSection);
       fetchAnalyticsData();
     } else {
+      console.log('Analytics conditions not met:', { selectedSubject, selectedSection, professorId });
       setAnalyticsData(null);
     }
   }, [selectedSubject, selectedSection, professorId]);
 
+  // Fetch section comparison data when selected subject changes
+  useEffect(() => {
+    if (selectedSubject && professorId) {
+      console.log('Fetching section comparison for subject:', selectedSubject);
+      fetchSectionComparisonData();
+    } else {
+      console.log('Section comparison conditions not met:', { selectedSubject, professorId });
+      setComparisonData(null);
+    }
+  }, [selectedSubject, professorId, activityTypeFilter]);
+
   const fetchAnalyticsData = async () => {
-    if (!selectedSubject || !professorId || !selectedSection) return;
+    if (!selectedSubject || !professorId || !selectedSection) {
+      console.log('Missing required data for analytics');
+      return;
+    }
 
     setLoading(true);
+    console.log('Starting analytics fetch...');
+    
     try {
-      // Build URL with section parameter
-      const attendanceUrl = `https://tracked.6minds.site/Professor/AttendanceDB/get_attendance_history.php?subject_code=${selectedSubject}&professor_ID=${professorId}&section=${selectedSection}`;
+      // Find the subject code for the selected subject and section
+      const classItem = classes.find(cls => 
+        cls.subject === selectedSubject && cls.section === selectedSection
+      );
+      
+      if (!classItem) {
+        console.error('Class not found for:', { selectedSubject, selectedSection });
+        throw new Error('Class not found');
+      }
+      
+      const subjectCode = classItem.subject_code;
+      console.log('Found subject code:', subjectCode, 'for', selectedSubject);
+
+      // Fetch attendance data
+      const attendanceUrl = `http://localhost/TrackEd/src/Pages/Professor/AttendanceDB/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professorId}`;
+      console.log('Attendance URL:', attendanceUrl);
 
       const attendanceResponse = await fetch(attendanceUrl);
       
@@ -186,9 +296,11 @@ export default function AnalyticsProf() {
       }
       
       const attendanceData = await attendanceResponse.json();
+      console.log('Attendance data received:', attendanceData);
 
       // Fetch activities data
-      const activitiesUrl = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${selectedSubject}&section=${selectedSection}`;
+      const activitiesUrl = `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`;
+      console.log('Activities URL:', activitiesUrl);
 
       const activitiesResponse = await fetch(activitiesUrl);
       
@@ -197,9 +309,10 @@ export default function AnalyticsProf() {
       }
       
       const activitiesData = await activitiesResponse.json();
+      console.log('Activities data received:', activitiesData);
 
       // Process the data
-      processAnalyticsData(attendanceData, activitiesData);
+      processAnalyticsData(attendanceData, activitiesData, subjectCode);
       
     } catch (error) {
       console.error('Error fetching analytics data:', error);
@@ -215,7 +328,178 @@ export default function AnalyticsProf() {
     }
   };
 
-  const processAnalyticsData = (attendanceData, activitiesData) => {
+  const fetchSectionComparisonData = async () => {
+    if (!selectedSubject || !professorId) {
+      console.log('Missing data for section comparison');
+      return;
+    }
+
+    console.log('Starting section comparison fetch for subject:', selectedSubject);
+    
+    try {
+      // Get all classes for this subject
+      const subjectClasses = classes.filter(cls => cls.subject === selectedSubject);
+      console.log('Classes for subject comparison:', subjectClasses);
+      
+      if (subjectClasses.length === 0) {
+        console.log('No classes found for this subject');
+        setComparisonData(null);
+        return;
+      }
+
+      const comparisonResults = [];
+      const activityTypeCounts = {
+        all: { quizzes: 0, assignments: 0, activities: 0, projects: 0, total: 0 },
+        quiz: { total: 0, submitted: 0 },
+        assignment: { total: 0, submitted: 0 },
+        activity: { total: 0, submitted: 0 },
+        project: { total: 0, submitted: 0 }
+      };
+
+      // Fetch data for each section with better error handling
+      const promises = subjectClasses.map(async (classItem) => {
+        const subjectCode = classItem.subject_code;
+        const section = classItem.section;
+
+        try {
+          const activitiesUrl = `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`;
+          console.log(`API URL for section ${section}:`, activitiesUrl);
+          
+          const activitiesResponse = await fetch(activitiesUrl);
+          
+          if (!activitiesResponse.ok) {
+            console.log(`No data for section ${section}, skipping`);
+            return null;
+          }
+          
+          const activitiesData = await activitiesResponse.json();
+          console.log(`Data for section ${section}:`, activitiesData);
+
+          if (activitiesData.success && Array.isArray(activitiesData.activities)) {
+            let sectionSubmitted = 0;
+            let sectionTotal = 0;
+            let sectionLate = 0;
+            let sectionMissing = 0;
+            let sectionPending = 0;
+            
+            // Count by activity type
+            const typeStats = {
+              quiz: { submitted: 0, total: 0 },
+              assignment: { submitted: 0, total: 0 },
+              activity: { submitted: 0, total: 0 },
+              project: { submitted: 0, total: 0 }
+            };
+
+            activitiesData.activities.forEach(activity => {
+              const activityType = activity.activity_type?.toLowerCase() || 'activity';
+              const currentDate = new Date();
+              const deadlineDate = activity.deadline ? new Date(activity.deadline) : null;
+              const isPastDeadline = deadlineDate && deadlineDate < currentDate;
+              
+              if (Array.isArray(activity.students)) {
+                activity.students.forEach(student => {
+                  sectionTotal++;
+                  const submitted = student.submitted === true || student.submitted === 1 || student.submitted === '1';
+                  const late = student.late === true || student.late === 1 || student.late === '1';
+                  
+                  if (submitted) {
+                    sectionSubmitted++;
+                    if (typeStats[activityType]) {
+                      typeStats[activityType].submitted++;
+                    }
+                    if (late) {
+                      sectionLate++;
+                    }
+                  } else {
+                    if (isPastDeadline) {
+                      sectionMissing++;
+                    } else {
+                      sectionPending++;
+                    }
+                  }
+                  
+                  if (typeStats[activityType]) {
+                    typeStats[activityType].total++;
+                  }
+                });
+              }
+            });
+
+            const submissionRate = sectionTotal > 0 ? ((sectionSubmitted / sectionTotal) * 100).toFixed(1) : 0;
+            
+            return {
+              section: section,
+              subjectCode: subjectCode,
+              totalStudents: activitiesData.students?.length || 0,
+              submitted: sectionSubmitted,
+              total: sectionTotal,
+              late: sectionLate,
+              missing: sectionMissing,
+              pending: sectionPending,
+              submissionRate: parseFloat(submissionRate),
+              typeStats: typeStats,
+              rawActivities: activitiesData.activities || []
+            };
+          }
+        } catch (error) {
+          console.error(`Error fetching data for section ${section}:`, error);
+          return null;
+        }
+        return null;
+      });
+
+      // Wait for all promises to resolve
+      const results = await Promise.all(promises);
+      
+      // Filter out null results and add to comparisonResults
+      results.forEach(result => {
+        if (result) {
+          comparisonResults.push(result);
+          
+          // Update activity type counts
+          const { typeStats, submitted, total } = result;
+          
+          activityTypeCounts.all.quizzes += typeStats.quiz.total;
+          activityTypeCounts.all.assignments += typeStats.assignment.total;
+          activityTypeCounts.all.activities += typeStats.activity.total;
+          activityTypeCounts.all.projects += typeStats.project.total;
+          activityTypeCounts.all.total += total;
+
+          activityTypeCounts.quiz.total += typeStats.quiz.total;
+          activityTypeCounts.quiz.submitted += typeStats.quiz.submitted;
+          activityTypeCounts.assignment.total += typeStats.assignment.total;
+          activityTypeCounts.assignment.submitted += typeStats.assignment.submitted;
+          activityTypeCounts.activity.total += typeStats.activity.total;
+          activityTypeCounts.activity.submitted += typeStats.activity.submitted;
+          activityTypeCounts.project.total += typeStats.project.total;
+          activityTypeCounts.project.submitted += typeStats.project.submitted;
+        }
+      });
+
+      // Sort sections by submission rate (highest first)
+      comparisonResults.sort((a, b) => b.submissionRate - a.submissionRate);
+
+      console.log('Final comparison results:', comparisonResults);
+
+      setComparisonData({
+        sections: comparisonResults,
+        activityTypeCounts: activityTypeCounts,
+        totalSections: comparisonResults.length
+      });
+
+      // Auto-select top 3 performing sections for comparison
+      const sectionsToSelect = comparisonResults.slice(0, Math.min(3, comparisonResults.length));
+      setSelectedSectionsForComparison(sectionsToSelect.map(s => s.section));
+      
+      console.log('Auto-selected sections:', sectionsToSelect.map(s => s.section));
+
+    } catch (error) {
+      console.error('Error fetching section comparison data:', error);
+      setComparisonData(null);
+    }
+  };
+
+  const processAnalyticsData = (attendanceData, activitiesData, subjectCode) => {
     // Check if we have valid data
     const attendanceHistory = (attendanceData.success && Array.isArray(attendanceData.attendance_history)) 
       ? attendanceData.attendance_history 
@@ -224,6 +508,12 @@ export default function AnalyticsProf() {
     const activities = (activitiesData.success && Array.isArray(activitiesData.activities)) 
       ? activitiesData.activities 
       : [];
+
+    console.log('Processing analytics data:', {
+      attendanceHistoryLength: attendanceHistory.length,
+      activitiesLength: activities.length,
+      subjectCode: subjectCode
+    });
 
     // Process attendance data
     const attendanceSummary = calculateAttendanceSummary(attendanceHistory);
@@ -239,10 +529,12 @@ export default function AnalyticsProf() {
       activitiesSummary,
       studentPerformance,
       rawAttendance: attendanceHistory,
-      rawActivities: activities
+      rawActivities: activities,
+      subjectCode: subjectCode
     });
   };
 
+  // Calculate attendance summary
   const calculateAttendanceSummary = (attendanceHistory) => {
     let totalPresent = 0;
     let totalAbsent = 0;
@@ -264,15 +556,26 @@ export default function AnalyticsProf() {
       });
     });
 
+    const attendanceRate = totalStudents > 0 ? (((totalPresent + totalLate) / totalStudents) * 100).toFixed(1) : 0;
+    
+    console.log('Attendance summary:', {
+      present: totalPresent,
+      absent: totalAbsent,
+      late: totalLate,
+      total: totalStudents,
+      attendanceRate: attendanceRate
+    });
+
     return {
       present: totalPresent,
       absent: totalAbsent,
       late: totalLate,
       total: totalStudents,
-      attendanceRate: totalStudents > 0 ? (((totalPresent + totalLate) / totalStudents) * 100).toFixed(1) : 0
+      attendanceRate: attendanceRate
     };
   };
 
+  // Calculate activities summary
   const calculateActivitiesSummary = (activities) => {
     let totalSubmitted = 0;
     let totalMissing = 0;
@@ -307,16 +610,28 @@ export default function AnalyticsProf() {
       });
     });
 
+    const submissionRate = totalEntries > 0 ? ((totalSubmitted / totalEntries) * 100).toFixed(1) : 0;
+    
+    console.log('Activities summary:', {
+      submitted: totalSubmitted,
+      missing: totalMissing,
+      pending: totalPending,
+      late: totalLate,
+      total: totalEntries,
+      submissionRate: submissionRate
+    });
+
     return {
       submitted: totalSubmitted,
       missing: totalMissing,
       pending: totalPending,
       late: totalLate,
       total: totalEntries,
-      submissionRate: totalEntries > 0 ? ((totalSubmitted / totalEntries) * 100).toFixed(1) : 0
+      submissionRate: submissionRate
     };
   };
 
+  // Calculate student performance
   const calculateStudentPerformance = (attendanceHistory, activities) => {
     const studentMap = new Map();
 
@@ -450,41 +765,34 @@ export default function AnalyticsProf() {
       return b.attendanceRate - a.attendanceRate;
     });
 
+    console.log('Student performance calculated:', studentArray.length, 'students');
+    
     return studentArray;
   };
 
-  // Helper function to get subject name from class object
-  const getSubjectName = (classItem) => {
-    return classItem.subject_name || classItem.subject || 'Untitled Subject';
+  // Helper function to get subject code from class object
+  const getSubjectCode = (subjectName) => {
+    const classItem = classes.find(cls => cls.subject === subjectName);
+    const code = classItem ? classItem.subject_code : '';
+    console.log('Getting subject code for', subjectName, ':', code);
+    return code;
   };
 
-  // Get current subject name for display
-  const getCurrentSubjectName = () => {
+  // Get current subject code for display
+  const getCurrentSubjectCode = () => {
     if (!selectedSubject || !selectedSection) return '';
-    const subject = classes.find(cls => 
-      cls.subject_code === selectedSubject && cls.section === selectedSection
+    const classItem = classes.find(cls => 
+      cls.subject === selectedSubject && cls.section === selectedSection
     );
-    return subject ? `${subject.subject_code} - ${getSubjectName(subject)}` : selectedSubject;
-  };
-
-  // Get short subject name (code only)
-  const getShortSubjectName = () => {
-    if (!selectedSubject) return '';
-    return selectedSubject;
-  };
-
-  // Get full subject name
-  const getFullSubjectName = () => {
-    if (!selectedSubject || !selectedSection) return '';
-    const subject = classes.find(cls => 
-      cls.subject_code === selectedSubject && cls.section === selectedSection
-    );
-    return subject ? getSubjectName(subject) : '';
+    const code = classItem ? classItem.subject_code : '';
+    console.log('Current subject code:', { selectedSubject, selectedSection, code });
+    return code;
   };
 
   // Get activities data for ActivityOverview
   const getActivitiesData = () => {
     if (!analyticsData || !Array.isArray(analyticsData.rawActivities)) {
+      console.log('No activities data available');
       return {
         quizzes: [],
         assignments: [],
@@ -558,6 +866,13 @@ export default function AnalyticsProf() {
       }
     });
 
+    console.log('Activities data prepared:', {
+      quizzes: quizzes.length,
+      assignments: assignments.length,
+      activities: activitiesList.length,
+      projects: projects.length
+    });
+
     return { quizzes, assignments, activities: activitiesList, projects };
   };
 
@@ -574,6 +889,7 @@ export default function AnalyticsProf() {
       return rankingSort === 'highest' ? totalB - totalA : totalA - totalB;
     });
 
+    console.log('Sorted ranking data:', sorted.length, 'students');
     return sorted;
   }, [analyticsData?.studentPerformance, rankingSort]);
 
@@ -588,13 +904,319 @@ export default function AnalyticsProf() {
       return performanceFilter === 'top' ? totalB - totalA : totalA - totalB;
     });
 
-    return sorted.slice(0, 10).map(student => ({
+    const chartData = sorted.slice(0, 10).map(student => ({
       name: student.id,
       studentName: student.name,
       Attendance: student.attendanceRate ? Number(student.attendanceRate.toFixed(1)) : 0,
       Submission: student.submissionRate ? Number(student.submissionRate.toFixed(1)) : 0
     }));
+    
+    console.log('Performance chart data:', chartData.length, 'students');
+    return chartData;
   }, [analyticsData?.studentPerformance, performanceFilter]);
+
+  // Get paginated sections for display
+  const getPaginatedSections = () => {
+    if (!comparisonData) return [];
+    
+    const startIndex = (sectionPage - 1) * sectionsPerPage;
+    const endIndex = startIndex + sectionsPerPage;
+    
+    return comparisonData.sections.slice(startIndex, endIndex);
+  };
+
+  // Calculate section comparison data for line chart
+  const sectionComparisonLineData = useMemo(() => {
+    if (!comparisonData || selectedSectionsForComparison.length === 0) return [];
+
+    const filteredSections = comparisonData.sections.filter(section => 
+      selectedSectionsForComparison.includes(section.section)
+    );
+
+    if (activityTypeFilter === 'all') {
+      // Use overall submission rate
+      return filteredSections.map(section => ({
+        section: `Section ${section.section}`,
+        submissionRate: section.submissionRate,
+        totalStudents: section.totalStudents,
+        submitted: section.submitted,
+        total: section.total,
+        color: SECTION_COLORS[selectedSectionsForComparison.indexOf(section.section) % SECTION_COLORS.length]
+      }));
+    } else {
+      // Calculate rate for specific activity type
+      return filteredSections.map(section => {
+        const typeStats = section.typeStats[activityTypeFilter];
+        const typeRate = typeStats?.total > 0 
+          ? ((typeStats.submitted / typeStats.total) * 100).toFixed(1)
+          : 0;
+        
+        return {
+          section: `Section ${section.section}`,
+          submissionRate: parseFloat(typeRate),
+          totalStudents: section.totalStudents,
+          submitted: typeStats?.submitted || 0,
+          total: typeStats?.total || 0,
+          activityType: activityTypeFilter,
+          color: SECTION_COLORS[selectedSectionsForComparison.indexOf(section.section) % SECTION_COLORS.length]
+        };
+      });
+    }
+  }, [comparisonData, selectedSectionsForComparison, activityTypeFilter]);
+
+  // Calculate student performance distribution for pie chart
+  const studentPerformancePieData = useMemo(() => {
+    if (!analyticsData?.studentPerformance || analyticsData.studentPerformance.length === 0) {
+      console.log('No student performance data for pie chart');
+      return [];
+    }
+
+    const students = analyticsData.studentPerformance;
+    const total = students.length;
+    
+    // Categorize students by performance
+    const excellent = students.filter(s => s.submissionRate >= 90).length;
+    const good = students.filter(s => s.submissionRate >= 70 && s.submissionRate < 90).length;
+    const average = students.filter(s => s.submissionRate >= 50 && s.submissionRate < 70).length;
+    const needsImprovement = students.filter(s => s.submissionRate >= 30 && s.submissionRate < 50).length;
+    const failing = students.filter(s => s.submissionRate < 30).length;
+
+    const pieData = [
+      { name: 'Excellent (90-100%)', value: excellent, color: '#00C853' },
+      { name: 'Good (70-89%)', value: good, color: '#4CAF50' },
+      { name: 'Average (50-69%)', value: average, color: '#FFC107' },
+      { name: 'Needs Improvement (30-49%)', value: needsImprovement, color: '#FF9800' },
+      { name: 'Failing (<30%)', value: failing, color: '#F44336' }
+    ];
+    
+    console.log('Student performance pie data:', pieData);
+    
+    return pieData;
+  }, [analyticsData?.studentPerformance]);
+
+  // Get suggestions for section comparison
+  const getSectionComparisonSuggestions = () => {
+    if (!comparisonData || comparisonData.sections.length === 0) return [];
+
+    const suggestions = [];
+    const sections = comparisonData.sections;
+    const totalSections = sections.length;
+
+    // Find sections with low submission rates (<60%)
+    const lowPerformingSections = sections.filter(s => s.submissionRate < 60);
+    const failingSections = sections.filter(s => s.submissionRate < 40);
+    
+    if (failingSections.length > 0) {
+      suggestions.push(
+        `⚠️ **CRITICAL:** ${failingSections.length} section(s) are failing with submission rates below 40%:`
+      );
+      
+      failingSections.forEach(section => {
+        suggestions.push(
+          `• **Section ${section.section}** has only ${section.submissionRate}% submission rate. Immediate intervention required.`
+        );
+      });
+      
+      suggestions.push(
+        `**Recommendation:** Schedule individual meetings with these sections, review teaching materials, and consider additional support sessions.`
+      );
+    }
+
+    if (lowPerformingSections.length > 0) {
+      const nonFailing = lowPerformingSections.filter(s => s.submissionRate >= 40);
+      if (nonFailing.length > 0) {
+        suggestions.push(
+          `📉 ${nonFailing.length} section(s) have submission rates between 40-60%:`
+        );
+        
+        nonFailing.forEach(section => {
+          suggestions.push(
+            `• Section ${section.section} has ${section.submissionRate}% submission rate.`
+          );
+        });
+        
+        suggestions.push(
+          `**Recommendation:** Consider targeted interventions like review sessions or adjusting assignment difficulty.`
+        );
+      }
+    }
+
+    // Find the best performing section
+    if (sections.length > 1) {
+      const bestSection = sections[0]; // Already sorted by submission rate
+      const worstSection = sections[sections.length - 1];
+      
+      if (bestSection.submissionRate > 80) {
+        suggestions.push(
+          `🏆 **Top Performer:** Section ${bestSection.section} has ${bestSection.submissionRate}% submission rate.`
+        );
+        suggestions.push(
+          `**Recommendation:** Consider peer mentoring program where top section assists struggling sections.`
+        );
+      }
+
+      // Check for large gaps between sections
+      const gap = bestSection.submissionRate - worstSection.submissionRate;
+      if (gap > 30) {
+        suggestions.push(
+          `📊 **Performance Gap:** Large difference of ${gap.toFixed(1)}% between best and worst sections.`
+        );
+        suggestions.push(
+          `**Recommendation:** Standardize teaching approaches and share successful strategies across sections.`
+        );
+      }
+    }
+
+    // Activity type specific suggestions
+    if (activityTypeFilter !== 'all') {
+      const typeName = activityTypeFilter.charAt(0).toUpperCase() + activityTypeFilter.slice(1);
+      const typeSections = sections.map(section => ({
+        section: section.section,
+        rate: section.typeStats[activityTypeFilter]?.total > 0 
+          ? ((section.typeStats[activityTypeFilter].submitted / section.typeStats[activityTypeFilter].total) * 100).toFixed(1)
+          : 'No data'
+      })).filter(s => s.rate !== 'No data');
+      
+      if (typeSections.length > 0) {
+        const avgRate = typeSections.reduce((sum, s) => sum + parseFloat(s.rate), 0) / typeSections.length;
+        
+        suggestions.push(
+          `📝 **${typeName} Performance:** Average ${avgRate.toFixed(1)}% across ${typeSections.length} sections.`
+        );
+      }
+    }
+
+    return suggestions.slice(0, 8); // Limit to 8 suggestions
+  };
+
+  // Get suggestions for student performance pie chart
+  const getStudentPerformanceSuggestions = () => {
+    if (studentPerformancePieData.length === 0) return [];
+
+    const totalStudents = studentPerformancePieData.reduce((sum, item) => sum + item.value, 0);
+    const failingStudents = studentPerformancePieData.find(item => item.name.includes('Failing'))?.value || 0;
+    const needsImprovementStudents = studentPerformancePieData.find(item => item.name.includes('Needs Improvement'))?.value || 0;
+    
+    const suggestions = [];
+
+    if (failingStudents > 0) {
+      const percentage = ((failingStudents / totalStudents) * 100).toFixed(1);
+      suggestions.push(
+        `⚠️ ${failingStudents} student(s) (${percentage}%) are failing (<30% submission rate). Consider one-on-one meetings to identify challenges.`
+      );
+    }
+
+    if (needsImprovementStudents > 0) {
+      const percentage = ((needsImprovementStudents / totalStudents) * 100).toFixed(1);
+      suggestions.push(
+        `📝 ${needsImprovementStudents} student(s) (${percentage}%) need improvement. Consider offering extra help sessions or study groups.`
+      );
+    }
+
+    const excellentStudents = studentPerformancePieData.find(item => item.name.includes('Excellent'))?.value || 0;
+    if (excellentStudents > 0 && excellentStudents >= totalStudents * 0.3) {
+      suggestions.push(
+        `🎉 ${excellentStudents} student(s) are excelling! Consider engaging them as peer mentors to help struggling classmates.`
+      );
+    }
+
+    return suggestions;
+  };
+
+  // Handle section selection for comparison
+  const handleSectionSelection = (section) => {
+    console.log('Toggling section selection:', section);
+    
+    if (selectedSectionsForComparison.includes(section)) {
+      // Remove the section
+      setSelectedSectionsForComparison(prev => {
+        const newSelection = prev.filter(s => s !== section);
+        console.log('Section removed. New selection:', newSelection);
+        return newSelection;
+      });
+    } else {
+      // Add the section with a limit
+      if (selectedSectionsForComparison.length < 10) { // Limit to 10 sections for visibility
+        setSelectedSectionsForComparison(prev => {
+          const newSelection = [...prev, section];
+          console.log('Section added. New selection:', newSelection);
+          return newSelection;
+        });
+      } else {
+        alert('Maximum 10 sections can be compared at once for optimal visibility.');
+      }
+    }
+  };
+
+  // Select all sections for comparison
+  const handleSelectAllSections = () => {
+    if (comparisonData) {
+      const allSections = comparisonData.sections.map(s => s.section);
+      console.log('Selecting all sections:', allSections);
+      setSelectedSectionsForComparison(allSections.slice(0, 10)); // Limit to 10
+    }
+  };
+
+  // Clear all section selections
+  const handleClearAllSections = () => {
+    console.log('Clearing all section selections');
+    setSelectedSectionsForComparison([]);
+  };
+
+  // Custom tooltip for line chart
+  const CustomLineTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border border-gray-300 rounded-lg shadow-lg">
+          <p className="font-bold text-gray-800 mb-2">{data.section}</p>
+          <div className="space-y-1">
+            <p className="text-sm" style={{ color: data.color }}>
+              Submission Rate: <strong>{data.submissionRate}%</strong>
+            </p>
+            {data.activityType && (
+              <p className="text-sm text-gray-600">
+                Activity Type: <strong>{data.activityType.charAt(0).toUpperCase() + data.activityType.slice(1)}</strong>
+              </p>
+            )}
+            <p className="text-sm text-gray-600">
+              Students: {data.totalStudents}
+            </p>
+            <p className="text-sm text-gray-600">
+              Submitted: {data.submitted}/{data.total} activities
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Custom label for pie chart
+  const CustomPerformancePieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.7;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    if (percent < 0.05) return null;
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize="12"
+        fontWeight="bold"
+        stroke="#333"
+        strokeWidth="0.5"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   // Pagination calculations for student attendance
   const attendanceTotalPages = Math.ceil((analyticsData?.studentPerformance?.length || 0) / itemsPerPage);
@@ -608,23 +1230,32 @@ export default function AnalyticsProf() {
   const rankingEndIndex = rankingStartIndex + itemsPerPage;
   const currentRanking = sortedRankingData.slice(rankingStartIndex, rankingEndIndex);
 
+  // Pagination calculations for sections
+  const sectionTotalPages = comparisonData ? Math.ceil(comparisonData.sections.length / sectionsPerPage) : 1;
+
   // Pagination handlers
   const handleAttendancePageChange = (page) => {
+    console.log('Changing attendance page to:', page);
     setAttendanceCurrentPage(page);
   };
 
   const handleRankingPageChange = (page) => {
+    console.log('Changing ranking page to:', page);
     setRankingCurrentPage(page);
   };
 
   // Toggle ranking sort
   const toggleRankingSort = () => {
-    setRankingSort(rankingSort === 'highest' ? 'lowest' : 'highest');
+    const newSort = rankingSort === 'highest' ? 'lowest' : 'highest';
+    console.log('Toggling ranking sort to:', newSort);
+    setRankingSort(newSort);
   };
 
   // Toggle performance filter
   const togglePerformanceFilter = () => {
-    setPerformanceFilter(performanceFilter === 'top' ? 'bottom' : 'top');
+    const newFilter = performanceFilter === 'top' ? 'bottom' : 'top';
+    console.log('Toggling performance filter to:', newFilter);
+    setPerformanceFilter(newFilter);
   };
 
   // Chart data preparation
@@ -817,7 +1448,7 @@ export default function AnalyticsProf() {
     </div>
   );
 
-  // No Data Message Component - UPDATED to use image instead of emoji
+  // No Data Message Component
   const NoDataMessage = ({ message, icon }) => (
     <div className="flex flex-col items-center justify-center h-64 sm:h-80 text-gray-500 p-4">
       <img src={NoDataIcon} alt="No data" className="w-30 h-30 mb-3 opacity-50" />
@@ -900,6 +1531,8 @@ export default function AnalyticsProf() {
 
   // Tab content renderer
   const renderTabContent = () => {
+    console.log('Rendering tab:', activeTab);
+    
     switch(activeTab) {
       case 'Overview':
         return (
@@ -1101,7 +1734,7 @@ export default function AnalyticsProf() {
             <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md p-4 sm:p-5 text-[#465746] mb-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4">
                 <p className="text-base sm:text-lg lg:text-xl font-bold">
-                  Class Ranking - {getCurrentSubjectName()} (Section {selectedSection})
+                  Class Ranking - {selectedSubject} (Section {selectedSection})
                 </p>
                 <button
                   onClick={toggleRankingSort}
@@ -1265,7 +1898,7 @@ export default function AnalyticsProf() {
               setSelectedFilter={setSelectedFilter}
               selectedSubject={selectedSubject}
               selectedSection={selectedSection}
-              getCurrentSubjectName={getCurrentSubjectName}
+              getCurrentSubjectName={() => `${selectedSubject} - Section ${selectedSection}`}
             />
           </div>
         );
@@ -1274,7 +1907,7 @@ export default function AnalyticsProf() {
         return (
           <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md p-4 sm:p-5 text-[#465746]">
             <p className="text-base sm:text-lg lg:text-xl font-bold">
-              Student Attendance Tracking - {getCurrentSubjectName()} (Section {selectedSection})
+              Student Attendance Tracking - {selectedSubject} (Section {selectedSection})
             </p>
             <hr className="border-[#465746]/30 my-3 sm:my-4" />
             
@@ -1313,10 +1946,10 @@ export default function AnalyticsProf() {
                             <td className="px-2 sm:px-4 py-2 sm:py-3 text-[#FF6666]">{student.missingCount}</td>
                             <td className="px-2 sm:px-4 py-2 sm:py-3">
                               <Link 
-                                to={`/AnalyticsIndividualInfo?student_id=${student.id}&subject_code=${selectedSubject}&section=${selectedSection}`}
+                                to={`/AnalyticsIndividualInfo?student_id=${student.id}&subject_code=${getCurrentSubjectCode()}&section=${selectedSection}`}
                                 state={{ 
                                   student: student,
-                                  subjectCode: selectedSubject,
+                                  subjectCode: getCurrentSubjectCode(),
                                   section: selectedSection
                                 }}
                               >
@@ -1347,6 +1980,343 @@ export default function AnalyticsProf() {
           </div>
         );
       
+      case 'Section Comparison':
+        return (
+          <>
+            {/* Section Comparison Header */}
+            <div className="bg-gradient-to-br from-white to-pink-50 p-4 sm:p-6 rounded-xl shadow-lg border border-pink-100 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+                <div>
+                  <h3 className="font-bold text-lg text-[#465746] mb-2">
+                    Section Performance Comparison - {selectedSubject}
+                  </h3>
+                  <p className="text-gray-600">
+                    Compare submission rates across different sections teaching the same subject
+                  </p>
+                </div>
+                
+                {/* Activity Type Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Filter by:</span>
+                  <select
+                    value={activityTypeFilter}
+                    onChange={(e) => setActivityTypeFilter(e.target.value)}
+                    className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm cursor-pointer"
+                  >
+                    <option value="all">All Activities</option>
+                    <option value="quiz">Quizzes Only</option>
+                    <option value="assignment">Assignments Only</option>
+                    <option value="activity">Activities Only</option>
+                    <option value="project">Projects Only</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Activity Type Filter Info */}
+              {activityTypeFilter !== 'all' && comparisonData && (
+                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-700">
+                    Showing {activityTypeFilter} data only. {comparisonData.sections.filter(s => 
+                      s.typeStats[activityTypeFilter]?.total > 0
+                    ).length} of {comparisonData.sections.length} sections have {activityTypeFilter} data.
+                  </p>
+                </div>
+              )}
+
+              {/* Suggestions */}
+              {getSectionComparisonSuggestions().length > 0 && (
+                <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-bold text-yellow-800 mb-2">📊 Recommendations</h4>
+                  <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
+                    {getSectionComparisonSuggestions().map((suggestion, index) => (
+                      <li key={index}>{suggestion}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Section Selection with Pagination */}
+              <div className="mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3">
+                  <h4 className="font-bold text-[#465746] mb-2 sm:mb-0">
+                    Select Sections to Compare ({selectedSectionsForComparison.length} selected of {comparisonData?.sections.length || 0})
+                  </h4>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSelectAllSections}
+                      className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 cursor-pointer"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      onClick={handleClearAllSections}
+                      className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Pagination Controls for Sections */}
+                {comparisonData && comparisonData.sections.length > sectionsPerPage && (
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-gray-600">
+                      Showing {(sectionPage - 1) * sectionsPerPage + 1} to {Math.min(sectionPage * sectionsPerPage, comparisonData.sections.length)} of {comparisonData.sections.length} sections
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setSectionPage(prev => Math.max(1, prev - 1))}
+                        disabled={sectionPage === 1}
+                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm disabled:opacity-50 cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => setSectionPage(prev => 
+                          prev < Math.ceil(comparisonData.sections.length / sectionsPerPage) ? prev + 1 : prev
+                        )}
+                        disabled={sectionPage >= Math.ceil(comparisonData.sections.length / sectionsPerPage)}
+                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm disabled:opacity-50 cursor-pointer"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Section Selection Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 max-h-60 overflow-y-auto p-2">
+                  {getPaginatedSections().map((section, index) => (
+                    <button
+                      key={section.section}
+                      onClick={() => handleSectionSelection(section.section)}
+                      className={`
+                        p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer
+                        ${selectedSectionsForComparison.includes(section.section)
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-gray-800">Section {section.section}</span>
+                        <div 
+                          className="w-3 h-3 rounded-full"
+                          style={{ 
+                            backgroundColor: selectedSectionsForComparison.includes(section.section)
+                              ? SECTION_COLORS[(selectedSectionsForComparison.indexOf(section.section)) % SECTION_COLORS.length]
+                              : '#D1D5DB'
+                          }}
+                        />
+                      </div>
+                      <div className="text-left">
+                        <p className={`text-sm font-bold ${
+                          section.submissionRate >= 70 ? 'text-green-600' : 
+                          section.submissionRate >= 50 ? 'text-yellow-600' : 
+                          'text-red-600'
+                        }`}>
+                          {section.submissionRate}%
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {section.submitted}/{section.total} submissions
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {section.totalStudents} students
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Line Chart - Section Comparison */}
+              <div className="h-64 sm:h-80 min-h-0 mb-6">
+                {sectionComparisonLineData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={sectionComparisonLineData}
+                      margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="section" 
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        label={{ 
+                          value: 'Submission Rate (%)', 
+                          angle: -90, 
+                          position: 'insideLeft',
+                          style: { fontSize: 12 }
+                        }}
+                        domain={[0, 100]}
+                      />
+                      <Tooltip content={<CustomLineTooltip />} />
+                      <Legend />
+                      {sectionComparisonLineData.map((section, index) => (
+                        <Line
+                          key={section.section}
+                          type="monotone"
+                          dataKey="submissionRate"
+                          name={`Section ${section.section.split(' ')[1]}`}
+                          stroke={section.color}
+                          strokeWidth={3}
+                          dot={{ r: 6 }}
+                          activeDot={{ r: 8 }}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-500 p-4">
+                    <img src={NoDataIcon} alt="No data" className="w-20 h-20 mb-3 opacity-50" />
+                    <p className="text-center">Select sections to compare from above</p>
+                    <p className="text-sm text-gray-400 text-center mt-1">
+                      {selectedSectionsForComparison.length === 0 
+                        ? 'No sections selected' 
+                        : 'Loading comparison data...'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Performance Summary Table */}
+              {comparisonData && (
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <h4 className="font-bold text-[#465746] mb-3">Section Performance Summary</h4>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="px-3 py-2 text-left font-bold">Section</th>
+                          <th className="px-3 py-2 text-left font-bold">Submission Rate</th>
+                          <th className="px-3 py-2 text-left font-bold">Total Students</th>
+                          <th className="px-3 py-2 text-left font-bold">Submitted</th>
+                          <th className="px-3 py-2 text-left font-bold">Total Activities</th>
+                          <th className="px-3 py-2 text-left font-bold">Performance</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {comparisonData.sections.map((section, index) => (
+                          <tr key={section.section} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="px-3 py-2 font-medium">Section {section.section}</td>
+                            <td className="px-3 py-2">
+                              <span className={`font-bold ${
+                                section.submissionRate >= 70 ? 'text-green-600' :
+                                section.submissionRate >= 50 ? 'text-yellow-600' :
+                                'text-red-600'
+                              }`}>
+                                {section.submissionRate}%
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">{section.totalStudents}</td>
+                            <td className="px-3 py-2">{section.submitted}</td>
+                            <td className="px-3 py-2">{section.total}</td>
+                            <td className="px-3 py-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                section.submissionRate >= 70 ? 'bg-green-100 text-green-800' :
+                                section.submissionRate >= 50 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {section.submissionRate >= 70 ? 'Excellent' :
+                                 section.submissionRate >= 50 ? 'Average' :
+                                 'Needs Improvement'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Student Performance Distribution */}
+            <div className="bg-gradient-to-br from-white to-indigo-50 p-4 sm:p-6 rounded-xl shadow-lg border border-indigo-100 mb-6">
+              <div className="mb-4">
+                <h3 className="font-bold text-lg text-[#465746] mb-2">
+                  Student Performance Distribution - Section {selectedSection}
+                </h3>
+                <p className="text-gray-600">
+                  Distribution of students based on their submission rates
+                </p>
+              </div>
+
+              {/* Performance Suggestions */}
+              {getStudentPerformanceSuggestions().length > 0 && (
+                <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-bold text-blue-800 mb-2">📈 Student Performance Insights</h4>
+                  <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+                    {getStudentPerformanceSuggestions().map((suggestion, index) => (
+                      <li key={index}>{suggestion}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="h-64 sm:h-80 min-h-0">
+                {studentPerformancePieData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={studentPerformancePieData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={CustomPerformancePieLabel}
+                        outerRadius="80%"
+                        innerRadius="40%"
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {studentPerformancePieData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.color} 
+                            stroke="#fff"
+                            strokeWidth={2}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value, name, props) => [
+                          `${value} students (${((value / studentPerformancePieData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(1)}%)`,
+                          name
+                        ]}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <NoDataMessage message="No student performance data available" />
+                )}
+              </div>
+
+              {/* Performance Categories Legend */}
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                {studentPerformancePieData.map((category, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 bg-white rounded border">
+                    <div 
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <div>
+                      <p className="text-sm font-medium">{category.name.split(' (')[0]}</p>
+                      <p className="text-xs text-gray-500">
+                        {category.value} student{category.value !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        );
+      
       default:
         return null;
     }
@@ -1362,7 +2332,7 @@ export default function AnalyticsProf() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen}/>
 
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* Header Section - Updated for mobile view */}
+          {/* Header Section */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img 
@@ -1380,10 +2350,10 @@ export default function AnalyticsProf() {
                 {selectedSection && selectedSubject && (
                   <>
                     <div className="text-gray-600 block mb-1">
-                      Section {selectedSection}
+                      {selectedSubject} - Section {selectedSection}
                     </div>
                     <div className="text-gray-600 block">
-                      {getCurrentSubjectName()}
+                      {getCurrentSubjectCode()}
                     </div>
                   </>
                 )}
@@ -1393,7 +2363,7 @@ export default function AnalyticsProf() {
 
           <hr className="border-[#465746]/30 mb-4 sm:mb-5" />
 
-          {/* Tab Navigation - Split into internal tabs and action buttons */}
+          {/* Tab Navigation */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-between items-stretch mb-4 sm:mb-5">
             {/* Internal Tabs - Left side */}
             <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
@@ -1436,17 +2406,17 @@ export default function AnalyticsProf() {
               ))}
             </div>
 
-            {/* Action Buttons - Right side (Classwork and Attendance) - UPDATED ATTENDANCE LINK */}
+            {/* Action Buttons - Right side */}
             <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
               {/* Classwork Button */}
               <Link
                 to={{
                   pathname: '/ClassworkTab',
                   state: {
-                    subjectCode: selectedSubject,
+                    subjectCode: getCurrentSubjectCode(),
                     section: selectedSection,
-                    subjectName: getFullSubjectName(),
-                    shortSubjectName: getShortSubjectName()
+                    subjectName: selectedSubject,
+                    shortSubjectName: getCurrentSubjectCode()
                   }
                 }}
                 className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer"
@@ -1459,14 +2429,14 @@ export default function AnalyticsProf() {
                 />
               </Link>
               
-              {/* Attendance Button - FIXED LINK with query parameter */}
+              {/* Attendance Button */}
               <Link
-                to={`/Attendance?code=${selectedSubject}`}
+                to={`/Attendance?code=${getCurrentSubjectCode()}`}
                 state={{
-                  subjectCode: selectedSubject,
+                  subjectCode: getCurrentSubjectCode(),
                   section: selectedSection,
-                  subjectName: getFullSubjectName(),
-                  shortSubjectName: getShortSubjectName()
+                  subjectName: selectedSubject,
+                  shortSubjectName: getCurrentSubjectCode()
                 }}
                 className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer"
                 title="Attendance"
@@ -1483,20 +2453,20 @@ export default function AnalyticsProf() {
           {/* Filter and Search Section */}
           <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 justify-between items-stretch lg:items-center mb-4 sm:mb-5">
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-1">
-              {/* Section Dropdown */}
-              <div className="relative w-full sm:w-auto sm:min-w-[150px] lg:min-w-[180px]">
+              {/* Subject Dropdown - FIRST FILTER */}
+              <div className="relative w-full sm:w-auto sm:min-w-[200px] lg:min-w-[250px]">
                 <button
-                  onClick={() => { setOpenSection(!openSection); setOpenSubject(false); }}
+                  onClick={() => { setOpenSubject(!openSubject); setOpenSection(false); }}
                   className="flex w-full items-center justify-between font-bold px-3 py-2 sm:py-2.5 bg-[#fff] rounded-md cursor-pointer shadow-md text-sm sm:text-base text-[#465746]"
-                  disabled={classesLoading || sections.length === 0}
+                  disabled={classesLoading || subjects.length === 0}
                 >
                   <span>
                     {classesLoading ? 'Loading...' : 
-                     sections.length === 0 ? 'No sections available' :
-                     selectedSection || 'Select Section'
+                     subjects.length === 0 ? 'No subjects available' :
+                     selectedSubject || 'Select Subject'
                     }
                   </span>
-                  {!classesLoading && sections.length > 0 && (
+                  {!classesLoading && subjects.length > 0 && (
                     <img 
                       src={ArrowDown} 
                       alt="ArrowDown" 
@@ -1504,48 +2474,47 @@ export default function AnalyticsProf() {
                     />
                   )}
                 </button>
-                {openSection && sections.length > 0 && (
+                {openSubject && subjects.length > 0 && (
                   <div className="absolute top-full mt-1 bg-white rounded-md w-full shadow-lg border border-gray-200 z-20 max-h-60 overflow-y-auto">
-                    {sections.map((section) => (
+                    {subjects.map((subject) => (
                       <button 
-                        key={section}
+                        key={subject}
                         className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-sm sm:text-base text-[#465746] border-b border-gray-100 last:border-b-0"
                         onClick={() => { 
-                          setSelectedSection(section);
-                          setSelectedSubject(""); // Reset subject when section changes
-                          setOpenSection(false);
+                          console.log('Subject selected:', subject);
+                          setSelectedSubject(subject);
+                          setSelectedSection(""); // Reset section when subject changes
+                          setOpenSubject(false);
                         }}>
-                        {section}
+                        {subject}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Subject Dropdown */}
-              <div className="relative w-full sm:w-auto sm:min-w-[200px] lg:min-w-[250px]">
+              {/* Section Dropdown - SECOND FILTER (depends on subject) */}
+              <div className="relative w-full sm:w-auto sm:min-w-[150px] lg:min-w-[180px]">
                 <button
                   onClick={() => { 
-                    if (selectedSection) {
-                      setOpenSubject(!openSubject); 
-                      setOpenSection(false); 
+                    if (selectedSubject) {
+                      setOpenSection(!openSection); 
+                      setOpenSubject(false); 
                     }
                   }}
                   className={`flex w-full items-center justify-between font-bold px-3 py-2 sm:py-2.5 bg-[#fff] rounded-md cursor-pointer shadow-md text-sm sm:text-base ${
-                    !selectedSection ? 'text-gray-400 cursor-not-allowed' : 'text-[#465746]'
+                    !selectedSubject ? 'text-gray-400 cursor-not-allowed' : 'text-[#465746]'
                   }`}
-                  disabled={classesLoading || getFilteredSubjects.length === 0 || !selectedSection}
+                  disabled={classesLoading || sectionsForSelectedSubject.length === 0 || !selectedSubject}
                 >
                   <span>
-                    {classesLoading ? 'Loading classes...' : 
-                     !selectedSection ? 'Select Subject' :
-                     getFilteredSubjects.length === 0 ? 'No subjects available' :
-                     selectedSubject ? 
-                      getFilteredSubjects.find(cls => cls.subject_code === selectedSubject)?.subject_code || 'Select Subject' 
-                      : 'Select Subject'
+                    {classesLoading ? 'Loading...' : 
+                     !selectedSubject ? 'Select Subject First' :
+                     sectionsForSelectedSubject.length === 0 ? 'No sections available' :
+                     selectedSection || 'Select Section'
                     }
                   </span>
-                  {!classesLoading && getFilteredSubjects.length > 0 && selectedSection && (
+                  {!classesLoading && sectionsForSelectedSubject.length > 0 && selectedSubject && (
                     <img 
                       src={ArrowDown} 
                       alt="ArrowDown" 
@@ -1553,20 +2522,18 @@ export default function AnalyticsProf() {
                     />
                   )}
                 </button>
-                {openSubject && getFilteredSubjects.length > 0 && selectedSection && (
+                {openSection && sectionsForSelectedSubject.length > 0 && selectedSubject && (
                   <div className="absolute top-full mt-1 bg-white rounded-md w-full shadow-lg border border-gray-200 z-10 max-h-60 overflow-y-auto">
-                    {getFilteredSubjects.map((classItem) => (
+                    {sectionsForSelectedSubject.map((section) => (
                       <button 
-                        key={`${classItem.subject_code}-${classItem.section}`}
+                        key={section}
                         className="block px-3 py-2 w-full text-left hover:bg-gray-100 text-sm sm:text-base text-[#465746] border-b border-gray-100 last:border-b-0"
                         onClick={() => { 
-                          setSelectedSubject(classItem.subject_code);
-                          setOpenSubject(false);
+                          console.log('Section selected:', section);
+                          setSelectedSection(section);
+                          setOpenSection(false);
                         }}>
-                        <div className="font-medium">{classItem.subject_code}</div>
-                        <div className="text-xs text-gray-600">
-                          {getSubjectName(classItem)}
-                        </div>
+                        {section}
                       </button>
                     ))}
                   </div>
@@ -1598,10 +2565,17 @@ export default function AnalyticsProf() {
             <>
               {renderTabContent()}
             </>
+          ) : activeTab === 'Section Comparison' && selectedSubject ? (
+            // Show section comparison even without specific section selected
+            <>
+              {renderTabContent()}
+            </>
           ) : !classesLoading && classes.length > 0 ? (
             <div className="bg-[#fff] p-6 rounded-lg shadow-md text-center">
               <p className="text-[#465746]">
-                {!selectedSection ? 'Please select a section to view analytics' : 'Please select a subject to view analytics'}
+                {!selectedSubject ? 'Please select a subject to view analytics' : 
+                 activeTab === 'Section Comparison' ? 'Loading section comparison data...' :
+                 'Please select a section to view analytics'}
               </p>
             </div>
           ) : null}

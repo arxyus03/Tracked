@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
@@ -6,13 +6,13 @@ import Header from "../../Components/Header";
 
 import BackButton from '../../assets/BackButton(Light).svg';
 import Search from "../../assets/Search.svg";
-import ClassManagementIcon from "../../assets/ClassManagement(Light).svg"; 
-import Announcement from "../../assets/Announcement(Light).svg";
-import Classwork from "../../assets/Classwork(Light).svg";
-import GradeIcon from "../../assets/Grade(Light).svg";
-import AnalyticsIcon from "../../assets/Analytics(Light).svg";
+import ClassManagementIcon from '../../assets/ClassManagement(Light).svg'; 
+import Announcement from '../../assets/Announcement(Light).svg';
+import Classwork from '../../assets/Classwork(Light).svg';
+import GradeIcon from '../../assets/Grade(Light).svg';
+import AnalyticsIcon from '../../assets/Analytics(Light).svg';
 import AttendanceIcon from '../../assets/Attendance(Light).svg';
-import DownloadIcon from '../../assets/Download(Light).svg'; // Add this import
+import DownloadIcon from '../../assets/Download(Light).svg';
 
 export default function GradeTab() {
   const [isOpen, setIsOpen] = useState(true);
@@ -23,90 +23,187 @@ export default function GradeTab() {
   const [classInfo, setClassInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState(null);
 
-  // Sample data for the grade table
-  const [gradeData, setGradeData] = useState([
-    {
-      activityType: "Assignment",
-      assignedWorks: 0,
-      submissions: 0,
-      missedSubmissions: 0,
-      totalScores: 0,
-      sumGradedWorks: 0,
-      percentage: "0%"
-    },
-    {
-      activityType: "Quiz",
-      assignedWorks: 0,
-      submissions: 0,
-      missedSubmissions: 0,
-      totalScores: 0,
-      sumGradedWorks: 0,
-      percentage: "0%"
-    },
-    {
-      activityType: "Activity",
-      assignedWorks: 0,
-      submissions: 0,
-      missedSubmissions: 0,
-      totalScores: 0,
-      sumGradedWorks: 0,
-      percentage: "0%"
-    },
-    {
-      activityType: "Project",
-      assignedWorks: 0,
-      submissions: 0,
-      missedSubmissions: 0,
-      totalScores: 0,
-      sumGradedWorks: 0,
-      percentage: "0%"
-    },
-    {
-      activityType: "Laboratory",
-      assignedWorks: 0,
-      submissions: 0,
-      missedSubmissions: 0,
-      totalScores: 0,
-      sumGradedWorks: 0,
-      percentage: "0%"
-    }
-  ]);
+  // REAL grade data loaded from backend
+  const [gradeData, setGradeData] = useState([]);
 
-  useEffect(() => {
-    if (subjectCode) fetchClassInfo();
-  }, [subjectCode]);
-
-  const fetchClassInfo = async () => {
-    setLoading(true);
+  // Fetch class info - use useCallback to prevent infinite re-renders
+  const fetchClassInfo = useCallback(async () => {
     try {
       const response = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_students_by_section.php?subject_code=${subjectCode}`
+        `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_students_by_section.php?subject_code=${subjectCode}`
       );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const result = await response.json();
+
       if (result.success) {
         setClassInfo(result.class_info);
-        
-        // Here you would fetch actual grade data and update the gradeData state
-        // For now, we'll keep the sample data
+        return result.class_info;
       } else {
-        console.error("Failed to fetch class info:", result.message);
+        throw new Error(result.message || "Failed to fetch class info");
       }
     } catch (error) {
       console.error("Error fetching class info:", error);
-    } finally {
-      setLoading(false);
+      setError("Failed to load class information");
+      return null;
     }
+  }, [subjectCode]);
+
+  // Fetch REAL grade summary data - use useCallback
+  const fetchGradeSummary = useCallback(async (classInfo) => {
+    try {
+      if (!classInfo || !classInfo.section || !classInfo.professor_ID) {
+        console.log("Missing class info for grade summary");
+        return;
+      }
+
+      console.log("Fetching grade summary for:", {
+        subjectCode,
+        section: classInfo.section,
+        professor_ID: classInfo.professor_ID
+      });
+
+      const response = await fetch(
+        `http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_grade_summary.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      console.log("Grade summary response:", result);
+
+      if (result.success) {
+        setGradeData(result.data);
+        // Update classInfo with additional details from the grade summary
+        if (result.class_info) {
+          setClassInfo(prev => ({ ...prev, ...result.class_info }));
+        }
+        // Store summary data if needed
+        if (result.summary) {
+          console.log("Summary data:", result.summary);
+        }
+        
+        // Debug info
+        if (result.debug) {
+          console.log("Debug info:", result.debug);
+        }
+      } else {
+        console.error("Failed to fetch grade summary:", result.message);
+        // Set empty data on error
+        const activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory"];
+        const emptyData = activityTypes.map(type => ({
+          activityType: type,
+          assignedWorks: 0,
+          submissions: 0,
+          missedSubmissions: 0,
+          totalScores: 0,
+          sumGradedWorks: 0,
+          percentage: "0%"
+        }));
+        setGradeData(emptyData);
+      }
+    } catch (error) {
+      console.error("Error fetching grade summary:", error);
+      // Set empty data on error
+      const activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory"];
+      const emptyData = activityTypes.map(type => ({
+        activityType: type,
+        assignedWorks: 0,
+        submissions: 0,
+        missedSubmissions: 0,
+        totalScores: 0,
+        sumGradedWorks: 0,
+        percentage: "0%"
+      }));
+      setGradeData(emptyData);
+      setError("Failed to load grade data");
+    }
+  }, [subjectCode]);
+
+  useEffect(() => {
+    if (!subjectCode) {
+      setError("No subject code provided");
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        setError("Request timeout - taking too long to load");
+        setLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch class info first
+        const classData = await fetchClassInfo();
+        
+        if (isMounted && classData) {
+          // Then fetch grade summary with the class data
+          await fetchGradeSummary(classData);
+        }
+        
+        if (isMounted) {
+          setLoading(false);
+          clearTimeout(timeoutId);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error("Error loading data:", error);
+          setError("Failed to load data");
+          setLoading(false);
+          clearTimeout(timeoutId);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [subjectCode, fetchClassInfo, fetchGradeSummary]);
+
+  const handleDownload = () => {
+    alert("Download functionality (CSV/PDF) will be implemented here.");
   };
 
-  // Static download handler
-  const handleDownload = () => {
-    alert('Download functionality would be implemented here. This would export the grade data as a CSV or PDF file.');
-    // In a real implementation, this would:
-    // 1. Generate CSV/PDF data from gradeData
-    // 2. Create a Blob and download link
-    // 3. Trigger the download
-  };
+  // Show error state
+  if (error && !loading) {
+    return (
+      <div>
+        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-5 text-center">
+            <div className="text-red-500 text-lg mb-4">Error: {error}</div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-[#00874E] text-white rounded-md hover:bg-[#006e3d] transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -117,6 +214,7 @@ export default function GradeTab() {
           <div className="p-5 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
             <p className="mt-3 text-gray-600">Loading grade data...</p>
+            {error && <p className="mt-2 text-red-500 text-sm">{error}</p>}
           </div>
         </div>
       </div>
@@ -145,7 +243,7 @@ export default function GradeTab() {
               </h1>
             </div>
             <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
-              View and manage class grades
+              View and manage class grades - {classInfo?.subject} ({classInfo?.section})
             </p>
           </div>
 
@@ -352,7 +450,7 @@ export default function GradeTab() {
                           </span>
                         </td>
                       </tr>
-                    ))}
+                    ))} 
                   </tbody>
                 </table>
               </div>
@@ -376,15 +474,24 @@ export default function GradeTab() {
                 <div className="text-center">
                   <div className="font-semibold text-gray-700">Overall Score</div>
                   <div className="text-lg font-bold text-[#00874E]">
-                    {gradeData.reduce((sum, item) => sum + item.sumGradedWorks, 0)}
+                    {gradeData.reduce((sum, item) => sum + item.sumGradedWorks, 0).toFixed(1)}
                   </div>
                 </div>
                 <div className="text-center">
                   <div className="font-semibold text-gray-700">Overall Percentage</div>
                   <div className="text-lg font-bold text-[#00874E]">
                     {((gradeData.reduce((sum, item) => sum + item.sumGradedWorks, 0) / 
-                       Math.max(gradeData.reduce((sum, item) => sum + item.totalScores, 1), 1)) * 100).toFixed(1)}%
+                       Math.max(gradeData.reduce((sum, item) => sum + item.totalScores, 0), 1)) * 100).toFixed(1)}%
                   </div>
+                </div>
+              </div>
+              {/* Class Information Display */}
+              <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+                <div className="text-sm text-gray-600">
+                  Showing data for: <span className="font-semibold">{classInfo?.subject} ({classInfo?.subject_code}) - Section {classInfo?.section}</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Professor: {classInfo?.professor_name || `ID: ${classInfo?.professor_ID}`}
                 </div>
               </div>
             </div>

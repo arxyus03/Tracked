@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import ClassManagementArchive from "../../Components/ClassManagementArchive";
-import CreateClass from "../../Components/CreateClass";
 
 import ClassManagementIcon from "../../assets/ClassManagement(Light).svg";
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
@@ -12,6 +10,8 @@ import Archive from "../../assets/Archive(Light).svg";
 import Palette from "../../assets/Palette(Light).svg";
 import Add from "../../assets/Add(Light).svg";
 import Book from "../../assets/ClassManagementSubject(Light).svg";
+import BackButton from "../../assets/BackButton(Light).svg";
+import ArchiveWarningIcon from "../../assets/Warning(Yellow).svg";
 import SuccessIcon from '../../assets/Success(Green).svg';
 
 export default function ClassManagement() {
@@ -21,22 +21,24 @@ export default function ClassManagement() {
   const [loading, setLoading] = useState(false);
   const [loadingClasses, setLoadingClasses] = useState(true);
 
-  // Success modal state
+  // Modal form states
+  const [selectedYearLevel, setSelectedYearLevel] = useState("");
+  const [subject, setSubject] = useState("");
+  const [section, setSection] = useState("");
+  const [formError, setFormError] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdSubjectCode, setCreatedSubjectCode] = useState("");
-  
-  // Archive modal state
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [classToArchive, setClassToArchive] = useState(null);
+
+  // Dropdown state for modal
+  const [yearLevelDropdownOpen, setYearLevelDropdownOpen] = useState(false);
 
   // Filter states
   const [selectedFilter, setSelectedFilter] = useState("All Year Levels");
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
 
-  // Form error state
-  const [formError, setFormError] = useState("");
-
-  // Using the same colors as the tab buttons with 10 options
+  // Using the second component's color palette (lighter colors)
   const bgOptions = [
     "#e6f4ea", // Light Green (Announcement tab color)
     "#e6f0ff", // Light Blue (Classwork tab color)
@@ -71,7 +73,7 @@ export default function ClassManagement() {
     fetchClasses();
   }, []);
 
-  // Load saved colors from localStorage when component mounts
+  // Load saved colors from localStorage when component mounts (from second component)
   useEffect(() => {
     const savedColors = localStorage.getItem('classColors');
     if (savedColors) {
@@ -85,7 +87,7 @@ export default function ClassManagement() {
     }
   }, []);
 
-  // Save colors to localStorage when classes change
+  // Save colors to localStorage when classes change (from second component)
   useEffect(() => {
     if (classes.length > 0) {
       const colorMap = {};
@@ -101,19 +103,25 @@ export default function ClassManagement() {
       setLoadingClasses(true);
       const professorId = getProfessorId();
       
+      console.log('Professor ID:', professorId);
+      
       if (!professorId) {
         console.error('No professor ID found. User may not be logged in.');
         setLoadingClasses(false);
         return;
       }
       
-      const response = await fetch(`https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
+      // Using localhost endpoint from first component
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
+      
+      console.log('Response status:', response.status);
       
       if (response.ok) {
         const result = await response.json();
+        console.log('API Response:', result);
         
         if (result.success) {
-          // Try to load saved colors first
+          // Try to load saved colors first (from second component)
           const savedColors = localStorage.getItem('classColors');
           const colorMap = savedColors ? JSON.parse(savedColors) : {};
           
@@ -121,8 +129,8 @@ export default function ClassManagement() {
             ...classItem,
             bgColor: colorMap[classItem.subject_code] || bgOptions[index % bgOptions.length]
           }));
-          
           setClasses(classesWithColors);
+          console.log('Classes set:', classesWithColors);
         } else {
           console.error('Error fetching classes:', result.message);
         }
@@ -153,6 +161,12 @@ export default function ClassManagement() {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Close year level dropdown in modal
+      if (yearLevelDropdownOpen && !event.target.closest('.year-level-dropdown')) {
+        setYearLevelDropdownOpen(false);
+      }
+      
+      // Close filter dropdown
       if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
         setFilterDropdownOpen(false);
       }
@@ -163,9 +177,9 @@ export default function ClassManagement() {
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [filterDropdownOpen]);
+  }, [yearLevelDropdownOpen, filterDropdownOpen]);
 
-  // Check if class already exists
+  // Check if class already exists (from second component)
   const checkDuplicateClass = (yearLevel, subject, section) => {
     if (!yearLevel || !subject || !section) return null;
     
@@ -191,14 +205,14 @@ export default function ClassManagement() {
     setShowArchiveModal(true);
   };
 
-  // Confirm archive function to pass to modal
   const confirmArchive = async () => {
     if (!classToArchive) return;
 
     try {
       const professorId = getProfessorId();
       
-      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveClassDB/archive_class.php', {
+      // Using localhost endpoint from first component's structure
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveClassDB/archive_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -212,10 +226,9 @@ export default function ClassManagement() {
       const result = await response.json();
 
       if (result.success) {
-        // Remove class from state
         setClasses(prevClasses => prevClasses.filter(c => c.subject_code !== classToArchive.subject_code));
         
-        // Remove color from localStorage
+        // Remove color from localStorage (from second component)
         const savedColors = localStorage.getItem('classColors');
         if (savedColors) {
           const colorMap = JSON.parse(savedColors);
@@ -223,7 +236,6 @@ export default function ClassManagement() {
           localStorage.setItem('classColors', JSON.stringify(colorMap));
         }
         
-        // Close modal
         setShowArchiveModal(false);
         setClassToArchive(null);
       } else {
@@ -234,6 +246,27 @@ export default function ClassManagement() {
       console.error('Error archiving class:', error);
       alert('Error archiving class. Please try again.');
       setShowArchiveModal(false);
+    }
+  };
+
+  // Handle Enter key press in modal inputs
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleCreate();
+    }
+  };
+
+  // Handle subject input change - convert to uppercase
+  const handleSubjectChange = (e) => {
+    setSubject(e.target.value.toUpperCase());
+  };
+
+  // Handle section input change - convert to uppercase and limit to one letter
+  const handleSectionChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    // Only allow letters and limit to one character
+    if (value === '' || /^[A-Z]$/.test(value)) {
+      setSection(value);
     }
   };
 
@@ -249,7 +282,7 @@ export default function ClassManagement() {
     const originalIndex = classes.findIndex(c => c.subject_code === classItem.subject_code);
     
     if (originalIndex !== -1) {
-      // Get current color index
+      // Get current color index (from second component)
       const currentColor = newClasses[originalIndex].bgColor;
       const currentIndex = bgOptions.indexOf(currentColor);
       
@@ -266,7 +299,7 @@ export default function ClassManagement() {
       // Update state
       setClasses(newClasses);
       
-      // Update localStorage immediately
+      // Update localStorage immediately (from second component)
       const savedColors = localStorage.getItem('classColors');
       const colorMap = savedColors ? JSON.parse(savedColors) : {};
       colorMap[classItem.subject_code] = newColor;
@@ -274,10 +307,8 @@ export default function ClassManagement() {
     }
   };
 
-  // Handle create class from modal
-  const handleCreateClass = (yearLevel, subject, section) => {
-    // Validate inputs
-    if (!yearLevel || !subject || !section) {
+  const handleCreate = async () => {
+    if (!selectedYearLevel || !subject || !section) {
       setFormError("Please fill in all required fields");
       return;
     }
@@ -288,29 +319,14 @@ export default function ClassManagement() {
       return;
     }
 
-    setFormError("");
-    
-    // Check for duplicate class
-    const duplicateClass = checkDuplicateClass(yearLevel, subject, section);
+    // Check for duplicate class (from second component)
+    const duplicateClass = checkDuplicateClass(selectedYearLevel, subject, section);
     if (duplicateClass) {
-      // Show duplicate warning modal instead of creating
-      setFormError(""); // Clear any previous errors
-      // The CreateClass will handle showing the duplicate warning
-      return { duplicate: duplicateClass };
+      setFormError(`A class with Year Level: ${selectedYearLevel}, Subject: ${subject.toUpperCase()}, Section: ${section.toUpperCase()} already exists.`);
+      return;
     }
 
-    // If no duplicate, proceed to create
-    createClass(yearLevel, subject, section);
-    return { duplicate: null };
-  };
-
-  // Handle force create (when user confirms duplicate warning)
-  const handleForceCreateClass = (yearLevel, subject, section) => {
-    createClass(yearLevel, subject, section);
-  };
-
-  // Create class function
-  const createClass = async (yearLevel, subject, section) => {
+    setFormError("");
     setLoading(true);
 
     try {
@@ -323,13 +339,14 @@ export default function ClassManagement() {
       }
 
       const classData = {
-        year_level: yearLevel,
+        year_level: selectedYearLevel,
         subject: subject,
         section: section,
         professor_ID: professorId
       };
 
-      const response = await fetch('https://tracked.6minds.site/Professor/ClassManagementDB/create_class.php', {
+      // Using localhost endpoint from first component
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ClassManagementDB/create_class.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -340,7 +357,7 @@ export default function ClassManagement() {
       const result = await response.json();
 
       if (result.success) {
-        // Get saved colors to maintain consistency
+        // Get saved colors to maintain consistency (from second component)
         const savedColors = localStorage.getItem('classColors');
         const colorMap = savedColors ? JSON.parse(savedColors) : {};
         
@@ -351,11 +368,12 @@ export default function ClassManagement() {
         
         setClasses(prevClasses => [...prevClasses, newClass]);
         
-        // Reset form
+        setSelectedYearLevel("");
+        setSubject("");
+        setSection("");
         setFormError("");
         setShowModal(false);
         
-        // Show success modal
         setCreatedSubjectCode(result.class_data.subject_code);
         setShowSuccessModal(true);
       } else {
@@ -409,7 +427,7 @@ export default function ClassManagement() {
         className="block"
       >
         <div
-          className="text-gray-600 rounded-lg p-4 sm:p-5 lg:p-6 space-y-3 border-2 border-transparent hover:border-[#00874E] hover:shadow-xl transition-all duration-200 h-full"
+          className="text-gray-600 rounded-lg p-4 sm:p-5 lg:p-6 space-y-3 border-2 border-transparent hover:border-[#00874E] hover:shadow-lg transition-all duration-200 h-full"
           style={{ backgroundColor: classItem.bgColor }}
         >
           {/* Header with Section and Buttons */}
@@ -422,7 +440,7 @@ export default function ClassManagement() {
                 style={{ filter: "brightness(0) opacity(0.7)" }}
               />
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm opacity-70 font-medium">Section:</p>
+                <p className="text-xs sm:text-sm opacity-90 font-medium">Section:</p>
                 <p className="text-sm sm:text-base lg:text-lg font-bold truncate">
                   {classItem.section}
                 </p>
@@ -459,21 +477,28 @@ export default function ClassManagement() {
           {/* Subject Details */}
           <div className="space-y-2 pt-2 border-t border-gray-400 border-opacity-30">
             <div>
-              <p className="text-xs sm:text-sm opacity-70 mb-0.5 font-medium">Subject:</p>
+              <p className="text-xs sm:text-sm opacity-90 mb-0.5 font-medium">Subject:</p>
               <p className="text-sm sm:text-base lg:text-lg font-semibold break-words line-clamp-2">
                 {classItem.subject}
               </p>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm lg:text-base">
               <div>
-                <span className="opacity-70 font-medium">Year Level: </span>
+                <span className="opacity-90 font-medium">Year Level: </span>
                 <span className="font-bold">{classItem.year_level}</span>
               </div>
               <div>
-                <span className="opacity-70 font-medium">Code: </span>
+                <span className="opacity-90 font-medium">Code: </span>
                 <span className="font-bold">{classItem.subject_code}</span>
               </div>
             </div>
+            {/* Semester Display (from first component) */}
+            {classItem.subject_semester && (
+              <div className="text-xs sm:text-sm opacity-90">
+                <span>Semester: </span>
+                <span className="font-semibold">{classItem.subject_semester}</span>
+              </div>
+            )}
           </div>
         </div>
       </Link>
@@ -577,17 +602,148 @@ export default function ClassManagement() {
         </div>
       </div>
 
-      {/* Create Class Modal Component */}
-      <CreateClass
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        onCreate={handleCreateClass}
-        onForceCreate={handleForceCreateClass}
-        loading={loading}
-        formError={formError}
-        showDuplicateWarning={false}
-        onCloseDuplicateWarning={() => {}}
-      />
+      {/* Create Class Modal */}
+      {showModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-md p-6 sm:p-8 relative modal-pop max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowModal(false)}
+              aria-label="Close modal"
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+            >
+              <img
+                src={BackButton}
+                alt="Backbutton"
+                className="w-5 h-5"
+              />
+            </button>
+
+            <h2 className="text-xl sm:text-2xl font-bold mb-1 pr-10">
+              Create Class
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">Fill in the details to create a new class</p>
+            <hr className="border-gray-200 mb-5" />
+
+            {/* Error Message */}
+            {formError && (
+              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded mb-5 text-sm">
+                <p className="font-semibold">Error</p>
+                <p>{formError}</p>
+              </div>
+            )}
+
+            {/* Form */}
+            <div className="space-y-5">
+              {/* Year Level Dropdown */}
+              <div className="relative year-level-dropdown">
+                <label className="text-sm font-semibold mb-2 block text-gray-700">
+                  Year Level <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setYearLevelDropdownOpen(!yearLevelDropdownOpen);
+                  }}
+                  className="w-full bg-white border-2 border-gray-300 text-black rounded-md px-4 py-3 flex items-center justify-between hover:border-[#00874E] focus:border-[#00874E] focus:outline-none transition-colors cursor-pointer"
+                >
+                  <span className={`text-sm ${!selectedYearLevel ? 'text-gray-500' : ''}`}>
+                    {selectedYearLevel || "Select Year Level"}
+                  </span>
+                  <img 
+                    src={ArrowDown} 
+                    alt="" 
+                    className={`h-4 w-4 transition-transform ${yearLevelDropdownOpen ? 'rotate-180' : ''}`} 
+                  />
+                </button>
+                {yearLevelDropdownOpen && (
+                  <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-xl border border-gray-200 z-10 overflow-hidden">
+                    {yearLevels.filter(year => year !== "All Year Levels").map((year) => (
+                      <button
+                        key={year}
+                        type="button"
+                        onClick={() => {
+                          setSelectedYearLevel(year);
+                          setYearLevelDropdownOpen(false);
+                        }}
+                        className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 transition-colors cursor-pointer"
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Subject Input */}
+              <div>
+                <label className="text-sm font-semibold mb-2 block text-gray-700">
+                  Subject <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter subject name"
+                  value={subject}
+                  onChange={handleSubjectChange}
+                  onKeyPress={handleKeyPress}
+                  className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors uppercase"
+                />
+              </div>
+
+              {/* Section Input */}
+              <div>
+                <label className="text-sm font-semibold mb-2 block text-gray-700">
+                  Section <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter section (A-Z)"
+                  value={section}
+                  onChange={handleSectionChange}
+                  onKeyPress={handleKeyPress}
+                  maxLength={1}
+                  className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors uppercase"
+                />
+              </div>
+
+              {/* Create Button */}
+              <button
+                onClick={handleCreate}
+                disabled={loading}
+                className={`w-full ${
+                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#00A15D] hover:bg-[#00874E] cursor-pointer'
+                } text-white font-bold py-3 rounded-md transition-all duration-200 text-base flex items-center justify-center gap-2`}
+              >
+                {loading && (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                )}
+                {loading ? 'Creating...' : 'Create Class'}
+              </button>
+            </div>
+          </div>
+
+          <style>{`
+            .overlay-fade { animation: overlayFade .18s ease-out both; }
+            @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
+
+            .modal-pop {
+              transform-origin: top center;
+              animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
+            }
+            @keyframes popIn {
+              from { opacity: 0; transform: translateY(-8px) scale(.98); }
+              to   { opacity: 1; transform: translateY(0)   scale(1);    }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* Success Modal */}
       {showSuccessModal && (
@@ -599,7 +755,7 @@ export default function ClassManagement() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white text-gray-600 rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
             <div className="text-center">
               {/* Success Icon */}
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
@@ -610,7 +766,7 @@ export default function ClassManagement() {
                 />
               </div>
 
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-600 mb-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 Class Created Successfully!
               </h3>
               
@@ -631,15 +787,71 @@ export default function ClassManagement() {
       )}
 
       {/* Archive Confirmation Modal */}
-      <ClassManagementArchive
-        show={showArchiveModal}
-        onClose={() => {
-          setShowArchiveModal(false);
-          setClassToArchive(null);
-        }}
-        onConfirm={confirmArchive}
-        classToArchive={classToArchive}
-      />
+      {showArchiveModal && classToArchive && (
+        <div
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowArchiveModal(false);
+              setClassToArchive(null);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+            <div className="text-center">
+              {/* Warning Icon */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                <img 
+                  src={ArchiveWarningIcon} 
+                  alt="Warning" 
+                  className="h-8 w-8" 
+                />
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                Archive Class?
+              </h3>
+              
+              <div className="mt-4 mb-6">
+                <p className="text-sm text-gray-600 mb-3">
+                  Are you sure you want to archive this class?
+                </p>
+                <div className="bg-gray-50 rounded-lg p-4 text-left">
+                  <p className="text-base sm:text-lg font-semibold text-gray-900 break-words">
+                    {classToArchive.subject}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Section: {classToArchive.section}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Code: {classToArchive.subject_code}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    setShowArchiveModal(false);
+                    setClassToArchive(null);
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmArchive}
+                  className="flex-1 bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                >
+                  Archive
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

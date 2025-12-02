@@ -12,9 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Database connection configuration
 $host = 'localhost';
-$dbname = 'u713320770_tracked';
-$username = 'u713320770_trackedDB';
-$password = 'Tracked@2025';
+$dbname = 'tracked';
+$username = 'root';
+$password = '';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
@@ -82,16 +82,34 @@ try {
         throw new Exception("Professor with ID '$professor_ID' does not exist in tracked_users table");
     }
 
+    // Get active semester from tracked_semester table
+    $semester_sql = "SELECT class_semester FROM tracked_semester WHERE semester_status = 'Active' LIMIT 1";
+    $stmt = $pdo->prepare($semester_sql);
+    $stmt->execute();
+    $semester_result = $stmt->fetch();
+    
+    $response['debug']['semester_query'] = [
+        'sql' => $semester_sql,
+        'result' => $semester_result
+    ];
+
+    if (!$semester_result || empty($semester_result['class_semester'])) {
+        throw new Exception("No active semester found. Please set an active semester first.");
+    }
+
+    $active_semester = $semester_result['class_semester'];
+    $response['debug']['active_semester'] = $active_semester;
+
     // Generate unique subject code
     $subject_code = generateUniqueSubjectCode($pdo);
     $response['debug']['generated_code'] = $subject_code;
 
-    // Insert class into database
-    $sql = "INSERT INTO classes (subject_code, year_level, subject, section, professor_ID) 
-            VALUES (?, ?, ?, ?, ?)";
+    // Insert class into database with the active semester
+    $sql = "INSERT INTO classes (subject_code, year_level, subject, subject_semester, section, professor_ID) 
+            VALUES (?, ?, ?, ?, ?, ?)";
     
     $stmt = $pdo->prepare($sql);
-    $result = $stmt->execute([$subject_code, $year_level, $subject, $section, $professor_ID]);
+    $result = $stmt->execute([$subject_code, $year_level, $subject, $active_semester, $section, $professor_ID]);
     
     $response['debug']['insert_result'] = $result;
     $response['debug']['row_count'] = $stmt->rowCount();

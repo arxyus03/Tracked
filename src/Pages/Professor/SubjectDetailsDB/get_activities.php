@@ -1,4 +1,5 @@
 <?php
+// C:\xampp\htdocs\TrackEd\src\Pages\Professor\SubjectDetailsDB\get_activities.php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
@@ -8,10 +9,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+// Localhost MySQL connection
 $host = 'localhost';
-$dbname = 'u713320770_tracked';
-$username = 'u713320770_trackedDB';
-$password = 'Tracked@2025';
+$dbname = 'tracked';
+$username = 'root';
+$password = '';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
@@ -29,35 +31,32 @@ if (empty($subject_code)) {
 }
 
 try {
-    // First, get the class details including section
-    $classStmt = $pdo->prepare("SELECT section, year_level FROM classes WHERE subject_code = ?");
+    // Get class details
+    $classStmt = $pdo->prepare("SELECT * FROM classes WHERE subject_code = ?");
     $classStmt->execute([$subject_code]);
     $class = $classStmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$class) {
-        echo json_encode(["success" => false, "message" => "Class not found"]);
+        echo json_encode(["success" => false, "message" => "Class not found for subject code: $subject_code"]);
         exit;
     }
     
-    $section = $class['section'];
-    
-    // Get students who are actually ENROLLED in this class from tracked_users table
+    // Get enrolled students
     $studentsStmt = $pdo->prepare("
-        SELECT t.tracked_ID as user_ID, 
+        SELECT 
+            t.tracked_ID as user_ID, 
             CONCAT(t.tracked_firstname, ' ', t.tracked_lastname) as user_Name,
             t.tracked_Email as user_Email
         FROM tracked_users t
         INNER JOIN student_classes sc ON t.tracked_ID = sc.student_ID
         WHERE sc.subject_code = ? AND sc.archived = 0
         AND t.tracked_Role = 'Student' AND t.tracked_Status = 'Active'
+        ORDER BY t.tracked_lastname, t.tracked_firstname
     ");
     $studentsStmt->execute([$subject_code]);
     $students = $studentsStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    error_log("ENROLLED Students for class '$subject_code': " . count($students));
-    
-    // Get activities - ONLY NON-ARCHIVED activities (archived = 0 or NULL)
-    // Format deadline to include time for frontend display
+    // Get activities - only non-archived
     $stmt = $pdo->prepare("
         SELECT 
             id,
@@ -76,7 +75,7 @@ try {
             school_work_edited
         FROM activities 
         WHERE subject_code = ? AND (archived = 0 OR archived IS NULL) 
-        ORDER BY created_at DESC
+        ORDER BY created_at ASC
     ");
     $stmt->execute([$subject_code]);
     $activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -86,7 +85,7 @@ try {
         $activityStudents = [];
         
         foreach ($students as $student) {
-            // Check if grade entry exists for this student and activity
+            // Check if grade entry exists
             $gradeStmt = $pdo->prepare("
                 SELECT * FROM activity_grades 
                 WHERE activity_ID = ? AND student_ID = ?
@@ -95,7 +94,7 @@ try {
             $gradeData = $gradeStmt->fetch(PDO::FETCH_ASSOC);
             
             if ($gradeData) {
-                // Use existing grade data - include submitted_at
+                // Use existing grade data
                 $activityStudents[] = [
                     'user_ID' => $student['user_ID'],
                     'user_Name' => $student['user_Name'],
@@ -106,28 +105,16 @@ try {
                     'submitted_at' => $gradeData['submitted_at']
                 ];
             } else {
-                // Create default entry if doesn't exist
-                try {
-                    $insertStmt = $pdo->prepare("
-                        INSERT INTO activity_grades (activity_ID, student_ID, grade, submitted, late, submitted_at) 
-                        VALUES (?, ?, NULL, 0, 0, NULL)
-                    ");
-                    $insertStmt->execute([$activity['id'], $student['user_ID']]);
-                    
-                    $activityStudents[] = [
-                        'user_ID' => $student['user_ID'],
-                        'user_Name' => $student['user_Name'],
-                        'user_Email' => $student['user_Email'],
-                        'grade' => null,
-                        'submitted' => false,
-                        'late' => false,
-                        'submitted_at' => null
-                    ];
-                } catch (Exception $insertError) {
-                    error_log("Error inserting grade for student {$student['user_ID']}: " . $insertError->getMessage());
-                    // Continue with other students even if one fails
-                    continue;
-                }
+                // No grade entry exists yet
+                $activityStudents[] = [
+                    'user_ID' => $student['user_ID'],
+                    'user_Name' => $student['user_Name'],
+                    'user_Email' => $student['user_Email'],
+                    'grade' => null,
+                    'submitted' => false,
+                    'late' => false,
+                    'submitted_at' => null
+                ];
             }
         }
         
@@ -137,15 +124,20 @@ try {
     echo json_encode([
         "success" => true,
         "activities" => $activities,
+        "students" => $students, // This is required for analytics
+        "class_info" => $class,
         "debug" => [
-            "class_section" => $section,
-            "total_enrolled_students" => count($students),
-            "student_details" => $students,
-            "total_activities" => count($activities)
+            "total_students" => count($students),
+            "total_activities" => count($activities),
+            "subject_code" => $subject_code
         ]
     ]);
 
 } catch (Exception $e) {
-    echo json_encode(["success" => false, "message" => "Error fetching activities: " . $e->getMessage()]);
+    error_log("Error in get_activities.php: " . $e->getMessage());
+    echo json_encode([
+        "success" => false, 
+        "message" => "Error fetching activities: " . $e->getMessage()
+    ]);
 }
 ?>

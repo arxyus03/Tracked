@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Auth Callback - TrackEd</title>
+</head>
+<body>
+    <script>
+        // Extract token from URL hash
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        
+        if (accessToken) {
+            // Send token back to main window
+            window.opener.postMessage({
+                type: 'google_auth_success',
+                token: accessToken
+            }, 'https://tracked.6minds.site');
+            
+            // Close popup
+            window.close();
+        } else {
+            // Handle error
+            window.opener.postMessage({
+                type: 'google_auth_error',
+                error: 'No access token found'
+            }, 'https://tracked.6minds.site');
+            window.close();
+        }
+    </script>
+</body>
+</html>

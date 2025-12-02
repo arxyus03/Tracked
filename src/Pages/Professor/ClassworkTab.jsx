@@ -19,13 +19,12 @@ import Announcement from "../../assets/Announcement(Light).svg";
 import Classwork from "../../assets/Classwork(Light).svg";
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
 import Search from "../../assets/Search.svg";
-import StudentsIcon from "../../assets/Person.svg";
 import ClassManagementIcon from "../../assets/ClassManagement(Light).svg";
 import GradeIcon from "../../assets/Grade(Light).svg";
 import AnalyticsIcon from "../../assets/Analytics(Light).svg";
-import Copy from "../../assets/Copy(Light).svg";
+import Copy from "../../assets/Copy(Light).svg"; // From second component
 
-// New Small Activity Card Component
+// New Small Activity Card Component - Merged version
 const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) => {
   const formatDate = (dateString) => {
     if (!dateString || dateString === "No deadline") return "No deadline";
@@ -122,14 +121,13 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
     }
   };
 
-  // Updated: Check if activity is fully graded - ALL students (even those who haven't submitted) must have a grade
+  // Updated: Check if activity is fully graded - Using second component's logic (ALL students must have grade)
   const isFullyGraded = (activity) => {
     if (!activity.students || activity.students.length === 0) return false;
     
     // Check if ALL students (not just submitted ones) have valid grades that are NOT 0
     return activity.students.every(student => {
       const grade = student.grade;
-      // Consider null, undefined, empty string, and 0 as "not graded"
       return grade != null && 
              grade !== '' && 
              grade !== undefined && 
@@ -144,7 +142,6 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
     
     return activity.students.some(student => {
       const grade = student.grade;
-      // Consider null, undefined, empty string, and 0 as "not graded"
       return grade != null && 
              grade !== '' && 
              grade !== undefined && 
@@ -153,7 +150,7 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
     });
   };
 
-  // Check if activity is active (not past deadline and not fully graded)
+  // Check if activity is active (not past deadline and not fully graded) - From second component
   const isActivityActive = (activity) => {
     return !isDeadlinePassed(activity.deadline) && !isFullyGraded(activity);
   };
@@ -209,7 +206,7 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
             </span>
             <span className="text-sm text-gray-500">#{activity.task_number}</span>
             
-            {/* Status badges - Hidden on mobile, shown on md and larger */}
+            {/* Status badges - Hidden on mobile, shown on md and larger (from second component) */}
             <div className="hidden md:flex items-center gap-1">
               {isFullyGraded(activity) && (
                 <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded flex items-center gap-1">
@@ -245,7 +242,7 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
           </h3>
           
           <div className="space-y-2 text-sm text-gray-600">
-            {/* Deadline with icon */}
+            {/* Deadline with icon (from second component) */}
             <div className="flex items-center gap-2">
               <svg className={`w-4 h-4 ${
                 isDeadlinePassed(activity.deadline) || isDeadlineUrgent(activity.deadline) 
@@ -263,7 +260,7 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
               </span>
             </div>
 
-            {/* Posted time */}
+            {/* Posted time with icon (from second component) */}
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -271,7 +268,7 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
               <span>{getPostedTime(activity.created_at)}</span>
             </div>
 
-            {/* Points */}
+            {/* Points with icon (from second component) */}
             {activity.points > 0 && (
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,7 +282,7 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
 
         {/* Right Section - Stats and Actions */}
         <div className="flex flex-col items-end gap-3 ml-4" onClick={(e) => e.stopPropagation()}>
-          {/* Submission Stats - Simplified */}
+          {/* Submission Stats - Simplified (from second component) */}
           <div className="text-right">
             <div className="text-lg font-bold text-gray-900 mb-1">
               <span className={submissionRate === 100 ? 'text-green-600' : 'text-gray-900'}>
@@ -294,11 +291,22 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
               <span className="text-gray-400">/{totalCount}</span>
             </div>
             <div className="text-xs text-gray-500">Submitted</div>
+            
+            {/* Progress bar - Keep from first component */}
+            <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1">
+              <div 
+                className={`h-full ${
+                  submissionRate === 100 ? 'bg-green-500' :
+                  submissionRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${Math.max(submissionRate, 0)}%` }}
+              ></div>
+            </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Merged responsive behavior */}
           <div className="flex items-center gap-2">
-            {/* Edit Button with Tooltip - Hidden on mobile, shown on md+ */}
+            {/* Edit Button with Tooltip - Hidden on mobile, shown on md+ (from second component) */}
             <div className="relative group hidden md:block">
               <button
                 onClick={() => onEdit(activity)}
@@ -323,7 +331,7 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
               </svg>
             </button>
 
-            {/* Archive Button - Only show for non-active activities */}
+            {/* Archive Button - Only show for non-active activities (from second component) */}
             {!isActivityActive(activity) && (
               <>
                 {/* Archive Button with Tooltip - Hidden on mobile, shown on md+ */}
@@ -352,7 +360,7 @@ const SmallActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) =
         </div>
       </div>
       
-      {/* Mobile-only Status Indicators - Simple dot indicators */}
+      {/* Mobile-only Status Indicators - Simple dot indicators (from second component) */}
       <div className="md:hidden flex items-center gap-2 mt-2">
         {isFullyGraded(activity) && (
           <div className="flex items-center gap-1">
@@ -433,7 +441,7 @@ export default function ClassworkTab() {
     return now.toISOString().slice(0, 16);
   };
 
-  // Copy subject code to clipboard
+  // Copy subject code to clipboard (from second component)
   const copySubjectCode = () => {
     if (classInfo?.subject_code) {
       navigator.clipboard.writeText(classInfo.subject_code)
@@ -483,7 +491,8 @@ export default function ClassworkTab() {
         return;
       }
 
-      const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
+      // Using localhost endpoint from first component
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_class_details.php?subject_code=${subjectCode}&professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -507,7 +516,8 @@ export default function ClassworkTab() {
         return;
       }
 
-      const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
+      // Using localhost endpoint from first component
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
       
       if (response.ok) {
         const result = await response.json();
@@ -527,7 +537,7 @@ export default function ClassworkTab() {
     }
   };
 
-  // Check if activity already exists (duplicate detection for activity type + task number)
+  // Check if activity already exists (duplicate detection for activity type + task number) - From second component
   const isActivityDuplicate = (activityType, taskNumber) => {
     return activities.some(activity => 
       activity.activity_type === activityType && 
@@ -535,10 +545,9 @@ export default function ClassworkTab() {
     );
   };
 
-  // Check if activity title already exists (duplicate title detection)
+  // Check if activity title already exists (duplicate title detection) - From second component
   const isTitleDuplicate = (title, excludeActivityId = null) => {
     return activities.some(activity => {
-      // If excludeActivityId is provided, skip that activity when checking for duplicates
       if (excludeActivityId && activity.id === excludeActivityId) {
         return false;
       }
@@ -546,7 +555,7 @@ export default function ClassworkTab() {
     });
   };
 
-  // Get existing task numbers for a specific activity type
+  // Get existing task numbers for a specific activity type - From second component
   const getExistingTaskNumbers = (activityType) => {
     return activities
       .filter(activity => activity.activity_type === activityType)
@@ -554,19 +563,17 @@ export default function ClassworkTab() {
       .sort((a, b) => a - b);
   };
 
-  // Get existing activity titles
+  // Get existing activity titles - From second component
   const getExistingTitles = () => {
     return activities.map(activity => activity.title);
   };
 
-  // Updated: Check if activity is fully graded (excluding 0 grades) - ALL students must have a grade
+  // Updated: Check if activity is fully graded - Using second component's logic
   const isFullyGraded = (activity) => {
     if (!activity.students || activity.students.length === 0) return false;
     
-    // Check if ALL students (not just submitted ones) have valid grades that are NOT 0
     return activity.students.every(student => {
       const grade = student.grade;
-      // Consider null, undefined, empty string, and 0 as "not graded"
       return grade != null && 
              grade !== '' && 
              grade !== undefined && 
@@ -581,13 +588,17 @@ export default function ClassworkTab() {
     
     return activity.students.some(student => {
       const grade = student.grade;
-      // Consider null, undefined, empty string, and 0 as "not graded"
       return grade != null && 
              grade !== '' && 
              grade !== undefined && 
              grade !== 0 && 
              grade !== '0';
     });
+  };
+
+  // Check if activity is active - From second component
+  const isActivityActive = (activity) => {
+    return !isDeadlinePassed(activity.deadline) && !isFullyGraded(activity);
   };
 
   // Check if deadline is passed
@@ -603,11 +614,6 @@ export default function ClassworkTab() {
     }
   };
 
-  // Check if activity is active
-  const isActivityActive = (activity) => {
-    return !isDeadlinePassed(activity.deadline) && !isFullyGraded(activity);
-  };
-
   // Handle create activity from modal
   const handleCreateActivity = async (activityData) => {
     // Validate required fields
@@ -616,7 +622,7 @@ export default function ClassworkTab() {
       return;
     }
 
-    // Check for duplicate activity (activity type + task number)
+    // Check for duplicate activity (activity type + task number) - From second component
     if (isActivityDuplicate(activityData.activityType, activityData.taskNumber)) {
       const existingTaskNumbers = getExistingTaskNumbers(activityData.activityType);
       const message = `"${activityData.activityType} ${activityData.taskNumber}" already exists.\n\nExisting ${activityData.activityType}s:\n${existingTaskNumbers.map(num => `${num}`).join('\n')}`;
@@ -625,7 +631,7 @@ export default function ClassworkTab() {
       return;
     }
 
-    // Check for duplicate title
+    // Check for duplicate title - From second component
     if (isTitleDuplicate(activityData.title)) {
       const existingTitles = getExistingTitles();
       const message = `Title "${activityData.title}" is already used.\n\nExisting titles:\n${existingTitles.map((title, index) => `${index + 1}. "${title}"`).join('\n')}`;
@@ -674,7 +680,8 @@ export default function ClassworkTab() {
 
       console.log('Creating activity with data:', apiData);
 
-      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/create_activity.php', {
+      // Using localhost endpoint from first component
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/create_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -726,7 +733,7 @@ export default function ClassworkTab() {
 
   // Handle edit activity
   const handleEditActivity = async (activityData) => {
-    // Check for duplicate activity (activity type + task number) - excluding current activity
+    // Check for duplicate activity - From second component
     if (isActivityDuplicate(activityData.activityType, activityData.taskNumber) && 
         (editingActivity.activity_type !== activityData.activityType || 
          editingActivity.task_number !== activityData.taskNumber)) {
@@ -737,7 +744,7 @@ export default function ClassworkTab() {
       return;
     }
 
-    // Check for duplicate title - excluding current activity
+    // Check for duplicate title - From second component
     if (isTitleDuplicate(activityData.title, editingActivity.id)) {
       const existingTitles = getExistingTitles();
       const filteredTitles = existingTitles.filter(title => 
@@ -762,7 +769,8 @@ export default function ClassworkTab() {
 
       console.log('Updating activity with data:', updatedActivityData);
 
-      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/update_activity.php', {
+      // Using localhost endpoint from first component
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/update_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -794,9 +802,9 @@ export default function ClassworkTab() {
     }
   };
 
-  // Handle archive activity - now checks if activity is active
+  // Handle archive activity - Using second component's logic
   const handleArchiveActivity = async (activity) => {
-    // Prevent archiving active activities
+    // Prevent archiving active activities - From second component
     if (isActivityActive(activity)) {
       alert("Cannot archive active activities. Please wait until the deadline passes or all submissions are graded.");
       setShowArchiveModal(false);
@@ -810,7 +818,8 @@ export default function ClassworkTab() {
         return;
       }
       
-      const response = await fetch('https://tracked.6minds.site/Professor/ArchiveActivitiesDB/archive_activity.php', {
+      // Using localhost endpoint from first component
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/ArchiveActivitiesDB/archive_activity.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -843,7 +852,7 @@ export default function ClassworkTab() {
     }
   };
 
-  // Handle archive button click - check if activity is active
+  // Handle archive button click - check if activity is active (from second component)
   const handleArchiveSchoolWork = (activity) => {
     if (isActivityActive(activity)) {
       alert("Cannot archive active activities. Please wait until the deadline passes or all submissions are graded.");
@@ -858,7 +867,8 @@ export default function ClassworkTab() {
     try {
       console.log('Saving grades for activity:', selectedActivity.id, 'Students:', updatedStudents);
       
-      const response = await fetch('https://tracked.6minds.site/Professor/SubjectDetailsDB/update_activity_grades.php', {
+      // Using localhost endpoint from first component
+      const response = await fetch('http://localhost/TrackEd/src/Pages/Professor/SubjectDetailsDB/update_activity_grades.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -914,7 +924,7 @@ export default function ClassworkTab() {
         case "Past Deadline":
           matchesFilter = isDeadlinePassed(activity.deadline);
           break;
-        case "Active":
+        case "Active": // From second component
           matchesFilter = isActivityActive(activity);
           break;
         default:
@@ -925,7 +935,7 @@ export default function ClassworkTab() {
     return matchesSearch && matchesFilter;
   });
 
-  // Group activities by status for visual separation
+  // Group activities by status for visual separation - Using second component's grouping
   const groupedActivities = {
     active: filteredActivities.filter(activity => isActivityActive(activity)),
     graded: filteredActivities.filter(activity => isFullyGraded(activity)),
@@ -1024,7 +1034,7 @@ export default function ClassworkTab() {
             </p>
           </div>
 
-          {/* Subject Information with Copy Button */}
+          {/* Subject Information with Copy Button (from second component) */}
           <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
             <div className="flex flex-wrap items-center gap-1 sm:gap-3">
               <span className="font-semibold">SUBJECT CODE:</span>
@@ -1041,6 +1051,7 @@ export default function ClassworkTab() {
                       alt="Copy" 
                       className="w-4 h-4" 
                     />
+                    <span className="text-xs copy-text">Copy</span>
                   </button>
                 )}
               </div>
@@ -1072,9 +1083,9 @@ export default function ClassworkTab() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full mt-4 sm:mt-5 gap-3">
-            {/* Navigation buttons - Stack on mobile, row on tablet/desktop */}
+            {/* Navigation buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-              {/* Announcement Button - Full width on mobile, auto on larger */}
+              {/* Announcement Button */}
               <Link to={`/Class?code=${subjectCode}`} className="flex-1 sm:flex-initial">
                 <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto">
                   <img 
@@ -1086,7 +1097,7 @@ export default function ClassworkTab() {
                 </button>
               </Link>
 
-              {/* Classwork, Attendance, Grade and Analytics - Grid on mobile, row on desktop */}
+              {/* Classwork, Attendance, Grade and Analytics */}
               <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-4 sm:w-auto">
                 <Link to={`/ClassworkTab?code=${subjectCode}`} className="min-w-0">
                   <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full">
@@ -1110,7 +1121,7 @@ export default function ClassworkTab() {
                   </button>
                 </Link>
 
-                {/* NEW: Grade Button */}
+                {/* Grade Button */}
                 <Link to={`/GradeTab?code=${subjectCode}`} className="sm:flex-initial">
                   <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#ffe6e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffd4d4] transition-all duration-300 cursor-pointer w-full sm:w-auto">
                     <img 
@@ -1122,7 +1133,7 @@ export default function ClassworkTab() {
                   </button>
                 </Link>
 
-                {/* NEW: Analytics Button */}
+                {/* Analytics Button */}
                 <Link to={`/AnalyticsTab?code=${subjectCode}`} className="sm:flex-initial">
                   <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto">
                     <img 
@@ -1136,7 +1147,7 @@ export default function ClassworkTab() {
               </div>
             </div>
 
-            {/* Action buttons - Icons only on mobile/tablet, unchanged on desktop */}
+            {/* Action buttons */}
             <div className="flex items-center gap-2 justify-end sm:justify-start mt-3 sm:mt-0 w-full sm:w-auto">
               <Link to={`/StudentList?code=${subjectCode}`}>
                 <div className="relative group">
@@ -1187,7 +1198,7 @@ export default function ClassworkTab() {
 
           {/* Filter and Search Section */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-5">
-            {/* Filter dropdown */}
+            {/* Filter dropdown - Updated with "Active" filter */}
             <div className="relative sm:flex-initial filter-dropdown">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
@@ -1201,7 +1212,7 @@ export default function ClassworkTab() {
                 />
               </button>
 
-              {/* Dropdown options */}
+              {/* Dropdown options - Updated with "Active" option */}
               {filterDropdownOpen && (
                 <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
                   {["All", "Active", ...activityTypes, "Graded", "Past Deadline"].map((option) => (
@@ -1245,7 +1256,7 @@ export default function ClassworkTab() {
 
           {/* SMALL ACTIVITY CARDS WITH VISUAL SEPARATION */}
           <div className="mt-4 sm:mt-5">
-            {/* Active Activities Section */}
+            {/* Active Activities Section (from second component) */}
             {groupedActivities.active.length > 0 && (
               <>
                 <div className="mb-4 mt-4">
@@ -1367,7 +1378,7 @@ export default function ClassworkTab() {
         professorName={classInfo?.professor_name}
       />
 
-      {/* Duplicate Activity Modal - Improved Design */}
+      {/* Duplicate Activity Modal - Improved Design (from second component) */}
       {showDuplicateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">

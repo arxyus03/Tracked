@@ -10,10 +10,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+// Localhost MySQL connection
 $host = 'localhost';
-$dbname = 'u713320770_tracked';
-$username = 'u713320770_trackedDB';
-$password = 'Tracked@2025';
+$dbname = 'tracked';
+$username = 'root';
+$password = '';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
@@ -62,10 +63,12 @@ try {
     ");
     
     $updatedCount = 0;
+    $errors = [];
+    
     foreach ($input['students'] as $student) {
         // Validate student data
         if (empty($student['user_ID'])) {
-            error_log("Skipping student with missing user_ID: " . print_r($student, true));
+            $errors[] = "Skipping student with missing user_ID: " . print_r($student, true);
             continue;
         }
 
@@ -79,45 +82,65 @@ try {
             }
         }
         
-        // Handle missing properties safely
+        // Handle missing properties safely with proper default values
         $submitted = isset($student['submitted']) ? ($student['submitted'] ? 1 : 0) : 0;
         $late = isset($student['late']) ? ($student['late'] ? 1 : 0) : 0;
         
         error_log("Updating student {$student['user_ID']}: grade=$grade, submitted=$submitted, late=$late");
         
-        $result = $stmt->execute([
-            $grade,
-            $submitted,
-            $late,
-            $submitted, // First parameter for CASE WHEN condition
-            $submitted, // Second parameter for CASE WHEN condition  
-            $input['activity_ID'],
-            $student['user_ID']
-        ]);
-        
-        if ($result) {
-            $updatedCount++;
-        } else {
-            error_log("Failed to update student {$student['user_ID']}");
+        try {
+            $result = $stmt->execute([
+                $grade,
+                $submitted,
+                $late,
+                $submitted, // First parameter for CASE WHEN condition
+                $submitted, // Second parameter for CASE WHEN condition  
+                $input['activity_ID'],
+                $student['user_ID']
+            ]);
+            
+            if ($result) {
+                $updatedCount++;
+                error_log("Successfully updated student {$student['user_ID']}");
+            } else {
+                $errorInfo = $stmt->errorInfo();
+                $errors[] = "Failed to update student {$student['user_ID']}: " . ($errorInfo[2] ?? 'Unknown error');
+                error_log("Failed to update student {$student['user_ID']}: " . print_r($errorInfo, true));
+            }
+        } catch (Exception $e) {
+            $errors[] = "Error updating student {$student['user_ID']}: " . $e->getMessage();
+            error_log("Exception updating student {$student['user_ID']}: " . $e->getMessage());
         }
     }
 
     $pdo->commit();
+    
     error_log("Successfully updated $updatedCount students");
-    echo json_encode([
+    
+    $response = [
         "success" => true, 
         "message" => "Grades updated successfully",
-        "updated_count" => $updatedCount
-    ]);
+        "updated_count" => $updatedCount,
+        "total_students" => count($input['students'])
+    ];
+    
+    if (!empty($errors)) {
+        $response['errors'] = $errors;
+        $response['warning'] = "Some students could not be updated";
+    }
+    
+    echo json_encode($response);
 
 } catch (Exception $e) {
     $pdo->rollBack();
     error_log("Error updating grades: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
     http_response_code(500);
     echo json_encode([
         "success" => false, 
         "message" => "Error updating grades: " . $e->getMessage(),
-        "error_details" => $e->getMessage()
+        "error_details" => $e->getMessage(),
+        "stack_trace" => $e->getTraceAsString()
     ]);
 }
 ?>
