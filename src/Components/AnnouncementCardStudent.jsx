@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-
 import ArrowDown from "../assets/ArrowDown(Light).svg";
 
 export default function AnnouncementCardStudent({
@@ -106,7 +105,7 @@ export default function AnnouncementCardStudent({
       
       // Format date: Month Day, Year | Time (in user's local timezone)
       const dateFormatted = date.toLocaleDateString('en-US', {
-        month: 'long',
+        month: 'short',
         day: 'numeric',
         year: 'numeric'
       });
@@ -182,37 +181,26 @@ export default function AnnouncementCardStudent({
     }
   };
 
-  // Get deadline text color class
-  const getDeadlineColorClass = (deadline) => {
-    if (isDeadlinePassed(deadline)) {
-      return 'text-red-600 font-bold';
-    } else if (isDeadlineUrgent(deadline)) {
-      return 'text-red-500 font-semibold';
-    }
-    return 'text-gray-600 font-medium';
-  };
-
   return (
     <div 
-      className={`shadow-md rounded-md mt-5 w-full transition-all duration-200 ${
+      className={`rounded-lg mt-2 w-full transition-all duration-200 border border-[#FFFFFF]/10 ${
         readStatus 
-          ? 'bg-white' 
-          : 'bg-green-50 border-l-4 border-green-500'
-      } hover:shadow-lg`}
+          ? 'bg-[#15151C]' 
+          : 'bg-[#15151C] border-l-4 border-[#00A15D]'
+      } hover:bg-[#15151C]/80`}
     >
       {/* Header */}
       <div 
-        className="relative p-3 sm:p-5 cursor-pointer" 
+        className="relative p-3 cursor-pointer" 
         onClick={handleCardClick}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pr-20 sm:pr-24">
-          {/* Title section - Removed section from header */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-1 min-w-0 text-sm sm:text-base">
-            <span className="font-bold">{subject}:</span>
-            <span className="break-words">{title}</span>
-            {/* Removed section display from header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pr-16 sm:pr-20">
+          {/* Title section */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0 text-xs">
+            <span className="font-bold text-[#FFFFFF] truncate">{subject}:</span>
+            <span className="text-[#FFFFFF]/80 truncate">{title}</span>
             {!readStatus && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[#00A15D]/20 text-[#00A15D]">
                 New
               </span>
             )}
@@ -220,11 +208,11 @@ export default function AnnouncementCardStudent({
         </div>
 
         {/* Action Icons - absolute positioned on upper right */}
-        <div className="absolute top-3 sm:top-5 right-3 sm:right-5 flex items-center gap-2 sm:gap-4">
+        <div className="absolute top-3 right-3 flex items-center gap-2">
           {readStatus && (
             <button
               onClick={handleMarkAsUnreadClick}
-              className="text-xs text-green-600 hover:text-green-800 font-medium hover:underline transition-colors cursor-pointer"
+              className="text-[10px] text-[#767EE0] hover:text-[#767EE0]/80 font-medium hover:underline transition-colors cursor-pointer"
               title="Mark as unread"
             >
               Mark Unread
@@ -233,7 +221,7 @@ export default function AnnouncementCardStudent({
           <img
             src={ArrowDown}
             alt="Expand"
-            className={`h-5 w-5 sm:h-6 sm:w-6 transform transition-transform duration-300 ${
+            className={`h-4 w-4 transform transition-transform duration-300 ${
               open ? "rotate-180" : ""
             }`}
           />
@@ -242,29 +230,26 @@ export default function AnnouncementCardStudent({
 
       {/* Content */}
       {open && (
-        <div className="p-3 sm:p-5 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row justify-between gap-3">
+        <div className="p-3 border-t border-[#FFFFFF]/10">
+          <div className="flex flex-col sm:flex-row justify-between gap-2">
             {/* Left side */}
-            <div className="mb-3 sm:mb-0">
-              <p className="font-semibold text-base sm:text-lg">{title}</p>
-              {/* Posted By now comes formatted from backend */}
-              <p className="text-xs sm:text-sm text-gray-600">
+            <div className="mb-2 sm:mb-0">
+              <p className="font-semibold text-sm text-[#FFFFFF] truncate">{title}</p>
+              <p className="text-xs text-[#FFFFFF]/60">
                 Posted By: {postedBy}
               </p>
-              {/* Removed section display inside card */}
             </div>
 
             {/* Right side */}
-            <div className="text-xs sm:text-sm text-gray-600 sm:text-right">
-              {/* Date Posted in green with relative time */}
-              <p className="text-green-600 font-medium">
+            <div className="text-xs text-[#FFFFFF]/60 sm:text-right">
+              <p className="text-[#00A15D] font-medium">
                 Date Posted: {relativeTime}
               </p>
               {deadline && deadline !== "N/A" && (
-                <p className={`mt-1 ${getDeadlineColorClass(deadline)}`}>
+                <p className={`mt-0.5 ${isDeadlinePassed(deadline) ? 'text-[#A15353]' : isDeadlineUrgent(deadline) ? 'text-[#FFA600]' : 'text-[#FFFFFF]/60'}`}>
                   Deadline: {formattedDeadline}
                   {(isDeadlinePassed(deadline) || isDeadlineUrgent(deadline)) && (
-                    <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                    <span className={`ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full ${isDeadlinePassed(deadline) ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#FFA600]/20 text-[#FFA600]'}`}>
                       {isDeadlinePassed(deadline) ? 'Deadline Passed' : 'Deadline Approaching'}
                     </span>
                   )}
@@ -274,15 +259,15 @@ export default function AnnouncementCardStudent({
           </div>
 
           {/* Instructions with Show More/Less */}
-          <div className="mt-4">
-            <p className="font-semibold mb-2 text-sm sm:text-base">Instructions:</p>
-            <p className="text-xs sm:text-sm text-gray-700 whitespace-pre-wrap break-words">
+          <div className="mt-3">
+            <p className="font-semibold mb-1.5 text-xs text-[#FFFFFF]">Instructions:</p>
+            <p className="text-xs text-[#FFFFFF]/80 whitespace-pre-wrap break-words">
               {displayInstructions}
             </p>
             {isInstructionsLong && (
               <button
                 onClick={() => setShowFullInstructions(!showFullInstructions)}
-                className="mt-2 text-[#00A15D] font-medium hover:underline text-xs sm:text-sm cursor-pointer"
+                className="mt-1.5 text-[#767EE0] font-medium hover:underline text-[11px] cursor-pointer"
               >
                 {showFullInstructions ? 'Show less' : 'Show more'}
               </button>
@@ -292,7 +277,7 @@ export default function AnnouncementCardStudent({
                 href={link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-block text-[#00A15D] font-semibold hover:underline text-xs sm:text-sm break-all"
+                className="mt-2 inline-block text-[#00A15D] font-semibold hover:underline text-[11px] break-all"
               >
                 🔗 View Link
               </a>

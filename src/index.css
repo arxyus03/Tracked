@@ -3,5 +3,30 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #D4D4D4;
+  background-color: #23232C;
+}
+
+/* Scroll bar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #15151C;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00A15D;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00874E;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #00A15D #15151C;
 }

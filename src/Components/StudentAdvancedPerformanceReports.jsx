@@ -1,12 +1,11 @@
 import React from "react";
-
-import ArrowDown from "../assets/ArrowDown(Light).svg";
 import PieIcon from "../assets/Pie(Light).svg";
 import TrendingUp from "../assets/TrendingUp.svg";
 import TrendingDown from "../assets/TrendingDown.svg";
 import AlertTriangleGreen from "../assets/Warning(Green).svg";
 import AlertTriangleYellow from "../assets/Warning(Yellow).svg";
 import AlertTriangleRed from "../assets/Warning(Red).svg";
+import ArrowDown from "../assets/ArrowDown(Light).svg";
 
 export default function StudentAdvancedPerformanceReports({
   calculateAdvancedAnalytics,
@@ -19,17 +18,17 @@ export default function StudentAdvancedPerformanceReports({
   setExpandedInsights,
   displayedInsights,
 }) {
-  // Risk level color coding
+  // Risk level color coding - updated for dark theme
   const getRiskColor = (level) => {
     switch (level) {
       case "HIGH":
-        return "text-red-800 bg-red-50 border-red-200";
+        return "text-[#A15353] bg-[#A15353]/10 border-[#A15353]/20";
       case "MEDIUM":
-        return "text-yellow-800 bg-yellow-50 border-yellow-200";
+        return "text-[#FFA600] bg-[#FFA600]/10 border-[#FFA600]/20";
       case "LOW":
-        return "text-green-800 bg-green-50 border-green-200";
+        return "text-[#00A15D] bg-[#00A15D]/10 border-[#00A15D]/20";
       default:
-        return "text-gray-600 bg-gray-50 border-gray-200";
+        return "text-[#FFFFFF]/60 bg-[#23232C] border-[#FFFFFF]/10";
     }
   };
 
@@ -47,148 +46,148 @@ export default function StudentAdvancedPerformanceReports({
     }
   };
 
-  // Trend indicator
+  // Trend indicator - updated colors
   const TrendIndicator = ({ trend }) => {
     if (trend === "improving") {
       return (
-        <div className="flex items-center text-yellow-600">
-          <img src={TrendingUp} alt="Improving" className="w-4 h-4 mr-1" />
-          <span className="text-sm">Improving</span>
+        <div className="flex items-center text-[#00A15D]">
+          <img src={TrendingUp} alt="Improving" className="w-3 h-3 mr-1" />
+          <span className="text-xs">Improving</span>
         </div>
       );
     } else if (trend === "declining") {
       return (
-        <div className="flex items-center text-red-600">
-          <img src={TrendingDown} alt="Declining" className="w-4 h-4 mr-1" />
-          <span className="text-sm">Declining</span>
+        <div className="flex items-center text-[#A15353]">
+          <img src={TrendingDown} alt="Declining" className="w-3 h-3 mr-1" />
+          <span className="text-xs">Declining</span>
         </div>
       );
     }
     return (
-      <div className="flex items-center text-green-600">
-        <span className="text-sm">Stable</span>
+      <div className="flex items-center text-[#767EE0]">
+        <span className="text-xs">Stable</span>
       </div>
     );
   };
 
-  // Activity type colors for performance cards
+  // Activity type colors for performance cards - updated for dark theme
   const getTypeColor = (activityType) => {
     switch (activityType.toLowerCase()) {
       case "activities":
         return {
-          bg: "bg-[#B8860B]/10",
-          border: "border-[#B8860B]/30",
-          text: "text-[#B8860B]",
-          progress: "bg-[#B8860B]",
+          bg: "bg-[#00A15D]/10",
+          border: "border-[#00A15D]/20",
+          text: "text-[#00A15D]",
+          progress: "bg-[#00A15D]",
         };
       case "assignments":
         return {
-          bg: "bg-[#D2691E]/10",
-          border: "border-[#D2691E]/30",
-          text: "text-[#D2691E]",
-          progress: "bg-[#D2691E]",
+          bg: "bg-[#767EE0]/10",
+          border: "border-[#767EE0]/20",
+          text: "text-[#767EE0]",
+          progress: "bg-[#767EE0]",
         };
       case "quizzes":
         return {
-          bg: "bg-[#A0522D]/10",
-          border: "border-[#A0522D]/30",
-          text: "text-[#A0522D]",
-          progress: "bg-[#A0522D]",
+          bg: "bg-[#A15353]/10",
+          border: "border-[#A15353]/20",
+          text: "text-[#A15353]",
+          progress: "bg-[#A15353]",
         };
       case "laboratories":
         return {
-          bg: "bg-[#8B4513]/10",
-          border: "border-[#8B4513]/30",
-          text: "text-[#8B4513]",
-          progress: "bg-[#8B4513]",
+          bg: "bg-[#FFA600]/10",
+          border: "border-[#FFA600]/20",
+          text: "text-[#FFA600]",
+          progress: "bg-[#FFA600]",
         };
       case "projects":
         return {
-          bg: "bg-[#5D4037]/10",
-          border: "border-[#5D4037]/30",
-          text: "text-[#5D4037]",
-          progress: "bg-[#5D4037]",
+          bg: "bg-[#B39DDB]/10",
+          border: "border-[#B39DDB]/20",
+          text: "text-[#B39DDB]",
+          progress: "bg-[#B39DDB]",
         };
       default:
         return {
-          bg: "bg-gray-50",
-          border: "border-gray-200",
-          text: "text-gray-700",
-          progress: "bg-gray-600",
+          bg: "bg-[#23232C]",
+          border: "border-[#FFFFFF]/10",
+          text: "text-[#FFFFFF]",
+          progress: "bg-[#FFFFFF]/20",
         };
     }
   };
 
   return (
-    <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 p-4 sm:p-5 text-[#465746]">
+    <div className="bg-[#15151C] rounded-lg shadow-sm p-4 text-[#FFFFFF]">
       <div className="flex items-center mb-4">
-        <img src={PieIcon} alt="Analytics" className="-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 mr-2 sm:mr-3" />
-        <h2 className="text-lg font-bold">Advanced Performance Reports</h2>
+        <img src={PieIcon} alt="Analytics" className="h-5 w-5 mr-2" />
+        <h2 className="text-base font-semibold">Advanced Performance Reports</h2>
       </div>
 
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Key Metrics Grid - More Compact */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {/* Risk Level */}
         <div
-          className={`p-4 rounded-lg border transition-all duration-500 ${getRiskColor(
+          className={`p-3 rounded-lg border transition-all duration-500 ${getRiskColor(
             calculateAdvancedAnalytics.riskLevel
           )}`}
           style={{
             opacity: animationProgress,
-            transform: `translateX(${-20 * (1 - animationProgress)}px)`,
+            transform: `translateX(${-10 * (1 - animationProgress)}px)`,
           }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Risk Level</p>
-              <p className="text-xl font-bold">
+              <p className="text-xs font-medium mb-0.5">Risk Level</p>
+              <p className="text-lg font-bold">
                 {calculateAdvancedAnalytics.riskLevel}
               </p>
             </div>
             <div
-              className={`w-10 h-10 rounded-md border-2 flex items-center justify-center ${
+              className={`w-8 h-8 rounded-md border flex items-center justify-center ${
                 calculateAdvancedAnalytics.riskLevel === "HIGH"
-                  ? "border-red-300"
+                  ? "border-[#A15353]/30"
                   : calculateAdvancedAnalytics.riskLevel === "MEDIUM"
-                  ? "border-yellow-300"
-                  : "border-green-300"
+                  ? "border-[#FFA600]/30"
+                  : "border-[#00A15D]/30"
               }`}
             >
               <img
                 src={getRiskIcon(calculateAdvancedAnalytics.riskLevel)}
                 alt="Risk Level"
-                className="w-6 h-6"
+                className="w-4 h-4"
               />
             </div>
           </div>
-          <p className="text-xs mt-1 opacity-75">
+          <p className="text-xs mt-1.5 text-[#FFFFFF]/60">
             {calculateAdvancedAnalytics.missedActivities} missed activities
           </p>
         </div>
 
         {/* Performance Score */}
         <div
-          className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200 transition-all duration-500"
+          className="bg-gradient-to-br from-[#00A15D]/10 to-[#00A15D]/5 p-3 rounded-lg border border-[#00A15D]/20 transition-all duration-500"
           style={{
             opacity: animationProgress,
-            transform: `translateY(${-20 * (1 - animationProgress)}px)`,
+            transform: `translateY(${-10 * (1 - animationProgress)}px)`,
             transitionDelay: "100ms",
           }}
         >
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-green-800 font-medium">
+              <p className="text-xs text-[#00A15D] font-medium mb-0.5">
                 Performance Score
               </p>
-              <p className="text-2xl font-bold text-green-900">
+              <p className="text-lg font-bold text-[#FFFFFF]">
                 {calculateAdvancedAnalytics.performanceScore}/100
               </p>
             </div>
             <TrendIndicator trend={calculateAdvancedAnalytics.trend} />
           </div>
-          <div className="w-full bg-green-200 rounded-full h-2 mt-2">
+          <div className="w-full bg-[#00A15D]/20 rounded-full h-1.5 mt-2">
             <div
-              className="bg-green-600 h-2 rounded-full transition-all duration-1000 ease-out"
+              className="bg-[#00A15D] h-1.5 rounded-full transition-all duration-1000 ease-out"
               style={{
                 width: `${
                   calculateAdvancedAnalytics.performanceScore *
@@ -202,47 +201,47 @@ export default function StudentAdvancedPerformanceReports({
 
         {/* Attendance Rate */}
         <div
-          className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200 transition-all duration-500"
+          className="bg-gradient-to-br from-[#767EE0]/10 to-[#767EE0]/5 p-3 rounded-lg border border-[#767EE0]/20 transition-all duration-500"
           style={{
             opacity: animationProgress,
-            transform: `translateY(${20 * (1 - animationProgress)}px)`,
+            transform: `translateY(${10 * (1 - animationProgress)}px)`,
             transitionDelay: "200ms",
           }}
         >
-          <p className="text-sm text-blue-800 font-medium">Attendance Rate</p>
-          <p className="text-2xl font-bold text-blue-900">
+          <p className="text-xs text-[#767EE0] font-medium mb-0.5">Attendance Rate</p>
+          <p className="text-lg font-bold text-[#FFFFFF]">
             {attendanceLoading ? "..." : `${attendanceRate}%`}
           </p>
-          <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
+          <div className="w-full bg-[#767EE0]/20 rounded-full h-1.5 mt-2">
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-1000 ease-out"
+              className="bg-[#767EE0] h-1.5 rounded-full transition-all duration-1000 ease-out"
               style={{
                 width: `${attendanceRate * animationProgress}%`,
                 transitionDelay: "300ms",
               }}
             ></div>
           </div>
-          <p className="text-xs mt-1 opacity-75">
+          <p className="text-xs mt-1.5 text-[#FFFFFF]/60">
             {currentSubject ? `${currentSubject.subject}` : "Current subject"}
           </p>
         </div>
 
         {/* Submission Rate */}
         <div
-          className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200 transition-all duration-500"
+          className="bg-gradient-to-br from-[#FFA600]/10 to-[#FFA600]/5 p-3 rounded-lg border border-[#FFA600]/20 transition-all duration-500"
           style={{
             opacity: animationProgress,
-            transform: `translateX(${20 * (1 - animationProgress)}px)`,
+            transform: `translateX(${10 * (1 - animationProgress)}px)`,
             transitionDelay: "300ms",
           }}
         >
-          <p className="text-sm text-purple-800 font-medium">Submission Rate</p>
-          <p className="text-2xl font-bold text-purple-900">
+          <p className="text-xs text-[#FFA600] font-medium mb-0.5">Submission Rate</p>
+          <p className="text-lg font-bold text-[#FFFFFF]">
             {submissionRateData.submissionRate}%
           </p>
-          <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
+          <div className="w-full bg-[#FFA600]/20 rounded-full h-1.5 mt-2">
             <div
-              className="bg-purple-600 h-2 rounded-full transition-all duration-1000 ease-out"
+              className="bg-[#FFA600] h-1.5 rounded-full transition-all duration-1000 ease-out"
               style={{
                 width: `${
                   submissionRateData.submissionRate * animationProgress
@@ -251,18 +250,18 @@ export default function StudentAdvancedPerformanceReports({
               }}
             ></div>
           </div>
-          <p className="text-xs mt-1 opacity-75">
+          <p className="text-xs mt-1.5 text-[#FFFFFF]/60">
             {submissionRateData.displayText} activities
           </p>
         </div>
       </div>
 
-      {/* Performance by Activity Type */}
+      {/* Performance by Activity Type - More Compact */}
       <div className="mb-6">
-        <h3 className="text-md font-semibold mb-3">
+        <h3 className="text-sm font-semibold mb-3 text-[#FFFFFF]">
           Performance by Activity Type
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
           {Object.entries(calculateAdvancedAnalytics.typePerformance).map(
             ([type, data], index) => {
               const colors = getTypeColor(type);
@@ -271,24 +270,24 @@ export default function StudentAdvancedPerformanceReports({
               return (
                 <div
                   key={type}
-                  className={`p-3 rounded-lg border ${colors.bg} ${colors.border} transition-all duration-500`}
+                  className={`p-2 rounded border ${colors.bg} ${colors.border} transition-all duration-500`}
                   style={{
                     opacity: animationProgress,
-                    transform: `translateY(${10 * (1 - animationProgress)}px)`,
+                    transform: `translateY(${5 * (1 - animationProgress)}px)`,
                     transition: `opacity 0.5s ease-out ${animationDelay}ms, transform 0.5s ease-out ${animationDelay}ms`,
                   }}
                 >
                   <p
-                    className={`text-sm font-medium capitalize ${colors.text}`}
+                    className={`text-xs font-medium capitalize ${colors.text} mb-1`}
                   >
                     {type}
                   </p>
-                  <p className={`text-lg font-bold ${colors.text}`}>
+                  <p className={`text-base font-bold ${colors.text} mb-1`}>
                     {data.score}%
                   </p>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                  <div className="w-full bg-[#FFFFFF]/10 rounded-full h-1">
                     <div
-                      className={`h-1.5 rounded-full ${colors.progress} transition-all duration-800 ease-out`}
+                      className={`h-1 rounded-full ${colors.progress} transition-all duration-800 ease-out`}
                       style={{
                         width: `${data.score * animationProgress}%`,
                         transition: `width 0.8s ease-out ${
@@ -304,14 +303,14 @@ export default function StudentAdvancedPerformanceReports({
         </div>
       </div>
 
-      {/* Performance Insights with Collapsible Feature */}
+      {/* Performance Insights with Collapsible Feature - More Compact */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-md font-semibold">Performance Insights</h3>
+          <h3 className="text-sm font-semibold text-[#FFFFFF]">Performance Insights</h3>
           {calculateAdvancedAnalytics.insights.length > 2 && (
             <button
               onClick={() => setExpandedInsights(!expandedInsights)}
-              className="text-sm text-[#00874E] hover:text-[#006c3d] font-medium flex items-center gap-1"
+              className="text-xs text-[#00A15D] hover:text-[#00A15D]/80 font-medium flex items-center gap-1"
             >
               {expandedInsights
                 ? "Show Less"
@@ -319,7 +318,7 @@ export default function StudentAdvancedPerformanceReports({
               <img
                 src={ArrowDown}
                 alt={expandedInsights ? "Show Less" : "Show More"}
-                className={`w-4 h-4 transition-transform ${
+                className={`w-3 h-3 transition-transform ${
                   expandedInsights ? "rotate-180" : ""
                 }`}
               />
@@ -327,18 +326,18 @@ export default function StudentAdvancedPerformanceReports({
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {displayedInsights.map((insight, index) => (
             <div
               key={index}
-              className={`p-4 rounded-lg border ${
+              className={`p-3 rounded border ${
                 insight.type === "critical"
-                  ? "bg-red-50 border-red-200"
+                  ? "bg-[#A15353]/10 border-[#A15353]/20"
                   : insight.type === "warning"
-                  ? "bg-yellow-50 border-yellow-200"
+                  ? "bg-[#FFA600]/10 border-[#FFA600]/20"
                   : insight.type === "positive"
-                  ? "bg-green-50 border-green-200"
-                  : "bg-blue-50 border-blue-200"
+                  ? "bg-[#00A15D]/10 border-[#00A15D]/20"
+                  : "bg-[#767EE0]/10 border-[#767EE0]/20"
               }`}
             >
               <div className="flex items-start">
@@ -346,43 +345,43 @@ export default function StudentAdvancedPerformanceReports({
                   <img
                     src={AlertTriangleRed}
                     alt="Critical"
-                    className="w-5 h-5 mr-3 mt-0.5 text-red-600 flex-shrink-0"
+                    className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0"
                   />
                 )}
                 {insight.type === "warning" && (
                   <img
                     src={AlertTriangleYellow}
                     alt="Warning"
-                    className="w-5 h-5 mr-3 mt-0.5 text-yellow-600 flex-shrink-0"
+                    className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0"
                   />
                 )}
                 {insight.type === "positive" && (
                   <img
                     src={AlertTriangleGreen}
                     alt="Positive"
-                    className="w-5 h-5 mr-3 mt-0.5 text-green-600 flex-shrink-0"
+                    className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0"
                   />
                 )}
                 {insight.type === "info" && (
-                  <div className="w-5 h-5 mr-3 mt-0.5 flex items-center justify-center flex-shrink-0">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                  <div className="w-4 h-4 mr-2 mt-0.5 flex items-center justify-center flex-shrink-0">
+                    <div className="w-2 h-2 bg-[#767EE0] rounded-full"></div>
                   </div>
                 )}
                 <div className="flex-1">
                   <p
-                    className={`font-medium ${
+                    className={`text-sm font-medium ${
                       insight.type === "critical"
-                        ? "text-red-800"
+                        ? "text-[#A15353]"
                         : insight.type === "warning"
-                        ? "text-yellow-800"
+                        ? "text-[#FFA600]"
                         : insight.type === "positive"
-                        ? "text-green-800"
-                        : "text-blue-800"
+                        ? "text-[#00A15D]"
+                        : "text-[#767EE0]"
                     }`}
                   >
                     {insight.message}
                   </p>
-                  <p className="text-sm mt-1 opacity-90">
+                  <p className="text-xs mt-1 text-[#FFFFFF]/80">
                     {insight.suggestion}
                   </p>
                 </div>

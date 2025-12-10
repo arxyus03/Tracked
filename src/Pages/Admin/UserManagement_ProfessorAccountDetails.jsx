@@ -8,8 +8,6 @@ import Popup from "../../Components/Popup";
 
 import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
-
-// Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function UserManagement_ProfessorAccountDetails() {
@@ -29,7 +27,7 @@ export default function UserManagement_ProfessorAccountDetails() {
 
   const location = useLocation();
 
-  // Lottie animation options
+  // Animation configuration
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -39,7 +37,7 @@ export default function UserManagement_ProfessorAccountDetails() {
     }
   };
 
-  // Get ID from query parameters
+  // Extract professor ID from URL
   const getProfessorId = () => {
     const urlParams = new URLSearchParams(location.search);
     return urlParams.get("id");
@@ -69,12 +67,10 @@ export default function UserManagement_ProfessorAccountDetails() {
             tracked_phone: data.professor.tracked_phone || "",
           });
         } else {
-          console.error("Professor not found:", data.message);
           setPopupType("error");
         }
       })
       .catch((err) => {
-        console.error("Error fetching professor data:", err);
         setPopupType("error");
       })
       .finally(() => {
@@ -92,12 +88,10 @@ export default function UserManagement_ProfessorAccountDetails() {
         if (data.success) {
           setProfessorClasses(data.classes || []);
         } else {
-          console.error("Error fetching professor classes:", data.message);
           setProfessorClasses([]);
         }
       })
       .catch((err) => {
-        console.error("Error fetching professor classes:", err);
         setProfessorClasses([]);
       })
       .finally(() => {
@@ -105,7 +99,6 @@ export default function UserManagement_ProfessorAccountDetails() {
       });
   };
 
-  // Format date helper function
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -116,7 +109,6 @@ export default function UserManagement_ProfessorAccountDetails() {
     });
   };
 
-  // Format classes for display
   const formatClassesDisplay = () => {
     if (classesLoading) {
       return (
@@ -147,7 +139,7 @@ export default function UserManagement_ProfessorAccountDetails() {
 
   const handleCancelClick = () => {
     setIsEditing(false);
-    // Reset edited data to original values
+    // Reset to original values
     if (professor) {
       setEditedData({
         tracked_firstname: professor.tracked_firstname || "",
@@ -180,7 +172,6 @@ export default function UserManagement_ProfessorAccountDetails() {
       const result = await response.json();
 
       if (result.success) {
-        // Update local state with new data
         setProfessor((prev) => ({
           ...prev,
           ...editedData,
@@ -189,11 +180,9 @@ export default function UserManagement_ProfessorAccountDetails() {
         setPopupType("success");
       } else {
         setPopupType("error");
-        console.error("Update failed:", result.message);
       }
     } catch (error) {
       setPopupType("error");
-      console.error("Error updating professor:", error);
     } finally {
       setIsLoading(false);
     }
@@ -206,6 +195,7 @@ export default function UserManagement_ProfessorAccountDetails() {
     }));
   };
 
+  // Loading state for initial professor data
   if (!professor) {
     return (
       <div>
@@ -242,9 +232,8 @@ export default function UserManagement_ProfessorAccountDetails() {
       >
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* content of ADMIN USER MANAGEMENT PROFESSOR ACCOUNT DETAILS */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* "Header" */}
+          {/* Page Header */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img
@@ -270,7 +259,7 @@ export default function UserManagement_ProfessorAccountDetails() {
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          {/* Loading State for Professor Data */}
+          {/* Loading overlay for professor data */}
           {isLoading && (
             <div className="flex flex-col justify-center items-center py-12 bg-white rounded-lg shadow-md">
               <div className="w-20 h-20 mb-4">
@@ -283,149 +272,70 @@ export default function UserManagement_ProfessorAccountDetails() {
             </div>
           )}
 
-          {/* Content */}
+          {/* Main Content */}
           {!isLoading && (
             <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-lg sm:rounded-xl space-y-5 sm:space-y-6 shadow-md text-[#465746]">
-              {/* Professor Information Section - Updated Format */}
+              
+              {/* Professor Information */}
               <div>
                 <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-[#465746]">
                   Professor Information
                 </h2>
                 <div className="space-y-3 sm:space-y-2">
-                  {/* First Name */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      First Name :
-                    </span>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedData.tracked_firstname}
-                        onChange={(e) =>
-                          handleInputChange("tracked_firstname", e.target.value)
-                        }
-                        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00874E] focus:border-transparent"
-                      />
-                    ) : (
-                      <span>{professor.tracked_firstname || "N/A"}</span>
-                    )}
-                  </div>
+                  {/* Editable fields when in edit mode */}
+                  {['First Name', 'Middle Name', 'Last Name', 'Phone Number'].map((field, index) => {
+                    const fieldKey = field.toLowerCase().replace(' ', '_').replace(' phone', '_phone');
+                    const apiKey = `tracked_${fieldKey}`;
+                    
+                    return (
+                      <div key={index} className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
+                        <span className="font-medium text-gray-600">{field} :</span>
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={editedData[apiKey]}
+                            onChange={(e) => handleInputChange(apiKey, e.target.value)}
+                            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00874E] focus:border-transparent"
+                          />
+                        ) : (
+                          <span>{professor[apiKey] || "N/A"}</span>
+                        )}
+                      </div>
+                    );
+                  })}
 
-                  {/* Middle Name */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Middle Name :
-                    </span>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedData.tracked_middlename}
-                        onChange={(e) =>
-                          handleInputChange("tracked_middlename", e.target.value)
-                        }
-                        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00874E] focus:border-transparent"
-                      />
-                    ) : (
-                      <span>{professor.tracked_middlename || "N/A"}</span>
-                    )}
-                  </div>
-
-                  {/* Last Name */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">Last Name :</span>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedData.tracked_lastname}
-                        onChange={(e) =>
-                          handleInputChange("tracked_lastname", e.target.value)
-                        }
-                        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00874E] focus:border-transparent"
-                      />
-                    ) : (
-                      <span>{professor.tracked_lastname || "N/A"}</span>
-                    )}
-                  </div>
-
-                  {/* Sex */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">Sex :</span>
-                    <span>{professor.tracked_gender || "N/A"}</span>
-                  </div>
-
-                  {/* Date of Birth */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Date of Birth :
-                    </span>
-                    <span>{formatDate(professor.tracked_bday)}</span>
-                  </div>
-
-                  {/* Professor ID */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Professor ID :
-                    </span>
-                    <span>{professor.tracked_ID || "N/A"}</span>
-                  </div>
-
-                  {/* CVSU Email Address */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      CVSU Email Address :
-                    </span>
-                    <span className="break-all">
-                      {professor.tracked_email || "N/A"}
-                    </span>
-                  </div>
-
-                  {/* Phone Number */}
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Phone Number :
-                    </span>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedData.tracked_phone}
-                        onChange={(e) =>
-                          handleInputChange("tracked_phone", e.target.value)
-                        }
-                        className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00874E] focus:border-transparent"
-                      />
-                    ) : (
-                      <span>{professor.tracked_phone || "N/A"}</span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Temporary Password :
-                    </span>
-                    <span className="font-semibold">{professor.temporary_password || "N/A"}</span>
-                  </div>
+                  {/* Non-editable fields */}
+                  {[
+                    { label: 'Sex', key: 'tracked_gender' },
+                    { label: 'Date of Birth', key: 'tracked_bday', format: formatDate },
+                    { label: 'Professor ID', key: 'tracked_ID' },
+                    { label: 'CVSU Email Address', key: 'tracked_email' },
+                    { label: 'Temporary Password', key: 'temporary_password' }
+                  ].map((item, index) => (
+                    <div key={index} className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
+                      <span className="font-medium text-gray-600">{item.label} :</span>
+                      <span className={item.label === 'CVSU Email Address' ? "break-all" : ""}>
+                        {item.format ? item.format(professor[item.key]) : professor[item.key] || "N/A"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <hr className="opacity-10 border-[#465746] rounded border-1 mb-6" />
 
-              {/* Professional Information Section */}
+              {/* Professional Information */}
               <div>
                 <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-[#465746]">
                   Professional Information
                 </h2>
                 <div className="space-y-3 sm:space-y-2">
                   <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Department :
-                    </span>
+                    <span className="font-medium text-gray-600">Department :</span>
                     <span>{professor.tracked_program || "N/A"}</span>
                   </div>
-
                   <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Subject Handled :
-                    </span>
+                    <span className="font-medium text-gray-600">Subject Handled :</span>
                     <span className={classesLoading ? "text-gray-400 italic" : ""}>
                       {formatClassesDisplay()}
                     </span>
@@ -435,40 +345,28 @@ export default function UserManagement_ProfessorAccountDetails() {
 
               <hr className="opacity-10 border-[#465746] rounded border-1 mb-6" />
 
-              {/* Account Information Section */}
+              {/* Account Information */}
               <div>
                 <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-[#465746]">
                   Account Information
                 </h2>
                 <div className="space-y-3 sm:space-y-2">
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Date Created :
-                    </span>
-                    <span>{formatDate(professor.created_at)}</span>
-                  </div>
-
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Last Login :
-                    </span>
-                    <span>{formatDate(professor.updated_at)}</span>
-                  </div>
-
-                  <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
-                    <span className="font-medium text-gray-600">
-                      Account Status :
-                    </span>
-                    <span
-                      className={`font-semibold ${
-                        professor.tracked_Status === "Active"
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {professor.tracked_Status || "N/A"}
-                    </span>
-                  </div>
+                  {[
+                    { label: 'Date Created', key: 'created_at', format: formatDate },
+                    { label: 'Last Login', key: 'updated_at', format: formatDate },
+                    { label: 'Account Status', key: 'tracked_Status' }
+                  ].map((item, index) => (
+                    <div key={index} className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
+                      <span className="font-medium text-gray-600">{item.label} :</span>
+                      <span className={
+                        item.label === 'Account Status' 
+                          ? `font-semibold ${professor.tracked_Status === 'Active' ? 'text-green-600' : 'text-red-600'}`
+                          : ''
+                      }>
+                        {item.format ? item.format(professor[item.key]) : professor[item.key] || "N/A"}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -477,7 +375,6 @@ export default function UserManagement_ProfessorAccountDetails() {
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   {isEditing ? (
                     <>
-                      {/* Save Button */}
                       <button
                         onClick={handleSaveClick}
                         disabled={isLoading}
@@ -497,8 +394,6 @@ export default function UserManagement_ProfessorAccountDetails() {
                           "Save"
                         )}
                       </button>
-
-                      {/* Cancel Button */}
                       <button
                         onClick={handleCancelClick}
                         disabled={isLoading}
@@ -508,40 +403,17 @@ export default function UserManagement_ProfessorAccountDetails() {
                       </button>
                     </>
                   ) : (
-                    <>
-                      {/* Edit Button */}
-                      <button
-                        onClick={handleEditClick}
-                        className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#006F3A] text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                    </>
+                    <button
+                      onClick={handleEditClick}
+                      className="font-bold text-white py-2.5 px-4 sm:px-6 bg-[#00874E] rounded-md shadow-md text-center hover:bg-[#006F3A] text-sm sm:text-base w-full sm:w-auto transition-colors duration-200 cursor-pointer"
+                    >
+                      Edit
+                    </button>
                   )}
                 </div>
               </div>
 
-              {/* Popup */}
-              {popupType === "reset" && (
-                <Popup
-                  setOpen={() => setPopupType(null)}
-                  message="Do you really want to reset this password?"
-                  confirmText="Reset"
-                  buttonColor="#00874E"
-                  hoverColor="#006F3A"
-                />
-              )}
-
-              {popupType === "disable" && (
-                <Popup
-                  setOpen={() => setPopupType(null)}
-                  message="Are you sure you want to disable this account?"
-                  confirmText="Disable"
-                  buttonColor="#FF6666"
-                  hoverColor="#C23535"
-                />
-              )}
-
+              {/* Popup Messages */}
               {popupType === "success" && (
                 <Popup
                   setOpen={() => setPopupType(null)}

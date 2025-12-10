@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import Lottie from "lottie-react";
 
@@ -18,7 +17,6 @@ import Details from '../../assets/Details(Light).svg';
 import SuccessIcon from '../../assets/Success(Green).svg';
 import ErrorIcon from '../../assets/Error(Red).svg';
 
-// Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function Report() {
@@ -26,7 +24,6 @@ export default function Report() {
   const [studentFilterOpen, setStudentFilterOpen] = useState(false);
   const [professorFilterOpen, setProfessorFilterOpen] = useState(false);
   
-  // State for widget data
   const [widgetData, setWidgetData] = useState({
     totalAccounts: 0,
     studentAccounts: 0,
@@ -35,19 +32,16 @@ export default function Report() {
     deactivatedAccounts: 0
   });
   
-  // State for table data
   const [students, setStudents] = useState([]);
   const [professors, setProfessors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // State for search and filter
   const [studentSearch, setStudentSearch] = useState('');
   const [professorSearch, setProfessorSearch] = useState('');
   const [studentFilter, setStudentFilter] = useState('all');
   const [professorFilter, setProfessorFilter] = useState('all');
 
-  // State for semester settings
   const [semesterSettings, setSemesterSettings] = useState({
     first_sem: 'INACTIVE',
     second_sem: 'INACTIVE',
@@ -56,12 +50,11 @@ export default function Report() {
   const [isLoadingSemester, setIsLoadingSemester] = useState(false);
   const [semesterModal, setSemesterModal] = useState({
     show: false,
-    type: '', // 'success' or 'error'
+    type: '',
     title: '',
     message: ''
   });
 
-  // Lottie animation options
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -71,7 +64,6 @@ export default function Report() {
     }
   };
 
-  // Fetch widget data
   const fetchWidgetData = async () => {
     try {
       const [userCountsRes, studentsRes, professorsRes] = await Promise.all([
@@ -88,7 +80,6 @@ export default function Report() {
       const studentsData = await studentsRes.json();
       const professorsData = await professorsRes.json();
 
-      // Use the counts from get_user_counts.php (it should handle the correct status)
       setWidgetData({
         totalAccounts: (userCounts.Students || 0) + (userCounts.Professors || 0),
         studentAccounts: userCounts.Students || 0,
@@ -106,7 +97,6 @@ export default function Report() {
     }
   };
 
-  // Fetch semester status from backend
   const fetchSemesterStatus = async () => {
     setIsLoadingSemester(true);
     try {
@@ -122,23 +112,18 @@ export default function Report() {
       if (data.success && data.data) {
         setSemesterSettings(data.data);
       } else {
-        console.error("Failed to fetch semester status:", data.message);
         showSemesterModal('error', 'Fetch Failed', 'Failed to load semester settings');
       }
     } catch (error) {
-      console.error("Error fetching semester status:", error);
       showSemesterModal('error', 'Network Error', 'Failed to connect to server');
     } finally {
       setIsLoadingSemester(false);
     }
   };
 
-  // Update semester status
   const updateSemesterStatus = async (semester, status) => {
     setIsLoadingSemester(true);
     try {
-      console.log('Updating semester:', semester, 'to:', status);
-      
       const response = await fetch("https://tracked.6minds.site/Admin/UserManagementDB_ReportsDB/semester_settings.php", {
         method: "POST",
         headers: {
@@ -151,24 +136,20 @@ export default function Report() {
       });
 
       const data = await response.json();
-      console.log('Update response:', data);
       
       if (data.success) {
-        // Refresh the semester status
         await fetchSemesterStatus();
         showSemesterModal('success', 'Success', data.message || 'Semester status updated successfully');
       } else {
         showSemesterModal('error', 'Update Failed', data.message || 'Failed to update semester status');
       }
     } catch (error) {
-      console.error("Error updating semester status:", error);
       showSemesterModal('error', 'Network Error', 'Failed to connect to server');
     } finally {
       setIsLoadingSemester(false);
     }
   };
 
-  // Show semester modal
   const showSemesterModal = (type, title, message) => {
     setSemesterModal({
       show: true,
@@ -178,18 +159,15 @@ export default function Report() {
     });
   };
 
-  // Close semester modal
   const closeSemesterModal = () => {
     setSemesterModal({ show: false, type: '', title: '', message: '' });
   };
 
-  // Handle semester toggle
   const handleSemesterToggle = (semester) => {
     const newStatus = semesterSettings[semester] === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     updateSemesterStatus(semester, newStatus);
   };
 
-  // Get semester display name
   const getSemesterDisplayName = (semester) => {
     const names = {
       first_sem: 'First Semester',
@@ -204,7 +182,6 @@ export default function Report() {
     fetchSemesterStatus();
   }, []);
 
-  // Filter students based on search and filter
   const filteredStudents = students.filter(student => {
     const matchesSearch = 
       student.tracked_ID?.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -216,14 +193,11 @@ export default function Report() {
     const matchesFilter = 
       studentFilter === 'all' || 
       (studentFilter === 'active' && student.tracked_Status === 'Active') ||
-      (studentFilter === 'deactivated' && student.tracked_Status === 'Deactivated') ||
-      (studentFilter === 'year' && student.tracked_yearandsec) ||
-      (studentFilter === 'section' && student.tracked_yearandsec);
+      (studentFilter === 'deactivated' && student.tracked_Status === 'Deactivated');
 
     return matchesSearch && matchesFilter;
   });
 
-  // Filter professors based on search and filter
   const filteredProfessors = professors.filter(professor => {
     const matchesSearch = 
       professor.tracked_ID?.toLowerCase().includes(professorSearch.toLowerCase()) ||
@@ -249,7 +223,6 @@ export default function Report() {
     setProfessorFilterOpen(false);
   };
 
-  // Semester Toggle Switch component
   const SemesterToggleSwitch = ({ semester, status, onToggle, disabled }) => {
     const isActive = status === 'ACTIVE';
     const displayName = getSemesterDisplayName(semester);
@@ -263,7 +236,6 @@ export default function Report() {
           className={`cursor-pointer relative inline-flex h-4 w-8 sm:h-5 sm:w-10 items-center rounded-full transition-colors focus:outline-none ${
             isActive ? 'bg-[#00874E]' : 'bg-gray-300'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-          title={`Turn ${displayName} ${isActive ? 'off' : 'on'}`}
         >
           <span
             className={`inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
@@ -324,9 +296,7 @@ export default function Report() {
       `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* content of ADMIN REPORTS */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-
           {/* Header */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
@@ -346,12 +316,10 @@ export default function Report() {
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          {/* main content of ADMIN REPORTS */}
-          {/* Widgets TOTAL, PROFESSOR, & STUDENT */}
+          {/* Stats Widgets */}
           <div className='flex justify-center items-center'>
             <div className='grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 w-full max-w-7xl'>
-
-              {/* Widgets TOTAL ACCOUNT CREATED */}
+              {/* Total Accounts */}
               <div className='bg-[#fff] h-24 sm:h-32 md:h-36 lg:h-40 rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 text-[#465746] shadow-md'> 
                 <div className='font-bold text-[10px] sm:text-sm md:text-base lg:text-[1.5rem] h-full flex flex-col'>
                   <p className='mb-1 sm:mb-2'> Accounts Imported </p>
@@ -370,7 +338,7 @@ export default function Report() {
                 </div>
               </div>
 
-              {/* Widgets STUDENT ACCOUNTS */}
+              {/* Student Accounts */}
               <div className='bg-[#fff] h-24 sm:h-32 md:h-36 lg:h-40 rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 text-[#465746] shadow-md'> 
                 <div className='font-bold text-[10px] sm:text-sm md:text-base lg:text-[1.5rem] h-full flex flex-col'>
                   <p className='mb-1 sm:mb-2'> Student Accounts </p>
@@ -389,7 +357,7 @@ export default function Report() {
                 </div>
               </div>
 
-              {/* Widgets PROFESSOR ACCOUNTS */}
+              {/* Professor Accounts */}
               <div className='bg-[#fff] h-24 sm:h-32 md:h-36 lg:h-40 rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 text-[#465746] shadow-md'> 
                 <div className='font-bold text-[10px] sm:text-sm md:text-base lg:text-[1.5rem] h-full flex flex-col'>
                   <p className='mb-1 sm:mb-2'> Professor Accounts </p>
@@ -407,16 +375,13 @@ export default function Report() {
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
 
-          {/* STUDENT ACCOUNT */}
-          {/* Widgets ACTIVE PENDING DISABLED */}
+          {/* Status Widgets */}
           <div className='flex justify-center items-center mt-4 sm:mt-5'>
             <div className='grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 w-full max-w-7xl'>
-
-              {/* Widgets ACTIVE ACCOUNTS */}
+              {/* Active Accounts */}
               <div className='bg-[#fff] h-24 sm:h-32 md:h-36 lg:h-40 rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 text-[#465746] shadow-md'> 
                 <div className='font-bold text-[10px] sm:text-sm md:text-base lg:text-[1.5rem] h-full flex flex-col'>
                   <p className='mb-1 sm:mb-2'> Active Accounts </p>
@@ -435,6 +400,7 @@ export default function Report() {
                 </div>
               </div>
 
+              {/* Deactivated Accounts */}
               <div className='bg-[#fff] h-24 sm:h-32 md:h-36 lg:h-40 rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 text-[#465746] shadow-md'> 
                 <div className='font-bold text-[10px] sm:text-sm md:text-base lg:text-[1.5rem] h-full flex flex-col'>
                   <p className='mb-1 sm:mb-2'> Deactivated Accounts </p>
@@ -453,7 +419,7 @@ export default function Report() {
                 </div>
               </div>
 
-              {/* NEW: Semester Settings Widget */}
+              {/* Semester Settings Widget */}
               <div className='bg-[#fff] h-24 sm:h-32 md:h-36 lg:h-40 rounded-lg sm:rounded-xl p-2 sm:p-3 lg:p-4 text-[#465746] shadow-md'> 
                 <div className='font-bold text-[10px] sm:text-sm md:text-base lg:text-[1.125rem] h-full flex flex-col'>
                   <p className='mb-1 sm:mb-2'> Semester Settings </p>
@@ -484,24 +450,23 @@ export default function Report() {
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
 
           <hr className="border-[#465746]/30 my-5 sm:my-6" />
 
+          {/* Student Accounts Section */}
           <p className="text-sm sm:text-base lg:text-lg text-[#465746] mb-4 font-bold">
             Student Accounts ({filteredStudents.length})
           </p>
 
-          {/* STUDENT BUTTONS */}
+          {/* Student Controls */}
           <div className="flex flex-col sm:flex-row text-[#465746] gap-3 sm:gap-4 sm:justify-between sm:items-center">           
             {/* Filter Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setStudentFilterOpen(!studentFilterOpen)}
                 className="flex items-center justify-between font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md w-full sm:w-40 lg:w-44 shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
-                title="Filter student accounts"
               >
                 <span>Filter</span>
                 <img src={ArrowDown} alt="ArrowDown" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ml-2" />
@@ -512,21 +477,18 @@ export default function Report() {
                   <button 
                     className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                     onClick={() => handleStudentFilterSelect('all')}
-                    title="Show all students"
                   >
                     All
                   </button>
                   <button 
                     className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                     onClick={() => handleStudentFilterSelect('active')}
-                    title="Show active students only"
                   >
                     Active
                   </button>
                   <button 
                     className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                     onClick={() => handleStudentFilterSelect('deactivated')}
-                    title="Show deactivated students only"
                   >
                     Deactivated
                   </button>
@@ -534,7 +496,7 @@ export default function Report() {
               )}
             </div>
 
-            {/* Search Button */}
+            {/* Search Input */}
             <div className="relative flex-1 sm:max-w-xs lg:max-w-md">
               <input
                 type="text"
@@ -542,23 +504,18 @@ export default function Report() {
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
                 className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm border-2 border-transparent focus:border-[#00874E] transition-all duration-200"
-                title="Search students by name, ID, email, or section"
               />
-              <button 
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]"
-                title="Search students"
-              >
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
                 <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
               </button>
             </div>
           </div>
 
-          {/* STUDENT ACCOUNT Table */}
+          {/* Student Accounts Table */}
           <div className="mt-4 sm:mt-5">
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm lg:text-base">
-                {/* Table Header */}
                 <thead>
                   <tr className="text-[#465746] font-bold">
                     <th className="py-2 px-2 sm:px-3">No.</th>
@@ -571,7 +528,6 @@ export default function Report() {
                   </tr>
                 </thead>
 
-                {/* Table Body */}
                 <tbody className="text-[#465746]">
                   {filteredStudents.map((student, index) => (
                     <tr key={student.tracked_ID} className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200">
@@ -591,7 +547,6 @@ export default function Report() {
                             src={Details} 
                             alt="View student details" 
                             className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 transition-opacity"
-                            title="View student details"
                           />
                         </Link>
                       </td>
@@ -601,7 +556,7 @@ export default function Report() {
               </table>
             </div>
 
-            {/* Mobile Cards - Student */}
+            {/* Mobile Cards */}
             <div className="md:hidden space-y-3">
               {filteredStudents.map((student, index) => (
                 <div key={student.tracked_ID} className="bg-white rounded-lg shadow p-4 text-[#465746]">
@@ -616,7 +571,6 @@ export default function Report() {
                           src={Details} 
                           alt="View student details" 
                           className="h-5 w-5"
-                          title="View student details"
                         />
                       </Link>
                     </div>
@@ -651,7 +605,6 @@ export default function Report() {
               ))}
             </div>
 
-            {/* No Results Message */}
             {filteredStudents.length === 0 && (
               <div className="text-center py-8 text-[#465746]">
                 No students found matching your criteria.
@@ -661,52 +614,48 @@ export default function Report() {
 
           <hr className="border-[#465746]/30 my-5 sm:my-6" />
 
-          {/* PROFESSOR ACCOUNT */}
+          {/* Professor Accounts Section */}
           <p className="text-sm sm:text-base lg:text-lg text-[#465746] mb-4 font-bold">
             Professor Accounts ({filteredProfessors.length})
           </p>
           
-          {/* PROFESSOR BUTTONS */}
+          {/* Professor Controls */}
           <div className="flex flex-col sm:flex-row text-[#465746] gap-3 sm:gap-4 sm:justify-between sm:items-center">
-             {/* Filter Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setProfessorFilterOpen(!professorFilterOpen)}
-                  className="flex items-center justify-between font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md w-full sm:w-40 lg:w-44 shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
-                  title="Filter professor accounts"
-                >
-                  <span>Filter</span>
-                  <img src={ArrowDown} alt="ArrowDown" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ml-2" />
-                </button>
+            {/* Filter Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setProfessorFilterOpen(!professorFilterOpen)}
+                className="flex items-center justify-between font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md w-full sm:w-40 lg:w-44 shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base transition-all duration-200 cursor-pointer"
+              >
+                <span>Filter</span>
+                <img src={ArrowDown} alt="ArrowDown" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 ml-2" />
+              </button>
 
-                {professorFilterOpen && (
-                  <div className="absolute top-full mt-1 bg-white rounded-md w-full sm:w-40 lg:w-44 shadow-lg border border-gray-200 z-10">
-                    <button 
-                      className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
-                      onClick={() => handleProfessorFilterSelect('all')}
-                      title="Show all professors"
-                    >
-                      All
-                    </button>
-                    <button 
-                      className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
-                      onClick={() => handleProfessorFilterSelect('active')}
-                      title="Show active professors only"
-                    >
-                      Active
-                    </button>
-                    <button 
-                      className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
-                      onClick={() => handleProfessorFilterSelect('deactivated')}
-                      title="Show deactivated professors only"
-                    >
-                      Deactivated
-                    </button>
-                  </div>
-                )}
-              </div>
+              {professorFilterOpen && (
+                <div className="absolute top-full mt-1 bg-white rounded-md w-full sm:w-40 lg:w-44 shadow-lg border border-gray-200 z-10">
+                  <button 
+                    className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
+                    onClick={() => handleProfessorFilterSelect('all')}
+                  >
+                    All
+                  </button>
+                  <button 
+                    className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
+                    onClick={() => handleProfessorFilterSelect('active')}
+                  >
+                    Active
+                  </button>
+                  <button 
+                    className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
+                    onClick={() => handleProfessorFilterSelect('deactivated')}
+                  >
+                    Deactivated
+                  </button>
+                </div>
+              )}
+            </div>
 
-            {/* Search Button */}
+            {/* Search Input */}
             <div className="relative flex-1 sm:max-w-xs lg:max-w-md">
               <input
                 type="text"
@@ -714,23 +663,18 @@ export default function Report() {
                 value={professorSearch}
                 onChange={(e) => setProfessorSearch(e.target.value)}
                 className="w-full h-9 sm:h-10 lg:h-11 rounded-md px-3 py-2 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm border-2 border-transparent focus:border-[#00874E] transition-all duration-200"
-                title="Search professors by name, ID, or email"
               />
-              <button 
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]"
-                title="Search professors"
-              >
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#465746]">
                 <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
               </button>
             </div>
           </div>
 
-          {/* PROFESSOR ACCOUNT Table */}
+          {/* Professor Accounts Table */}
           <div className="mt-4 sm:mt-5">
             {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm lg:text-base">
-                {/* Table Header */}
                 <thead>
                   <tr className="text-[#465746] font-bold">
                     <th className="py-2 px-2 sm:px-3">No.</th>
@@ -742,7 +686,6 @@ export default function Report() {
                   </tr>
                 </thead>
 
-                {/* Table Body */}
                 <tbody className="text-[#465746]">
                   {filteredProfessors.map((professor, index) => (
                     <tr key={professor.tracked_ID} className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200">
@@ -761,7 +704,6 @@ export default function Report() {
                             src={Details} 
                             alt="View professor details" 
                             className="h-5 w-5 sm:h-6 sm:w-6 hover:opacity-70 transition-opacity"
-                            title="View professor details"
                           />
                         </Link>
                       </td>
@@ -771,7 +713,7 @@ export default function Report() {
               </table>
             </div>
 
-            {/* Mobile Cards - Professor */}
+            {/* Mobile Cards */}
             <div className="md:hidden space-y-3">
               {filteredProfessors.map((professor, index) => (
                 <div key={professor.tracked_ID} className="bg-white rounded-lg shadow p-4 text-[#465746]">
@@ -786,7 +728,6 @@ export default function Report() {
                           src={Details} 
                           alt="View professor details" 
                           className="h-5 w-5"
-                          title="View professor details"
                         />
                       </Link>
                     </div>
@@ -816,14 +757,12 @@ export default function Report() {
               ))}
             </div>
 
-            {/* No Results Message */}
             {filteredProfessors.length === 0 && (
               <div className="text-center py-8 text-[#465746]">
                 No professors found matching your criteria.
               </div>
             )}
           </div>
-          
         </div>
 
         {/* Semester Settings Modal */}
@@ -839,7 +778,6 @@ export default function Report() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center">
-                {/* Icon */}
                 <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 ${
                   semesterModal.type === 'success' ? 'bg-green-100' : 'bg-red-100'
                 }`}>

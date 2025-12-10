@@ -1,18 +1,24 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import PerformanceAnalyticsStudent from "../../Components/PerformanceAnalyticsStudent";
 
-import Analytics from '../../assets/Analytics(Light).svg';
-import StudentsIcon from "../../assets/ClassManagement(Light).svg";
-import Announcement from "../../assets/Announcement(Light).svg";
-import Classwork from "../../assets/Classwork(Light).svg";
-import Attendance from "../../assets/Attendance(Light).svg";
-import BackButton from '../../assets/BackButton(Light).svg';
+// Import the two components for side-by-side layout
+import StudentActivityOverview from "../../Components/StudentActivityOverview";
+import StudentActivityList from "../../Components/StudentActivityList";
 
+// ========== IMPORT ASSETS ==========
+import Analytics from '../../assets/Analytics.svg';
+import StudentsIcon from "../../assets/StudentList.svg";
+import Announcement from "../../assets/Announcement.svg";
+import Classwork from "../../assets/Classwork.svg";
+import Attendance from "../../assets/Attendance.svg";
+import BackButton from '../../assets/BackButton.svg';
+
+// ========== MAIN COMPONENT ==========
 export default function SubjectAnalyticsStudent() {
+  // ========== STATE VARIABLES ==========
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get('code');
@@ -26,43 +32,75 @@ export default function SubjectAnalyticsStudent() {
     quizzes: [],
     assignments: [],
     activities: [],
-    projects: []
+    projects: [],
+    laboratories: []
   });
   const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState("");
 
-  // Get student ID from localStorage
+  // States for side-by-side components
+  const [activitySearchTerm, setActivitySearchTerm] = useState("");
+  const [activityCurrentPage, setActivityCurrentPage] = useState(1);
+  const [animationProgress, setAnimationProgress] = useState(0);
+
+  // ========== USE EFFECTS ==========
   useEffect(() => {
-    const getStudentId = () => {
+    const checkScreenSize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
       try {
-        const userDataString = localStorage.getItem('user');
-        if (userDataString) {
-          const userData = JSON.parse(userDataString);
-          setStudentId(userData.id);
-          return userData.id;
-        }
+        const userData = JSON.parse(userStr);
+        setStudentId(userData.id);
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
-      return null;
-    };
-
-    getStudentId();
+    }
   }, []);
 
-  // Calculate attendance warnings
+  useEffect(() => {
+    if (studentId && subjectCode) fetchStudentClasses();
+  }, [studentId, subjectCode]);
+
+  useEffect(() => {
+    if (studentId) fetchAttendanceData();
+  }, [studentId]);
+
+  useEffect(() => {
+    if (subjectCode && studentId) fetchActivitiesData();
+  }, [subjectCode, studentId]);
+
+  // Animate pie chart on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimationProgress(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ========== CALCULATIONS ==========
   const calculateAttendanceWarnings = useMemo(() => {
     if (!attendanceData.length) return { overallWarning: false, subjectWarnings: [] };
 
     let hasOverallWarning = false;
     const subjectWarnings = attendanceData.map(subject => {
-      // Convert late arrivals to equivalent absences (3 late = 1 absent)
       const equivalentAbsences = Math.floor(subject.late / 3);
       const totalEffectiveAbsences = subject.absent + equivalentAbsences;
       
-      // Check if student has warning (2 or more effective absences)
       const hasWarning = totalEffectiveAbsences >= 2;
-      const isAtRisk = totalEffectiveAbsences >= 3; // 3 absences = dropped
+      const isAtRisk = totalEffectiveAbsences >= 3;
       
       if (hasWarning) hasOverallWarning = true;
 
@@ -83,100 +121,118 @@ export default function SubjectAnalyticsStudent() {
     return { overallWarning: hasOverallWarning, subjectWarnings };
   }, [attendanceData]);
 
-  // Fetch student classes when studentId is available
-  useEffect(() => {
-    if (!studentId || !subjectCode) return;
+  // Calculate segments for pie chart
+  const { segments, statusTotal } = useMemo(() => {
+    // Combine all activities
+    const allActivities = [
+      ...activitiesData.quizzes,
+      ...activitiesData.assignments,
+      ...activitiesData.activities,
+      ...activitiesData.projects,
+      ...activitiesData.laboratories
+    ];
 
-    const fetchStudentClasses = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching classes for student:', studentId);
-        const response = await fetch(`https://tracked.6minds.site/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+    // Calculate status counts
+    const submittedCount = allActivities.filter(item => item.submitted === 1 || item.submitted === true).length;
+    const missedCount = allActivities.filter(item => item.missing === 1 || item.missing === true).length;
+    const pendingCount = allActivities.filter(item => 
+      !(item.submitted === 1 || item.submitted === true) && 
+      !(item.missing === 1 || item.missing === true)
+    ).length;
+
+    const total = submittedCount + missedCount + pendingCount;
+
+    return {
+      segments: [
+        { label: "Submitted", value: submittedCount, color: "#00A15D" },
+        { label: "Pending", value: pendingCount, color: "#767EE0" },
+        { label: "Missed", value: missedCount, color: "#A15353" }
+      ],
+      statusTotal: total
+    };
+  }, [activitiesData]);
+
+  // Get displayed list based on selected filter
+  const displayedList = useMemo(() => {
+    if (selectedFilter === '') {
+      // Return all activities combined
+      return [
+        ...activitiesData.quizzes,
+        ...activitiesData.assignments,
+        ...activitiesData.activities,
+        ...activitiesData.projects,
+        ...activitiesData.laboratories
+      ];
+    } else if (selectedFilter === 'Quizzes') {
+      return activitiesData.quizzes;
+    } else if (selectedFilter === 'Assignment') {
+      return activitiesData.assignments;
+    } else if (selectedFilter === 'Activities') {
+      return activitiesData.activities;
+    } else if (selectedFilter === 'Projects') {
+      return activitiesData.projects;
+    } else if (selectedFilter === 'Laboratory') {
+      return activitiesData.laboratories;
+    }
+    return [];
+  }, [selectedFilter, activitiesData]);
+
+  // ========== API CALL FUNCTIONS ==========
+  const fetchStudentClasses = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`https://tracked.6minds.site/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
+      
+      if (response.ok) {
         const data = await response.json();
-        console.log('Full API response:', data);
-        
         if (data.success && data.classes) {
-          console.log('Classes found:', data.classes);
           setSubjects(data.classes);
           
-          // Find and set the current subject based on subjectCode from URL
           const currentSubj = data.classes.find(sub => sub.subject_code === subjectCode);
           if (currentSubj) {
             setCurrentSubject(currentSubj);
-            console.log('Current subject set:', currentSubj);
-          } else {
-            console.error('Current subject not found in enrolled classes');
           }
         } else {
-          console.error('Failed to fetch classes:', data.message);
           setSubjects([]);
         }
-      } catch (error) {
-        console.error('Error fetching student classes:', error);
-        setSubjects([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching student classes:', error);
+      setSubjects([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchStudentClasses();
-  }, [studentId, subjectCode]);
-
-  // Fetch attendance data when studentId is available
-  useEffect(() => {
+  const fetchAttendanceData = async () => {
     if (!studentId) return;
 
-    const fetchAttendanceData = async () => {
-      try {
-        console.log('Fetching attendance for student:', studentId);
-        const response = await fetch(`https://tracked.6minds.site/Student/AttendanceStudentDB/get_attendance_student.php?student_id=${studentId}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+    try {
+      const response = await fetch(`https://tracked.6minds.site/Student/AttendanceStudentDB/get_attendance_student.php?student_id=${studentId}`);
+      
+      if (response.ok) {
         const data = await response.json();
-        console.log('Attendance data:', data);
-        
         if (data.success) {
           setAttendanceData(data.attendance_summary);
-        } else {
-          console.error('Failed to fetch attendance:', data.message);
         }
-      } catch (error) {
-        console.error('Error fetching attendance data:', error);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+    }
+  };
 
-    fetchAttendanceData();
-  }, [studentId]);
-
-  // Fetch activities data when subject is available
-  useEffect(() => {
-    const fetchActivitiesData = async () => {
-      if (!subjectCode || !studentId) {
-        console.log('Skipping activities fetch - no subject or student ID');
-        setLoading(false);
-        return;
-      }
+  const fetchActivitiesData = async () => {
+    if (!subjectCode || !studentId) {
+      setLoading(false);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?student_id=${studentId}&subject_code=${subjectCode}`);
       
-      setLoading(true);
-      try {
-        console.log('Fetching activities for subject:', subjectCode, 'student:', studentId);
-        const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?student_id=${studentId}&subject_code=${subjectCode}`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+      if (response.ok) {
         const data = await response.json();
-        console.log('Activities data:', data);
-        
         if (data.success) {
           const organizedData = {
             quizzes: [],
@@ -241,37 +297,48 @@ export default function SubjectAnalyticsStudent() {
             quizzes: [],
             assignments: [],
             activities: [],
-            projects: []
+            projects: [],
+            laboratories: []
           });
         }
-      } catch (error) {
-        console.error('Error fetching activities data:', error);
-        setActivitiesData({
-          quizzes: [],
-          assignments: [],
-          activities: [],
-          projects: []
-        });
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching activities data:', error);
+      setActivitiesData({
+        quizzes: [],
+        assignments: [],
+        activities: [],
+        projects: [],
+        laboratories: []
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchActivitiesData();
-  }, [subjectCode, studentId]);
+  // ========== RENDER HELPERS ==========
+  const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
+    <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+      <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
+        active 
+          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
+          : colorClass
+      }`}>
+        <img src={icon} alt="" className="h-4 w-4" />
+        <span className="sm:inline truncate">{label}</span>
+      </button>
+    </Link>
+  );
 
-  // Show loading if no student ID yet
-  if (!studentId) {
+  // ========== LOADING STATE ==========
+  if (!studentId || loading) {
     return (
-      <div>
+      <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div className={`
-          transition-all duration-300
-          ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
-        `}>
-          <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Loading..." />
-          <div className="p-8 text-center">
-            <p className="text-[#465746]">Loading student data...</p>
+        <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-8 text-center text-[#FFFFFF]">
+            <p>Loading student data...</p>
           </div>
         </div>
       </div>
@@ -280,139 +347,77 @@ export default function SubjectAnalyticsStudent() {
 
   const { overallWarning } = calculateAttendanceWarnings;
 
+  // ========== MAIN RENDER ==========
   return (
-    <div>
+    <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div className={`
-        transition-all duration-300
-        ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
-      `}>
-        <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Student" />
+      <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
+        <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* Header Section - Updated for Analytics */}
-          <div className="mb-4 sm:mb-4">
+        {/* ========== MAIN CONTENT ========== */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-6">
+          
+          {/* ========== PAGE HEADER ========== */}
+          <div className="mb-4">
             <div className="flex items-center mb-2">
-              <img 
-                src={Analytics} 
-                alt="Analytics" 
-                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3" 
-              />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
-                Reports
-              </h1>
+              <img src={Analytics} alt="Analytics" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
+              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">Reports</h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
-              View Class Reports
-            </p>
+            <p className="text-sm lg:text-base text-[#FFFFFF]/80">View Class Reports</p>
           </div>
 
-          {/* Subject Information - Updated with Back Button */}
-          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
-
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+          {/* ========== CLASS INFORMATION ========== */}
+          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{currentSubject?.subject || 'Loading...'}</span>
             </div>
-
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">SECTION:</span>
                 <span>{currentSubject?.section || 'Loading...'}</span>
               </div>
-              <Link to={"/Subjects"}>
+              <Link to="/Subjects">
                 <img 
                   src={BackButton} 
                   alt="Back" 
-                  className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity" 
+                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
                 />
               </Link>
             </div>
           </div>
 
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+          <hr className="border-[#FFFFFF]/30 mb-4" />
 
-          {/* Action Buttons - Copied from Announcements Page */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full mt-4 sm:mt-5 gap-3">
-            {/* Navigation buttons - Stack on mobile, row on tablet/desktop */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-              {/* Class Announcements Button - Active state with different background */}
-              <Link to={`/SubjectAnnouncementStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                  <img 
-                    src={Announcement} 
-                    alt="" 
-                    className="h-4 w-4 sm:h-5 sm:w-5"
-                  />
-                  <span className="sm:inline">Announcements</span>
-                </button>
-              </Link>
-
-              {/* School Works and Attendance - Side by side on all screens */}
-              <div className="flex gap-3 w-full sm:w-auto">
-                <Link to={`/SubjectSchoolWorksStudent?code=${subjectCode}`} className="flex-1 min-w-0">
-                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full">
-                    <img 
-                      src={Classwork} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
-                    />
-                    <span className="whitespace-nowrap truncate">School Works</span>
-                  </button>
-                </Link>
-
-                <Link to={`/SubjectAttendanceStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#fff4e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffebd4] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                    <img 
-                      src={Attendance} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Attendance</span>
-                  </button>
-                </Link>
-
-                <Link to={`/SubjectAnalyticsStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                    <img 
-                      src={Analytics} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Reports</span>
-                  </button>
-                </Link>
-              </div>
+          {/* ========== ACTION BUTTONS ========== */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
+              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
+              {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
+              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", true)}
             </div>
-
-            {/* Action buttons - Icons only on mobile/tablet, unchanged on desktop */}
-            <div className="flex items-center gap-2 justify-end sm:justify-start mt-3 sm:mt-0 w-full sm:w-auto">
-              <Link to={`/SubjectListStudent?code=${subjectCode}`}>
-                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
-                  <img 
-                    src={StudentsIcon} 
-                    alt="Student List" 
-                    className="h-5 w-5 sm:h-6 sm:w-6" 
-                  />
-                </button>
-              </Link>
-            </div>
+            <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
+              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer">
+                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
+              </button>
+            </Link>
           </div>
 
-          {/* Overall Attendance Warning Banner */}
+          {/* ========== ATTENDANCE WARNING BANNER - Smaller ========== */}
           {overallWarning && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 sm:mb-5">
+            <div className="bg-[#FFA600]/10 border border-[#FFA600]/30 rounded-md p-3 mb-4">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="h-4 w-4 text-[#FFA600]" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
+                  <h3 className="text-xs font-medium text-[#FFA600]">
                     Attendance Warning
                   </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
+                  <div className="mt-1 text-xs text-[#FFA600]/90">
                     <p>
                       You have attendance warnings in some subjects. Students with 3 accumulated absences will be dropped from the course. 
                       3 late arrivals are equivalent to one absent.
@@ -423,28 +428,68 @@ export default function SubjectAnalyticsStudent() {
             </div>
           )}
 
-          {/* Show message when subject is not found */}
+          {/* ========== SUBJECT NOT FOUND MESSAGE - Smaller ========== */}
           {!loading && subjects.length > 0 && !currentSubject && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-center">
-              <p className="text-red-800">
+            <div className="bg-[#A15353]/10 border border-[#A15353]/30 rounded-md p-3 mb-4 text-center">
+              <p className="text-[#A15353] text-sm">
                 Subject not found or you are not enrolled in this subject.
               </p>
             </div>
           )}
 
-          {/* ActivityOverview component - Only show if subject is available */}
+          {/* ========== SIDE-BY-SIDE LAYOUT (Activity Overview + Activity List) ========== */}
           {!loading && currentSubject && (
-            <PerformanceAnalyticsStudent
-              quizzesList={activitiesData.quizzes}
-              assignmentsList={activitiesData.assignments}
-              activitiesList={activitiesData.activities}
-              projectsList={activitiesData.projects}
-              laboratoriesList={activitiesData.laboratories}
-              selectedFilter={selectedFilter}
-              setSelectedFilter={setSelectedFilter}
-              currentSubject={currentSubject}
-              subjectCode={subjectCode}
-            />
+            <div className="space-y-4">
+              {/* Side-by-side components at the top */}
+              <div className="flex flex-col lg:flex-row gap-3">
+                {/* Left Side - Activity Overview (40%) */}
+                <div className="lg:w-2/5">
+                  <StudentActivityOverview
+                    quizzesCount={activitiesData.quizzes.length}
+                    assignmentsCount={activitiesData.assignments.length}
+                    activitiesCount={activitiesData.activities.length}
+                    projectsCount={activitiesData.projects.length}
+                    laboratoriesCount={activitiesData.laboratories.length}
+                    totalTasksCount={displayedList.length}
+                    selectedFilter={selectedFilter}
+                    setSelectedFilter={setSelectedFilter}
+                    animationProgress={animationProgress}
+                    segments={segments}
+                    statusTotal={statusTotal}
+                  />
+                </div>
+                
+                {/* Right Side - Activity List (60%) */}
+                <div className="lg:w-3/5">
+                  <StudentActivityList
+                    displayedList={displayedList}
+                    selectedFilter={selectedFilter}
+                    currentSubject={currentSubject}
+                    subjectCode={subjectCode}
+                    activitySearchTerm={activitySearchTerm}
+                    setActivitySearchTerm={setActivitySearchTerm}
+                    activityCurrentPage={activityCurrentPage}
+                    setActivityCurrentPage={setActivityCurrentPage}
+                    itemsPerPage={8}
+                  />
+                </div>
+              </div>
+
+              {/* Advanced Performance Analytics below - Smaller */}
+              <div className="mt-4">
+                <PerformanceAnalyticsStudent
+                  quizzesList={activitiesData.quizzes}
+                  assignmentsList={activitiesData.assignments}
+                  activitiesList={activitiesData.activities}
+                  projectsList={activitiesData.projects}
+                  laboratoriesList={activitiesData.laboratories}
+                  selectedFilter={selectedFilter}
+                  setSelectedFilter={setSelectedFilter}
+                  currentSubject={currentSubject}
+                  subjectCode={subjectCode}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>

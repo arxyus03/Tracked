@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import AnnouncementCardStudent from "../../Components/AnnouncementCardStudent";
 
-import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
-import BackButton from '../../assets/BackButton(Light).svg';
-import ArrowDown from "../../assets/ArrowDown(Light).svg";
+// ========== IMPORT ASSETS ==========
+import Announcement from "../../assets/Announcement.svg";
+import BackButton from '../../assets/BackButton.svg';
+import ArrowDown from "../../assets/ArrowDown.svg";
 import Search from "../../assets/Search.svg";
-import StudentsIcon from "../../assets/ClassManagement(Light).svg";
-import Announcement from "../../assets/Announcement(Light).svg";
-import Classwork from "../../assets/Classwork(Light).svg";
-import Attendance from "../../assets/Attendance(Light).svg";
-import Analytics from "../../assets/Analytics(Light).svg";
+import StudentsIcon from "../../assets/StudentList.svg";
+import Classwork from "../../assets/Classwork.svg";
+import Attendance from "../../assets/Attendance.svg";
+import Analytics from "../../assets/Analytics.svg";
 
 export default function SubjectAnnouncementStudent() {
+  // ========== STATE VARIABLES ==========
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get('code');
@@ -25,65 +25,69 @@ export default function SubjectAnnouncementStudent() {
   const [classInfo, setClassInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState('');
-  
-  // Filter and Search states
   const [filterOption, setFilterOption] = useState("All");
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Get student ID from localStorage
+  // ========== USE EFFECTS ==========
   useEffect(() => {
-    const getStudentId = () => {
+    const checkScreenSize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
       try {
-        const userDataString = localStorage.getItem('user');
-        if (userDataString) {
-          const userData = JSON.parse(userDataString);
-          setStudentId(userData.id);
-          return userData.id;
-        }
+        const userData = JSON.parse(userStr);
+        setStudentId(userData.id);
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
-      return null;
-    };
-
-    getStudentId();
+    }
   }, []);
 
-  // Fetch class details
   useEffect(() => {
-    if (subjectCode) {
-      fetchClassDetails();
-    }
+    if (subjectCode) fetchClassDetails();
   }, [subjectCode]);
 
-  // Fetch announcements after classInfo and studentId are available
   useEffect(() => {
-    if (classInfo && studentId) {
-      fetchAnnouncements();
-    }
+    if (classInfo && studentId) fetchAnnouncements();
   }, [classInfo, studentId]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
+        setFilterDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [filterDropdownOpen]);
+
+  // ========== API CALL FUNCTIONS ==========
   const fetchClassDetails = async () => {
     try {
       const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_class_details_student.php?subject_code=${subjectCode}`);
-      
       if (response.ok) {
         const result = await response.json();
-        if (result.success) {
-          setClassInfo(result.class_data);
-        } else {
-          console.error('Error fetching class details:', result.message);
-        }
-      } else {
-        console.error('HTTP error fetching class details:', response.status);
+        if (result.success) setClassInfo(result.class_data);
       }
     } catch (error) {
       console.error('Error fetching class details:', error);
     }
   };
 
-  // Fetch announcements for student
   const fetchAnnouncements = async () => {
     if (!studentId) return;
     
@@ -92,20 +96,15 @@ export default function SubjectAnnouncementStudent() {
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Fetched announcements result:', result);
         if (result.success) {
-          // Add read status to announcements (default to unread)
           const announcementsWithReadStatus = result.announcements.map(announcement => ({
             ...announcement,
-            isRead: false // Default to unread
+            isRead: false
           }));
           setAnnouncements(announcementsWithReadStatus);
         } else {
-          console.error('Error fetching announcements:', result.message);
           setAnnouncements([]);
         }
-      } else {
-        console.error('HTTP error fetching announcements:', response.status);
       }
     } catch (error) {
       console.error('Error fetching announcements:', error);
@@ -115,10 +114,10 @@ export default function SubjectAnnouncementStudent() {
     }
   };
 
-  // Handle marking announcement as read
+  // ========== HANDLER FUNCTIONS ==========
   const handleMarkAsRead = (announcementId) => {
-    setAnnouncements(prevAnnouncements => 
-      prevAnnouncements.map(announcement => 
+    setAnnouncements(prev => 
+      prev.map(announcement => 
         announcement.id === announcementId 
           ? { ...announcement, isRead: true }
           : announcement
@@ -126,10 +125,9 @@ export default function SubjectAnnouncementStudent() {
     );
   };
 
-  // Handle marking announcement as unread
   const handleMarkAsUnread = (announcementId) => {
-    setAnnouncements(prevAnnouncements => 
-      prevAnnouncements.map(announcement => 
+    setAnnouncements(prev => 
+      prev.map(announcement => 
         announcement.id === announcementId 
           ? { ...announcement, isRead: false }
           : announcement
@@ -137,17 +135,12 @@ export default function SubjectAnnouncementStudent() {
     );
   };
 
-  // Filter announcements based on filter option and search query
+  // ========== FILTER & SORT LOGIC ==========
   const filteredAnnouncements = announcements.filter(announcement => {
-    // Filter by read status
     let matchesFilter = true;
-    if (filterOption === "Unread") {
-      matchesFilter = !announcement.isRead;
-    } else if (filterOption === "Read") {
-      matchesFilter = announcement.isRead;
-    }
+    if (filterOption === "Unread") matchesFilter = !announcement.isRead;
+    if (filterOption === "Read") matchesFilter = announcement.isRead;
     
-    // Filter by search query
     const matchesSearch = 
       announcement.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       announcement.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -156,11 +149,8 @@ export default function SubjectAnnouncementStudent() {
     return matchesFilter && matchesSearch;
   });
 
-  // Sort announcements based on filter option
   const sortedAnnouncements = [...filteredAnnouncements].sort((a, b) => {
-    // For all filters, maintain original order or sort by unread first
     if (filterOption === "All") {
-      // Put unread announcements first
       if (a.isRead && !b.isRead) return 1;
       if (!a.isRead && b.isRead) return -1;
       return new Date(b.datePosted) - new Date(a.datePosted);
@@ -168,38 +158,23 @@ export default function SubjectAnnouncementStudent() {
     return 0;
   });
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
-        setFilterDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [filterDropdownOpen]);
-
-  // Render empty state when no announcements
+  // ========== RENDER HELPERS ==========
   const renderEmptyState = () => (
-    <div className="col-span-full text-center py-8 sm:py-12 lg:py-16">
-      <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mb-4 sm:mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+    <div className="col-span-full text-center py-12">
+      <div className="mx-auto w-20 h-20 mb-6 rounded-full bg-[#15151C] flex items-center justify-center">
         <img 
           src={Announcement} 
           alt="No announcements" 
-          className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 opacity-50" 
+          className="h-10 w-10 opacity-50" 
         />
       </div>
-      <p className="text-gray-500 text-sm sm:text-base lg:text-lg mb-2">
+      <p className="text-[#FFFFFF]/60 text-base mb-2">
         {searchQuery || filterOption !== "All" 
           ? "No announcements match your search criteria" 
           : "No announcements available yet."
         }
       </p>
-      <p className="text-gray-400 text-xs sm:text-sm lg:text-base">
+      <p className="text-[#FFFFFF]/40 text-sm">
         {searchQuery || filterOption !== "All" 
           ? "Try adjusting your search or filter options." 
           : "Check back later for new announcements from your professor."
@@ -208,160 +183,107 @@ export default function SubjectAnnouncementStudent() {
     </div>
   );
 
+  const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
+    <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+      <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
+        active 
+          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
+          : colorClass
+      }`}>
+        <img src={icon} alt="" className="h-4 w-4" />
+        <span className="sm:inline truncate">{label}</span>
+      </button>
+    </Link>
+  );
+
+  // ========== LOADING STATE ==========
   if (loading) {
     return (
-      <div>
+      <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-5 text-center">Loading...</div>
+          <div className="p-8 text-center text-[#FFFFFF]">Loading announcements...</div>
         </div>
       </div>
     );
   }
 
+  // ========== MAIN RENDER ==========
   return (
-    <div>
+    <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* Main Content */}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+        {/* ========== MAIN CONTENT ========== */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-6">
           
-          {/* Page Header - Updated for Announcements */}
-          <div className="mb-4 sm:mb-4">
+          {/* ========== PAGE HEADER ========== */}
+          <div className="mb-4">
             <div className="flex items-center mb-2">
-              <img
-                src={Announcement}
-                alt="Class Announcements"
-                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
-              />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
-                Class Announcements
-              </h1>
+              <img src={Announcement} alt="Class Announcements" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
+              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">Class Announcements</h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
-              View Class announcements
-            </p>
+            <p className="text-sm lg:text-base text-[#FFFFFF]/80">View Class announcements</p>
           </div>
 
-          {/* Class Information */}
-          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
-
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+          {/* ========== CLASS INFORMATION ========== */}
+          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'Loading...'}</span>
             </div>
-
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">SECTION:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
               </div>
-              <Link to={"/Subjects"}>
+              <Link to="/Subjects">
                 <img 
                   src={BackButton} 
                   alt="Back" 
-                  className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity" 
+                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
                 />
               </Link>
             </div>
           </div>
 
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+          <hr className="border-[#FFFFFF]/30 mb-4" />
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full mt-4 sm:mt-5 gap-3">
-            {/* Navigation buttons - Stack on mobile, row on tablet/desktop */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-              {/* Class Announcements Button - Active state with different background */}
-              <Link to={`/SubjectAnnouncementStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                  <img 
-                    src={Announcement} 
-                    alt="" 
-                    className="h-4 w-4 sm:h-5 sm:w-5"
-                  />
-                  <span className="sm:inline">Announcements</span>
-                </button>
-              </Link>
-
-              {/* School Works and Attendance - Side by side on all screens */}
-              <div className="flex gap-3 w-full sm:w-auto">
-                <Link to={`/SubjectSchoolWorksStudent?code=${subjectCode}`} className="flex-1 min-w-0">
-                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full">
-                    <img 
-                      src={Classwork} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
-                    />
-                    <span className="whitespace-nowrap truncate">School Works</span>
-                  </button>
-                </Link>
-
-                <Link to={`/SubjectAttendanceStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#fff4e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffebd4] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                    <img 
-                      src={Attendance} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Attendance</span>
-                  </button>
-                </Link>
-
-                <Link to={`/SubjectAnalyticsStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                    <img 
-                      src={Analytics} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Reports</span>
-                  </button>
-                </Link>
-              </div>
+          {/* ========== ACTION BUTTONS ========== */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", true)}
+              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
+              {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
+              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
             </div>
-
-            {/* Action buttons - Icons only on mobile/tablet, unchanged on desktop */}
-            <div className="flex items-center gap-2 justify-end sm:justify-start mt-3 sm:mt-0 w-full sm:w-auto">
-              <Link to={`/SubjectListStudent?code=${subjectCode}`}>
-                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
-                  <img 
-                    src={StudentsIcon} 
-                    alt="Student List" 
-                    className="h-5 w-5 sm:h-6 sm:w-6" 
-                  />
-                </button>
-              </Link>
-            </div>
+            <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
+              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer">
+                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
+              </button>
+            </Link>
           </div>
 
-          {/* Filter and Search Section - Updated for Announcements */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-5">
-            {/* Filter dropdown */}
-            <div className="relative sm:flex-initial filter-dropdown">
+          {/* ========== FILTER & SEARCH ========== */}
+          <div className="flex flex-col sm:flex-row gap-2.5 mb-3">
+            <div className="relative filter-dropdown sm:w-36">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className="flex items-center justify-between w-full sm:w-auto font-bold px-4 py-2.5 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] active:border-[#00874E] transition-all duration-200 text-sm sm:text-base sm:min-w-[160px] cursor-pointer touch-manipulation"
+                className="flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border border-transparent hover:border-[#00A15D] transition-all duration-200 text-xs font-medium cursor-pointer"
               >
-                <span>{filterOption}</span>
-                <img
-                  src={ArrowDown}
-                  alt=""
-                  className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`}
-                />
+                <span className="text-[#FFFFFF]">{filterOption}</span>
+                <img src={ArrowDown} alt="" className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Dropdown options - Updated for Announcements */}
               {filterDropdownOpen && (
-                <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
+                <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-[#FFFFFF]/10 z-20 overflow-hidden">
                   {["All", "Unread", "Read"].map((option) => (
                     <button
                       key={option}
-                      className={`block px-4 py-2.5 w-full text-left hover:bg-gray-100 active:bg-gray-200 text-sm sm:text-base transition-colors duration-150 cursor-pointer touch-manipulation ${
-                        filterOption === option ? 'bg-gray-50 font-semibold' : ''
+                      className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
+                        filterOption === option ? 'bg-[#23232C] font-semibold' : 'text-[#FFFFFF]/80'
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -375,7 +297,6 @@ export default function SubjectAnnouncementStudent() {
               )}
             </div>
 
-            {/* Search bar */}
             <div className="flex-1">
               <div className="relative">
                 <input
@@ -383,43 +304,34 @@ export default function SubjectAnnouncementStudent() {
                   placeholder="Search announcements..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
+                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-transparent focus:border-[#00A15D] transition-colors placeholder:text-[#FFFFFF]/40"
                 />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                  <img
-                    src={Search}
-                    alt="Search"
-                    className="h-5 w-5 sm:h-6 sm:w-6"
-                  />
+                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60">
+                  <img src={Search} alt="Search" className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ANNOUNCEMENT CARDS - Replaced Activity Cards */}
-          <div className="space-y-4 mt-4 sm:mt-5">
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
-                <p className="mt-3 text-gray-600">Loading announcements...</p>
-              </div>
-            ) : sortedAnnouncements.length > 0 ? (
+          {/* ========== ANNOUNCEMENT CARDS ========== */}
+          <div className="space-y-4">
+            {sortedAnnouncements.length > 0 ? (
               sortedAnnouncements.map((announcement) => (
-              <AnnouncementCardStudent
-                key={announcement.id}
-                id={announcement.id}
-                subject={announcement.subject}
-                title={announcement.title}
-                postedBy={announcement.postedBy}
-                datePosted={announcement.datePosted}
-                deadline={announcement.deadline}
-                instructions={announcement.instructions}
-                link={announcement.link}
-                section={announcement.section}
-                isRead={announcement.isRead}
-                onMarkAsRead={() => handleMarkAsRead(announcement.id)}
-                onMarkAsUnread={() => handleMarkAsUnread(announcement.id)}
-              />
+                <AnnouncementCardStudent
+                  key={announcement.id}
+                  id={announcement.id}
+                  subject={announcement.subject}
+                  title={announcement.title}
+                  postedBy={announcement.postedBy}
+                  datePosted={announcement.datePosted}
+                  deadline={announcement.deadline}
+                  instructions={announcement.instructions}
+                  link={announcement.link}
+                  section={announcement.section}
+                  isRead={announcement.isRead}
+                  onMarkAsRead={() => handleMarkAsRead(announcement.id)}
+                  onMarkAsUnread={() => handleMarkAsUnread(announcement.id)}
+                />
               ))
             ) : (
               renderEmptyState()

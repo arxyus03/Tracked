@@ -444,34 +444,6 @@ export default function PerformanceAnalyticsStudent({
         setExpandedInsights={setExpandedInsights}
         displayedInsights={displayedInsights}
       />
-
-      {/* Activity Overview */}
-      <ActivityOverview
-        quizzesCount={quizzesCount}
-        assignmentsCount={assignmentsCount}
-        activitiesCount={activitiesCount}
-        projectsCount={projectsCount}
-        laboratoriesCount={laboratoriesCount}
-        totalTasksCount={totalTasksCount}
-        selectedFilter={selectedFilter}
-        setSelectedFilter={setSelectedFilter}
-        statusCounts={statusCounts}
-        animationProgress={animationProgress}
-        segments={segments}
-        statusTotal={statusTotal}
-      />
-
-      {/* Activity List */}
-      <ActivityList
-        displayedList={displayedList}
-        selectedFilter={selectedFilter}
-        currentSubject={currentSubject}
-        subjectCode={subjectCode}
-        activitySearchTerm={activitySearchTerm}
-        setActivitySearchTerm={setActivitySearchTerm}
-        activityCurrentPage={activityCurrentPage}
-        setActivityCurrentPage={setActivityCurrentPage}
-      />
     </div>
   );
 }

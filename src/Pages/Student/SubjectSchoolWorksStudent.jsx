@@ -1,33 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-
 import StudentActivityDetails from "../../Components/StudentActivityDetails";
 
-import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
-import BackButton from '../../assets/BackButton(Light).svg';
-import ArrowDown from "../../assets/ArrowDown(Light).svg";
+// ========== IMPORT ASSETS ==========
+import BackButton from '../../assets/BackButton.svg';
+import ArrowDown from "../../assets/ArrowDown.svg";
 import Search from "../../assets/Search.svg";
-import StudentsIcon from "../../assets/ClassManagement(Light).svg";
-import Announcement from "../../assets/Announcement(Light).svg";
-import Classwork from "../../assets/Classwork(Light).svg";
-import Attendance from "../../assets/Attendance(Light).svg";
-import Analytics from "../../assets/Analytics(Light).svg";
+import StudentsIcon from "../../assets/StudentList.svg";
+import Announcement from "../../assets/Announcement.svg";
+import Classwork from "../../assets/Classwork.svg";
+import Attendance from "../../assets/Attendance.svg";
+import Analytics from "../../assets/Analytics.svg";
+import DeadlineIcon from "../../assets/Deadline.svg";
+import GradeIcon from "../../assets/Points.svg"; 
 
-// Student Activity Card Component
+// ========== STUDENT ACTIVITY CARD COMPONENT ==========
 const StudentActivityCard = ({ activity, onViewDetails }) => {
   const formatDate = (dateString) => {
     if (!dateString || dateString === "No deadline") return "No deadline";
-    
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
         timeZone: 'UTC',
         month: 'short',
         day: 'numeric',
-        year: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       });
@@ -36,53 +34,21 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
     }
   };
 
-  const getPostedTime = (createdAt) => {
-    if (!createdAt) return "Recently";
-    
-    try {
-      const created = new Date(createdAt);
-      const now = new Date();
-      
-      // Use UTC timestamps for accurate comparison
-      const diffMs = now.getTime() - created.getTime();
-      const diffSeconds = Math.floor(diffMs / 1000);
-      const diffMinutes = Math.floor(diffMs / (1000 * 60));
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const diffYears = Math.floor(diffDays / 365);
-      
-      if (diffSeconds < 60) return `${diffSeconds}s ago`;
-      if (diffMinutes < 60) return `${diffMinutes}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 365) return `${diffDays}d ago`;
-      return `${diffYears}y ago`;
-    } catch {
-      return "Recently";
-    }
-  };
-
-  // Check if deadline is urgent (within 24 hours or past due)
   const isDeadlineUrgent = (deadline) => {
     if (!deadline || deadline === "No deadline") return false;
-    
     try {
       const deadlineDate = new Date(deadline);
       const now = new Date();
-      
-      // Compare UTC timestamps directly
       const timeDiff = deadlineDate.getTime() - now.getTime();
       const hoursDiff = timeDiff / (1000 * 60 * 60);
-      
-      return hoursDiff <= 24 && hoursDiff > 0; // Urgent if within 24 hours but not passed
+      return hoursDiff <= 24 && hoursDiff > 0;
     } catch {
       return false;
     }
   };
 
-  // Check if deadline is past due
   const isDeadlinePassed = (deadline) => {
     if (!deadline || deadline === "No deadline") return false;
-    
     try {
       const deadlineDate = new Date(deadline);
       const now = new Date();
@@ -92,173 +58,169 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
     }
   };
 
-  // Get activity type color
   const getActivityTypeColor = (type) => {
     const colors = {
-      'Assignment': 'bg-blue-100 text-blue-800',
-      'Quiz': 'bg-purple-100 text-purple-800',
-      'Activity': 'bg-green-100 text-green-800',
-      'Project': 'bg-orange-100 text-orange-800',
-      'Laboratory': 'bg-red-100 text-red-800',
+      'Assignment': 'bg-[#767EE0]/20 text-[#767EE0]',
+      'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
+      'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
+      'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
+      'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
     };
-    return colors[type] || 'bg-gray-100 text-gray-800';
+    return colors[type] || 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80';
   };
 
-  // Get student status
   const getStudentStatus = (activity) => {
     const isSubmitted = activity.submitted === 1 || activity.submitted === true || activity.submitted === '1';
     const isLate = activity.late === 1 || activity.late === true || activity.late === '1';
     
-    // Check if deadline is overdue and not submitted - using UTC
     let isOverdue = false;
     if (activity.deadline && activity.deadline !== "No deadline") {
       try {
         const deadlineDate = new Date(activity.deadline);
         const now = new Date();
         isOverdue = deadlineDate.getTime() < now.getTime() && !isSubmitted;
-      } catch {
-        // If date parsing fails, skip overdue check
-      }
+      } catch {}
     }
     
     if (isSubmitted && isLate) return { 
-      status: "Late", 
-      color: "bg-yellow-100 text-yellow-800", 
+      status: "Awaiting Upload", 
+      color: "bg-[#FFA600]/20 text-[#FFA600]", 
       type: "submitted" 
     };
     if (isSubmitted) return { 
-      status: "Submitted", 
-      color: "bg-green-100 text-green-800", 
+      status: "Awaiting Upload", 
+      color: "bg-[#767EE0]/20 text-[#00A15D]", 
       type: "submitted" 
     };
     if (isOverdue) return { 
       status: "Missed", 
-      color: "bg-red-100 text-red-800", 
+      color: "bg-[#A15353]/20 text-[#A15353]", 
       type: "missed" 
     };
     return { 
-      status: "Assigned", 
-      color: "bg-blue-100 text-blue-800", 
+      status: "Active", 
+      color: "bg-[#767EE0]/20 text-[#767EE0]", 
       type: "active" 
     };
   };
 
-
-   // Check if professor has uploaded files (from database)
   const hasProfessorSubmission = activity.professor_file_count > 0 || 
                                (activity.professor_file_url && activity.professor_file_url !== null);
 
   const statusInfo = getStudentStatus(activity);
+  const isGraded = activity.grade !== null && activity.grade !== undefined && activity.grade !== '';
+  const deadlineColor = isDeadlinePassed(activity.deadline) || isDeadlineUrgent(activity.deadline) 
+    ? 'text-[#A15353]' 
+    : 'text-[#FFFFFF]/80';
+  
+  // Round grade to whole number
+  const displayGrade = isGraded ? Math.round(parseFloat(activity.grade)) : null;
+  const displayPoints = activity.points ? Math.round(parseFloat(activity.points)) : null;
+
+  // Determine card background color based on status
+  const getCardBackground = () => {
+    if (statusInfo.type === 'missed') return 'bg-[#A15353]/10';
+    if (statusInfo.type === 'submitted') return 'bg-[#15151C]';
+    return 'bg-[#15151C]';
+  };
+
+  // Get grading status for the top label
+  const getGradingStatus = () => {
+    if (isGraded) {
+      return {
+        text: 'Graded',
+        color: 'bg-[#00A15D]/20 text-[#00A15D]'
+      };
+    } else if (statusInfo.type === 'submitted') {
+      return {
+        text: 'Pending Grade',
+        color: 'bg-[#FFA600]/20 text-[#FFA600]'
+      };
+    } else if (statusInfo.type === 'active') {
+      return {
+        text: 'Not Submitted',
+        color: 'bg-[#767EE0]/20 text-[#767EE0]'
+      };
+    }
+    return null;
+  };
+
+  const gradingStatus = getGradingStatus();
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-md border border-gray-200 p-4 hover:shadow-lg transition-shadow cursor-pointer"
+      className={`rounded-lg border border-[#FFFFFF]/10 p-2.5 hover:shadow-sm transition-all cursor-pointer hover:border-[#00A15D]/30 ${getCardBackground()}`}
       onClick={() => onViewDetails(activity)}
     >
-      <div className="flex items-start justify-between">
-        {/* Left Section - Activity Info */}
-        <div className="flex-1 min-w-0">
-          {/* Top row with activity type, task number, status, and posted time */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 ${getActivityTypeColor(activity.activity_type)} text-xs font-medium rounded`}>
-                {activity.activity_type}
-              </span>
-              <span className="text-sm text-gray-500 font-bold">#{activity.task_number}</span>
-              <span className={`px-2 py-1 text-xs font-medium rounded ${statusInfo.color}`}>
-                {statusInfo.status}
-              </span>
-            </div>
-            {/* Posted time moved to upper right */}
-            <div className="text-xs text-gray-500 text-right">
-              <div>{getPostedTime(activity.created_at)}</div>
-            </div>
-          </div>
-          
-          <h3 className="font-semibold text-gray-900 text-lg mb-2 truncate">
-            {activity.title}
-          </h3>
-          
-          <div className="space-y-1 text-sm text-gray-600">
-            {/* Deadline with simple red text for urgency */}
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Deadline:</span>
-              <span className={`font-medium ${
-                isDeadlinePassed(activity.deadline) || isDeadlineUrgent(activity.deadline) 
-                  ? 'text-red-600 font-bold' 
-                  : 'text-gray-600'
-              }`}>
-                {formatDate(activity.deadline)}
-              </span>
-            </div>
-
-            {/* Points */}
-            {activity.points > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="font-bold">Points:</span>
-                <span className="text-green-600 font-bold">{activity.points} pts</span>
-              </div>
-            )}
-
-            {/* Grade - Show only if graded */}
-            {activity.grade !== null && activity.grade !== undefined && activity.grade !== '' && (
-              <div className="flex items-center gap-2">
-                <span className="font-bold">Your Grade:</span>
-                <span className="text-blue-600 font-bold">{activity.grade}/{activity.points}</span>
-                {activity.grade >= activity.points * 0.7 ? (
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    Good Job!
-                  </span>
-                ) : (
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                    Room for Improvement
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Professor's Submission Status - Quick Overview */}
-          <div className={`mt-3 p-2 rounded-lg border ${
-            hasProfessorSubmission 
-              ? 'bg-green-50 border-green-200' 
-              : 'bg-blue-50 border-blue-200'
-          }`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-medium ${
-                  hasProfessorSubmission ? 'text-green-700' : 'text-blue-700'
-                }`}>
-                  Professor's Submission of your work:
-                </span>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  hasProfessorSubmission 
-                    ? 'bg-green-100 text-green-800 font-semibold' 
-                    : 'bg-blue-100 text-blue-800'
-                }`}>
-                  {hasProfessorSubmission ? 'Available' : 'Pending'}
-                </span>
-              </div>
-              {hasProfessorSubmission && (
-                <span className="text-green-600 text-xs flex items-center gap-1">
-                  {activity.professor_file_count || 1} file{(activity.professor_file_count || 1) > 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-            <p className="text-xs mt-1 text-gray-600">
-              {hasProfessorSubmission 
-                ? 'Professor has uploaded your work for reference' 
-                : 'Waiting for professor to upload your work'
-              }
-            </p>
-          </div>
+      {/* Header with type+number and status */}
+      <div className="flex items-center justify-between mb-1.5">
+        <span className={`px-1.5 py-0.5 ${getActivityTypeColor(activity.activity_type)} text-xs font-medium rounded`}>
+          {activity.activity_type} #{activity.task_number}
+        </span>
+        <div className="flex items-center gap-1">
+          <span className={`px-1 py-0.5 text-xs font-medium rounded ${statusInfo.color}`}>
+            {statusInfo.status}
+          </span>
+          {gradingStatus && (
+            <span className={`px-1 py-0.5 text-xs font-medium rounded ${gradingStatus.color}`}>
+              {gradingStatus.text}
+            </span>
+          )}
         </div>
+      </div>
+      
+      {/* Title - Smaller */}
+      <h3 className="font-medium text-[#FFFFFF] text-xs mb-2.5 truncate">
+        {activity.title}
+      </h3>
+      
+      {/* Minimal Info Row - Compact */}
+      <div className="flex items-center justify-between mb-2">
+        {/* Deadline */}
+        <div className="flex items-center gap-1">
+          <img src={DeadlineIcon} alt="Deadline" className="w-2.5 h-2.5" />
+          <span className={`text-xs font-medium ${deadlineColor}`}>
+            {formatDate(activity.deadline)}
+          </span>
+        </div>
+        
+        {/* Grade Status */}
+        <div className="flex items-center gap-1">
+          <img src={GradeIcon} alt="Grade" className="w-2.5 h-2.5" />
+          {isGraded ? (
+            <span className="text-xs font-medium text-[#FFA600]">
+              {displayGrade}/{displayPoints}
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-[#FFA600]">
+              No Grade
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Professor File Count - Ultra Minimal */}
+      <div className={`px-1.5 py-1 rounded text-xs flex items-center justify-between ${
+        hasProfessorSubmission 
+          ? 'bg-[#00A15D]/10 text-[#00A15D]' 
+          : 'bg-[#767EE0]/10 text-[#767EE0]'
+      }`}>
+        <span className="font-medium truncate mr-1">
+          {hasProfessorSubmission ? 'Reference Materials' : 'No Reference Materials'}
+        </span>
+        {hasProfessorSubmission && (
+          <span className="font-bold text-[10px]">
+            {activity.professor_file_count || 1}
+          </span>
+        )}
       </div>
     </div>
   );
 };
 
+// ========== MAIN COMPONENT ==========
 export default function SubjectSchoolWorksStudent() {
+  // ========== STATE VARIABLES ==========
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get('code');
@@ -268,70 +230,67 @@ export default function SubjectSchoolWorksStudent() {
   const [classInfo, setClassInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState('');
-  
-  // Filter and Search states
   const [filterOption, setFilterOption] = useState("All");
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Modal states
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-
-  // Student images state
   const [studentImages, setStudentImages] = useState({});
 
-  // Get student ID from localStorage
+  // ========== USE EFFECTS ==========
   useEffect(() => {
-    const getStudentId = () => {
-      try {
-        const userDataString = localStorage.getItem('user');
-        if (userDataString) {
-          const userData = JSON.parse(userDataString);
-          const id = userData.id || userData.tracked_ID;
-          if (id) {
-            setStudentId(id);
-            return id;
-          }
-        }
-        console.error('Student ID not found in localStorage');
-        return null;
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        return null;
+    const checkScreenSize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
       }
     };
 
-    getStudentId();
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // Fetch class details
   useEffect(() => {
-    if (subjectCode) {
-      fetchClassDetails();
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr);
+        const id = userData.id || userData.tracked_ID;
+        if (id) setStudentId(id);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
     }
+  }, []);
+
+  useEffect(() => {
+    if (subjectCode) fetchClassDetails();
   }, [subjectCode]);
 
-  // Fetch activities after classInfo and studentId are available
   useEffect(() => {
-    if (classInfo && studentId) {
-      fetchActivities();
-    }
+    if (classInfo && studentId) fetchActivities();
   }, [classInfo, studentId]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
+        setFilterDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [filterDropdownOpen]);
+
+  // ========== API CALL FUNCTIONS ==========
   const fetchClassDetails = async () => {
     try {
       const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_class_details_student.php?subject_code=${subjectCode}`);
-      
       if (response.ok) {
         const result = await response.json();
-        if (result.success) {
-          setClassInfo(result.class_data);
-        } else {
-          console.error('Error fetching class details:', result.message);
-        }
-      } else {
-        console.error('HTTP error fetching class details:', response.status);
+        if (result.success) setClassInfo(result.class_data);
       }
     } catch (error) {
       console.error('Error fetching class details:', error);
@@ -343,17 +302,9 @@ export default function SubjectSchoolWorksStudent() {
     
     try {
       const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?subject_code=${subjectCode}&student_id=${studentId}`);
-      
       if (response.ok) {
         const result = await response.json();
-        console.log('Fetched activities result:', result);
-        if (result.success) {
-          setActivities(result.activities);
-        } else {
-          console.error('Error fetching activities:', result.message);
-        }
-      } else {
-        console.error('HTTP error fetching activities:', response.status);
+        if (result.success) setActivities(result.activities);
       }
     } catch (error) {
       console.error('Error fetching activities:', error);
@@ -362,7 +313,6 @@ export default function SubjectSchoolWorksStudent() {
     }
   };
 
-  // Handle image upload
   const handleImageUpload = async (activityId, file) => {
     if (!studentId) {
       alert("Student ID not found. Please log in again.");
@@ -381,9 +331,7 @@ export default function SubjectSchoolWorksStudent() {
       });
 
       const result = await response.json();
-
       if (result.success) {
-        // Create a local URL for the uploaded image
         const imageUrl = URL.createObjectURL(file);
         const newImage = {
           id: Date.now(),
@@ -409,27 +357,23 @@ export default function SubjectSchoolWorksStudent() {
     }
   };
 
-  // Handle view details
+  // ========== HANDLER FUNCTIONS ==========
   const handleViewDetails = (activity) => {
     setSelectedActivity(activity);
     setDetailsModalOpen(true);
   };
 
-  // Get activity status for filtering
   const getActivityStatus = (activity) => {
     const isSubmitted = activity.submitted === 1 || activity.submitted === true || activity.submitted === '1';
     const isLate = activity.late === 1 || activity.late === true || activity.late === '1';
     
-    // Check if deadline is overdue and not submitted - using UTC
     let isOverdue = false;
     if (activity.deadline && activity.deadline !== "No deadline") {
       try {
         const deadlineDate = new Date(activity.deadline);
         const now = new Date();
         isOverdue = deadlineDate.getTime() < now.getTime() && !isSubmitted;
-      } catch {
-        // If date parsing fails, skip overdue check
-      }
+      } catch {}
     }
     
     if (isSubmitted && isLate) return "submitted";
@@ -438,7 +382,7 @@ export default function SubjectSchoolWorksStudent() {
     return "active";
   };
 
-  // Filter activities based on filter option and search query
+  // ========== FILTER & GROUP LOGIC ==========
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = activity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         activity.task_number?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -446,10 +390,8 @@ export default function SubjectSchoolWorksStudent() {
     let matchesFilter = true;
     if (filterOption !== "All") {
       if (filterOption === "Missed" || filterOption === "Submitted" || filterOption === "Active") {
-        // Filter by status
         matchesFilter = getActivityStatus(activity) === filterOption.toLowerCase();
       } else {
-        // Filter by activity type
         matchesFilter = activity.activity_type === filterOption;
       }
     }
@@ -457,207 +399,165 @@ export default function SubjectSchoolWorksStudent() {
     return matchesSearch && matchesFilter;
   });
 
-  // Group activities by status
   const groupedActivities = {
     active: filteredActivities.filter(activity => getActivityStatus(activity) === "active"),
     submitted: filteredActivities.filter(activity => getActivityStatus(activity) === "submitted"),
     missed: filteredActivities.filter(activity => getActivityStatus(activity) === "missed")
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
-        setFilterDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [filterDropdownOpen]);
-
-  // Render empty state when no activities
+  // ========== RENDER HELPERS ==========
   const renderEmptyState = () => (
-    <div className="col-span-full text-center py-8 sm:py-12 lg:py-16">
-      <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mb-4 sm:mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+    <div className="col-span-full text-center py-6">
+      <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-[#15151C] flex items-center justify-center">
         <img 
           src={Classwork} 
           alt="No activities" 
-          className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 opacity-50" 
+          className="h-6 w-6 opacity-50" 
         />
       </div>
-      <p className="text-gray-500 text-sm sm:text-base lg:text-lg mb-2">
+      <p className="text-[#FFFFFF]/60 text-xs mb-0.5">
         {searchQuery || filterOption !== "All" 
-          ? "No activities match your search criteria" 
-          : "No activities available yet."
+          ? "No activities match your search" 
+          : "No activities available"
         }
       </p>
-      <p className="text-gray-400 text-xs sm:text-sm lg:text-base">
+      <p className="text-[#FFFFFF]/40 text-[10px]">
         {searchQuery || filterOption !== "All" 
-          ? "Try adjusting your search or filter options." 
-          : "Check back later for new activities from your professor."
+          ? "Try adjusting search or filters" 
+          : "Check back later"
         }
       </p>
     </div>
   );
 
+  const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
+    <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+      <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
+        active 
+          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
+          : colorClass
+      }`}>
+        <img src={icon} alt="" className="h-4 w-4" />
+        <span className="sm:inline truncate">{label}</span>
+      </button>
+    </Link>
+  );
+
+  const renderActivitySection = (title, activities, color) => (
+    activities.length > 0 && (
+      <>
+        <div className="mb-2.5 mt-2.5">
+          <h3 className="text-sm font-semibold text-[#FFFFFF] flex items-center gap-2">
+            <span className={`w-1.5 h-1.5 rounded-full ${color}`}></span>
+            {title}
+            <span className="text-xs font-normal text-[#FFFFFF]/50 ml-2">
+              ({activities.length})
+            </span>
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-3">
+          {activities.map((activity) => (
+            <StudentActivityCard
+              key={activity.id}
+              activity={activity}
+              onViewDetails={handleViewDetails}
+              studentImages={studentImages}
+            />
+          ))}
+        </div>
+        <hr className="my-3 border-[#FFFFFF]/10" />
+      </>
+    )
+  );
+
+  // ========== LOADING STATE ==========
   if (loading) {
     return (
-      <div>
+      <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-5 text-center">Loading...</div>
+          <div className="p-8 text-center text-[#FFFFFF]">Loading activities...</div>
         </div>
       </div>
     );
   }
 
+  // ========== MAIN RENDER ==========
   return (
-    <div>
+    <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* Main Content */}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+        {/* ========== MAIN CONTENT ========== */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-6">
           
-          {/* Page Header */}
-          <div className="mb-4 sm:mb-4">
+          {/* ========== PAGE HEADER ========== */}
+          <div className="mb-4">
             <div className="flex items-center mb-2">
-              <img
-                src={Classwork}
-                alt="School Works"
-                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
-              />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
-                School Works
-              </h1>
+              <img src={Classwork} alt="School Works" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
+              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">School Works</h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
-              Manage your academic activities and submissions
-            </p>
+            <p className="text-sm lg:text-base text-[#FFFFFF]/80">Manage your academic activities</p>
           </div>
 
-          {/* Subject Information */}
-          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
-
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+          {/* ========== CLASS INFORMATION ========== */}
+          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'Loading...'}</span>
             </div>
-
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">SECTION:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
               </div>
-              <Link to={"/Subjects"}>
+              <Link to="/Subjects">
                 <img 
                   src={BackButton} 
                   alt="Back" 
-                  className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity" 
+                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
                 />
-              </Link>
-            </div>
-          </div>  
-
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full mt-4 sm:mt-5 gap-3">
-            {/* Navigation buttons - Stack on mobile, row on tablet/desktop */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-              {/* Class Announcements Button*/}
-              <Link to={`/SubjectAnnouncementStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                  <img 
-                    src={Announcement} 
-                    alt="" 
-                    className="h-4 w-4 sm:h-5 sm:w-5"
-                  />
-                  <span className="sm:inline">Announcements</span>
-                </button>
-              </Link>
-
-              {/* School Works and Attendance - Side by side on all screens */}
-              <div className="flex gap-3 w-full sm:w-auto">
-                <Link to={`/SubjectSchoolWorksStudent?code=${subjectCode}`} className="flex-1 min-w-0">
-                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full">
-                    <img 
-                      src={Classwork} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
-                    />
-                    <span className="whitespace-nowrap truncate">School Works</span>
-                  </button>
-                </Link>
-
-                <Link to={`/SubjectAttendanceStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#fff4e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffebd4] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                    <img 
-                      src={Attendance} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Attendance</span>
-                  </button>
-                </Link>
-
-                <Link to={`/SubjectAnalyticsStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto">
-                    <img 
-                      src={Analytics} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Reports</span>
-                  </button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Action buttons - Icons only on mobile/tablet, unchanged on desktop */}
-            <div className="flex items-center gap-2 justify-end sm:justify-start mt-3 sm:mt-0 w-full sm:w-auto">
-              <Link to={`/SubjectListStudent?code=${subjectCode}`}>
-                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer w-10 h-10 sm:w-auto sm:h-auto">
-                  <img 
-                    src={StudentsIcon} 
-                    alt="Student List" 
-                    className="h-5 w-5 sm:h-6 sm:w-6" 
-                  />
-                </button>
               </Link>
             </div>
           </div>
 
-          {/* Filter and Search Section */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-5">
-            {/* Filter dropdown */}
-            <div className="relative sm:flex-initial filter-dropdown">
+          <hr className="border-[#FFFFFF]/30 mb-4" />
+
+          {/* ========== ACTION BUTTONS ========== */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
+              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", true)}
+              {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
+              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
+            </div>
+            <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
+              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer">
+                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
+              </button>
+            </Link>
+          </div>
+
+          {/* ========== FILTER & SEARCH ========== */}
+          <div className="flex flex-col sm:flex-row gap-2.5 mb-3">
+            <div className="relative filter-dropdown sm:w-36">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className="flex items-center justify-between w-full sm:w-auto font-bold px-4 py-2.5 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] active:border-[#00874E] transition-all duration-200 text-sm sm:text-base sm:min-w-[160px] cursor-pointer touch-manipulation"
+                className="flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border border-transparent hover:border-[#00A15D] transition-all duration-200 text-xs font-medium cursor-pointer"
               >
-                <span>{filterOption}</span>
-                <img
-                  src={ArrowDown}
-                  alt=""
-                  className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`}
-                />
+                <span className="text-[#FFFFFF]">{filterOption}</span>
+                <img src={ArrowDown} alt="" className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Dropdown options */}
               {filterDropdownOpen && (
-                <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
+                <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-[#FFFFFF]/10 z-20 overflow-hidden">
                   {["All", "Active", "Submitted", "Missed", "Assignment", "Quiz", "Activity", "Project", "Laboratory"].map((option) => (
                     <button
                       key={option}
-                      className={`block px-4 py-2.5 w-full text-left hover:bg-gray-100 active:bg-gray-200 text-sm sm:text-base transition-colors duration-150 cursor-pointer touch-manipulation ${
-                        filterOption === option ? 'bg-gray-50 font-semibold' : ''
+                      className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
+                        filterOption === option ? 'bg-[#23232C] font-semibold' : 'text-[#FFFFFF]/80'
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -671,7 +571,6 @@ export default function SubjectSchoolWorksStudent() {
               )}
             </div>
 
-            {/* Search bar */}
             <div className="flex-1">
               <div className="relative">
                 <input
@@ -679,112 +578,34 @@ export default function SubjectSchoolWorksStudent() {
                   placeholder="Search activities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
+                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-transparent focus:border-[#00A15D] transition-colors placeholder:text-[#FFFFFF]/40"
                 />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                  <img
-                    src={Search}
-                    alt="Search"
-                    className="h-5 w-5 sm:h-6 sm:w-6"
-                  />
+                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60">
+                  <img src={Search} alt="Search" className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ACTIVITY CARDS - Grouped by status */}
-          <div className="mt-4 sm:mt-5">
-            {/* Active Activities Section */}
-            {groupedActivities.active.length > 0 && (
-              <>
-                <div className="mb-4 mt-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-                    Active Activities
-                    <span className="text-sm font-normal text-gray-500 ml-2">
-                      ({groupedActivities.active.length})
-                    </span>
-                  </h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {groupedActivities.active.map((activity) => (
-                    <StudentActivityCard
-                      key={activity.id}
-                      activity={activity}
-                      onViewDetails={handleViewDetails}
-                      studentImages={studentImages}
-                    />
-                  ))}
-                </div>
-                <hr className="my-6 border-gray-300" />
-              </>
-            )}
-
-            {/* Submitted Activities Section */}
-            {groupedActivities.submitted.length > 0 && (
-              <>
-                <div className="mb-4 mt-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                    Submitted Activities
-                    <span className="text-sm font-normal text-gray-500 ml-2">
-                      ({groupedActivities.submitted.length})
-                    </span>
-                  </h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {groupedActivities.submitted.map((activity) => (
-                    <StudentActivityCard
-                      key={activity.id}
-                      activity={activity}
-                      onViewDetails={handleViewDetails}
-                      studentImages={studentImages}
-                    />
-                  ))}
-                </div>
-                <hr className="my-6 border-gray-300" />
-              </>
-            )}
-
-            {/* Missed Activities Section */}
-            {groupedActivities.missed.length > 0 && (
-              <>
-                <div className="mb-4 mt-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-                    Missed Activities
-                    <span className="text-sm font-normal text-gray-500 ml-2">
-                      ({groupedActivities.missed.length})
-                    </span>
-                  </h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  {groupedActivities.missed.map((activity) => (
-                    <StudentActivityCard
-                      key={activity.id}
-                      activity={activity}
-                      onViewDetails={handleViewDetails}
-                      studentImages={studentImages}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Empty State - Only show if there are no activities at all */}
+          {/* ========== ACTIVITY CARDS ========== */}
+          <div className="mt-2.5">
+            {renderActivitySection("Active Activities", groupedActivities.active, "bg-[#767EE0]")}
+            {renderActivitySection("Submitted Activities", groupedActivities.submitted, "bg-[#00A15D]")}
+            {renderActivitySection("Missed Activities", groupedActivities.missed, "bg-[#A15353]")}
+            
             {filteredActivities.length === 0 && renderEmptyState()}
           </div>
         </div>
       </div>
 
-      {/* Student Activity Details Modal */}
+      {/* ========== STUDENT ACTIVITY DETAILS MODAL ========== */}
       <StudentActivityDetails
         activity={selectedActivity}
         isOpen={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         onImageUpload={handleImageUpload}
         studentImages={studentImages}
-        studentId={studentId} // Add this line!
+        studentId={studentId}
       />
     </div>
   );

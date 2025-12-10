@@ -2,17 +2,18 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Lottie from "lottie-react";
 
+// Components
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import Popup from "../../Components/Popup";
 
+// Assets
 import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
-
-// Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function UserManagement_StudentAccountDetails() {
+  // State variables
   const [isOpen, setIsOpen] = useState(true);
   const [popupType, setPopupType] = useState(null);
   const [student, setStudent] = useState(null);
@@ -28,7 +29,7 @@ export default function UserManagement_StudentAccountDetails() {
 
   const location = useLocation();
 
-  // Lottie animation options
+  // Lottie animation config
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -38,15 +39,16 @@ export default function UserManagement_StudentAccountDetails() {
     }
   };
 
-  // Get ID from query parameters
+  // Get student ID from URL
   const getStudentId = () => {
     const urlParams = new URLSearchParams(location.search);
     return urlParams.get("id");
   };
 
-  // Try to get student data from location state first
+  // Get student data from location state
   const studentFromState = location.state?.student;
 
+  // Fetch student data
   useEffect(() => {
     if (studentFromState) {
       setStudent(studentFromState);
@@ -60,7 +62,6 @@ export default function UserManagement_StudentAccountDetails() {
     } else {
       const studentId = getStudentId();
       if (studentId) {
-        // Fallback to API call if no state data
         fetchStudentData(studentId);
       } else {
         setIsFetching(false);
@@ -68,6 +69,7 @@ export default function UserManagement_StudentAccountDetails() {
     }
   }, [location.search, studentFromState]);
 
+  // Fetch student data from API
   const fetchStudentData = (studentId) => {
     setIsFetching(true);
     fetch(
@@ -97,7 +99,7 @@ export default function UserManagement_StudentAccountDetails() {
       });
   };
 
-  // Format date helper function
+  // Format date helper
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -108,7 +110,7 @@ export default function UserManagement_StudentAccountDetails() {
     });
   };
 
-  // Extract year level from yearandsec (e.g., "4D" -> "4th Year")
+  // Extract year level from yearandsec
   const getYearLevel = (yearAndSec) => {
     if (!yearAndSec) return "N/A";
     const yearMatch = yearAndSec.match(/^(\d+)/);
@@ -121,20 +123,21 @@ export default function UserManagement_StudentAccountDetails() {
     return yearAndSec;
   };
 
-  // Extract section from yearandsec (e.g., "4D" -> "D")
+  // Extract section from yearandsec
   const getSection = (yearAndSec) => {
     if (!yearAndSec) return "N/A";
     const sectionMatch = yearAndSec.match(/[A-Za-z]+$/);
     return sectionMatch ? sectionMatch[0] : yearAndSec;
   };
 
+  // Edit button handler
   const handleEditClick = () => {
     setIsEditing(true);
   };
 
+  // Cancel edit handler
   const handleCancelClick = () => {
     setIsEditing(false);
-    // Reset edited data to original values
     if (student) {
       setEditedData({
         tracked_firstname: student.tracked_firstname || "",
@@ -145,6 +148,7 @@ export default function UserManagement_StudentAccountDetails() {
     }
   };
 
+  // Save changes handler
   const handleSaveClick = async () => {
     if (!student) return;
 
@@ -167,7 +171,6 @@ export default function UserManagement_StudentAccountDetails() {
       const result = await response.json();
 
       if (result.success) {
-        // Update local state with new data
         setStudent((prev) => ({
           ...prev,
           ...editedData,
@@ -186,6 +189,7 @@ export default function UserManagement_StudentAccountDetails() {
     }
   };
 
+  // Input change handler
   const handleInputChange = (field, value) => {
     setEditedData((prev) => ({
       ...prev,
@@ -193,6 +197,7 @@ export default function UserManagement_StudentAccountDetails() {
     }));
   };
 
+  // Loading state
   if (isFetching) {
     return (
       <div>
@@ -218,6 +223,7 @@ export default function UserManagement_StudentAccountDetails() {
     );
   }
 
+  // Student not found state
   if (!student) {
     return (
       <div>
@@ -248,17 +254,15 @@ export default function UserManagement_StudentAccountDetails() {
   return (
     <div>
       <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div
-        className={`
+      <div className={`
         transition-all duration-300
         ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}
-      `}
-      >
+      `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* content of ADMIN USER MANAGEMENT STUDENT ACCOUNT DETAILS */}
+        {/* Main Content */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* "Header" */}
+          {/* Header Section */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img
@@ -297,9 +301,9 @@ export default function UserManagement_StudentAccountDetails() {
             </div>
           )}
 
-          {/* main content of ADMIN STUDENT ACCOUNT DETAILS */}
+          {/* Student Details Card */}
           <div className="bg-white p-4 sm:p-5 lg:p-6 rounded-lg sm:rounded-xl space-y-5 sm:space-y-6 shadow-md text-[#465746]">
-            {/* Student Information Section - Updated Format */}
+            {/* Student Information Section */}
             <div>
               <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-[#465746]">
                 Student Information
@@ -382,7 +386,7 @@ export default function UserManagement_StudentAccountDetails() {
                   <span>{student.tracked_ID || "N/A"}</span>
                 </div>
 
-                {/* CVSU Email Address */}
+                {/* Email Address */}
                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
                   <span className="font-medium text-gray-600">
                     CVSU Email Address :
@@ -431,6 +435,7 @@ export default function UserManagement_StudentAccountDetails() {
                   <span>{getSection(student.tracked_yearandsec)}</span>
                 </div>
 
+                {/* Temporary Password */}
                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
                   <span className="font-medium text-gray-600">
                     Temporary Password :
@@ -444,12 +449,13 @@ export default function UserManagement_StudentAccountDetails() {
 
             <hr className="opacity-10 border-[#465746] rounded border-1 mb-6" />
 
-            {/* Account Information Section - Updated Format */}
+            {/* Account Information Section */}
             <div>
               <h2 className="text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4 text-[#465746]">
                 Account Information
               </h2>
               <div className="space-y-3 sm:space-y-2">
+                {/* Date Created */}
                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
                   <span className="font-medium text-gray-600">
                     Date Created :
@@ -457,6 +463,7 @@ export default function UserManagement_StudentAccountDetails() {
                   <span>{formatDate(student.created_at)}</span>
                 </div>
 
+                {/* Last Login */}
                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
                   <span className="font-medium text-gray-600">
                     Last Login :
@@ -464,6 +471,7 @@ export default function UserManagement_StudentAccountDetails() {
                   <span>{formatDate(student.updated_at)}</span>
                 </div>
 
+                {/* Account Status */}
                 <div className="flex flex-col sm:grid sm:grid-cols-2 gap-1 text-sm sm:text-base md:text-lg">
                   <span className="font-medium text-gray-600">
                     Account Status :
@@ -530,7 +538,7 @@ export default function UserManagement_StudentAccountDetails() {
               </div>
             </div>
 
-            {/* Popup */}
+            {/* Popup Components */}
             {popupType === "reset" && (
               <Popup
                 setOpen={() => setPopupType(null)}

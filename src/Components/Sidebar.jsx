@@ -1,15 +1,11 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-
 import Dashboard from "../assets/Dashboard.svg";
 import Subjects from "../assets/Subjects.svg";
 import Analytics from "../assets/Analytics.svg";
 import ClassManagement from "../assets/ClassManagement.svg";
-import Announcement from "../assets/Announcement.svg";
 import Report from "../assets/Report.svg";
-import AccountRequest from "../assets/AccountRequest.svg";
 import Import from "../assets/Import.svg";
-// import Notification from "../assets/Notification.svg";
 import Profile from "../assets/Profile.svg";
 import AccountSettings from "../assets/Settings.svg";
 import LogOut from "../assets/LogOut.svg";
@@ -31,7 +27,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
   const isOpen = isControlled ? isOpenProp : localOpen;
   const setIsOpen = isControlled ? setIsOpenProp : setLocalOpen;
 
-  // Get user ID from localStorage
   const getUserId = () => {
     try {
       const userDataString = localStorage.getItem('user');
@@ -45,7 +40,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     return null;
   };
 
-  // Fetch student's enrolled subjects
   const fetchStudentSubjects = async () => {
     if (role !== "student") return;
     
@@ -53,25 +47,17 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
       setLoadingSubjects(true);
       const studentId = getUserId();
       
-      if (!studentId) {
-        console.error('No student ID found');
-        setLoadingSubjects(false);
-        return;
-      }
+      if (!studentId) return;
       
       const response = await fetch(`https://tracked.6minds.site/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Student subjects response:', result);
         if (result.success) {
           setStudentSubjects(result.classes || []);
         } else {
-          console.error('Error fetching subjects:', result.message);
           setStudentSubjects([]);
         }
-      } else {
-        throw new Error('Failed to fetch subjects');
       }
     } catch (error) {
       console.error('Error fetching student subjects:', error);
@@ -81,7 +67,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     }
   };
 
-  // Fetch teacher's classes - USING THE SAME ENDPOINT AS CLASS MANAGEMENT PAGE
   const fetchTeacherClasses = async () => {
     if (role !== "teacher") return;
     
@@ -89,26 +74,17 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
       setLoadingClasses(true);
       const professorId = getUserId();
       
-      if (!professorId) {
-        console.error('No professor ID found');
-        setLoadingClasses(false);
-        return;
-      }
+      if (!professorId) return;
       
-      // Using the same endpoint that works in the Class Management page
       const response = await fetch(`https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Teacher classes response:', result);
         if (result.success) {
           setTeacherClasses(result.classes || []);
         } else {
-          console.error('Error fetching classes:', result.message);
           setTeacherClasses([]);
         }
-      } else {
-        throw new Error('Failed to fetch classes');
       }
     } catch (error) {
       console.error('Error fetching teacher classes:', error);
@@ -118,13 +94,11 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     }
   };
 
-  // Check screen size and set initial state
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       
-      // Auto-open on desktop, auto-close on mobile (only if uncontrolled)
       if (!isControlled) {
         setLocalOpen(!mobile);
       }
@@ -135,7 +109,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [isControlled]);
 
-  // Fetch data when component mounts based on role
   useEffect(() => {
     if (role === "student") {
       fetchStudentSubjects();
@@ -144,16 +117,14 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     }
   }, [role]);
 
-  // Auto-open dropdowns if current path matches and we have data
   useEffect(() => {
     if (role === "student" && (location.pathname === '/Subjects' || location.pathname.includes('/Subject'))) {
       setSubjectsDropdownOpen(true);
     } else if (role === "teacher" && (location.pathname === '/ClassManagement' || location.pathname.includes('/Class'))) {
       setClassesDropdownOpen(true);
     }
-  }, [location.pathname, role, studentSubjects, teacherClasses]);
+  }, [location.pathname, role]);
 
-  // Handle outside clicks on mobile only
   useEffect(() => {
     const handleOutsideClick = (event) => {
       if (isMobile && isOpen && !event.target.closest("aside") && !event.target.closest("button[data-sidebar-toggle]")) {
@@ -167,7 +138,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     }
   }, [isMobile, isOpen, setIsOpen]);
 
-  // Handle escape key on mobile only
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape" && isMobile && isOpen) {
@@ -178,7 +148,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     return () => document.removeEventListener("keydown", onKey);
   }, [isMobile, isOpen, setIsOpen]);
 
-  // Prevent body scroll when mobile sidebar is open
   useEffect(() => {
     if (isMobile && isOpen) {
       document.body.style.overflow = "hidden";
@@ -190,62 +159,33 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     };
   }, [isMobile, isOpen]);
 
-  // Get current subject/class code from URL
   const getCurrentCode = () => {
     const searchParams = new URLSearchParams(location.search);
     return searchParams.get('code');
   };
 
-  // Check if a specific subject is currently active (for students)
-  const isSubjectActive = (subject) => {
-    const currentCode = getCurrentCode();
-    return currentCode === subject.subject_code;
-  };
-
-  // Check if a specific class is currently active (for teachers)
-  const isClassActive = (classItem) => {
-    const currentCode = getCurrentCode();
-    return currentCode === classItem.subject_code;
-  };
-
-  // Role menus
   const menus = {
     student: {
       main: [
         { label: "Dashboard", icon: Dashboard, path: "/DashboardStudent" },
-        { 
-          label: "Subjects", 
-          icon: Subjects, 
-          path: "/Subjects",
-          hasDropdown: true
-        },
-        // { label: "Reports", icon: Analytics, path: "/AnalyticsStudent" },
+        { label: "Subjects", icon: Subjects, path: "/Subjects", hasDropdown: true },
       ],
       extras: [
-        // { label: "Notification", icon: Notification, path: "/NotificationStudent" },
         { label: "Profile", icon: Profile, path: "/ProfileStudent" },
         { label: "Account Setting", icon: AccountSettings, path: "/AccountSetting" },
       ],
     },
-
     teacher: {
       main: [
         { label: "Dashboard", icon: Dashboard, path: "/DashboardProf" },
-        { 
-          label: "Class Management", 
-          icon: ClassManagement, 
-          path: "/ClassManagement",
-          hasDropdown: true
-        },
+        { label: "Class Management", icon: ClassManagement, path: "/ClassManagement", hasDropdown: true },
         { label: "Reports", icon: Analytics, path: "/AnalyticsProf" },
       ],
       extras: [
-        // { label: "Notification", icon: Notification, path: "/NotificationProf" },
         { label: "Profile", icon: Profile, path: "/ProfileProf" },
         { label: "Account Setting", icon: AccountSettings, path: "/AccountSettingProf" },
       ],
     },
-
     admin: {
       main: [
         { label: "User Management", icon: ClassManagement, path: "/UserManagement" },
@@ -253,7 +193,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
         { label: "Import", icon: Import, path: "/Import" },
       ],
     },
-
     superadmin: {
       main: [
         { label: "User Management", icon: ClassManagement, path: "/SuperAdminAccountList" },
@@ -272,12 +211,11 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     setClassesDropdownOpen(false);
   };
 
-  const navItemBase =
-    "flex items-center px-4 py-3 rounded-lg hover:bg-[#00A15D] cursor-pointer select-none transition-colors duration-150";
+  // Updated hover color to 20% opacity
+  const navItemBase = "flex items-center px-4 py-3 rounded-lg hover:bg-[#00A15D]/20 cursor-pointer select-none transition-colors duration-150";
 
   return (
     <>
-      {/* Backdrop overlay for mobile only */}
       {isOpen && isMobile && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -286,16 +224,15 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
         />
       )}
 
-      {/* Sidebar */}
+      {/* Removed right margin/padding and added border-right */}
       <aside
-        className={`fixed top-0 left-0 h-screen bg-[#00874E] select-none z-50 shadow-xl transition-transform duration-300 ease-in-out
+        className={`fixed top-0 left-0 h-screen bg-[#15151C] select-none z-50 shadow-xl transition-transform duration-300 ease-in-out border-r border-[#23232C]
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         w-[75%] max-w-[280px] sm:w-[240px] lg:w-[250px] xl:w-[270px] 2xl:w-[290px]`}
         role="navigation"
         aria-label="Main navigation"
       >
         <div className="flex flex-col h-full overflow-hidden">
-          {/* Logo section */}
           <div className="flex-shrink-0 p-4 pb-3">
             <div className="flex justify-center">
               <img src={TextLogo} alt="TrackED Logo" className="h-10" />
@@ -303,7 +240,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
             <hr className="border-[#DBDBDB] rounded border-1 opacity-40 mt-4" />
           </div>
 
-          {/* Main navigation - conditionally scrollable */}
           <nav 
             className={`flex-1 px-4 ${
               (subjectsDropdownOpen && role === "student") || (classesDropdownOpen && role === "teacher")
@@ -315,12 +251,11 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
               {menus[role]?.main?.map((item, index) => (
                 <div key={`${item.label}-${index}`}>
                   {item.hasDropdown && role === "student" ? (
-                    // Subjects with dropdown for students
                     <div className="mb-1">
                       <button
                         onClick={() => setSubjectsDropdownOpen(!subjectsDropdownOpen)}
                         className={`${navItemBase} w-full justify-between ${
-                          subjectsDropdownOpen ? "bg-[#00A15D]" : ""
+                          subjectsDropdownOpen ? "bg-[#00A15D]/20" : ""
                         }`}
                       >
                         <div className="flex items-center">
@@ -336,7 +271,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                         />
                       </button>
                       
-                      {/* Subjects Dropdown */}
                       {subjectsDropdownOpen && (
                         <div className="ml-4 mt-1 mb-2 border-transparent pl-2">
                           {loadingSubjects ? (
@@ -345,15 +279,15 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                             </div>
                           ) : studentSubjects.length > 0 ? (
                             studentSubjects.map((subject) => {
-                              const isActive = isSubjectActive(subject);
+                              const isActive = getCurrentCode() === subject.subject_code;
                               
                               return (
                                 <NavLink
                                   key={subject.subject_code}
                                   to={`/SubjectAnnouncementStudent?code=${subject.subject_code}`}
                                   onClick={handleDropdownClick}
-                                  className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D] transition-colors duration-150 mb-1 ${
-                                    isActive ? "bg-[#00A15D] font-semibold" : ""
+                                  className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mb-1 ${
+                                    isActive ? "bg-[#00A15D]/20 font-semibold" : ""
                                   }`}
                                 >
                                   <div className="min-w-0 flex-1">
@@ -368,19 +302,15 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                           ) : (
                             <div className="px-3 py-2">
                               <div className="text-white text-xs opacity-70">No subjects enrolled</div>
-                              <div className="text-white/80 text-xs mt-1">
-                                Contact your professor to enroll
-                              </div>
                             </div>
                           )}
                           
-                          {/* Always show link to Subjects page */}
                           <NavLink
                             to="/Subjects"
                             onClick={handleDropdownClick}
                             className={({ isActive }) =>
-                              `flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D] transition-colors duration-150 mt-1 border-t border-white/20 pt-2 ${
-                                isActive ? "bg-[#00A15D]" : ""
+                              `flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mt-1 border-t border-white/20 pt-2 ${
+                                isActive ? "bg-[#00A15D]/20" : ""
                               }`
                             }
                           >
@@ -390,12 +320,11 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                       )}
                     </div>
                   ) : item.hasDropdown && role === "teacher" ? (
-                    // Class Management with dropdown for teachers
                     <div className="mb-1">
                       <button
                         onClick={() => setClassesDropdownOpen(!classesDropdownOpen)}
                         className={`${navItemBase} w-full justify-between ${
-                          classesDropdownOpen ? "bg-[#00A15D]" : ""
+                          classesDropdownOpen ? "bg-[#00A15D]/20" : ""
                         }`}
                       >
                         <div className="flex items-center">
@@ -411,7 +340,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                         />
                       </button>
                       
-                      {/* Classes Dropdown */}
                       {classesDropdownOpen && (
                         <div className="ml-4 mt-1 mb-2 border-transparent pl-2">
                           {loadingClasses ? (
@@ -420,15 +348,15 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                             </div>
                           ) : teacherClasses.length > 0 ? (
                             teacherClasses.map((classItem) => {
-                              const isActive = isClassActive(classItem);
+                              const isActive = getCurrentCode() === classItem.subject_code;
                               
                               return (
                                 <NavLink
                                   key={classItem.subject_code}
                                   to={`/Class?code=${classItem.subject_code}`}
                                   onClick={handleDropdownClick}
-                                  className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D] transition-colors duration-150 mb-1 ${
-                                    isActive ? "bg-[#00A15D] border-l-2 border-white font-semibold" : ""
+                                  className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mb-1 ${
+                                    isActive ? "bg-[#00A15D]/20 border-l-2 border-white font-semibold" : ""
                                   }`}
                                 >
                                   <div className="min-w-0 flex-1">
@@ -443,19 +371,15 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                           ) : (
                             <div className="px-3 py-2">
                               <div className="text-white text-xs opacity-70">No classes created</div>
-                              <div className="text-white/80 text-xs mt-1">
-                                Create your first class to get started
-                              </div>
                             </div>
                           )}
                           
-                          {/* Always show link to Class Management page */}
                           <NavLink
                             to="/ClassManagement"
                             onClick={handleDropdownClick}
                             className={({ isActive }) =>
-                              `flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D] transition-colors duration-150 mt-1 border-t border-white/20 pt-2 ${
-                                isActive ? "bg-[#00A15D]" : ""
+                              `flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mt-1 border-t border-white/20 pt-2 ${
+                                isActive ? "bg-[#00A15D]/20" : ""
                               }`
                             }
                           >
@@ -465,12 +389,11 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                       )}
                     </div>
                   ) : (
-                    // Regular navigation item
                     <NavLink
                       to={item.path}
                       onClick={handleLinkClick}
                       className={({ isActive }) =>
-                        `${navItemBase} ${isActive ? "bg-[#00A15D]" : ""}`
+                        `${navItemBase} ${isActive ? "bg-[#00A15D]/20" : ""}`
                       }
                     >
                       <img src={item.icon} alt="icons" className="h-5 w-5 mr-3 flex-shrink-0" />
@@ -481,7 +404,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
               ))}
             </div>
 
-            {/* Extra menu items */}
             {menus[role]?.extras?.length > 0 && (
               <div className="pt-2 pb-2">
                 <hr className="border-[#DBDBDB] rounded border-1 opacity-40 my-3" />
@@ -492,7 +414,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                       to={item.path}
                       onClick={handleLinkClick}
                       className={({ isActive }) =>
-                        `${navItemBase} ${isActive ? "bg-[#00A15D]" : ""}`
+                        `${navItemBase} ${isActive ? "bg-[#00A15D]/20" : ""}`
                       }
                     >
                       <img src={item.icon} alt="" className="h-5 w-5 mr-3 flex-shrink-0" />
@@ -504,7 +426,6 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
             )}
           </nav>
 
-          {/* Logout section - fixed at bottom */}
           <div className="flex-shrink-0 p-4 pt-2 border-t border-[#DBDBDB]/20">
             <NavLink 
               to="/Login" 

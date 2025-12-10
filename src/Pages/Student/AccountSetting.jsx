@@ -2,52 +2,36 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import Settings from '../../assets/Settings(Light).svg';
+import Settings from '../../assets/Settings.svg';
 import SuccessIcon from '../../assets/Success(Green).svg';
 import ErrorIcon from '../../assets/Error(Red).svg';
 
 export default function AccountSetting() {
-  const [isOpen, setIsOpen] = useState(false); // Default to closed
+  const [isOpen, setIsOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Form states
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   
-  // Change password states
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
-  // Popup and message states
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sidebar behavior based on screen size
   useEffect(() => {
-    // Check screen size and set sidebar state accordingly
     const checkScreenSize = () => {
-      if (window.innerWidth >= 1024) { // lg breakpoint (1024px)
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
+      setIsOpen(window.innerWidth >= 1024);
     };
 
-    // Check on initial load
     checkScreenSize();
-
-    // Add event listener for window resize
     window.addEventListener('resize', checkScreenSize);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', checkScreenSize);
-    };
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
   useEffect(() => {
@@ -82,11 +66,8 @@ export default function AccountSetting() {
     }
   };
 
-  // Email validation function
   const validateEmail = (email) => {
-    if (!email) {
-      return true;
-    }
+    if (!email) return true;
     
     if (!email.endsWith('@cvsu.edu.ph')) {
       setPopupMessage('Only emails with @cvsu.edu.ph are allowed');
@@ -97,11 +78,8 @@ export default function AccountSetting() {
     return true;
   };
 
-  // Phone number validation function
   const validatePhone = (phone) => {
-    if (!phone) {
-      return true;
-    }
+    if (!phone) return true;
     
     if (phone.length !== 11) {
       setPopupMessage('Phone number must be exactly 11 digits');
@@ -124,7 +102,6 @@ export default function AccountSetting() {
 
   const handlePhoneChange = (e) => {
     const value = e.target.value;
-    // Only allow digits and limit to 11 characters
     if (/^\d*$/.test(value) && value.length <= 11) {
       setPhone(value);
     }
@@ -133,15 +110,8 @@ export default function AccountSetting() {
   const handleUpdateAccountInfo = async (e) => {
     e.preventDefault();
     
-    // Validate email before submission
-    if (!validateEmail(email)) {
-      return;
-    }
-
-    // Validate phone number before submission
-    if (!validatePhone(phone)) {
-      return;
-    }
+    if (!validateEmail(email)) return;
+    if (!validatePhone(phone)) return;
 
     if (!password) {
       setPopupMessage('Please enter your password to confirm changes');
@@ -177,7 +147,6 @@ export default function AccountSetting() {
         setPopupMessage('Account information updated successfully');
         setShowSuccessPopup(true);
         setPassword('');
-        // Refresh user data
         await fetchUserData();
       } else {
         setPopupMessage(data.message || 'Failed to update account information');
@@ -251,13 +220,13 @@ export default function AccountSetting() {
 
   if (loading) {
     return (
-      <div>
+      <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px]" : "ml-0"}`}>
+        <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Loading..." />
           <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-            <div className="bg-white p-8 rounded-lg shadow-md text-center text-[#465746]">
-              <p>Loading account settings...</p>
+            <div className="bg-[#15151C] p-6 rounded-lg shadow-md text-center">
+              <p className="text-[#FFFFFF]/70">Loading account settings...</p>
             </div>
           </div>
         </div>
@@ -266,66 +235,65 @@ export default function AccountSetting() {
   }
 
   return (
-    <div>
+    <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px]" : "ml-0"}`}>
+      <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header 
           setIsOpen={setIsOpen} 
           isOpen={isOpen} 
           userName={userData ? `${userData.tracked_fname} ${userData.tracked_lname}` : "Loading..."} 
         />
 
-        {/* Main content */}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8 text-[#FFFFFF]">
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
-              <img src={Settings} alt="Settings" className="h-6 w-6 sm:h-7 sm:w-7 mr-3" />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">Account Settings</h1>
+              <img src={Settings} alt="Settings" className="h-7 w-7 sm:h-8 sm:w-8 mr-2 sm:mr-3" />
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl">Account Settings</h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">Update your Information</p>
+            <p className="text-sm sm:text-base lg:text-lg text-[#FFFFFF]/80">Update your Information</p>
           </div>
 
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+          <hr className="border-[#FFFFFF]/30 mb-5 sm:mb-6" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mt-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
             {/* Update Account Info */}
-            <div className="bg-white rounded-md shadow-md p-4 sm:p-5 md:p-6 space-y-4">
-              <p className="text-base sm:text-lg font-bold text-[#465746]">Update Account Information</p>
+            <div className="bg-[#15151C] rounded-lg shadow-md p-4 space-y-4">
+              <p className="text-lg font-bold text-[#FFFFFF]">Update Account Information</p>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Email Address:</label>
+                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Email Address:</label>
                   <input
                     type="email"
                     value={email}
                     onChange={handleEmailChange}
                     placeholder="your.email@cvsu.edu.ph"
-                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Phone Number:</label>
+                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Phone Number:</label>
                   <input
                     type="text"
                     value={phone}
                     onChange={handlePhoneChange}
                     placeholder="09XXXXXXXXX"
-                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
                     maxLength="11"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Password (to confirm):</label>
+                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Password (to confirm):</label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
                     required
                   />
                 </div>
@@ -333,8 +301,8 @@ export default function AccountSetting() {
                 <button
                   onClick={handleUpdateAccountInfo}
                   disabled={isSubmitting}
-                  className={`w-full sm:w-auto bg-[#00A15D] text-white font-bold py-2 px-6 sm:px-8 rounded-md hover:bg-green-800 transition-colors duration-200 text-sm sm:text-base ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                  className={`w-full bg-[#00A15D] text-white font-bold py-2.5 rounded-md hover:bg-[#00874E] transition-all duration-200 text-sm cursor-pointer ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   {isSubmitting ? 'Updating...' : 'Submit'}
@@ -343,42 +311,42 @@ export default function AccountSetting() {
             </div>
 
             {/* Change Password */}
-            <div className="bg-white rounded-md shadow-md p-4 sm:p-5 md:p-6 space-y-4">
-              <p className="text-base sm:text-lg font-bold text-[#465746]">Change Password</p>
+            <div className="bg-[#15151C] rounded-lg shadow-md p-4 space-y-4">
+              <p className="text-lg font-bold text-[#FFFFFF]">Change Password</p>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Current Password:</label>
+                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Current Password:</label>
                   <input
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
-                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">New Password:</label>
+                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">New Password:</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Enter new password"
-                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium mb-1 text-[#465746]">Re-Enter New Password:</label>
+                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Re-Enter New Password:</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm new password"
-                    className="w-full p-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00A15D]"
+                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
                     required
                   />
                 </div>
@@ -386,8 +354,8 @@ export default function AccountSetting() {
                 <button
                   onClick={handleChangePassword}
                   disabled={isSubmitting}
-                  className={`w-full sm:w-auto bg-[#00A15D] text-white font-bold py-2 px-6 sm:px-8 rounded-md hover:bg-green-800 transition-colors duration-200 text-sm sm:text-base ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                  className={`w-full bg-[#00A15D] text-white font-bold py-2.5 rounded-md hover:bg-[#00874E] transition-all duration-200 text-sm cursor-pointer ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   {isSubmitting ? 'Changing...' : 'Submit'}
@@ -401,31 +369,23 @@ export default function AccountSetting() {
       {/* Success Popup */}
       {showSuccessPopup && (
         <div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4"
           onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowSuccessPopup(false);
-            }
+            if (e.target === e.currentTarget) setShowSuccessPopup(false);
           }}
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+          <div className="bg-[#15151C] text-[#FFFFFF] rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 relative">
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                <img 
-                  src={SuccessIcon} 
-                  alt="Success" 
-                  className="h-8 w-8"
-                />
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-[#00A15D]/20 mb-3">
+                <img src={SuccessIcon} alt="Success" className="h-6 w-6" />
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-                Success!
-              </h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-6">{popupMessage}</p>
+              <h3 className="text-lg font-bold mb-2">Success!</h3>
+              <p className="text-sm text-[#FFFFFF]/70 mb-4">{popupMessage}</p>
               <button
                 onClick={() => setShowSuccessPopup(false)}
-                className="w-full bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                className="w-full bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-2.5 rounded transition-all duration-200 cursor-pointer text-sm"
               >
                 OK
               </button>
@@ -437,28 +397,22 @@ export default function AccountSetting() {
       {/* Error Popup */}
       {showErrorPopup && (
         <div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4"
           onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowErrorPopup(false);
-            }
+            if (e.target === e.currentTarget) setShowErrorPopup(false);
           }}
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+          <div className="bg-[#15151C] text-[#FFFFFF] rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 relative">
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-                <img 
-                  src={ErrorIcon} 
-                  alt="Error" 
-                  className="h-8 w-8"
-                />
+              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-[#A15353]/20 mb-3">
+                <img src={ErrorIcon} alt="Error" className="h-6 w-6" />
               </div>
-              <p className="text-sm sm:text-base text-gray-600 mb-6">{popupMessage}</p>
+              <p className="text-sm text-[#FFFFFF]/70 mb-4">{popupMessage}</p>
               <button
                 onClick={() => setShowErrorPopup(false)}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                className="w-full bg-[#A15353] hover:bg-[#8A4545] text-white font-bold py-2.5 rounded transition-all duration-200 cursor-pointer text-sm"
               >
                 OK
               </button>
@@ -466,20 +420,6 @@ export default function AccountSetting() {
           </div>
         </div>
       )}
-
-      <style>{`
-        .overlay-fade { animation: overlayFade .18s ease-out both; }
-        @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
-
-        .modal-pop {
-          transform-origin: top center;
-          animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
-        }
-        @keyframes popIn {
-          from { opacity: 0; transform: translateY(-8px) scale(.98); }
-          to   { opacity: 1; transform: translateY(0)   scale(1);    }
-        }
-      `}</style>
     </div>
   );
 }

@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Lottie from "lottie-react";
 
+// Components
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import AdminProfAccountStatus from "../../Components/AdminProfAccountStatus";
 import AdminProfAccountBackup from "../../Components/AdminProfAccountBackup";
 import AdminProfAccountRestore from "../../Components/AdminProfAccountRestore";
 
+// Assets
 import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import BackButton from "../../assets/BackButton(Light).svg";
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
@@ -15,11 +17,10 @@ import Search from "../../assets/Search.svg";
 import Details from "../../assets/Details(Light).svg";
 import BackupIcon from "../../assets/Backup(Light).svg";
 import RestoreIcon from "../../assets/Restore(Light).svg"; 
-
-// Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function UserManagementProfessorAccounts() {
+  // State variables
   const [isOpen, setIsOpen] = useState(true);
   const [open, setOpen] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
@@ -33,7 +34,7 @@ export default function UserManagementProfessorAccounts() {
   const [searchTerm, setSearchTerm] = useState("");
   const itemsPerPage = 10;
 
-  // New state for backup/restore modals
+  // Backup/Restore states
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [backupModalContent, setBackupModalContent] = useState(null);
@@ -41,7 +42,7 @@ export default function UserManagementProfessorAccounts() {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
-  // Lottie animation options
+  // Lottie animation config
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -51,7 +52,7 @@ export default function UserManagementProfessorAccounts() {
     }
   };
 
-  // Set sidebar open by default on laptop/desktop, closed on mobile
+  // Set sidebar open by default on desktop
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -90,7 +91,6 @@ export default function UserManagementProfessorAccounts() {
   const handleBackup = async () => {
     setIsBackingUp(true);
     try {
-      // Create backup and download in one request
       const response = await fetch("https://tracked.6minds.site/Admin/ProfessorAccountsDB/backup_professors.php", {
         method: "POST",
         headers: {
@@ -99,7 +99,6 @@ export default function UserManagementProfessorAccounts() {
       });
       
       if (response.ok) {
-        // Get filename from response headers or generate it
         const filename = `professors_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.sql`;
         
         const blob = await response.blob();
@@ -128,7 +127,7 @@ export default function UserManagementProfessorAccounts() {
       setBackupModalContent({
         type: 'error',
         title: 'Backup Failed',
-        message: error.message || 'Network error during backup. Please check if the server is running.'
+        message: error.message || 'Network error during backup.'
       });
     } finally {
       setIsBackingUp(false);
@@ -141,7 +140,7 @@ export default function UserManagementProfessorAccounts() {
     setRestoreModalContent({
       type: 'confirmation',
       title: 'Confirm Restore',
-      message: 'Are you sure you want to restore professor accounts from the latest backup? This will overwrite existing data.',
+      message: 'Are you sure you want to restore professor accounts from the latest backup?',
       confirmText: 'Restore',
       cancelText: 'Cancel'
     });
@@ -182,7 +181,7 @@ export default function UserManagementProfessorAccounts() {
       setRestoreModalContent({
         type: 'error',
         title: 'Network Error',
-        message: 'Network error during restore. Please check if the server is running.'
+        message: 'Network error during restore.'
       });
     } finally {
       setIsRestoring(false);
@@ -202,7 +201,7 @@ export default function UserManagementProfessorAccounts() {
     setRestoreModalContent(null);
   };
 
-  // Filter professors based on selected filter and search term
+  // Filter professors
   const filteredProfessors = professors.filter(prof => {
     if (selectedFilter !== "All" && prof.tracked_Status !== selectedFilter) {
       return false;
@@ -224,7 +223,7 @@ export default function UserManagementProfessorAccounts() {
     return true;
   });
 
-  // Handle search input change
+  // Handle search input
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
@@ -244,6 +243,7 @@ export default function UserManagementProfessorAccounts() {
 
   const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
+  // Status change handler
   const handleStatusChange = (prof) => {
     setSelectedProfessor(prof);
     setShowArchiveModal(true);
@@ -286,7 +286,7 @@ export default function UserManagementProfessorAccounts() {
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      alert(`Network error: ${error.message}. Please check if the server is running.`);
+      alert(`Network error: ${error.message}.`);
     } finally {
       setShowArchiveModal(false);
       setSelectedProfessor(null);
@@ -316,16 +316,14 @@ export default function UserManagementProfessorAccounts() {
   return (
     <div>
       <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div
-        className={`transition-all duration-300 ${
-          isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
-        }`}
-      >
+      <div className={`transition-all duration-300 ${
+        isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
+      }`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* content of ADMIN USER MANAGEMENT PROFESSOR ACCOUNT LIST */}
+        {/* Main Content */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* "Header" */}
+          {/* Header Section */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">
@@ -339,7 +337,6 @@ export default function UserManagementProfessorAccounts() {
                 </h1>
               </div>
               
-              {/* Back Button - Visible on all screens */}
               <Link to="/UserManagement" className="flex items-center text-[#465746] hover:text-[#00874E] transition-colors duration-200">
                 <img
                   src={BackButton}
@@ -370,11 +367,10 @@ export default function UserManagementProfessorAccounts() {
 
           {!loading && (
             <>
-              {/* BUTTONS - New Responsive Layout */}
+              {/* Control Buttons Section */}
               <div className="flex flex-col lg:flex-row text-[#465746] gap-3 sm:gap-4">
-                {/* Left side: Filter Dropdown */}
+                {/* Filter Dropdown */}
                 <div className="flex flex-col gap-3 flex-shrink-0">
-                  {/* Spacer div to push filter down on desktop */}
                   <div className="hidden lg:block h-[42px]"></div>
                   
                   <div className="relative">
@@ -410,11 +406,11 @@ export default function UserManagementProfessorAccounts() {
                   </div>
                 </div>
 
-                {/* Right side: Backup/Restore buttons and Search Bar */}
+                {/* Backup/Restore and Search Section */}
                 <div className="flex-1 flex flex-col gap-3">
-                  {/* Backup and Restore Buttons Row */}
+                  {/* Backup and Restore Buttons */}
                   <div className="flex flex-wrap gap-2 sm:gap-3 lg:justify-end h-9 sm:h-10 lg:h-[42px]">
-                    {/* Backup Button with Icon and Lighter Green Background */}
+                    {/* Backup Button */}
                     <button 
                       onClick={handleBackup}
                       disabled={isBackingUp}
@@ -444,7 +440,7 @@ export default function UserManagementProfessorAccounts() {
                       )}
                     </button>
 
-                    {/* Restore Button with Icon and Lighter Green Background */}
+                    {/* Restore Button */}
                     <button 
                       onClick={handleRestore}
                       disabled={isRestoring}
@@ -475,7 +471,7 @@ export default function UserManagementProfessorAccounts() {
                     </button>
                   </div>
 
-                  {/* Search Bar Row */}
+                  {/* Search Bar */}
                   <div className="relative w-full">
                     <input
                       type="text"
@@ -507,7 +503,7 @@ export default function UserManagementProfessorAccounts() {
                 </div>
               </div>
 
-              {/* Table */}
+              {/* Professors Table/Cards */}
               <div className="mt-4 sm:mt-5">
                 {/* Desktop Table */}
                 <div className="hidden md:block overflow-x-auto">
@@ -633,7 +629,6 @@ export default function UserManagementProfessorAccounts() {
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex flex-wrap justify-center mt-5 sm:mt-6 gap-2">
-                    {/* Previous Button */}
                     {currentPage > 1 && (
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
@@ -643,7 +638,6 @@ export default function UserManagementProfessorAccounts() {
                       </button>
                     )}
 
-                    {/* Page Numbers */}
                     {Array.from({ length: totalPages }, (_, i) => {
                       const pageNum = i + 1;
                       if (
@@ -677,7 +671,6 @@ export default function UserManagementProfessorAccounts() {
                       return null;
                     })}
 
-                    {/* Next Button */}
                     {currentPage < totalPages && (
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}

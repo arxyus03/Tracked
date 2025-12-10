@@ -2,23 +2,22 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Lottie from "lottie-react";
 
+// Components
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import Popup from "../../Components/Popup";
 
+// Assets
 import ArrowDown from "../../assets/ArrowDown(Light).svg";
 import Search from "../../assets/Search.svg";
-import ArchiveRow from "../../assets/ArchiveRow(Light).svg";
-import Details from "../../assets/Details(Light).svg";
 import Import from "../../assets/Import(Light).svg";
 import ArchiveWarningIcon from "../../assets/Warning(Yellow).svg";
 import SuccessIcon from "../../assets/Success(Green).svg";
 import ErrorIcon from "../../assets/Error(Red).svg";
-
-// Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function AdminImport() {
+  // State variables
   const [isOpen, setIsOpen] = useState(true);
   const [open, setOpen] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -36,11 +35,12 @@ export default function AdminImport() {
 
   const fileInputRef = useRef(null);
 
-  // Fetch Professors and Students
+  // Fetch users on component mount
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  // Fetch users from API
   const fetchUsers = () => {
     setIsLoading(true);
     fetch("https://tracked.6minds.site/Admin/AdminImportDB/get_users.php")
@@ -73,14 +73,15 @@ export default function AdminImport() {
       });
   };
 
+  // Open import modal
   const handleImportDatabase = () => {
     setShowImportModal(true);
   };
 
+  // Handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Enhanced file validation
       const validTypes = ['.sql', 'application/sql', 'text/sql', 'text/plain'];
       const maxSize = 10 * 1024 * 1024; // 10MB
       
@@ -112,10 +113,12 @@ export default function AdminImport() {
     }
   };
 
+  // Trigger file input click
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
+  // Confirm import database
   const confirmImportDatabase = () => {
     if (!importFile) {
       setResultData({
@@ -148,7 +151,7 @@ export default function AdminImport() {
             title: "Import Successful!",
             message: data.message
           });
-          fetchUsers(); // Refresh the user list
+          fetchUsers(); // Refresh user list
         } else {
           setResultData({
             type: "error",
@@ -177,6 +180,7 @@ export default function AdminImport() {
       });
   };
 
+  // Activate accounts handler
   const handleActivateAccounts = () => {
     const professorAndStudentUsers = users.filter(user => 
       user.user_Role === 'Professor' || user.user_Role === 'Student'
@@ -194,6 +198,7 @@ export default function AdminImport() {
     setShowActivateModal(true);
   };
 
+  // Confirm account activation
   const confirmActivateAccounts = () => {
     setIsActivating(true);
     
@@ -252,7 +257,7 @@ export default function AdminImport() {
       });
   };
 
-  // Pagination Logic
+  // Pagination logic
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
@@ -266,6 +271,7 @@ export default function AdminImport() {
     setCurrentPage(pageNumber);
   };
 
+  // Get modal icon based on result type
   const getModalIcon = () => {
     switch (resultData.type) {
       case "success":
@@ -299,7 +305,7 @@ export default function AdminImport() {
     }
   };
 
-  // Lottie animation options
+  // Lottie animation config
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -312,11 +318,9 @@ export default function AdminImport() {
   return (
     <div>
       <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div
-        className={`transition-all duration-300 ${
-          isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
-        }`}
-      >
+      <div className={`transition-all duration-300 ${
+        isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"
+      }`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
         {/* Hidden file input */}
@@ -328,9 +332,9 @@ export default function AdminImport() {
           className="hidden"
         />
 
-        {/* content of ADMIN IMPORT */}
+        {/* Main Content */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* "Header" */}
+          {/* Header Section */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img
@@ -349,9 +353,9 @@ export default function AdminImport() {
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
-          {/* BUTTONS */}
+          {/* Control Buttons Section */}
           <div className="flex flex-col sm:flex-row text-[#465746] gap-3 sm:gap-4 sm:justify-between sm:items-center">
-            {/* Filter Import Backup BUTTONS */}
+            {/* Filter, Import, and Activate Buttons */}
             <div className="flex flex-wrap gap-2 sm:gap-3">
               {/* Filter Dropdown */}
               <div className="relative">
@@ -382,6 +386,7 @@ export default function AdminImport() {
                 )}
               </div>
 
+              {/* Import Database Button */}
               <button 
                 onClick={handleImportDatabase}
                 className="font-bold px-3 sm:px-4 py-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] text-xs sm:text-sm lg:text-base whitespace-nowrap transition-all duration-200 cursor-pointer"
@@ -389,6 +394,7 @@ export default function AdminImport() {
                 Import Database
               </button>
 
+              {/* Activate Accounts Button */}
               <button
                 onClick={handleActivateAccounts}
                 disabled={professorAndStudentUsers.length === 0 || isActivating}
@@ -402,7 +408,7 @@ export default function AdminImport() {
               </button>
             </div>
 
-            {/* Search Button */}
+            {/* Search Bar */}
             <div className="relative flex-1 sm:max-w-xs lg:max-w-md">
               <input
                 type="text"
@@ -419,9 +425,9 @@ export default function AdminImport() {
             </div>
           </div>
 
-          {/* ACCOUNT Table */}
+          {/* Users Table/Cards Section */}
           <div className="mt-4 sm:mt-5">
-            {/* Loading State with Lottie Animation */}
+            {/* Loading State */}
             {isLoading && (
               <div className="flex flex-col justify-center items-center py-12">
                 <div className="w-24 h-24 mb-4">
@@ -544,7 +550,6 @@ export default function AdminImport() {
                     {/* Page Numbers */}
                     {Array.from({ length: totalPages }, (_, i) => {
                       const pageNum = i + 1;
-                      // Show first page, last page, current page, and pages around current
                       if (
                         pageNum === 1 ||
                         pageNum === totalPages ||
@@ -554,7 +559,7 @@ export default function AdminImport() {
                           <button
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
-                            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md text-xs sm:text-sm font-medium transition-colors duration-200 cursor-pointer ${
+                            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-md shadow-md text-xs sm:text-sm font-medium transition-colors duration-200 ${
                               currentPage === pageNum
                                 ? "bg-[#00874E] text-white"
                                 : "bg-white text-[#465746] hover:bg-gray-100"
@@ -684,20 +689,6 @@ export default function AdminImport() {
               </div>
             </div>
           </div>
-
-          <style>{`
-            .overlay-fade { animation: overlayFade .18s ease-out both; }
-            @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
-
-            .modal-pop {
-              transform-origin: top center;
-              animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
-            }
-            @keyframes popIn {
-              from { opacity: 0; transform: translateY(-8px) scale(.98); }
-              to   { opacity: 1; transform: translateY(0)   scale(1);    }
-            }
-          `}</style>
         </div>
       )}
 
@@ -730,7 +721,7 @@ export default function AdminImport() {
               
               <div className="mt-4 mb-6">
                 <p className="text-sm text-gray-600 mb-3">
-                  Are you sure you want to activate all imported Professor and Student accounts? This action will make all imported Professor and Student accounts active in the system.
+                  Are you sure you want to activate all imported Professor and Student accounts?
                 </p>
                 <div className="bg-gray-50 rounded-lg p-4 text-left">
                   <p className="text-base sm:text-lg font-semibold text-gray-900">
@@ -775,20 +766,6 @@ export default function AdminImport() {
               </div>
             </div>
           </div>
-
-          <style>{`
-            .overlay-fade { animation: overlayFade .18s ease-out both; }
-            @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
-
-            .modal-pop {
-              transform-origin: top center;
-              animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
-            }
-            @keyframes popIn {
-              from { opacity: 0; transform: translateY(-8px) scale(.98); }
-              to   { opacity: 1; transform: translateY(0)   scale(1);    }
-            }
-          `}</style>
         </div>
       )}
 
@@ -806,7 +783,7 @@ export default function AdminImport() {
         >
           <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
             <div className="text-center">
-              {/* Dynamic Icon based on result type */}
+              {/* Dynamic Icon */}
               <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full ${getModalIconColor()} mb-4`}>
                 <img 
                   src={getModalIcon()} 
@@ -826,25 +803,11 @@ export default function AdminImport() {
                 {resultData.type === "success" && (
                   <div className="bg-gray-50 rounded-lg p-4 text-left">
                     <p className="text-base sm:text-lg font-semibold text-gray-900">
-                      {resultData.title.includes("Import") ? "Database imported successfully!" : "Professor and Student accounts have been activated successfully"}
+                      {resultData.title.includes("Import") ? "Database imported successfully!" : "Accounts activated successfully"}
                     </p>
                     <p className="text-sm text-gray-600 mt-2">
                       • Total users processed: {professorAndStudentUsers.length}
                     </p>
-                    {resultData.title.includes("Import") ? (
-                      <p className="text-sm text-gray-600">
-                        • Data has been successfully imported into the database
-                      </p>
-                    ) : (
-                      <>
-                        <p className="text-sm text-gray-600">
-                          • Emails sent with temporary passwords
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          • Users can now login with their temporary passwords
-                        </p>
-                      </>
-                    )}
                   </div>
                 )}
                 {resultData.type === "error" && (
@@ -858,11 +821,6 @@ export default function AdminImport() {
                     <p className="text-sm text-gray-600">
                       • Verify the database connection
                     </p>
-                    {resultData.title.includes("Import") && (
-                      <p className="text-sm text-gray-600">
-                        • Ensure the SQL file is valid and properly formatted
-                      </p>
-                    )}
                   </div>
                 )}
               </div>
@@ -877,20 +835,6 @@ export default function AdminImport() {
               </div>
             </div>
           </div>
-
-          <style>{`
-            .overlay-fade { animation: overlayFade .18s ease-out both; }
-            @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
-
-            .modal-pop {
-              transform-origin: top center;
-              animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
-            }
-            @keyframes popIn {
-              from { opacity: 0; transform: translateY(-8px) scale(.98); }
-              to   { opacity: 1; transform: translateY(0)   scale(1);    }
-            }
-          `}</style>
         </div>
       )}
     </div>

@@ -2,24 +2,25 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Lottie from "lottie-react";
 
+// Components
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
+// Assets
 import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import Student from "../../assets/Student(Light).svg";
 import Professor from "../../assets/Professor(Light).svg";
-
-// Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function UserManagement() {
+  // State variables
   const [isOpen, setIsOpen] = useState(true);
   const [professorCount, setProfessorCount] = useState(0);
   const [studentCount, setStudentCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Lottie animation options
+  // Lottie animation config
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -29,6 +30,7 @@ export default function UserManagement() {
     }
   };
 
+  // Fetch user counts from API
   useEffect(() => {
     const fetchUserCounts = async () => {
       try {
@@ -44,7 +46,6 @@ export default function UserManagement() {
         const data = await response.json();
         
         if (data.success) {
-          // Convert to numbers to ensure proper handling
           setProfessorCount(Number(data.Professors) || 0);
           setStudentCount(Number(data.Students) || 0);
         } else {
@@ -53,7 +54,6 @@ export default function UserManagement() {
       } catch (err) {
         console.error("Error fetching user counts:", err);
         setError(err.message);
-        // Set default values on error
         setProfessorCount(0);
         setStudentCount(0);
       } finally {
@@ -64,6 +64,7 @@ export default function UserManagement() {
     fetchUserCounts();
   }, []);
 
+  // Loading state
   if (loading) {
     return (
       <div>
@@ -89,21 +90,20 @@ export default function UserManagement() {
     );
   }
 
+  // Main UI
   return (
     <div>
       <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
 
-      <div
-        className={`
+      <div className={`
         transition-all duration-300
         ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}
-      `}
-      >
+      `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* content of ADMIN USER MANAGEMENT */}
+        {/* User Management Content */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* "Header" of ADMIN USER MANAGEMENT */}
+          {/* Header Section */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img
@@ -124,14 +124,16 @@ export default function UserManagement() {
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
+          {/* Error Display */}
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               Error: {error}
             </div>
           )}
 
+          {/* User Cards Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-5 lg:gap-6">
-            {/* Professor Accounts Button */}
+            {/* Professor Accounts Card */}
             <Link to="/UserManagementProfessorAccounts" className="block">
               <div className="bg-[#E8F5E8] rounded-lg sm:rounded-xl shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 p-4 sm:p-5 lg:p-6">
                 <div className="flex items-center mb-3 sm:mb-4">
@@ -156,7 +158,7 @@ export default function UserManagement() {
               </div>
             </Link>
 
-            {/* Student Accounts Button */}
+            {/* Student Accounts Card */}
             <Link to="/UserManagementStudentSections" className="block">
               <div className="bg-[#F0F9FF] rounded-lg sm:rounded-xl shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 p-4 sm:p-5 lg:p-6">
                 <div className="flex items-center mb-3 sm:mb-4">

@@ -15,16 +15,16 @@ export default function ActivityList({
   setActivitySearchTerm,
   activityCurrentPage,
   setActivityCurrentPage,
-  itemsPerPage = 10
+  itemsPerPage = 8
 }) {
-  // Gradient color palette for activity types
+  // Color palette for activity types
   const activityTypeColors = {
-    Overall: { text: "text-[#2c5530]" },
-    Activities: { text: "text-[#B8860B]" },
-    Assignment: { text: "text-[#D2691E]" },
-    Quizzes: { text: "text-[#A0522D]" },
-    Laboratory: { text: "text-[#8B4513]" },
-    Projects: { text: "text-[#5D4037]" }
+    Overall: "#FFFFFF",
+    Activities: "#FFA600",
+    Assignment: "#767EE0",
+    Quizzes: "#00A15D",
+    Laboratory: "#A15353",
+    Projects: "#767EE0"
   };
 
   // Get current subject name
@@ -37,21 +37,13 @@ export default function ActivityList({
 
   // Get the text color for the current displayed label
   const getDisplayedLabelColor = () => {
-    if (selectedFilter === '') {
-      return activityTypeColors.Overall.text;
-    } else if (selectedFilter === 'Quizzes') {
-      return activityTypeColors.Quizzes.text;
-    } else if (selectedFilter === 'Assignment') {
-      return activityTypeColors.Assignment.text;
-    } else if (selectedFilter === 'Activities') {
-      return activityTypeColors.Activities.text;
-    } else if (selectedFilter === 'Projects') {
-      return activityTypeColors.Projects.text;
-    } else if (selectedFilter === 'Laboratory') {
-      return activityTypeColors.Laboratory.text;
-    } else {
-      return activityTypeColors.Overall.text;
-    }
+    if (selectedFilter === '') return activityTypeColors.Overall;
+    if (selectedFilter === 'Quizzes') return activityTypeColors.Quizzes;
+    if (selectedFilter === 'Assignment') return activityTypeColors.Assignment;
+    if (selectedFilter === 'Activities') return activityTypeColors.Activities;
+    if (selectedFilter === 'Projects') return activityTypeColors.Projects;
+    if (selectedFilter === 'Laboratory') return activityTypeColors.Laboratory;
+    return activityTypeColors.Overall;
   };
 
   const displayedLabel = selectedFilter === '' 
@@ -75,8 +67,7 @@ export default function ActivityList({
   // Pagination calculations for activities
   const activityTotalPages = Math.ceil(filteredActivities.length / itemsPerPage);
   const activityStartIndex = (activityCurrentPage - 1) * itemsPerPage;
-  const activityEndIndex = activityStartIndex + itemsPerPage;
-  const currentActivities = filteredActivities.slice(activityStartIndex, activityEndIndex);
+  const currentActivities = filteredActivities.slice(activityStartIndex, activityStartIndex + itemsPerPage);
 
   // Reset pagination when filters or search change
   React.useEffect(() => {
@@ -90,9 +81,9 @@ export default function ActivityList({
 
   // Pagination Component
   const Pagination = () => {
-    const maxVisiblePages = 5;
+    const maxVisiblePages = 3;
     
-    let startPage = Math.max(1, activityCurrentPage - Math.floor(maxVisiblePages / 2));
+    let startPage = Math.max(1, activityCurrentPage - 1);
     let endPage = Math.min(activityTotalPages, startPage + maxVisiblePages - 1);
     
     if (endPage - startPage + 1 < maxVisiblePages) {
@@ -107,9 +98,9 @@ export default function ActivityList({
     if (activityTotalPages <= 1) return null;
 
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-2">
-        <div className="text-xs sm:text-sm text-gray-600">
-          Showing {((activityCurrentPage - 1) * itemsPerPage) + 1} to {Math.min(activityCurrentPage * itemsPerPage, filteredActivities.length)} of {filteredActivities.length} entries
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3 px-1">
+        <div className="text-xs text-gray-400">
+          Showing {activityStartIndex + 1} to {Math.min(activityCurrentPage * itemsPerPage, filteredActivities.length)} of {filteredActivities.length} entries
         </div>
         
         <div className="flex items-center gap-1">
@@ -117,13 +108,13 @@ export default function ActivityList({
           <button
             onClick={() => handleActivityPageChange(activityCurrentPage - 1)}
             disabled={activityCurrentPage === 1}
-            className={`flex items-center justify-center w-8 h-8 rounded-md border ${
+            className={`flex items-center justify-center w-7 h-7 rounded-md ${
               activityCurrentPage === 1 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300' 
-                : 'bg-white text-[#465746] border-gray-300 hover:bg-gray-50 cursor-pointer'
+                ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+                : 'bg-gray-900 text-white border border-gray-700 hover:bg-gray-800 cursor-pointer'
             }`}
           >
-            <img src={ArrowLeft} alt="Previous" className="w-5 h-5" />
+            <img src={ArrowLeft} alt="Previous" className="w-3 h-3" />
           </button>
 
           {/* Page Numbers */}
@@ -131,10 +122,10 @@ export default function ActivityList({
             <button
               key={page}
               onClick={() => handleActivityPageChange(page)}
-              className={`cursor-pointer flex items-center justify-center w-8 h-8 rounded-md border text-sm font-medium ${
+              className={`cursor-pointer flex items-center justify-center w-7 h-7 rounded-md text-xs font-medium ${
                 activityCurrentPage === page
-                  ? 'bg-[#465746] text-white border-[#465746]'
-                  : 'bg-white text-[#465746] border-gray-300 hover:bg-gray-50'
+                  ? 'bg-[#767EE0] text-white'
+                  : 'bg-gray-900 text-white border border-gray-700 hover:bg-gray-800'
               }`}
             >
               {page}
@@ -145,13 +136,13 @@ export default function ActivityList({
           <button
             onClick={() => handleActivityPageChange(activityCurrentPage + 1)}
             disabled={activityCurrentPage === activityTotalPages}
-            className={`flex items-center justify-center w-8 h-8 rounded-md border ${
+            className={`flex items-center justify-center w-7 h-7 rounded-md ${
               activityCurrentPage === activityTotalPages
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300'
-                : 'bg-white text-[#465746] border-gray-300 hover:bg-gray-50 cursor-pointer'
+                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-900 text-white border border-gray-700 hover:bg-gray-800 cursor-pointer'
             }`}
           >
-            <img src={ArrowRight} alt="Next" className="w-5 h-5" />
+            <img src={ArrowRight} alt="Next" className="w-3 h-3" />
           </button>
         </div>
       </div>
@@ -159,45 +150,47 @@ export default function ActivityList({
   };
 
   return (
-    <div className="bg-[#fff] p-4 sm:p-5 rounded-lg sm:rounded-xl shadow-md mt-4 sm:mt-5 text-[#465746]">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-        <p className={`font-bold text-base sm:text-lg lg:text-xl ${getDisplayedLabelColor()}`}>
+    <div className="bg-[#15151C] p-3 rounded-lg shadow-md text-white h-full flex flex-col">
+      {/* Header with search */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
+        <p className="font-semibold text-sm" style={{ color: getDisplayedLabelColor() }}>
           {displayedLabel} - {getCurrentSubjectName()}
         </p>
         
         {/* Activity List Search */}
-        <div className="relative w-full sm:w-64 lg:w-80">
+        <div className="relative w-full sm:w-56">
           <input
             type="text"
             placeholder="Search activities..."
             value={activitySearchTerm}
             onChange={(e) => setActivitySearchTerm(e.target.value)}
-            className="w-full h-9 sm:h-10 rounded-md px-3 py-2 pr-10 shadow-md outline-none bg-white text-xs sm:text-sm text-[#465746] border border-gray-300 focus:border-[#465746]"
+            className="w-full h-8 rounded-md px-3 py-1 pr-8 outline-none bg-gray-900 text-sm text-white border border-gray-700 focus:border-[#767EE0]"
           />
-          <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-            <img src={Search} alt="Search" className="h-4 w-4 sm:h-5 sm:w-5" />
+          <button className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400">
+            <img src={Search} alt="Search" className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
 
-      {currentActivities.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-[#465746]">
-            {activitySearchTerm ? `No activities found for "${activitySearchTerm}"` : `No ${displayedLabel.toLowerCase()} found for ${getCurrentSubjectName()}.`}
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <div className="inline-block min-w-full align-middle px-4 sm:px-0">
-            <table className="min-w-full border-collapse text-xs sm:text-sm lg:text-base">
+      {/* Table container with flex-grow to take available space */}
+      <div className="flex-grow overflow-auto">
+        {currentActivities.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-400 text-sm">
+              {activitySearchTerm ? `No activities found for "${activitySearchTerm}"` : `No ${displayedLabel.toLowerCase()} found for ${getCurrentSubjectName()}.`}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left p-2 sm:p-3 font-bold">Task</th>
-                  <th className="text-left p-2 sm:p-3 font-bold">Title</th>
-                  <th className="text-left p-2 sm:p-3 font-bold text-[#00A15D]">Submitted</th>
-                  <th className="text-left p-2 sm:p-3 font-bold text-[#2196F3]">Assigned</th>
-                  <th className="text-left p-2 sm:p-3 font-bold text-[#FF6666]">Missed</th>
-                  <th className="text-left p-2 sm:p-3 font-bold">Deadline</th>
+                <tr className="border-b border-gray-700 sticky top-0 bg-[#15151C]">
+                  <th className="text-left p-2 font-medium text-gray-300">Task</th>
+                  <th className="text-left p-2 font-medium text-gray-300">Title</th>
+                  <th className="text-left p-2 font-medium" style={{ color: '#00A15D' }}>Submitted</th>
+                  <th className="text-left p-2 font-medium" style={{ color: '#767EE0' }}>Assigned</th>
+                  <th className="text-left p-2 font-medium" style={{ color: '#A15353' }}>Missed</th>
+                  <th className="text-left p-2 font-medium text-gray-300">Deadline</th>
                 </tr>
               </thead>
               <tbody>
@@ -208,50 +201,52 @@ export default function ActivityList({
                   const isAssigned = !isSubmitted && !isMissing;
                   
                   return (
-                    <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="p-2 sm:p-3 whitespace-nowrap">{item.task}</td>
-                      <td className="p-2 sm:p-3">{item.title}</td>
+                    <tr key={item.id} className="border-b border-gray-800 hover:bg-gray-900/50">
+                      <td className="p-2 whitespace-nowrap">{item.task}</td>
+                      <td className="p-2">{item.title}</td>
                       
                       {/* Submitted Column */}
-                      <td className="p-2 sm:p-3 text-[#00A15D]">
+                      <td className="p-2">
                         {isSubmitted ? (
-                          <img src={CheckSubmitted} alt="Submitted" className="w-5 h-5 sm:w-6 sm:h-6" />
+                          <img src={CheckSubmitted} alt="Submitted" className="w-4 h-4" />
                         ) : (
-                          <span>-</span>
+                          <span className="text-gray-500">-</span>
                         )}
                       </td>
                       
                       {/* Assigned Column */}
-                      <td className="p-2 sm:p-3 text-[#2196F3]">
+                      <td className="p-2">
                         {isAssigned ? (
-                          <img src={CheckPending} alt="Assigned" className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <img src={CheckPending} alt="Assigned" className="w-3.5 h-3.5" />
                         ) : (
-                          <span>-</span>
+                          <span className="text-gray-500">-</span>
                         )}
                       </td>
                       
                       {/* Missed Column */}
-                      <td className="p-2 sm:p-3 text-[#FF6666]">
+                      <td className="p-2">
                         {isMissing ? (
-                          <img src={Cross} alt="Missed" className="w-4 h-4 sm:w-5 sm:w-5" />
+                          <img src={Cross} alt="Missed" className="w-3.5 h-3.5" />
                         ) : (
-                          <span>-</span>
+                          <span className="text-gray-500">-</span>
                         )}
                       </td>
                       
-                      <td className="p-2 sm:p-3 whitespace-nowrap">{item.deadline}</td>
+                      <td className="p-2 whitespace-nowrap">{item.deadline}</td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Activity List Pagination */}
       {currentActivities.length > 0 && (
-        <Pagination />
+        <div className="mt-3">
+          <Pagination />
+        </div>
       )}
     </div>
   );

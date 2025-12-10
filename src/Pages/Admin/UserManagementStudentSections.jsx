@@ -2,34 +2,35 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Lottie from "lottie-react";
 
+// Components
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
+// Assets
 import ClassManagementLight from "../../assets/ClassManagement(Light).svg";
 import SectionIcon from "../../assets/Book(Light).svg";
 import BackIcon from "../../assets/BackButton(Light).svg";
-
-// Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function UserManagementStudentSections() {
+  // State variables
   const [isOpen, setIsOpen] = useState(true);
   const [sectionData, setSectionData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Subtle color scheme for different sections
+  // Color scheme for sections A to G
   const sectionColors = {
-    A: "#F0F9FF", // Very light blue
-    B: "#F0FDF4", // Very light green
-    C: "#FFFBEB", // Very light amber
-    D: "#FEF2F2", // Very light red
-    E: "#FAF5FF", // Very light purple
-    F: "#ECFEFF", // Very light cyan
-    G: "#FFF7ED"  // Very light orange
+    A: "#F0F9FF",
+    B: "#F0FDF4",
+    C: "#FFFBEB",
+    D: "#FEF2F2",
+    E: "#FAF5FF",
+    F: "#ECFEFF",
+    G: "#FFF7ED"
   };
 
-  // Year level colors for the breakdown
+  // Year level colors
   const yearLevelColors = {
     "1": "#A1EE9D",
     "2": "#8ADB86",
@@ -45,7 +46,7 @@ export default function UserManagementStudentSections() {
     "4": "4th"
   };
 
-  // Lottie animation options
+  // Lottie animation config
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -55,7 +56,7 @@ export default function UserManagementStudentSections() {
     }
   };
 
-  // Fetch actual section data from API
+  // Fetch section data from API
   useEffect(() => {
     const fetchSectionData = async () => {
       try {
@@ -79,7 +80,7 @@ export default function UserManagementStudentSections() {
       } catch (err) {
         console.error("Error fetching section data:", err);
         setError(err.message);
-        // Fallback to empty data
+        // Fallback data
         const emptyData = {};
         ['A', 'B', 'C', 'D', 'E', 'F', 'G'].forEach(section => {
           emptyData[section] = {
@@ -96,11 +97,11 @@ export default function UserManagementStudentSections() {
     fetchSectionData();
   }, []);
 
-  // Function to get top year levels for display
+  // Get top year levels for display
   const getTopYearLevels = (yearLevels, maxDisplay = 2) => {
     const entries = Object.entries(yearLevels)
-      .sort(([,a], [,b]) => b - a) // Sort by count descending
-      .slice(0, maxDisplay); // Get top ones
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, maxDisplay);
     
     return entries.map(([year, count]) => ({
       year: yearLevelLabels[year] || `${year}th`,
@@ -108,6 +109,7 @@ export default function UserManagementStudentSections() {
     }));
   };
 
+  // Loading state
   if (loading) {
     return (
       <div>
@@ -137,17 +139,15 @@ export default function UserManagementStudentSections() {
     <div>
       <Sidebar role="admin" isOpen={isOpen} setIsOpen={setIsOpen} />
 
-      <div
-        className={`
+      <div className={`
         transition-all duration-300
         ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}
-      `}
-      >
+      `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* content of MANAGE STUDENT SECTIONS */}
+        {/* Main Content */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* Header of MANAGE STUDENT SECTIONS */}
+          {/* Header Section */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">
@@ -161,11 +161,10 @@ export default function UserManagementStudentSections() {
                 </h1>
               </div>
               
-              {/* Back Button with Custom Icon */}
+              {/* Back Button */}
               <Link 
                 to="/UserManagement" 
                 className="inline-flex items-center text-[#465746] hover:text-[#00874E] transition-colors duration-200 group"
-                title="Back to User Management"
               >
                 <img
                   src={BackIcon}
@@ -181,6 +180,7 @@ export default function UserManagementStudentSections() {
 
           <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
 
+          {/* Error Display */}
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
               <p className="font-bold">Error Loading Data</p>
@@ -189,8 +189,8 @@ export default function UserManagementStudentSections() {
             </div>
           )}
 
+          {/* Section Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-            {/* Section Cards A to G */}
             {['A', 'B', 'C', 'D', 'E', 'F', 'G'].map((section) => {
               const data = sectionData[section] || { total: 0, yearLevels: {} };
               const topYearLevels = getTopYearLevels(data.yearLevels);
@@ -206,6 +206,7 @@ export default function UserManagementStudentSections() {
                     className="rounded-lg sm:rounded-xl shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 p-4 sm:p-5 lg:p-6 h-full hover:shadow-lg"
                     style={{ backgroundColor: sectionColors[section] }}
                   >
+                    {/* Section Header */}
                     <div className="flex items-center mb-3 sm:mb-4">
                       <img
                         src={SectionIcon}
@@ -247,7 +248,7 @@ export default function UserManagementStudentSections() {
                             </div>
                           ))}
                           
-                          {/* Show "and more" if there are more year levels */}
+                          {/* Show more indicator */}
                           {Object.keys(data.yearLevels).length > topYearLevels.length && (
                             <div className="text-xs text-gray-500 text-center">
                               +{Object.keys(data.yearLevels).length - topYearLevels.length} more year levels
@@ -261,7 +262,7 @@ export default function UserManagementStudentSections() {
                       )}
                     </div>
 
-                    {/* Visual year level distribution (mini bars) */}
+                    {/* Visual year level distribution */}
                     {hasYearLevels && (
                       <div className="mt-3 pt-3 border-t border-gray-200">
                         <p className="text-xs text-[#465746] font-semibold mb-2">Distribution:</p>
@@ -288,7 +289,7 @@ export default function UserManagementStudentSections() {
             })}
           </div>
 
-          {/* Legend for year levels */}
+          {/* Year Level Legend */}
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="font-semibold text-[#465746] mb-3">Year Level Colors:</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">

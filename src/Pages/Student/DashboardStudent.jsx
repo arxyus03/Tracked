@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom';
-
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import Dashboard from '../../assets/DashboardProf(Light).svg';
+// ========== IMPORT ASSETS ==========
+import Dashboard from '../../assets/Dashboard.svg';
 import SubjectPerformance from '../../assets/SubjectPerformance.svg';
 import RecentActivity from '../../assets/RecentActivity.svg';
-import ID from '../../assets/ID(Light).svg';
-import Pie from '../../assets/Pie(Light).svg';
+import ID from '../../assets/ID.svg';
+import Pie from '../../assets/Pie.svg';
 import Details from '../../assets/Details(Light).svg';
-import ArrowDown from '../../assets/ArrowDown(Light).svg';
 import CompletedActivities from '../../assets/CompletedActivities.svg';
 import PendingTask from '../../assets/PendingTask.svg';
 import TotalDaySpent from '../../assets/TotalDaySpent.svg';
@@ -24,12 +23,15 @@ import AlertTriangleYellow from "../../assets/Warning(Yellow).svg";
 import AlertTriangleRed from "../../assets/Warning(Red).svg";
 
 export default function DashboardStudent() {
+  // ========== STATE VARIABLES ==========
   const [isOpen, setIsOpen] = useState(false);
   const [userName, setUserName] = useState("Student");
   const [userId, setUserId] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [studentCourse, setStudentCourse] = useState("");
   const [studentYearLevel, setStudentYearLevel] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Widget states
   const [completedActivities, setCompletedActivities] = useState(0);
@@ -38,9 +40,8 @@ export default function DashboardStudent() {
   const [pendingTask, setPendingTask] = useState(0);
   const [totalDaysPresent, setTotalDaysPresent] = useState(0);
   const [overallMissed, setOverallMissed] = useState(0);
-  const [loading, setLoading] = useState(true);
 
-  // NEW: Analytics states
+  // Analytics states
   const [performanceScore, setPerformanceScore] = useState(0);
   const [attendanceRate, setAttendanceRate] = useState(0);
   const [submissionRate, setSubmissionRate] = useState(0);
@@ -49,8 +50,8 @@ export default function DashboardStudent() {
   const [performanceTrend, setPerformanceTrend] = useState("stable");
   const [subjectPerformance, setSubjectPerformance] = useState([]);
   const [warnings, setWarnings] = useState([]);
-  const [error, setError] = useState(null);
 
+  // ========== USE EFFECTS ==========
   useEffect(() => {
     const checkScreenSize = () => {
       if (window.innerWidth >= 1024) {
@@ -62,10 +63,7 @@ export default function DashboardStudent() {
 
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
-
-    return () => {
-      window.removeEventListener('resize', checkScreenSize);
-    };
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
   useEffect(() => {
@@ -105,8 +103,8 @@ export default function DashboardStudent() {
                 }
 
                 await fetchDashboardData(userIdFromStorage);
-                await fetchAttendanceData(userIdFromStorage); // NEW: Fetch attendance data
-                await fetchAnalyticsData(userIdFromStorage); // NEW: Fetch analytics
+                await fetchAttendanceData(userIdFromStorage);
+                await fetchAnalyticsData(userIdFromStorage);
               }
             }
           }
@@ -121,6 +119,7 @@ export default function DashboardStudent() {
     fetchUserData();
   }, []);
 
+  // ========== API CALL FUNCTIONS ==========
   const fetchDashboardData = async (studentId) => {
     try {
       setLoading(true);
@@ -144,20 +143,14 @@ export default function DashboardStudent() {
     }
   };
 
-  // NEW: Fetch attendance data - FIXED VERSION
   const fetchAttendanceData = async (studentId) => {
     try {
-      console.log('Fetching attendance data for student:', studentId);
       const response = await fetch(`https://tracked.6minds.site/Student/AttendanceStudentDB/get_attendance_student.php?student_id=${studentId}`);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Raw attendance API response:', data);
         
         if (data.success && data.attendance_summary && data.attendance_summary.length > 0) {
-          console.log('Attendance summary data:', data.attendance_summary);
-          
-          // Calculate overall attendance rate across all subjects
           let totalPresent = 0;
           let totalPossible = 0;
           
@@ -166,25 +159,16 @@ export default function DashboardStudent() {
             const late = subject.late || 0;
             const totalClasses = subject.total_classes || 0;
             
-            console.log(`Subject: ${subject.subject_name}, Present: ${present}, Late: ${late}, Total Classes: ${totalClasses}`);
-            
-            // Present + Late count as attended
             totalPresent += present + late;
             totalPossible += totalClasses;
           });
           
-          console.log('Total calculation:', { totalPresent, totalPossible });
-          
           const overallAttendanceRate = totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : 0;
           setAttendanceRate(overallAttendanceRate);
-          
-          console.log('Final attendance rate:', overallAttendanceRate);
         } else {
-          console.log('No attendance data found or empty data');
           setAttendanceRate(0);
         }
       } else {
-        console.error('Failed to fetch attendance data, status:', response.status);
         setAttendanceRate(0);
       }
     } catch (error) {
@@ -223,24 +207,20 @@ export default function DashboardStudent() {
     }
   };
 
-  // NEW: Fetch analytics data
   const fetchAnalyticsData = async (studentId) => {
     try {
-      // Fetch student classes to get analytics for each subject
       const classesResponse = await fetch(`https://tracked.6minds.site/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
       
       if (classesResponse.ok) {
         const classesData = await classesResponse.json();
         
         if (classesData.success && classesData.classes) {
-          // Calculate overall performance metrics
           let totalCompleted = 0;
           let totalActivities = 0;
           let totalMissed = 0;
           const subjectPerformanceData = [];
           const allRecentActivities = [];
 
-          // Fetch analytics for each subject
           for (const subject of classesData.classes) {
             const analyticsResponse = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?student_id=${studentId}&subject_code=${subject.subject_code}`);
             
@@ -267,7 +247,6 @@ export default function DashboardStudent() {
                   section: subject.section
                 });
 
-                // Get recent activities with proper formatting
                 if (activities.length > 0) {
                   const recent = activities
                     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -281,10 +260,8 @@ export default function DashboardStudent() {
                       submitted: activity.submitted,
                       missing: activity.missing,
                       created_at: activity.created_at,
-                      // Format the date and time properly with UTC
                       formatted_date: formatActivityDate(activity.created_at),
                       formatted_time: formatActivityTime(activity.created_at),
-                      // Determine status for display
                       status: activity.submitted ? 'Submitted' : activity.missing ? 'Missed' : 'Assigned'
                     }));
                   
@@ -294,19 +271,16 @@ export default function DashboardStudent() {
             }
           }
 
-          // Sort all recent activities by creation date and take top 5
           const sortedRecentActivities = allRecentActivities
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .slice(0, 5);
           
           setRecentActivities(sortedRecentActivities);
 
-          // Calculate overall performance score
           const overallCompletionRate = totalActivities > 0 ? Math.round((totalCompleted / totalActivities) * 100) : 0;
           setPerformanceScore(overallCompletionRate);
           setSubmissionRate(overallCompletionRate);
 
-          // Determine risk level
           let riskLevelCalc = "LOW";
           if (totalMissed > totalActivities * 0.3) {
             riskLevelCalc = "HIGH";
@@ -315,13 +289,11 @@ export default function DashboardStudent() {
           }
           setRiskLevel(riskLevelCalc);
 
-          // Determine trend (simplified)
           const trend = overallCompletionRate > 70 ? "improving" : overallCompletionRate < 50 ? "declining" : "stable";
           setPerformanceTrend(trend);
 
           setSubjectPerformance(subjectPerformanceData);
 
-          // Generate warnings
           const warningsList = [];
           if (riskLevelCalc === "HIGH") {
             warningsList.push({
@@ -348,7 +320,6 @@ export default function DashboardStudent() {
             });
           }
           setWarnings(warningsList);
-
         }
       }
     } catch (error) {
@@ -358,17 +329,16 @@ export default function DashboardStudent() {
     }
   };
 
-  // NEW: Risk level color coding
+  // ========== STYLING HELPERS ==========
   const getRiskColor = (level) => {
     switch (level) {
-      case "HIGH": return "text-red-800 bg-red-50 border-red-200";
-      case "MEDIUM": return "text-yellow-800 bg-yellow-50 border-yellow-200";
-      case "LOW": return "text-green-800 bg-green-50 border-green-200";
+      case "HIGH": return "text-[#FF6B6B] bg-[#A15353]/10 border-[#A15353]/20";
+      case "MEDIUM": return "text-[#FFB347] bg-[#FFA600]/10 border-[#FFA600]/20";
+      case "LOW": return "text-[#4CAF50] bg-[#00A15D]/10 border-[#00A15D]/20";
       default: return "text-gray-600 bg-gray-50 border-gray-200";
     }
   };
 
-  // NEW: Get risk icon
   const getRiskIcon = (level) => {
     switch (level) {
       case "HIGH": return AlertTriangleRed;
@@ -378,53 +348,49 @@ export default function DashboardStudent() {
     }
   };
 
-  // NEW: Trend indicator component
   const TrendIndicator = ({ trend }) => {
     if (trend === "improving") {
       return (
-        <div className="flex items-center text-green-600">
+        <div className="flex items-center text-[#4CAF50]">
           <img src={TrendingUp} alt="Improving" className="w-4 h-4 mr-1" />
           <span className="text-sm">Improving</span>
         </div>
       );
     } else if (trend === "declining") {
       return (
-        <div className="flex items-center text-red-600">
+        <div className="flex items-center text-[#FF6B6B]">
           <img src={TrendingDown} alt="Declining" className="w-4 h-4 mr-1" />
           <span className="text-sm">Needs Attention</span>
         </div>
       );
     }
     return (
-      <div className="flex items-center text-blue-600">
+      <div className="flex items-center text-[#8A9BFF]">
         <span className="text-sm">Stable</span>
       </div>
     );
   };
 
-  // NEW: Get activity type color
   const getActivityTypeColor = (type) => {
     const colors = {
-      'Assignment': 'bg-blue-100 text-blue-800',
-      'Quiz': 'bg-purple-100 text-purple-800',
-      'Activity': 'bg-green-100 text-green-800',
-      'Project': 'bg-orange-100 text-orange-800',
-      'Laboratory': 'bg-red-100 text-red-800',
+      'Assignment': 'bg-[#8A9BFF]/20 text-[#8A9BFF]',
+      'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
+      'Activity': 'bg-[#4CAF50]/20 text-[#4CAF50]',
+      'Project': 'bg-[#FFB347]/20 text-[#FFB347]',
+      'Laboratory': 'bg-[#FF6B6B]/20 text-[#FF6B6B]',
     };
     return colors[type] || 'bg-gray-100 text-gray-800';
   };
 
+  // ========== LOADING & ERROR STATES ==========
   if (loading) {
     return (
-      <div>
+      <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div className={`
-          transition-all duration-300
-          ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
-        `}>
+        <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
           <div className="p-8 flex justify-center items-center h-64">
-            <div className="text-[#465746] text-lg">Loading dashboard data...</div>
+            <div className="text-[#FFFFFF] text-lg">Loading dashboard data...</div>
           </div>
         </div>
       </div>
@@ -433,18 +399,15 @@ export default function DashboardStudent() {
 
   if (error) {
     return (
-      <div>
+      <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div className={`
-          transition-all duration-300
-          ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
-        `}>
+        <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
           <div className="p-8 flex flex-col justify-center items-center h-64">
-            <div className="text-[#FF6666] text-lg mb-4">{error}</div>
+            <div className="text-[#FF6B6B] text-lg mb-4">{error}</div>
             <button 
               onClick={() => window.location.reload()}
-              className="bg-[#00874E] text-white px-4 py-2 rounded-lg hover:bg-[#006c3d] transition-colors"
+              className="bg-[#00A15D] text-white px-4 py-2 rounded-lg hover:bg-[#00874E] transition-colors"
             >
               Retry
             </button>
@@ -454,42 +417,36 @@ export default function DashboardStudent() {
     );
   }
 
+  // ========== MAIN RENDER ==========
   return (
-    <div>
+    <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
-      <div className={`
-        transition-all duration-300
-        ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
-      `}>
+      <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
-        {/* Dashboard content */}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8 text-[#465746]">
+        {/* ========== DASHBOARD CONTENT ========== */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-8 text-[#FFFFFF]">
+          
+          {/* ========== HEADER SECTION ========== */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img src={Dashboard} alt="Dashboard" className="h-6 w-6 sm:h-7 sm:w-7 mr-3" />
               <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl">Dashboard</h1>
             </div>
-            <div className='flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0'>
-              <div className="text-sm sm:text-base lg:text-lg">
-                <span>Hi</span>
-                <span className="font-bold ml-1 mr-1">{userName}!</span>
-                <span>Ready to check your progress?</span>
-              </div>
-              <div className="flex items-center text-sm sm:text-base lg:text-lg self-end sm:self-auto">
-                <span>2nd Semester 2024 - 2025</span>
-                <img src={ArrowDown} alt="ArrowDown" className="h-5 w-5 sm:h-6 sm:w-6 ml-2" />
-              </div>
+            <div className="text-sm sm:text-base lg:text-lg text-[#FFFFFF]/80">
+              <span>Hi</span>
+              <span className="font-bold ml-1 mr-1 text-[#FFFFFF]">{userName}!</span>
+              <span>Ready to check your progress?</span>
             </div>
           </div>
 
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+          <hr className="border-[#FFFFFF]/30 mb-5 sm:mb-6" />
 
-          {/* PERFORMANCE OVERVIEW - UPDATED SECTION */}
-          <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md p-4 sm:p-5 mb-5">
+          {/* ========== PERFORMANCE OVERVIEW ========== */}
+          <div className="bg-[#15151C] rounded-lg sm:rounded-xl shadow-md p-4 sm:p-5 mb-5">
             <div className="flex items-center mb-4">
               <img src={Pie} alt="Analytics" className="h-6 w-6 mr-2" />
-              <h2 className="text-lg font-bold">Performance Overview</h2>
+              <h2 className="text-lg font-bold text-[#FFFFFF]">Performance Overview</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -501,61 +458,53 @@ export default function DashboardStudent() {
                     <p className="text-xl font-bold">{riskLevel}</p>
                   </div>
                   <div className={`w-10 h-10 rounded-md border-2 flex items-center justify-center ${
-                    riskLevel === "HIGH" ? "border-red-300" :
-                    riskLevel === "MEDIUM" ? "border-yellow-300" :
-                    "border-green-300"
+                    riskLevel === "HIGH" ? "border-[#A15353]/30" :
+                    riskLevel === "MEDIUM" ? "border-[#FFA600]/30" :
+                    "border-[#00A15D]/30"
                   }`}>
-                    <img 
-                      src={getRiskIcon(riskLevel)} 
-                      alt="Risk Level" 
-                      className="w-6 h-6" 
-                    />
+                    <img src={getRiskIcon(riskLevel)} alt="Risk Level" className="w-5 h-5" />
                   </div>
                 </div>
-                <p className="text-xs mt-1 opacity-75">
-                  {overallMissed} missed activities
-                </p>
+                <p className="text-xs mt-1 opacity-75">{overallMissed} missed activities</p>
               </div>
 
               {/* Performance Score */}
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+              <div className="bg-gradient-to-br from-[#00A15D]/10 to-[#00A15D]/5 p-4 rounded-lg border border-[#00A15D]/20">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-sm text-green-800 font-medium">Performance Score</p>
-                    <p className="text-2xl font-bold text-green-900">{performanceScore}/100</p>
+                    <p className="text-sm text-[#4CAF50] font-medium">Performance Score</p>
+                    <p className="text-xl font-bold text-[#FFFFFF]">{performanceScore}/100</p>
                   </div>
                   <TrendIndicator trend={performanceTrend} />
                 </div>
-                <div className="w-full bg-green-200 rounded-full h-2 mt-2">
+                <div className="w-full bg-[#00A15D]/20 rounded-full h-2 mt-2">
                   <div 
-                    className="bg-green-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                    className="bg-[#00A15D] h-2 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${performanceScore}%` }}
                   ></div>
                 </div>
               </div>
 
-              {/* Attendance Rate - UPDATED with real data */}
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800 font-medium">Attendance Rate</p>
-                <p className="text-2xl font-bold text-blue-900">{attendanceRate}%</p>
-                <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
+              {/* Attendance Rate */}
+              <div className="bg-gradient-to-br from-[#767EE0]/10 to-[#767EE0]/5 p-4 rounded-lg border border-[#767EE0]/20">
+                <p className="text-sm text-[#8A9BFF] font-medium">Attendance Rate</p>
+                <p className="text-xl font-bold text-[#FFFFFF]">{attendanceRate}%</p>
+                <div className="w-full bg-[#767EE0]/20 rounded-full h-2 mt-2">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                    className="bg-[#767EE0] h-2 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${attendanceRate}%` }}
                   ></div>
                 </div>
-                <p className="text-xs mt-1 opacity-75">
-                  Across all subjects
-                </p>
+                <p className="text-xs mt-1 opacity-75">Across all subjects</p>
               </div>
 
               {/* Submission Rate */}
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
-                <p className="text-sm text-purple-800 font-medium">Submission Rate</p>
-                <p className="text-2xl font-bold text-purple-900">{submissionRate}%</p>
-                <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
+              <div className="bg-gradient-to-br from-[#9b87f5]/10 to-[#9b87f5]/5 p-4 rounded-lg border border-[#9b87f5]/20">
+                <p className="text-sm text-[#B39DDB] font-medium">Submission Rate</p>
+                <p className="text-xl font-bold text-[#FFFFFF]">{submissionRate}%</p>
+                <div className="w-full bg-[#9b87f5]/20 rounded-full h-2 mt-2">
                   <div 
-                    className="bg-purple-600 h-2 rounded-full transition-all duration-1000 ease-out"
+                    className="bg-[#9b87f5] h-2 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${submissionRate}%` }}
                   ></div>
                 </div>
@@ -566,187 +515,171 @@ export default function DashboardStudent() {
             </div>
           </div>
 
-          {/* WIDGETS */}
-          <div className='flex justify-center items-center mt-5'>
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-4 lg:gap-6 w-full max-w-7xl'>
-
-              {/* Completed Activities Widget */}
-              <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 shadow-md'> 
-                <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
-                  <h1 className='mb-2'>Completed Activities</h1>
+          {/* ========== WIDGETS SECTION ========== */}
+          <div className="mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              {/* Completed Activities */}
+              <div className='bg-[#15151C] h-32 rounded-lg p-4 shadow-md w-full'> 
+                <div className='font-bold text-sm h-full flex flex-col'>
+                  <h1 className='mb-2 text-[#FFFFFF]'>Completed Activities</h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#81ebbd] h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-lg sm:rounded-xl border-2 border-[#449844]'>
-                      <img src={CompletedActivities} alt="CompletedActivities" className="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"/>
+                    <div className='flex justify-center items-center bg-[#00A15D]/20 h-12 w-12 rounded-lg border-2 border-[#00A15D]'>
+                      <img src={CompletedActivities} alt="CompletedActivities" className="h-6 w-6"/>
                     </div>
-                    <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      {completedActivities}
-                    </p>
+                    <p className='text-3xl text-[#FFFFFF]'>{completedActivities}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Overall Submitted Widget */}
-              <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 shadow-md'> 
-                <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
-                  <h1 className='mb-2'>Overall Submitted</h1>
+              {/* Overall Submitted */}
+              <div className='bg-[#15151C] h-32 rounded-lg p-4 shadow-md w-full'> 
+                <div className='font-bold text-sm h-full flex flex-col'>
+                  <h1 className='mb-2 text-[#FFFFFF]'>Overall Submitted</h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#81ebbd] h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-lg sm:rounded-xl border-2 border-[#449844]'>
-                      <img src={OverallSubmitted} alt="OverallSubmitted" className="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"/>
+                    <div className='flex justify-center items-center bg-[#00A15D]/20 h-12 w-12 rounded-lg border-2 border-[#00A15D]'>
+                      <img src={OverallSubmitted} alt="OverallSubmitted" className="h-6 w-6"/>
                     </div>
-                    <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      {overallSubmitted}
-                    </p>
+                    <p className='text-3xl text-[#FFFFFF]'>{overallSubmitted}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Overall Days Absent Widget */}
-              <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 shadow-md'> 
-                <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
-                  <h1 className='mb-2'>Overall Days Absent</h1>
+              {/* Days Absent */}
+              <div className='bg-[#15151C] h-32 rounded-lg p-4 shadow-md w-full'> 
+                <div className='font-bold text-sm h-full flex flex-col'>
+                  <h1 className='mb-2 text-[#FFFFFF]'>Days Absent</h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#ffb1b1] h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-lg sm:rounded-xl border-2 border-[#FF6666]'>
-                      <img src={OverallDaysAbsent} alt="OverallDaysAbsent" className="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"/>
+                    <div className='flex justify-center items-center bg-[#A15353]/20 h-12 w-12 rounded-lg border-2 border-[#A15353]'>
+                      <img src={OverallDaysAbsent} alt="OverallDaysAbsent" className="h-6 w-6"/>
                     </div>
-                    <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      {overallDaysAbsent}
-                    </p>
+                    <p className='text-3xl text-[#FFFFFF]'>{overallDaysAbsent}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Pending Task Widget */}
-              <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 shadow-md'> 
-                <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
-                  <h1 className='mb-2'>Pending Task</h1>
+              {/* Pending Task */}
+              <div className='bg-[#15151C] h-32 rounded-lg p-4 shadow-md w-full'> 
+                <div className='font-bold text-sm h-full flex flex-col'>
+                  <h1 className='mb-2 text-[#FFFFFF]'>Pending Task</h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#a7aef9] h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-lg sm:rounded-xl border-2 border-[#4951AA]'>
-                      <img src={PendingTask} alt="PendingTask" className="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"/>
+                    <div className='flex justify-center items-center bg-[#767EE0]/20 h-12 w-12 rounded-lg border-2 border-[#767EE0]'>
+                      <img src={PendingTask} alt="PendingTask" className="h-6 w-6"/>
                     </div>
-                    <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      {pendingTask}
-                    </p>
+                    <p className='text-3xl text-[#FFFFFF]'>{pendingTask}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Total Days Present Widget */}
-              <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 shadow-md'> 
-                <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
-                  <h1 className='mb-2'>Total of Days Present</h1>
+              {/* Days Present */}
+              <div className='bg-[#15151C] h-32 rounded-lg p-4 shadow-md w-full'> 
+                <div className='font-bold text-sm h-full flex flex-col'>
+                  <h1 className='mb-2 text-[#FFFFFF]'>Days Present</h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#81ebbd] h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-lg sm:rounded-xl border-2 border-[#449844]'>
-                      <img src={TotalDaySpent} alt="TotalDaySpent" className="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"/>
+                    <div className='flex justify-center items-center bg-[#00A15D]/20 h-12 w-12 rounded-lg border-2 border-[#00A15D]'>
+                      <img src={TotalDaySpent} alt="TotalDaySpent" className="h-6 w-6"/>
                     </div>
-                    <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      {totalDaysPresent}
-                    </p>
+                    <p className='text-3xl text-[#FFFFFF]'>{totalDaysPresent}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Overall Missed Widget */}
-              <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 shadow-md'> 
-                <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
-                  <h1 className='mb-2'>Overall Missed</h1>
+              {/* Overall Missed */}
+              <div className='bg-[#15151C] h-32 rounded-lg p-4 shadow-md w-full'> 
+                <div className='font-bold text-sm h-full flex flex-col'>
+                  <h1 className='mb-2 text-[#FFFFFF]'>Overall Missed</h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#ffb1b1] h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-lg sm:rounded-xl border-2 border-[#FF6666]'>
-                      <img src={OverallMissed} alt="OverallMissed" className="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"/>
+                    <div className='flex justify-center items-center bg-[#A15353]/20 h-12 w-12 rounded-lg border-2 border-[#A15353]'>
+                      <img src={OverallMissed} alt="OverallMissed" className="h-6 w-6"/>
                     </div>
-                    <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      {overallMissed}
-                    </p>
+                    <p className='text-3xl text-[#FFFFFF]'>{overallMissed}</p>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
 
-          {/* SUBJECT PERFORMANCE & RECENT ACTIVITIES - UPDATED SECTION */}
+          {/* ========== SUBJECT & ACTIVITIES SECTION ========== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-            {/* Subject Performance - Hidden on mobile */}
-            <div className="hidden lg:block bg-[#fff] rounded-lg sm:rounded-xl shadow-md p-4 sm:p-5">
-              <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <img src={SubjectPerformance} alt="SubjectPerformance" className="h-6 w-6 mr-2" />
+            {/* Subject Performance */}
+            <div className="bg-[#15151C] rounded-lg shadow-md p-4">
+              <h3 className="text-base font-semibold mb-4 flex items-center text-[#FFFFFF]">
+                <img src={SubjectPerformance} alt="SubjectPerformance" className="h-5 w-5 mr-2" />
                 Subject Performance
               </h3>
-              <div className="max-h-80 overflow-y-auto space-y-3 pr-2">
+              <div className="max-h-64 overflow-y-auto space-y-3 pr-2">
                 {subjectPerformance.length > 0 ? (
                   subjectPerformance.map((subject, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-3 bg-[#23232C] rounded-lg">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{subject.subject}</p>
-                        <p className="text-xs text-gray-500">{subject.section}</p>
+                        <p className="font-medium text-sm truncate text-[#FFFFFF]">{subject.subject}</p>
+                        <p className="text-xs text-[#FFFFFF]/50">{subject.section}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-sm">{subject.completionRate}%</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="font-semibold text-sm text-[#FFFFFF]">{subject.completionRate}%</p>
+                        <p className="text-xs text-[#FFFFFF]/50">
                           {subject.completed}/{subject.total}
                         </p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No subject data available</p>
+                  <p className="text-[#FFFFFF]/50 text-center py-4 text-sm">No subject data available</p>
                 )}
               </div>
-              {/* UPDATED: Simple button without arrow, centered */}
               <div className="flex justify-center mt-4">
                 <Link to="/Subjects">
-                  <button className="bg-[#00874E] text-white px-6 py-2 rounded-lg hover:bg-[#006c3d] transition-colors font-medium">
+                  <button className="bg-[#00A15D] text-white px-4 py-2 rounded text-sm hover:bg-[#00874E] transition-colors font-medium">
                     View All Subjects
                   </button>
                 </Link>
               </div>
             </div>
 
-            {/* Recent Activities - UPDATED with scrollable area and improved layout */}
-            <div className="bg-[#fff] rounded-lg sm:rounded-xl shadow-md p-4 sm:p-5">
-              <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <img src={RecentActivity} alt="RecentActivity" className="h-6 w-6 mr-2" />
+            {/* Recent Activities */}
+            <div className="bg-[#15151C] rounded-lg shadow-md p-4">
+              <h3 className="text-base font-semibold mb-4 flex items-center text-[#FFFFFF]">
+                <img src={RecentActivity} alt="RecentActivity" className="h-5 w-5 mr-2" />
                 Recent Activities
               </h3>
-              <div className="max-h-80 overflow-y-auto space-y-3 pr-2">
+              <div className="max-h-64 overflow-y-auto space-y-3 pr-2">
                 {recentActivities.length > 0 ? (
                   recentActivities.map((activity, index) => (
-                    <div key={index} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-start justify-between p-3 bg-[#23232C] rounded-lg">
                       <div className="flex-1 min-w-0 mr-3">
                         <div className="flex items-center gap-2 mb-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded ${getActivityTypeColor(activity.activity_type)}`}>
                             {activity.activity_type}
                           </span>
                           <span className={`text-xs px-2 py-1 rounded ${
-                            activity.submitted ? 'bg-green-100 text-green-800' : 
-                            activity.missing ? 'bg-red-100 text-red-800' : 
-                            'bg-blue-100 text-blue-800'
+                            activity.submitted ? 'bg-[#4CAF50]/20 text-[#4CAF50]' : 
+                            activity.missing ? 'bg-[#FF6B6B]/20 text-[#FF6B6B]' : 
+                            'bg-[#8A9BFF]/20 text-[#8A9BFF]'
                           }`}>
                             {activity.submitted ? 'Submitted' : activity.missing ? 'Missed' : 'Assigned'}
                           </span>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-sm">
+                          <p className="text-sm text-[#FFFFFF]">
                             <span className="font-medium">Subject:</span> {activity.subject}
                           </p>
-                          <p className="text-sm">
+                          <p className="text-sm text-[#FFFFFF]">
                             <span className="font-medium">Title:</span> {activity.title}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right text-xs text-gray-500 min-w-20">
+                      <div className="text-right text-xs text-[#FFFFFF]/50 min-w-20">
                         <div className="font-medium">{activity.formatted_date}</div>
                         <div>{activity.formatted_time}</div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No recent activities</p>
+                  <p className="text-[#FFFFFF]/50 text-center py-4 text-sm">No recent activities</p>
                 )}
               </div>
-              {/* UPDATED: Simple button without arrow, centered */}
               <div className="flex justify-center mt-4">
                 <Link to="/Subjects">
-                  <button className="bg-[#00874E] text-white px-6 py-2 rounded-lg hover:bg-[#006c3d] transition-colors font-medium">
+                  <button className="bg-[#00A15D] text-white px-4 py-2 rounded text-sm hover:bg-[#00874E] transition-colors font-medium">
                     View All Activities
                   </button>
                 </Link>
@@ -754,59 +687,56 @@ export default function DashboardStudent() {
             </div>
           </div>
 
-          {/* Student Info */}
-          <div className="bg-[#FFFFFF] rounded-lg sm:rounded-xl shadow-md mt-5 p-4 sm:p-5 text-sm sm:text-base lg:text-[1.125rem]">
+          {/* ========== STUDENT INFO ========== */}
+          <div className="bg-[#15151C] rounded-lg shadow-md mt-5 p-4 text-sm">
             <div className="flex items-center">
-              <img src={ID} alt="ID" className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3" />
-              <p className="font-bold text-sm sm:text-base lg:text-[1.125rem]">{userName}</p>
+              <img src={ID} alt="ID" className="h-5 w-5 mr-2" />
+              <p className="font-bold text-sm text-[#FFFFFF]">{userName}</p>
             </div>
 
-            <hr className="opacity-60 border-[#465746] rounded border-1 my-2 sm:my-3" />
+            <hr className="opacity-60 border-[#FFFFFF]/30 rounded border-1 my-3" />
 
-            <div className="pl-4 sm:pl-8 space-y-1 sm:space-y-2">
+            <div className="pl-4 space-y-2">
               <div className="flex flex-col sm:flex-row">
-                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Student ID:</span>
-                <span className="text-xs sm:text-sm lg:text-base">{userId || "Loading..."}</span>
+                <span className="font-bold text-sm w-28 mb-1 sm:mb-0 text-[#FFFFFF]">Student ID:</span>
+                <span className="text-sm text-[#FFFFFF]/80">{userId || "Loading..."}</span>
               </div>
               <div className="flex flex-col sm:flex-row">
-                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Email:</span>
-                <span className="text-xs sm:text-sm lg:text-base break-all sm:break-normal">{userEmail || "Loading..."}</span>
+                <span className="font-bold text-sm w-28 mb-1 sm:mb-0 text-[#FFFFFF]">Email:</span>
+                <span className="text-sm break-all sm:break-normal text-[#FFFFFF]/80">{userEmail || "Loading..."}</span>
               </div>
               <div className="flex flex-col sm:flex-row">
-                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Course:</span>
-                <span className="text-xs sm:text-sm lg:text-base">{studentCourse || "Loading..."}</span>
+                <span className="font-bold text-sm w-28 mb-1 sm:mb-0 text-[#FFFFFF]">Course:</span>
+                <span className="text-sm text-[#FFFFFF]/80">{studentCourse || "Loading..."}</span>
               </div>
               <div className="flex flex-col sm:flex-row">
-                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Year Level:</span>
-                <span className="text-xs sm:text-sm lg:text-base">{studentYearLevel || "Loading..."}</span>
+                <span className="font-bold text-sm w-28 mb-1 sm:mb-0 text-[#FFFFFF]">Year Level:</span>
+                <span className="text-sm text-[#FFFFFF]/80">{studentYearLevel || "Loading..."}</span>
               </div>
             </div>
           </div>
 
-          {/* Dynamic Warnings - REMOVED the success message */}
+          {/* ========== WARNINGS ========== */}
           {warnings.length > 0 && (
             warnings.map((warning, index) => (
               <Link key={index} to={"/AnalyticsStudent"}>
-                <div className="bg-[#FFFFFF] rounded-lg sm:rounded-xl shadow-md mt-5 p-3 sm:p-4 text-sm sm:text-base lg:text-[1.125rem] border-2 border-transparent hover:border-[#00874E] transition-all duration-200">
+                <div className="bg-[#15151C] rounded-lg shadow-md mt-4 p-3 text-sm border-2 border-transparent hover:border-[#00A15D] transition-all duration-200">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0">
-                    <p className={`font-bold text-xs sm:text-sm lg:text-base sm:flex-1 ${
-                      warning.type === 'critical' ? 'text-red-600' : 'text-yellow-600'
+                    <p className={`font-bold text-sm sm:flex-1 ${
+                      warning.type === 'critical' ? 'text-[#FF6B6B]' : 'text-[#FFB347]'
                     }`}>
                       {warning.type === 'critical' ? 'CRITICAL:' : 'WARNING:'}
                     </p>
-                    <p className="font-bold text-xs sm:text-sm lg:text-base sm:flex-1">{warning.message}</p>
-                    <img src={Details} alt="Details" className="h-6 w-6 sm:h-8 sm:w-8 self-end sm:self-auto"/>
+                    <p className="font-bold text-sm sm:flex-1 text-[#FFFFFF]">{warning.message}</p>
+                    <img src={Details} alt="Details" className="h-6 w-6 self-end sm:self-auto"/>
                   </div>
                   {warning.suggestion && (
-                    <p className="text-xs text-gray-600 mt-2 sm:mt-0 sm:ml-4">{warning.suggestion}</p>
+                    <p className="text-sm text-[#FFFFFF]/60 mt-2 sm:mt-0 sm:ml-4">{warning.suggestion}</p>
                   )}
                 </div>
               </Link>
             ))
           )}
-
-          {/* REMOVED: Quick Analytics Link */}
-
         </div>
       </div>
     </div>

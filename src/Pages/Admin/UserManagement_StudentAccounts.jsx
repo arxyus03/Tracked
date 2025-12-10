@@ -15,8 +15,6 @@ import Search from "../../assets/Search.svg";
 import Details from "../../assets/Details(Light).svg";
 import BackupIcon from "../../assets/Backup(Light).svg";
 import RestoreIcon from "../../assets/Restore(Light).svg";
-
-// Import the Lottie animation JSON file
 import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
 
 export default function UserManagementStudentAccounts() {
@@ -33,7 +31,7 @@ export default function UserManagementStudentAccounts() {
   const [searchTerm, setSearchTerm] = useState("");
   const itemsPerPage = 10;
 
-  // New state for backup/restore modals
+  // Backup/restore modal states
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [backupModalContent, setBackupModalContent] = useState(null);
@@ -41,16 +39,15 @@ export default function UserManagementStudentAccounts() {
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
-  // New state for Year dropdown only (section removed)
+  // Year filter state
   const [yearOpen, setYearOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState("All");
 
-  // Get the section from URL parameters
+  // Get section from URL parameters
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const selectedSection = queryParams.get('section') || 'All';
 
-  // Lottie animation options
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -60,29 +57,23 @@ export default function UserManagementStudentAccounts() {
     }
   };
 
-  // Set sidebar open by default on laptop/desktop, closed on mobile
+  // Responsive sidebar handling
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
+      setIsOpen(window.innerWidth >= 1024);
     };
-
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch students from backend
+  // Fetch students data
   useEffect(() => {
     fetchStudents();
   }, []);
 
   const fetchStudents = () => {
     setLoading(true);
-    setError(null);
     fetch("https://tracked.6minds.site/Admin/StudentAccountsDB/get_students.php")
       .then((res) => res.json())
       .then((data) => {
@@ -93,13 +84,11 @@ export default function UserManagementStudentAccounts() {
         } else if (data.success && Array.isArray(data.students)) {
           setStudents(data.students);
         } else {
-          console.error("Unexpected response format:", data);
           setStudents([]);
           setError("Failed to load students data");
         }
       })
       .catch((err) => {
-        console.error(err);
         setStudents([]);
         setError("Network error. Please check if the server is running.");
       })
@@ -108,7 +97,7 @@ export default function UserManagementStudentAccounts() {
       });
   };
 
-  // Backup function
+  // Backup students data
   const handleBackup = async () => {
     setIsBackingUp(true);
     try {
@@ -120,9 +109,7 @@ export default function UserManagementStudentAccounts() {
       });
       
       if (response.ok) {
-        // Get filename from response headers or generate it
         const filename = `students_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.sql`;
-        
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -145,11 +132,10 @@ export default function UserManagementStudentAccounts() {
         throw new Error(errorText || 'Backup failed');
       }
     } catch (error) {
-      console.error("Error creating backup:", error);
       setBackupModalContent({
         type: 'error',
         title: 'Backup Failed',
-        message: error.message || 'Network error during backup. Please check if the server is running.'
+        message: error.message || 'Network error during backup.'
       });
     } finally {
       setIsBackingUp(false);
@@ -157,12 +143,12 @@ export default function UserManagementStudentAccounts() {
     }
   };
 
-  // Restore function
+  // Initiate restore process
   const handleRestore = async () => {
     setRestoreModalContent({
       type: 'confirmation',
       title: 'Confirm Restore',
-      message: 'Are you sure you want to restore student accounts from the latest backup? This will overwrite existing data.',
+      message: 'Are you sure you want to restore student accounts from the latest backup?',
       confirmText: 'Restore',
       cancelText: 'Cancel'
     });
@@ -199,11 +185,10 @@ export default function UserManagementStudentAccounts() {
         });
       }
     } catch (error) {
-      console.error("Error restoring backup:", error);
       setRestoreModalContent({
         type: 'error',
         title: 'Network Error',
-        message: 'Network error during restore. Please check if the server is running.'
+        message: 'Network error during restore.'
       });
     } finally {
       setIsRestoring(false);
@@ -211,44 +196,37 @@ export default function UserManagementStudentAccounts() {
     }
   };
 
-  // Close backup modal
   const closeBackupModal = () => {
     setShowBackupModal(false);
     setBackupModalContent(null);
   };
 
-  // Close restore modal
   const closeRestoreModal = () => {
     setShowRestoreModal(false);
     setRestoreModalContent(null);
   };
 
-  // Filter students based on selected filters and search term - FIXED VERSION
+  // Filter students based on selected criteria
   const filteredStudents = students.filter(stud => {
-    // Status filter
     if (selectedFilter !== "All" && stud.tracked_Status !== selectedFilter) {
       return false;
     }
 
-    // Year filter - FIXED: Compare numbers instead of number vs text
     if (selectedYear !== "All") {
-      const studentYear = stud.tracked_yearandsec?.charAt(0); // "4" from "4D"
-      const selectedYearNumber = selectedYear.charAt(0); // "4" from "4th"
-      
+      const studentYear = stud.tracked_yearandsec?.charAt(0);
+      const selectedYearNumber = selectedYear.charAt(0);
       if (studentYear !== selectedYearNumber) {
         return false;
       }
     }
 
-    // Section filter from URL
     if (selectedSection !== "All") {
-      const studentSection = stud.tracked_yearandsec?.substring(1); // "D" from "4D"
+      const studentSection = stud.tracked_yearandsec?.substring(1);
       if (studentSection !== selectedSection) {
         return false;
       }
     }
 
-    // Search filter
     if (searchTerm.trim() !== "") {
       const searchLower = searchTerm.toLowerCase();
       const fullName = `${stud.tracked_firstname} ${stud.tracked_middlename} ${stud.tracked_lastname}`.toLowerCase();
@@ -267,13 +245,11 @@ export default function UserManagementStudentAccounts() {
     return true;
   });
 
-  // Handle search input change
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
 
-  // Clear search
   const handleClearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
@@ -309,10 +285,7 @@ export default function UserManagementStudentAccounts() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       
       if (data.success) {
@@ -324,12 +297,10 @@ export default function UserManagementStudentAccounts() {
           )
         );
       } else {
-        console.error("Failed to update status:", data.message);
         alert(`Failed to update student status: ${data.message}`);
       }
     } catch (error) {
-      console.error("Error updating status:", error);
-      alert(`Network error: ${error.message}. Please check if the server is running.`);
+      alert(`Network error: ${error.message}.`);
     } finally {
       setShowArchiveModal(false);
       setSelectedStudent(null);
@@ -366,9 +337,8 @@ export default function UserManagementStudentAccounts() {
       >
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* content of ADMIN USER MANAGEMENT STUDENT ACCOUNT LIST */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-          {/* "Header" */}
+          {/* Page Header */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">
@@ -382,7 +352,6 @@ export default function UserManagementStudentAccounts() {
                 </h1>
               </div>
               
-              {/* Back Button - Visible on all screens */}
               <Link to="/UserManagementStudentSections" className="flex items-center text-[#465746] hover:text-[#00874E] transition-colors duration-200">
                 <img
                   src={BackButton}
@@ -395,7 +364,6 @@ export default function UserManagementStudentAccounts() {
               <span>Student Account Administration</span>
             </div>
             
-            {/* Section Information */}
             <div className="mt-2 text-md sm:text-base text-[#465746] font-medium">
               <span className="font-bold">Section: {selectedSection}</span>
             </div>
@@ -431,11 +399,10 @@ export default function UserManagementStudentAccounts() {
 
           {!loading && (
             <>
-              {/* BUTTONS - New Responsive Layout */}
+              {/* Action Controls */}
               <div className="flex flex-col text-[#465746] gap-3 sm:gap-4">
-                {/* Top Row: Backup/Restore buttons aligned right */}
+                {/* Backup/Restore Buttons */}
                 <div className="flex justify-end gap-2 sm:gap-3 w-full">
-                  {/* Backup Button */}
                   <button 
                     onClick={handleBackup}
                     disabled={isBackingUp}
@@ -465,7 +432,6 @@ export default function UserManagementStudentAccounts() {
                     )}
                   </button>
 
-                  {/* Restore Button */}
                   <button 
                     onClick={handleRestore}
                     disabled={isRestoring}
@@ -496,9 +462,8 @@ export default function UserManagementStudentAccounts() {
                   </button>
                 </div>
 
-                {/* Middle Row: Filter dropdowns aligned right */}
+                {/* Filter Dropdowns */}
                 <div className="flex justify-end gap-2 sm:gap-3 w-full">
-                  {/* Status Filter Dropdown */}
                   <div className="relative">
                     <button
                       onClick={() => setOpen(!open)}
@@ -531,7 +496,6 @@ export default function UserManagementStudentAccounts() {
                     )}
                   </div>
 
-                  {/* Year Filter Dropdown */}
                   <div className="relative">
                     <button
                       onClick={() => setYearOpen(!yearOpen)}
@@ -565,7 +529,7 @@ export default function UserManagementStudentAccounts() {
                   </div>
                 </div>
 
-                {/* Bottom Row: Search Bar - Full width */}
+                {/* Search Bar */}
                 <div className="relative w-full">
                   <input
                     type="text"
@@ -596,7 +560,7 @@ export default function UserManagementStudentAccounts() {
                 </div>
               </div>
 
-              {/* Table */}
+              {/* Students Table */}
               <div className="mt-4 sm:mt-5">
                 {/* Desktop Table */}
                 <div className="hidden lg:block overflow-x-auto">
@@ -681,7 +645,7 @@ export default function UserManagementStudentAccounts() {
                           <Link 
                             to={`/UserManagementStudentAccountDetails?id=${stud.tracked_ID}`}
                           >
-                            <img src={Details} alt="Details" className="h-5 w-5 hover:opacity-70 transition-opacity duration-200" />
+                            <img src={Details} alt="Details" className="h-5 w-5 hover:opacity-70" />
                           </Link>
                         </div>
                       </div>
@@ -733,7 +697,6 @@ export default function UserManagementStudentAccounts() {
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex flex-wrap justify-center mt-5 sm:mt-6 gap-2">
-                    {/* Previous Button */}
                     {currentPage > 1 && (
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
@@ -743,7 +706,6 @@ export default function UserManagementStudentAccounts() {
                       </button>
                     )}
 
-                    {/* Page Numbers */}
                     {Array.from({ length: totalPages }, (_, i) => {
                       const pageNum = i + 1;
                       if (
@@ -777,7 +739,6 @@ export default function UserManagementStudentAccounts() {
                       return null;
                     })}
 
-                    {/* Next Button */}
                     {currentPage < totalPages && (
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}

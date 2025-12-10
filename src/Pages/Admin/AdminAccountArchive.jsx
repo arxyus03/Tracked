@@ -1,32 +1,32 @@
-import React from 'react'
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useState } from "react";
-import Lottie from "lottie-react";
+import Lottie from 'lottie-react';
 
-import Sidebar from "../../Components/Sidebar";
-import Header from "../../Components/Header";
+// Components
+import Sidebar from '../../Components/Sidebar';
+import Header from '../../Components/Header';
 
+// Assets
 import BackButton from '../../assets/BackButton(Light).svg';
 import Archive from '../../assets/Archive(Light).svg';
 import Unarchive from '../../assets/Unarchive.svg';
 import ArrowDown from '../../assets/ArrowDown(Light).svg';
 import Search from '../../assets/Search.svg';
 import SuccessIcon from '../../assets/Success(Green).svg';
-
-// Import the Lottie animation JSON file
-import loadingAnimation from "../../assets/system-regular-716-spinner-three-dots-loop-expand.json";
+import loadingAnimation from '../../assets/system-regular-716-spinner-three-dots-loop-expand.json';
 
 export default function AdminAccountArchive() {
+  // State variables
   const [isOpen, setIsOpen] = useState(true);
   const [open, setOpen] = useState(false);
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [setSelectedFilter] = useState("All");
+  const [setSelectedFilter] = useState('All');
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [isLoading] = useState(false); // Add loading state
-  const [isUnarchiving, setIsUnarchiving] = useState(false); // Add unarchive loading state
+  const [isLoading] = useState(false);
+  const [isUnarchiving, setIsUnarchiving] = useState(false);
 
-  // Lottie animation options
+  // Lottie animation config
   const defaultLottieOptions = {
     loop: true,
     autoplay: true,
@@ -36,17 +36,18 @@ export default function AdminAccountArchive() {
     }
   };
 
+  // Unarchive click handler
   const handleUnarchiveClick = (account) => {
     setSelectedAccount(account);
     setShowUnarchiveModal(true);
   };
 
+  // Confirm unarchive handler
   const confirmUnarchive = () => {
     setIsUnarchiving(true);
-    // Add your unarchive logic here
-    console.log("Unarchiving account:", selectedAccount);
+    console.log('Unarchiving account:', selectedAccount);
     
-    // Simulate API call delay
+    // Simulate API call
     setTimeout(() => {
       setIsUnarchiving(false);
       setShowUnarchiveModal(false);
@@ -55,10 +56,10 @@ export default function AdminAccountArchive() {
     }, 1500);
   };
 
-  // Sample data - replace with your actual data
+  // Sample archived accounts data
   const archivedAccounts = [
-    { id: 1, number: "2025001", name: "Alice Mendoza", email: "alice@example.com", type: "Student", status: "Deactivated" },
-    { id: 2, number: "2025002", name: "Brian Santos", email: "brian@example.com", type: "Professor", status: "Deactivated" }
+    { id: 1, number: '2025001', name: 'Alice Mendoza', email: 'alice@example.com', type: 'Student', status: 'Deactivated' },
+    { id: 2, number: '2025002', name: 'Brian Santos', email: 'brian@example.com', type: 'Professor', status: 'Deactivated' }
   ];
 
   return (
@@ -70,10 +71,9 @@ export default function AdminAccountArchive() {
       `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* main content of ADMIN ACCOUNT ARCHIVE */}
+        {/* Main Content */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-        
-          {/* "Header" */}
+          {/* Header Section */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img 
@@ -114,12 +114,11 @@ export default function AdminAccountArchive() {
 
           {!isLoading && (
             <>
-              {/* BUTTONS */}
+              {/* Control Buttons Section */}
               <div className="flex flex-col sm:flex-row text-[#465746] gap-3 sm:gap-4 sm:justify-between sm:items-center">
-                {/* Filter and Backup BUTTONS */}
+                {/* Filter and Backup Buttons */}
                 <div className="flex flex-wrap gap-2 sm:gap-3">
-                  
-                 {/* Filter Dropdown */}
+                  {/* Filter Dropdown */}
                   <div className="relative">
                     <button
                       onClick={() => setOpen(!open)}
@@ -138,7 +137,7 @@ export default function AdminAccountArchive() {
                         <button 
                           className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                           onClick={() => {
-                            setSelectedFilter("Students");
+                            setSelectedFilter('Students');
                             setOpen(false);
                           }}
                         >
@@ -147,7 +146,7 @@ export default function AdminAccountArchive() {
                         <button 
                           className="block px-3 sm:px-4 py-2 w-full text-left hover:bg-gray-100 text-xs sm:text-sm lg:text-base transition-colors duration-200 cursor-pointer"
                           onClick={() => {
-                            setSelectedFilter("Professor");
+                            setSelectedFilter('Professor');
                             setOpen(false);
                           }}
                         >
@@ -162,7 +161,7 @@ export default function AdminAccountArchive() {
                   </button>
                 </div>
 
-                {/* Search Button */}
+                {/* Search Bar */}
                 <div className="relative flex-1 sm:max-w-xs lg:max-w-md">
                   <input
                     type="text"
@@ -179,13 +178,11 @@ export default function AdminAccountArchive() {
                 </div>
               </div>
 
-              {/* Account Archive Main Content */}
-              {/* Account Request Table */}
+              {/* Accounts Table/Cards */}
               <div className="mt-4 sm:mt-5">
                 {/* Desktop Table */}
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left border-separate border-spacing-y-2 sm:border-spacing-y-3 text-xs sm:text-sm lg:text-base">
-                    {/* Table Header */}
                     <thead>
                       <tr className="text-[#465746] font-bold">
                         <th className="py-2 px-2 sm:px-3">No.</th>
@@ -197,7 +194,6 @@ export default function AdminAccountArchive() {
                       </tr>
                     </thead>
 
-                    {/* Table Body */}
                     <tbody className="text-[#465746]">
                       {archivedAccounts.map((account) => (
                         <tr key={account.id} className="bg-[#fff] rounded-lg shadow hover:bg-gray-50 transition-colors duration-200">
@@ -310,7 +306,7 @@ export default function AdminAccountArchive() {
                   </div>
 
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                    {isUnarchiving ? "Restoring Account..." : "Restore Account?"}
+                    {isUnarchiving ? 'Restoring Account...' : 'Restore Account?'}
                   </h3>
                   
                   <div className="mt-4 mb-6">
