@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ArrowDown from "../assets/ArrowDown(Light).svg";
+import ArrowDown from "../../assets/ArrowDown(Light).svg";
 
 export default function AnnouncementCardStudent({
   subject,

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-
 import Profile from '../../assets/Profile.svg';
 import BackButton from '../../assets/BackButton(Light).svg';
+import CopyIcon from '../../assets/Copy(Light).svg'; // Add this SVG import
 
 export default function ProfileStudent() {
   const [isOpen, setIsOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -77,6 +78,30 @@ export default function ProfileStudent() {
     if (!userData?.tracked_yearandsec) return "N/A";
     const section = userData.tracked_yearandsec.substring(1);
     return section || "N/A";
+  };
+
+  const copyToClipboard = (text) => {
+    if (!text || text === "N/A") return;
+    
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Fallback copy failed: ', err);
+      }
+      document.body.removeChild(textArea);
+    });
   };
 
   return (
@@ -168,9 +193,30 @@ export default function ProfileStudent() {
                     <span className="text-sm text-[#FFFFFF]">{getSection()}</span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
                     <span className="text-sm font-medium text-[#FFFFFF]/70">Temporary Password :</span>
-                    <span className="text-sm font-semibold text-[#767EE0]">{userData?.temporary_password || "N/A"}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-[#767EE0]">
+                        {userData?.temporary_password || "N/A"}
+                      </span>
+                      {userData?.temporary_password && userData.temporary_password !== "N/A" && (
+                        <button
+                          onClick={() => copyToClipboard(userData.temporary_password)}
+                          className="relative group p-1 rounded hover:bg-[#767EE0]/20 transition-colors cursor-pointer"
+                          title="Copy password"
+                        >
+                          <img 
+                            src={CopyIcon} 
+                            alt="Copy" 
+                            className={`w-4 h-4 invert ${copied ? 'opacity-50' : ''}`} 
+                          />
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-[#23232C] text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                            {copied ? 'Copied!' : 'Copy to clipboard'}
+                          </div>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -183,7 +229,7 @@ export default function ProfileStudent() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <span className="text-sm font-medium text-[#FFFFFF]/70">Subjects Enrolled :</span>
-                    <span className="text-sm text-[#FFFFFF]">
+                    <div className="text-sm text-[#FFFFFF]">
                       {userData?.enrolled_subjects && userData.enrolled_subjects.length > 0 
                         ? userData.enrolled_subjects.map((subject, index) => (
                             <div key={index} className="mb-1">
@@ -192,7 +238,7 @@ export default function ProfileStudent() {
                           ))
                         : "No subjects enrolled"
                       }
-                    </span>
+                    </div>
                   </div>
                 </div>
               </div>

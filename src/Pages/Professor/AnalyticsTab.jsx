@@ -1,24 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar
+  PieChart, Pie, Cell,
+  BarChart, Bar,
+  ResponsiveContainer,
+  Tooltip, 
+  Legend, 
+  CartesianGrid, 
+  XAxis, 
+  YAxis
 } from 'recharts';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
+import StudentPerformanceCard from "../../Components/ProfessorComponents/StudentPerformanceCard";
+import PerformanceByAssessmentType from "../../Components/ProfessorComponents/PerformanceByAssessmentType";
+import PerformanceDistributionCard from "../../Components/ProfessorComponents/PerformanceDistributionCard";
+import StudentPerformanceRankingCard from "../../Components/ProfessorComponents/StudentPerformanceRankingCard";
 
-import BackButton from '../../assets/BackButton(Light).svg';
+import BackButton from '../../assets/BackButton.svg';
 import Search from "../../assets/Search.svg";
-import ClassManagementIcon from "../../assets/ClassManagement(Light).svg"; 
-import Announcement from "../../assets/Announcement(Light).svg";
-import Classwork from "../../assets/Classwork(Light).svg";
-import GradeIcon from "../../assets/Grade(Light).svg";
-import AnalyticsIcon from "../../assets/Analytics(Light).svg";
-import AttendanceIcon from '../../assets/Attendance(Light).svg';
+import ClassManagementIcon from "../../assets/ClassManagement.svg"; 
+import Announcement from "../../assets/Announcement.svg";
+import Classwork from "../../assets/Classwork.svg";
+import GradeIcon from "../../assets/Grade.svg";
+import AnalyticsIcon from "../../assets/Analytics.svg";
+import AttendanceIcon from '../../assets/Attendance.svg';
 
-// Color palette for charts
-const COLORS = ['#00874E', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+// Color palette for charts (adjusted for dark mode)
+const COLORS = ['#00874E', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#B39DDB', '#98D8C8'];
 const ACTIVITY_TYPES = ['Assignment', 'Quiz', 'Activity', 'Project', 'Laboratory', 'Attendance'];
 
 export default function AnalyticsTab() {
@@ -34,8 +44,6 @@ export default function AnalyticsTab() {
   const [selectedActivityType, setSelectedActivityType] = useState('All');
   const [error, setError] = useState(null);
   const [barChartSort, setBarChartSort] = useState('desc');
-  const [failingStudents, setFailingStudents] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(true);
   const [attendanceData, setAttendanceData] = useState(null);
   const [activitiesData, setActivitiesData] = useState(null);
   const [studentsData, setStudentsData] = useState(null);
@@ -182,26 +190,10 @@ export default function AnalyticsTab() {
     
     if (!hasActivities && !hasAttendance) {
       setAnalyticsData(null);
-      setFailingStudents([]);
       return;
     }
 
     const studentPerformance = calculateStudentPerformance(activities, students);
-    
-    const failing = studentPerformance
-      .filter(student => student.averageGrade < 60)
-      .map(student => ({
-        studentId: student.studentId,
-        studentName: student.studentName,
-        averageGrade: student.averageGrade,
-        submissionRate: student.submissionRate,
-        gradedActivities: student.gradedActivities,
-        totalActivities: student.totalActivities,
-        performanceByType: student.performanceByType,
-        attendanceRate: student.attendanceRate
-      }));
-    
-    setFailingStudents(failing);
     
     const lineChartData = prepareLineChartData(activities, studentPerformance);
     const pieChartData = preparePieChartData(studentPerformance);
@@ -407,7 +399,7 @@ export default function AnalyticsTab() {
         students: data.students || data.count,
         color: COLORS[ACTIVITY_TYPES.indexOf(type) % COLORS.length]
       }))
-      .sort((a, b) => b.average - a.average);
+      .sort((a, b) => b.average - b.average);
   };
 
   const calculateSummary = (studentPerformance, activities, attendanceData) => {
@@ -529,7 +521,8 @@ export default function AnalyticsTab() {
       grade: student.averageGrade,
       submissions: student.submittedActivities,
       totalActivities: student.totalActivities,
-      rank: sortOrder === 'desc' ? index + 1 : sortedPerformance.length - index
+      rank: sortOrder === 'desc' ? index + 1 : sortedPerformance.length - index,
+      totalStudents: studentPerformance.length
     }));
   };
 
@@ -616,10 +609,6 @@ export default function AnalyticsTab() {
     return typeData;
   };
 
-  const filteredLineChartData = analyticsData?.lineChartData.filter(item => 
-    selectedActivityType === 'All' || item.activityType === selectedActivityType
-  ) || [];
-
   // Helper function to extract surname from full name
   const getStudentDisplayName = (studentId, studentName) => {
     if (!studentName) {
@@ -636,90 +625,24 @@ export default function AnalyticsTab() {
     return `${surname} (${studentId})`;
   };
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border border-gray-300 rounded shadow-lg max-w-xs">
-          <p className="font-semibold text-[#465746] mb-1">{label}</p>
-          {payload.map((entry, index) => {
-            // Find the student's name for this data point
-            let displayName = entry.name;
-            if (entry.name === 'Class Average') {
-              displayName = 'Class Average';
-            } else {
-              // Find the student in analyticsData to get their name
-              const student = analyticsData?.students?.find(s => s.user_ID === entry.name);
-              if (student) {
-                displayName = getStudentDisplayName(student.user_ID, student.user_Name);
-              } else {
-                displayName = `Student ${entry.name}`;
-              }
-            }
-            
-            return (
-              <div key={index} className="flex items-center justify-between">
-                <span style={{ color: entry.color }} className="text-sm">
-                  {displayName}:
-                </span>
-                <span className="text-sm font-medium ml-2">
-                  {entry.value !== null ? `${entry.value}%` : 'Not submitted'}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const BarChartTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      // Find the student's name
-      const student = analyticsData?.studentPerformance?.find(s => s.studentId === label);
-      const displayName = student ? getStudentDisplayName(student.studentId, student.studentName) : `Student ${label}`;
-      
-      return (
-        <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
-          <p className="font-semibold text-[#465746] mb-1">
-            {displayName}
-          </p>
-          {payload.map((entry, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <span style={{ color: entry.color }} className="text-sm">
-                {entry.name === 'grade' ? 'Average Grade' : 
-                 entry.name === 'submissions' ? 'Submissions' : 
-                 entry.name === 'totalActivities' ? 'Total Activities' : entry.name}:
-              </span>
-              <span className="text-sm font-medium ml-2">
-                {entry.name === 'grade' ? `${entry.value}%` : entry.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
-
   const AssessmentTypeBarTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
-          <p className="font-semibold text-[#465746] mb-1">{label}</p>
+        <div className="bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-xl p-3">
+          <p className="font-semibold text-[#FFFFFF] mb-1">{label}</p>
           <div className="space-y-1">
             <div className="flex justify-between">
-              <span className="text-sm">Average Performance:</span>
-              <span className="text-sm font-medium ml-2">{data.average}%</span>
+              <span className="text-sm text-[#FFFFFF]/80">Average Performance:</span>
+              <span className="text-sm font-medium ml-2 text-[#FFFFFF]">{data.average}%</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm">Students with data:</span>
-              <span className="text-sm font-medium ml-2">{data.students}</span>
+              <span className="text-sm text-[#FFFFFF]/80">Students with data:</span>
+              <span className="text-sm font-medium ml-2 text-[#FFFFFF]">{data.students}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm">Data points:</span>
-              <span className="text-sm font-medium ml-2">{data.count}</span>
+              <span className="text-sm text-[#FFFFFF]/80">Data points:</span>
+              <span className="text-sm font-medium ml-2 text-[#FFFFFF]">{data.count}</span>
             </div>
           </div>
         </div>
@@ -739,198 +662,6 @@ export default function AnalyticsTab() {
         barChartData: updatedBarChartData
       }));
     }
-  };
-
-  const FailingStudentRecommendations = () => {
-    if (failingStudents.length === 0 || !showSuggestions) return null;
-
-    return (
-      <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-lg font-semibold text-amber-800 flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            Student Intervention Recommendations
-          </h3>
-          <button 
-            onClick={() => setShowSuggestions(false)}
-            className="text-amber-600 hover:text-amber-800"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        
-        <p className="text-amber-700 mb-4">
-          <strong>{failingStudents.length} student{failingStudents.length !== 1 ? 's' : ''}</strong> 
-          {failingStudents.length !== 1 ? ' are' : ' is'} performing below passing grade (60%). 
-          Consider the following interventions:
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {failingStudents.map((student) => {
-            const attendanceSummary = calculateAttendanceRecord(student.studentId);
-            const attendanceRate = attendanceSummary ? 
-              ((attendanceSummary.present + attendanceSummary.excused) / attendanceSummary.totalDays) * 100 : 0;
-            
-            // Get display name with surname
-            const displayName = getStudentDisplayName(student.studentId, student.studentName);
-            
-            return (
-              <div key={student.studentId} className="bg-white rounded p-3 border border-amber-100">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <span className="font-medium text-gray-800">{displayName}</span>
-                    <p className="text-sm text-gray-600">{student.studentName}</p>
-                  </div>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    student.averageGrade < 40 ? 'bg-red-100 text-red-800' : 
-                    student.averageGrade < 50 ? 'bg-orange-100 text-orange-800' : 
-                    'bg-amber-100 text-amber-800'
-                  }`}>
-                    Average: {student.averageGrade}%
-                  </span>
-                </div>
-                
-                <div className="text-sm text-gray-600 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Submission Rate:</span>
-                    <span className={`font-medium ${
-                      student.submissionRate < 50 ? 'text-red-600' : 
-                      student.submissionRate < 70 ? 'text-amber-600' : 
-                      'text-green-600'
-                    }`}>
-                      {student.submissionRate}%
-                    </span>
-                  </div>
-                  
-                  {attendanceSummary && attendanceSummary.totalDays > 0 && (
-                    <div className="flex justify-between">
-                      <span>Attendance Rate:</span>
-                      <span className={`font-medium ${
-                        attendanceRate < 70 ? 'text-red-600' : 
-                        attendanceRate < 85 ? 'text-amber-600' : 
-                        'text-green-600'
-                      }`}>
-                        {Math.round(attendanceRate)}%
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between">
-                    <span>Graded Activities:</span>
-                    <span>{student.gradedActivities} of {student.totalActivities}</span>
-                  </div>
-                </div>
-                
-                {attendanceSummary && attendanceSummary.totalDays > 0 && (
-                  <div className="mt-2 pt-2 border-t border-gray-100">
-                    <p className="text-xs font-medium text-gray-700 mb-1">Attendance Breakdown:</p>
-                    <div className="grid grid-cols-4 gap-1 text-xs text-center">
-                      <div className="bg-green-100 text-green-800 p-1 rounded">
-                        <div className="font-bold">{attendanceSummary.present}</div>
-                        <div>Present</div>
-                      </div>
-                      <div className="bg-yellow-100 text-yellow-800 p-1 rounded">
-                        <div className="font-bold">{attendanceSummary.late}</div>
-                        <div>Late</div>
-                      </div>
-                      <div className="bg-red-100 text-red-800 p-1 rounded">
-                        <div className="font-bold">{attendanceSummary.absent}</div>
-                        <div>Absent</div>
-                      </div>
-                      <div className="bg-blue-100 text-blue-800 p-1 rounded">
-                        <div className="font-bold">{attendanceSummary.excused}</div>
-                        <div>Excused</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {Object.keys(student.performanceByType).length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-gray-100">
-                    <p className="text-xs font-medium text-gray-700 mb-1">Performance by Activity Type:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {Object.entries(student.performanceByType).map(([type, grade]) => (
-                        <span key={type} className="text-xs px-2 py-0.5 bg-gray-100 rounded">
-                          {type}: {grade}%
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="mt-3 pt-2 border-t border-gray-100">
-                  <p className="text-xs font-medium text-gray-700 mb-1">Recommended Actions:</p>
-                  <ul className="text-xs text-gray-600 list-disc pl-4 space-y-1">
-                    {student.submissionRate < 70 && (
-                      <li>Schedule a one-on-one meeting to discuss submission issues</li>
-                    )}
-                    {attendanceRate < 70 && (
-                      <li>Address attendance concerns and discuss importance of regular class attendance</li>
-                    )}
-                    {student.averageGrade < 50 && (
-                      <li>Provide additional resources or tutoring sessions</li>
-                    )}
-                    {Object.entries(student.performanceByType).some(([_, grade]) => grade < 60) && (
-                      <li>Review specific activity types where student is struggling</li>
-                    )}
-                    {attendanceRate < 70 && student.submissionRate < 70 && (
-                      <li>Consider involving academic advisor for attendance and submission issues</li>
-                    )}
-                    <li>Set up progress monitoring with weekly check-ins</li>
-                  </ul>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        
-        <div className="bg-blue-50 border border-blue-100 rounded p-3">
-          <p className="text-sm font-medium text-blue-800 mb-1">General Recommendations:</p>
-          <ul className="text-sm text-blue-700 list-disc pl-5 space-y-1">
-            <li>Monitor correlation between attendance rates and academic performance</li>
-            <li>Consider implementing additional support sessions for struggling students</li>
-            <li>Review assessment methods for activities with consistently low scores</li>
-            <li>Provide clear feedback on assignments to help students improve</li>
-            <li>Encourage peer-to-peer learning and study groups</li>
-            <li>Track attendance patterns and address chronic absenteeism early</li>
-          </ul>
-        </div>
-      </div>
-    );
-  };
-
-  const FailingStudentsSummary = () => {
-    if (failingStudents.length === 0) return null;
-    
-    return (
-      <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg shadow-md p-4 border-l-4 border-red-500">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-red-700">Students Needing Attention</h3>
-            <p className="text-2xl font-bold text-red-600">{failingStudents.length}</p>
-            <p className="text-xs text-red-600 mt-1">Below passing grade (60%)</p>
-          </div>
-          <button 
-            onClick={() => {
-              const element = document.getElementById('student-intervention');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-md transition-colors"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-            </svg>
-            View Details
-          </button>
-        </div>
-      </div>
-    );
   };
 
   const reloadAllData = async () => {
@@ -959,8 +690,8 @@ export default function AnalyticsTab() {
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
           <div className="p-5 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
-            <p className="mt-3 text-gray-600">Loading Student Progress Analytics...</p>
-            <p className="text-sm text-gray-500 mt-1">This may take a moment as we load all data</p>
+            <p className="mt-3 text-[#FFFFFF]/80">Loading Student Progress Analytics...</p>
+            <p className="text-sm text-[#FFFFFF]/60 mt-1">This may take a moment as we load all data</p>
           </div>
         </div>
       </div>
@@ -968,13 +699,14 @@ export default function AnalyticsTab() {
   }
 
   return (
-    <div>
+    <div className="bg-[#15151C] min-h-screen">
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
         <div className="p-4 sm:p-5 md:p-6 lg:p-8">
           
+          {/* ========== PAGE HEADER ========== */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-center mb-2">
               <img
@@ -982,37 +714,38 @@ export default function AnalyticsTab() {
                 alt="Analytics"
                 className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
+              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#FFFFFF]">
                 Student Progress Tracking System
               </h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
+            <p className="text-sm sm:text-base lg:text-lg text-[#FFFFFF]/80">
               Integrated Academic Data Analytics & Performance Insights
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+          {/* ========== SUBJECT INFORMATION - UPDATED TO WHITE AND SMALLER ========== */}
+          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
               <span>{classInfo?.subject_code || subjectCode || 'N/A'}</span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'N/A'}</span>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Section:</span>
+                <span className="font-semibold">SECTION:</span>
                 <span>{classInfo?.section || 'N/A'}</span>
               </div>
-              <div className="w-full flex justify-end">
+              <div className="flex justify-end">
                 <Link to="/ClassManagement">
                   <img 
                     src={BackButton} 
                     alt="Back" 
-                    className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity" 
+                    className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity brightness-0 invert" 
                     title="Back to Class Management"
                   />
                 </Link>
@@ -1020,96 +753,102 @@ export default function AnalyticsTab() {
             </div>
           </div>
 
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+          <hr className="border-[#FFFFFF]/20 mb-4" />
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full mt-4 sm:mt-5 gap-3">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+          {/* ========== ACTION BUTTONS ========== */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {/* Announcement Button */}
               <Link to={`/Class?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto" title="Announcement">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 bg-[#00A15D]/20 text-[#00A15D] border-2 border-[#00A15D]/30 font-semibold text-sm rounded-md shadow-md hover:bg-[#00A15D]/30 transition-all duration-300 cursor-pointer w-full sm:w-auto">
                   <img 
                     src={Announcement} 
                     alt="" 
-                    className="h-4 w-4 sm:h-5 sm:w-5"
+                    className="h-4 w-4 brightness-0 invert"
                   />
-                  <span className="sm:inline">Announcement</span>
+                  <span className="sm:inline">Announcements</span>
                 </button>
               </Link>
 
-              <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-4 sm:w-auto">
-                <Link to={`/ClassworkTab?code=${subjectCode}`} className="min-w-0">
-                  <button className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full" title="Class Work">
-                    <img 
-                      src={Classwork} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
-                    />
-                    <span className="whitespace-nowrap truncate">Class work</span>
-                  </button>
-                </Link>
+              {/* Classwork Button */}
+              <Link to={`/ClassworkTab?code=${subjectCode}`} className="min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 bg-[#767EE0]/20 text-[#767EE0] border-2 border-[#767EE0]/30 font-semibold text-sm rounded-md shadow-md hover:bg-[#767EE0]/30 transition-all duration-300 cursor-pointer w-full">
+                  <img 
+                    src={Classwork} 
+                    alt="" 
+                    className="h-4 w-4 flex-shrink-0 brightness-0 invert"
+                  />
+                  <span className="whitespace-nowrap truncate">Class Work</span>
+                </button>
+              </Link>
 
-                <Link to={`/Attendance?code=${subjectCode}`} className="sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#fff4e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffebd4] transition-all duration-300 cursor-pointer w-full sm:w-auto" title="Attendance">
-                    <img 
-                      src={AttendanceIcon}
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Attendance</span>
-                  </button>
-                </Link>
+              {/* Attendance Button */}
+              <Link to={`/Attendance?code=${subjectCode}`} className="sm:flex-initial">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 bg-[#FFA600]/20 text-[#FFA600] border-2 border-[#FFA600]/30 font-semibold text-sm rounded-md shadow-md hover:bg-[#FFA600]/30 transition-all duration-300 cursor-pointer w-full sm:w-auto">
+                  <img 
+                    src={AttendanceIcon}
+                    alt="" 
+                    className="h-4 w-4 brightness-0 invert"
+                  />
+                  <span className="sm:inline">Attendance</span>
+                </button>
+              </Link>
 
-                <Link to={`/GradeTab?code=${subjectCode}`} className="sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#ffe6e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffd4d4] transition-all duration-300 cursor-pointer w-full sm:w-auto" title="Grade">
-                    <img 
-                      src={GradeIcon} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Grade</span>
-                  </button>
-                </Link>
+              {/* Grade Button */}
+              <Link to={`/GradeTab?code=${subjectCode}`} className="sm:flex-initial">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 bg-[#A15353]/20 text-[#A15353] border-2 border-[#A15353]/30 font-semibold text-sm rounded-md shadow-md hover:bg-[#A15353]/30 transition-all duration-300 cursor-pointer w-full sm:w-auto">
+                  <img 
+                    src={GradeIcon} 
+                    alt="" 
+                    className="h-4 w-4 brightness-0 invert"
+                  />
+                  <span className="sm:inline">Grade</span>
+                </button>
+              </Link>
 
-                <Link to={`/AnalyticsTab?code=${subjectCode}`} className="sm:flex-initial">
-                  <button className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-[#c4a0ff] hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto" title="Analytics">
-                    <img 
-                      src={AnalyticsIcon} 
-                      alt="" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Analytics</span>
-                  </button>
-                </Link>
-              </div>
+              {/* Analytics Button - Active */}
+              <Link to={`/AnalyticsTab?code=${subjectCode}`} className="sm:flex-initial">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 bg-[#B39DDB]/20 text-[#B39DDB] border-2 border-[#B39DDB]/30 font-semibold text-sm rounded-md shadow-md hover:bg-[#B39DDB]/30 transition-all duration-300 cursor-pointer w-full sm:w-auto">
+                  <img 
+                    src={AnalyticsIcon} 
+                    alt="" 
+                    className="h-4 w-4 brightness-0 invert"
+                  />
+                  <span className="sm:inline">Analytics</span>
+                </button>
+              </Link>
             </div>
 
-            <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+            {/* ========== ICON BUTTONS ========== */}
+            <div className="flex items-center gap-2 justify-end sm:justify-start">
               <Link to={`/StudentList?code=${subjectCode}`}>
-                <button className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer" title="Student List">
+                <button className="p-2 bg-[#2A2A35] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer" title="Student List">
                   <img 
                     src={ClassManagementIcon} 
                     alt="ClassManagement" 
-                    className="h-5 w-5 sm:h-6 sm:w-6" 
+                    className="h-4 w-4 brightness-0 invert" 
                   />
                 </button>
               </Link>
             </div>
           </div>
 
-          <div className="mt-6 sm:mt-8">
-            <div className="flex flex-col sm:flex-row gap-4">
+          {/* ========== EVERYTHING BELOW ACTION BUTTONS MADE SMALLER ========== */}
+          <div className="mt-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 max-w-md">
                 <input
                   type="text"
                   placeholder="Search by Student ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
+                  className="w-full h-10 rounded-md px-3 py-2 pr-10 shadow-md outline-none bg-[#2A2A35] text-[#FFFFFF] text-sm border-2 border-transparent focus:border-[#00874E] transition-colors placeholder:text-[#FFFFFF]/50"
                 />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" title="Search">
+                <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#FFFFFF]/50" title="Search">
                   <img
                     src={Search}
                     alt="Search"
-                    className="h-5 w-5 sm:h-6 sm:w-6"
+                    className="h-4 w-4 brightness-0 invert"
                   />
                 </button>
               </div>
@@ -1118,7 +857,7 @@ export default function AnalyticsTab() {
                 <select
                   value={selectedActivityType}
                   onChange={(e) => setSelectedActivityType(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00874E] focus:border-transparent bg-white"
+                  className="px-2 py-1.5 border border-[#3A3A45] rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[#00874E] focus:border-transparent bg-[#2A2A35] text-[#FFFFFF]"
                 >
                   <option value="All">All Types</option>
                   {ACTIVITY_TYPES.filter(type => type !== 'Attendance').map(type => (
@@ -1130,71 +869,70 @@ export default function AnalyticsTab() {
           </div>
 
           {analyticsData ? (
-            <div className="mt-6 sm:mt-8 space-y-8">
+            <div className="mt-4 space-y-6">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-[#00874E] hover:shadow-lg transition-shadow">
-                  <h3 className="text-sm font-semibold text-gray-600">Total Students</h3>
-                  <p className="text-2xl font-bold text-[#465746]">{analyticsData.summary.totalStudents}</p>
-                  <p className="text-xs text-gray-500 mt-1">Enrolled in class</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#00874E] hover:shadow-lg transition-shadow">
+                  <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Total Students</h3>
+                  <p className="text-lg font-bold text-[#FFFFFF]">{analyticsData.summary.totalStudents}</p>
+                  <p className="text-xs text-[#FFFFFF]/40">Enrolled in class</p>
                 </div>
-                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-[#4ECDC4] hover:shadow-lg transition-shadow">
-                  <h3 className="text-sm font-semibold text-gray-600">Learning Activities</h3>
-                  <p className="text-2xl font-bold text-[#465746]">{analyticsData.summary.totalActivities}</p>
-                  <p className="text-xs text-gray-500 mt-1">Assignments & Assessments</p>
+                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#4ECDC4] hover:shadow-lg transition-shadow">
+                  <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Learning Activities</h3>
+                  <p className="text-lg font-bold text-[#FFFFFF]">{analyticsData.summary.totalActivities}</p>
+                  <p className="text-xs text-[#FFFFFF]/40">Assignments & Assessments</p>
                 </div>
-                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-[#45B7D1] hover:shadow-lg transition-shadow">
-                  <h3 className="text-sm font-semibold text-gray-600">Class Average</h3>
-                  <p className="text-2xl font-bold text-[#465746]">
+                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#45B7D1] hover:shadow-lg transition-shadow">
+                  <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Class Average</h3>
+                  <p className="text-lg font-bold text-[#FFFFFF]">
                     {analyticsData.summary.averageGrade}%
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Overall Performance</p>
+                  <p className="text-xs text-[#FFFFFF]/40">Overall Performance</p>
                 </div>
-                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-[#FF6B6B] hover:shadow-lg transition-shadow">
-                  <h3 className="text-sm font-semibold text-gray-600">Engagement Rate</h3>
-                  <p className="text-2xl font-bold text-[#465746]">
+                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#FF6B6B] hover:shadow-lg transition-shadow">
+                  <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Engagement Rate</h3>
+                  <p className="text-lg font-bold text-[#FFFFFF]">
                     {analyticsData.summary.averageSubmissionRate}%
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Average Submission Rate</p>
+                  <p className="text-xs text-[#FFFFFF]/40">Average Submission Rate</p>
                 </div>
-                <FailingStudentsSummary />
               </div>
 
               {/* Always show attendance section if we have data */}
               {analyticsData.summary.averageAttendanceRate > 0 ? (
-                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-[#96CEB4] hover:shadow-lg transition-shadow">
+                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#96CEB4] hover:shadow-lg transition-shadow">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-600">Average Attendance</h3>
-                      <p className="text-2xl font-bold text-[#465746]">
+                      <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Average Attendance</h3>
+                      <p className="text-lg font-bold text-[#FFFFFF]">
                         {analyticsData.summary.averageAttendanceRate}%
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-[#FFFFFF]/40">
                         {analyticsData.summary.totalAttendanceDays || 0} days tracked
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm text-gray-600">Attendance Rate Distribution</div>
-                      <div className="flex items-center gap-1 mt-1">
-                        <div className="w-16 h-2 bg-red-500 rounded-full"></div>
-                        <div className="w-16 h-2 bg-yellow-500 rounded-full"></div>
-                        <div className="w-16 h-2 bg-green-500 rounded-full"></div>
+                      <div className="text-xs text-[#FFFFFF]/60">Attendance Rate Distribution</div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <div className="w-12 h-1.5 bg-[#EF5350] rounded-full"></div>
+                        <div className="w-12 h-1.5 bg-[#FFB74D] rounded-full"></div>
+                        <div className="w-12 h-1.5 bg-[#66BB6A] rounded-full"></div>
                       </div>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-gray-300 hover:shadow-lg transition-shadow">
+                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#3A3A45] hover:shadow-lg transition-shadow">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-600">Attendance Data</h3>
-                      <p className="text-2xl font-bold text-gray-400">Not Available</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        No attendance records found for this subject
+                      <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Attendance Data</h3>
+                      <p className="text-lg font-bold text-[#FFFFFF]/40">Not Available</p>
+                      <p className="text-xs text-[#FFFFFF]/40">
+                        No attendance records found
                       </p>
                     </div>
                     <Link to={`/Attendance?code=${subjectCode}`}>
-                      <button className="px-4 py-2 bg-[#00874E] text-white rounded hover:bg-[#006e3d] transition-colors text-sm">
+                      <button className="px-2 py-1.5 bg-[#00A15D]/20 text-[#00A15D] border-2 border-[#00A15D]/30 rounded-md shadow-md hover:bg-[#00A15D]/30 transition-all duration-300 text-xs">
                         Take Attendance
                       </button>
                     </Link>
@@ -1202,791 +940,57 @@ export default function AnalyticsTab() {
                 </div>
               )}
 
-              <div id="student-intervention">
-                <FailingStudentRecommendations />
+              {/* Use the new StudentPerformanceCard component */}
+              <StudentPerformanceCard 
+                analyticsData={analyticsData}
+                selectedActivityType={selectedActivityType}
+                setSelectedActivityType={setSelectedActivityType}
+                getStudentDisplayName={getStudentDisplayName}
+              />
+
+              {/* Separated Chart Components */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <PerformanceDistributionCard 
+                  pieChartData={analyticsData.pieChartData}
+                  totalStudents={analyticsData.summary.totalStudents}
+                />
+
+                <StudentPerformanceRankingCard
+                  barChartData={analyticsData.barChartData}
+                  barChartSort={barChartSort}
+                  handleBarChartSortChange={handleBarChartSortChange}
+                  totalStudents={analyticsData.students.length}
+                  getStudentDisplayName={getStudentDisplayName}
+                />
               </div>
 
-              {/* Average Performance by Assessment Type Bar Graph */}
-              {/* <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                  Average Performance by Assessment Type
-                </h3>
-                <p className="text-sm text-gray-500 mb-6">
-                  Class average performance across different types of assessments and attendance
-                </p>
-                
-                {analyticsData.assessmentTypeBarData.length > 0 ? (
-                  <>
-                    <div className="h-80 min-h-0">
-                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                        <BarChart
-                          data={analyticsData.assessmentTypeBarData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                          <XAxis 
-                            dataKey="type" 
-                            angle={-45}
-                            textAnchor="end"
-                            height={60}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <YAxis 
-                            label={{ value: 'Average Performance (%)', angle: -90, position: 'insideLeft' }}
-                            domain={[0, 100]}
-                            tick={{ fontSize: 12 }}
-                          />
-                          <Tooltip content={<AssessmentTypeBarTooltip />} />
-                          <Bar 
-                            dataKey="average" 
-                            name="Average Performance"
-                            radius={[4, 4, 0, 0]}
-                          >
-                            {analyticsData.assessmentTypeBarData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                    
-                    <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {analyticsData.assessmentTypeBarData.map((item, index) => (
-                        <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-gray-700 text-sm">{item.type}</span>
-                            <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-700 rounded">
-                              {item.students} students
-                            </span>
-                          </div>
-                          <div className="flex items-baseline">
-                            <span className="text-2xl font-bold text-[#465746]">{item.average}%</span>
-                            <span className="text-xs text-gray-500 ml-1">average</span>
-                          </div>
-                          <div className="mt-2 flex items-center">
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="h-2 rounded-full"
-                                style={{ 
-                                  width: `${item.average}%`,
-                                  backgroundColor: item.color || COLORS[index % COLORS.length]
-                                }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-6 pt-6 border-t border-gray-200">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Insights & Recommendations:</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {analyticsData.assessmentTypeBarData
-                          .filter(item => item.average < 70)
-                          .map((item, index) => (
-                            <div key={index} className="bg-amber-50 border border-amber-100 rounded-lg p-4">
-                              <div className="flex items-center mb-2">
-                                <div 
-                                  className="w-3 h-3 rounded-full mr-2"
-                                  style={{ backgroundColor: item.color || COLORS[index % COLORS.length] }}
-                                ></div>
-                                <h5 className="font-medium text-amber-800">{item.type} Needs Attention</h5>
-                              </div>
-                              <p className="text-sm text-amber-700 mb-2">
-                                Average score of {item.average}% is below the 70% threshold.
-                              </p>
-                              <ul className="text-xs text-amber-600 list-disc pl-4 space-y-1">
-                                <li>Review difficulty level of {item.type.toLowerCase()} assessments</li>
-                                <li>Consider providing additional resources for {item.type.toLowerCase()}</li>
-                                <li>Schedule review sessions focusing on {item.type.toLowerCase()} topics</li>
-                                <li>Analyze individual student performance in this category</li>
-                              </ul>
-                            </div>
-                          ))}
-                        
-                        {analyticsData.assessmentTypeBarData
-                          .filter(item => item.average >= 90)
-                          .map((item, index) => (
-                            <div key={index} className="bg-green-50 border border-green-100 rounded-lg p-4">
-                              <div className="flex items-center mb-2">
-                                <div 
-                                  className="w-3 h-3 rounded-full mr-2"
-                                  style={{ backgroundColor: item.color || COLORS[index % COLORS.length] }}
-                                ></div>
-                                <h5 className="font-medium text-green-800">{item.type} Strength</h5>
-                              </div>
-                              <p className="text-sm text-green-700 mb-2">
-                                Excellent average score of {item.average}% in this category.
-                              </p>
-                              <ul className="text-xs text-green-600 list-disc pl-4 space-y-1">
-                                <li>Students are performing well in {item.type.toLowerCase()}</li>
-                                <li>Consider maintaining current teaching methods for this category</li>
-                                <li>Use successful strategies from this category in other areas</li>
-                              </ul>
-                            </div>
-                          ))}
-                      </div>
-                      
-                      {analyticsData.assessmentTypeBarData
-                        .filter(item => item.type === 'Attendance' && item.average < 85)
-                        .map((item, index) => (
-                          <div key={index} className="mt-4 bg-blue-50 border border-blue-100 rounded-lg p-4">
-                            <div className="flex items-center mb-2">
-                              <div 
-                                className="w-3 h-3 rounded-full mr-2"
-                                style={{ backgroundColor: item.color || COLORS[5 % COLORS.length] }}
-                              ></div>
-                              <h5 className="font-medium text-blue-800">Attendance Analysis</h5>
-                            </div>
-                            <p className="text-sm text-blue-700 mb-2">
-                              Attendance rate of {item.average}% suggests potential room for improvement.
-                            </p>
-                            <ul className="text-xs text-blue-600 list-disc pl-4 space-y-1">
-                              <li>Monitor attendance patterns for specific days/times</li>
-                              <li>Consider implementing attendance incentives</li>
-                              <li>Review correlation between attendance and academic performance</li>
-                              <li>Address chronic absenteeism with early interventions</li>
-                            </ul>
-                          </div>
-                        ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No assessment data available yet.</p>
-                  </div>
-                )}
-              </div> */}
-
-              <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-700">
-                      Student Performance Across Activities
-                    </h3>
-                    <p className="text-sm text-gray-500">Individual student scores on each class activity (Student IDs displayed)</p>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                    <span className="text-sm text-gray-600">Filter by:</span>
-                    <select
-                      value={selectedActivityType}
-                      onChange={(e) => setSelectedActivityType(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00874E] focus:border-transparent bg-white"
-                    >
-                      <option value="All">All Types</option>
-                      {ACTIVITY_TYPES.filter(type => type !== 'Attendance').map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="h-96 min-h-0">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                    <LineChart data={filteredLineChartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis 
-                        dataKey="activity" 
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis 
-                        label={{ value: 'Score (%)', angle: -90, position: 'insideLeft' }} 
-                        domain={[0, 100]}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Legend />
-                      
-                      {analyticsData.students.map((student, index) => {
-                        const displayName = getStudentDisplayName(student.user_ID, student.user_Name);
-                        
-                        return (
-                          <Line
-                            key={student.user_ID}
-                            type="monotone"
-                            dataKey={student.user_ID}
-                            name={displayName}
-                            stroke={COLORS[index % COLORS.length]}
-                            strokeWidth={1.5}
-                            dot={{ r: 2 }}
-                            activeDot={{ r: 4 }}
-                            connectNulls
-                          />
-                        );
-                      })}
-                      
-                      {filteredLineChartData.some(d => d['Class Average'] !== undefined) && (
-                        <Line
-                          type="monotone"
-                          dataKey="Class Average"
-                          name="Class Average"
-                          stroke="#465746"
-                          strokeWidth={3}
-                          strokeDasharray="5 5"
-                          dot={{ r: 5 }}
-                        />
-                      )}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-                
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-[#00874E]" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                        Activity Key: What A1, A2, A3 Represent
-                      </h4>
-                      
-                      {selectedActivityType !== 'All' && (
-                        <div className="inline-flex items-center bg-purple-100 text-purple-800 text-xs font-medium px-3 py-1 rounded-full mb-3">
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
-                          </svg>
-                          Filtered: Showing only "{selectedActivityType}" activities
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-[#465746] rounded mr-2 border-2 border-white"></div>
-                        <span>Dashed line = Class Average</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <h5 className="font-medium text-gray-700">
-                          Activity Details
-                        </h5>
-                        <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
-                          {filteredLineChartData.length} activities shown
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                        {analyticsData.activities
-                          .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-                          .slice(0, 8)
-                          .map((activity, index) => (
-                            <div key={activity.id} className="flex items-start p-2 bg-white rounded border border-gray-200 hover:bg-gray-50">
-                              <div className="flex-shrink-0">
-                                <div className="w-8 h-8 flex items-center justify-center bg-[#00874E] text-white text-sm font-bold rounded mr-3">
-                                  A{index + 1}
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-900 text-sm truncate" title={activity.title}>
-                                  {activity.title}
-                                </div>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-700 rounded">
-                                    {activity.activity_type || 'Other'}
-                                  </span>
-                                  <span className="text-xs text-gray-600">
-                                    {activity.points || 0} points
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    • {new Date(activity.created_at).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                      
-                      {analyticsData.activities.length > 8 && (
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                          Showing first 8 of {analyticsData.activities.length} activities
-                        </p>
-                      )}
-                    </div>
-                    
-                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                      <h5 className="font-medium text-blue-800 mb-3 flex items-center">
-                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                        </svg>
-                        Understanding the Chart
-                      </h5>
-                      
-                      <div className="space-y-3">
-                        <div className="flex items-start">
-                          <div className="w-6 h-6 flex-shrink-0 flex items-center justify-center bg-[#00874E] text-white text-xs font-bold rounded mr-2 mt-0.5">
-                            A1
-                          </div>
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">Activity Sequence</span>
-                            <p className="text-xs text-gray-600">
-                              <strong>A1, A2, A3</strong> represent activities in the order they were assigned.
-                              A1 is the first activity, A2 is the second, etc.
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-start">
-                          <div className="w-3 h-3 flex-shrink-0 mt-1 mr-2">
-                            <div className="w-full h-full bg-[#465746] border-2 border-white rounded"></div>
-                          </div>
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">Class Average</span>
-                            <p className="text-xs text-gray-600">
-                              Dashed line shows the average score of all students for each activity.
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-start">
-                          <div className="w-3 h-3 flex-shrink-0 mt-1 mr-2">
-                            <div className="w-full h-full bg-[#00874E] rounded"></div>
-                          </div>
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">Student Lines</span>
-                            <p className="text-xs text-gray-600">
-                              Each colored line represents one student's performance across all activities.
-                              Names show as "Surname (Student ID)".
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="text-xs text-blue-700 bg-blue-100 p-3 rounded border border-blue-200">
-                          <strong>Tip:</strong> Hover over any point to see the student's surname, ID and exact score percentage.
-                          The chart shows all {analyticsData.students.length} students in the class.
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Class Performance Distribution
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-6">Distribution of students across performance levels</p>
-                  <div className="h-80 min-h-0">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                      <PieChart>
-                        <Pie
-                          data={analyticsData.pieChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="count"
-                        >
-                          {analyticsData.pieChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value, name, props) => [
-                          `${value} student${value !== 1 ? 's' : ''} (${((value / analyticsData.summary.totalStudents) * 100).toFixed(1)}%)`,
-                          props.payload.name
-                        ]} />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                    {analyticsData.pieChartData.map((range, index) => (
-                      <div key={index} className="flex items-center">
-                        <div 
-                          className="w-3 h-3 rounded mr-2"
-                          style={{ backgroundColor: range.color }}
-                        ></div>
-                        <span>{range.name}: {range.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        Student Performance Ranking
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {barChartSort === 'desc' 
-                          ? 'All students ranked from highest to lowest average grade' 
-                          : 'All students ranked from lowest to highest average grade'}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleBarChartSortChange}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          {barChartSort === 'desc' ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
-                          ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                          )}
-                        </svg>
-                        {barChartSort === 'desc' ? 'Highest to Lowest' : 'Lowest to Highest'}
-                      </button>
-                      <span className="text-sm text-gray-600">
-                        {analyticsData.students.length} students
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-80 min-h-0">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                      <BarChart data={analyticsData.barChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis 
-                          dataKey="name" 
-                          tick={{ fontSize: 11 }}
-                          interval={0}
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                          label={{ value: 'Student ID', position: 'insideBottom', offset: -10 }}
-                        />
-                        <YAxis 
-                          domain={[0, 100]} 
-                          tick={{ fontSize: 12 }}
-                          label={{ value: 'Average Grade %', angle: -90, position: 'insideLeft' }}
-                        />
-                        <Tooltip content={<BarChartTooltip />} />
-                        <Bar 
-                          dataKey="grade" 
-                          name="Average Grade" 
-                          fill={barChartSort === 'desc' ? '#00874E' : '#FF6B6B'} 
-                          radius={[2, 2, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="mt-4 text-sm text-gray-600 text-center">
-                    Showing all {analyticsData.students.length} students sorted by average grade
-                    {barChartSort === 'desc' ? ' (highest to lowest)' : ' (lowest to highest)'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Performance by Assessment Type (Detailed View) - Now with Attendance Graph */}
-              <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                  Performance by Assessment Type (Detailed View)
-                </h3>
-                <p className="text-sm text-gray-500 mb-6">
-                  Detailed student performance across different assessment types including attendance analysis
-                </p>
-                
-                {/* Attendance Graph Section */}
-                <div className="mb-8 bg-gray-50 rounded-lg p-4 border">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-gray-700 flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2"
-                        style={{ backgroundColor: COLORS[5 % COLORS.length] }}
-                      ></div>
-                      Attendance Analysis
-                    </h4>
-                    <span className="text-sm text-gray-500">
-                      {analyticsData.summary.totalAttendanceDays || 0} days tracked
-                    </span>
-                  </div>
-                  
-                  {analyticsData.activityTypeData['Attendance'] && analyticsData.activityTypeData['Attendance'].length > 0 ? (
-                    <>
-                      <div className="h-64 min-h-0">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                          <BarChart 
-                            data={analyticsData.activityTypeData['Attendance']}
-                            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                            <XAxis 
-                              dataKey="studentName" 
-                              tick={{ fontSize: 10 }}
-                              angle={-45}
-                              textAnchor="end"
-                              height={40}
-                            />
-                            <YAxis 
-                              domain={[0, 100]} 
-                              tick={{ fontSize: 10 }}
-                              label={{ value: 'Attendance Rate (%)', angle: -90, position: 'insideLeft' }}
-                            />
-                            <Tooltip 
-                              formatter={(value, name, props) => {
-                                if (name === 'average') {
-                                  const fullName = props.payload.fullName || `Student ${props.payload.studentName}`;
-                                  const displayName = getStudentDisplayName(props.payload.studentName, fullName);
-                                  return [
-                                    `${value}%`, 
-                                    `Attendance Rate for ${displayName}`
-                                  ];
-                                }
-                                return [value, name];
-                              }}
-                              labelFormatter={(label) => {
-                                const student = analyticsData?.students?.find(s => s.user_ID === label);
-                                return student ? getStudentDisplayName(student.user_ID, student.user_Name) : `Student ${label}`;
-                              }}
-                            />
-                            <Bar 
-                              dataKey="average" 
-                              name="Attendance Rate"
-                              fill={COLORS[5 % COLORS.length]}
-                              radius={[2, 2, 0, 0]}
-                            />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                      
-                      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-green-50 border border-green-100 rounded p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-green-800">High Attendance</span>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
-                              ≥90%
-                            </span>
-                          </div>
-                          <p className="text-2xl font-bold text-green-700 mt-1">
-                            {
-                              analyticsData.activityTypeData['Attendance'].filter(
-                                item => item.average >= 90
-                              ).length
-                            }
-                          </p>
-                          <p className="text-xs text-green-600 mt-1">students</p>
-                        </div>
-                        
-                        <div className="bg-yellow-50 border border-yellow-100 rounded p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-yellow-800">Moderate</span>
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
-                              70-89%
-                            </span>
-                          </div>
-                          <p className="text-2xl font-bold text-yellow-700 mt-1">
-                            {
-                              analyticsData.activityTypeData['Attendance'].filter(
-                                item => item.average >= 70 && item.average < 90
-                              ).length
-                            }
-                          </p>
-                          <p className="text-xs text-yellow-600 mt-1">students</p>
-                        </div>
-                        
-                        <div className="bg-orange-50 border border-orange-100 rounded p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-orange-800">Low</span>
-                            <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded">
-                              50-69%
-                            </span>
-                          </div>
-                          <p className="text-2xl font-bold text-orange-700 mt-1">
-                            {
-                              analyticsData.activityTypeData['Attendance'].filter(
-                                item => item.average >= 50 && item.average < 70
-                              ).length
-                            }
-                          </p>
-                          <p className="text-xs text-orange-600 mt-1">students</p>
-                        </div>
-                        
-                        <div className="bg-red-50 border border-red-100 rounded p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-red-800">Critical</span>
-                            <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">
-                              {'<'}50%
-                            </span>
-                          </div>
-                          <p className="text-2xl font-bold text-red-700 mt-1">
-                            {
-                              analyticsData.activityTypeData['Attendance'].filter(
-                                item => item.average < 50
-                              ).length
-                            }
-                          </p>
-                          <p className="text-xs text-red-600 mt-1">students</p>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">Attendance Insights:</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {analyticsData.activityTypeData['Attendance'].some(item => item.average < 70) && (
-                            <div className="bg-amber-50 border border-amber-200 rounded p-3">
-                              <div className="flex items-center mb-1">
-                                <svg className="w-4 h-4 text-amber-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-sm font-medium text-amber-800">Attendance Concerns</span>
-                              </div>
-                              <p className="text-xs text-amber-700">
-                                {
-                                  analyticsData.activityTypeData['Attendance'].filter(
-                                    item => item.average < 70
-                                  ).length
-                                } students have attendance below 70%. Consider intervention.
-                              </p>
-                            </div>
-                          )}
-                          
-                          {analyticsData.activityTypeData['Attendance'].some(item => item.average >= 90) && (
-                            <div className="bg-green-50 border border-green-200 rounded p-3">
-                              <div className="flex items-center mb-1">
-                                <svg className="w-4 h-4 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                <span className="text-sm font-medium text-green-800">Excellent Attendance</span>
-                              </div>
-                              <p className="text-xs text-green-700">
-                                {
-                                  analyticsData.activityTypeData['Attendance'].filter(
-                                    item => item.average >= 90
-                                  ).length
-                                } students maintain ≥90% attendance.
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-center py-8">
-                      <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <h4 className="text-lg font-medium text-gray-700 mb-2">No Attendance Data</h4>
-                      <p className="text-gray-500 mb-4">
-                        No attendance records found for this subject. Take attendance to see analytics here.
-                      </p>
-                      <Link to={`/Attendance?code=${subjectCode}`}>
-                        <button className="px-4 py-2 bg-[#00874E] text-white rounded hover:bg-[#006e3d] transition-colors">
-                          Take Attendance
-                        </button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Other Assessment Types */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {ACTIVITY_TYPES.filter(type => type !== 'Attendance').map((type, index) => {
-                    const typeData = analyticsData.activityTypeData[type];
-                    
-                    if (!typeData || typeData.length === 0) {
-                      const activityCount = Object.entries(analyticsData.summary.activityTypeDistribution)
-                        .find(([t]) => t === type)?.[1] || 0;
-                      
-                      if (activityCount === 0) return null;
-                      
-                      return (
-                        <div key={type} className="bg-gray-50 rounded-lg p-4 border">
-                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                            <div 
-                              className="w-3 h-3 rounded-full mr-2"
-                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                            ></div>
-                            {type}
-                          </h4>
-                          <div className="h-48 flex items-center justify-center">
-                            <div className="text-center text-gray-500">
-                              <p>No graded submissions yet</p>
-                              <p className="text-sm mt-1">{activityCount} activity(s) created</p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={type} className="bg-gray-50 rounded-lg p-4 border hover:bg-white transition-colors">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                          ></div>
-                          {type}
-                          <span className="ml-auto text-xs text-gray-500">
-                            {typeData.length} students with grades
-                          </span>
-                        </h4>
-                        <div className="h-48 min-h-0">
-                          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                            <BarChart data={typeData}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                              <XAxis 
-                                dataKey="studentName" 
-                                tick={{ fontSize: 10 }}
-                                angle={-45}
-                                textAnchor="end"
-                                height={40}
-                              />
-                              <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
-                              <Tooltip 
-                                formatter={(value) => [`${value}%`, 'Grade']}
-                                labelFormatter={(label) => {
-                                  const student = analyticsData?.students?.find(s => s.user_ID === label);
-                                  return student ? getStudentDisplayName(student.user_ID, student.user_Name) : `Student ${label}`;
-                                }}
-                              />
-                              <Bar 
-                                dataKey="average" 
-                                fill={COLORS[index % COLORS.length]}
-                                radius={[2, 2, 0, 0]}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                        
-                        <div className="mt-3 text-xs text-gray-600">
-                          <div className="flex justify-between items-center">
-                            <span>Average:</span>
-                            <span className="font-medium">
-                              {Math.round(
-                                typeData.reduce((sum, item) => sum + item.average, 0) / typeData.length
-                              )}%
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center mt-1">
-                            <span>Top performer:</span>
-                            <span className="font-medium">
-                              {Math.max(...typeData.map(item => item.average))}%
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* Use the new PerformanceByAssessmentType component */}
+              <PerformanceByAssessmentType 
+                analyticsData={analyticsData}
+                getStudentDisplayName={getStudentDisplayName}
+              />
 
             </div>
           ) : (
-            <div className="mt-8">
-              <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                <div className="text-gray-500 mb-4">
-                  <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mt-6">
+              <div className="bg-[#2A2A35] rounded-lg shadow-md p-6 text-center">
+                <div className="text-[#FFFFFF]/60">
+                  <svg className="w-12 h-12 mx-auto mb-3 text-[#FFFFFF]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Ready for Analytics</h3>
-                  <p className="mb-4 text-gray-600 max-w-md mx-auto">
+                  <h3 className="text-lg font-semibold text-[#FFFFFF] mb-1">Ready for Analytics</h3>
+                  <p className="mb-3 text-[#FFFFFF]/60 text-sm max-w-md mx-auto">
                     Create activities and grade student submissions to generate comprehensive academic analytics.
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     <Link to={`/ClassworkTab?code=${subjectCode}`}>
-                      <button className="px-6 py-2 bg-[#00874E] text-white rounded hover:bg-[#006e3d] transition-colors">
+                      <button className="px-2 py-1.5 bg-[#00A15D]/20 text-[#00A15D] border-2 border-[#00A15D]/30 rounded-md shadow-md hover:bg-[#00A15D]/30 transition-all duration-300 text-xs">
                         Create Activities
                       </button>
                     </Link>
                     <button 
                       onClick={reloadAllData}
-                      className="px-6 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                      className="px-2 py-1.5 bg-[#3A3A45] text-[#FFFFFF] rounded-md hover:bg-[#4A4A55] transition-colors text-xs"
                     >
                       Refresh Data
                     </button>

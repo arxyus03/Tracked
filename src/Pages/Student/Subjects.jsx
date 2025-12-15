@@ -249,7 +249,7 @@ export default function Subjects() {
 
     return classes.map((classItem) => (
       <Link 
-        to={`/SubjectAnnouncementStudent?code=${classItem.subject_code}`} 
+        to={`/SubjectOverviewStudent?code=${classItem.subject_code}`}  // Changed from SubjectAnnouncementStudent to SubjectOverviewStudent
         key={classItem.subject_code}
         className="block"
       >
@@ -300,7 +300,7 @@ export default function Subjects() {
             </div>
           </div>
 
-          {/* Subject Details */}
+          {/* Subject Details - Removed class code */}
           <div className="space-y-1.5 pt-2.5 border-t border-[#FFFFFF]/20">
             <div>
               <p className="text-xs opacity-70 mb-0.5">Subject:</p>
@@ -308,11 +308,7 @@ export default function Subjects() {
                 {classItem.subject}
               </p>
             </div>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-              <div>
-                <span className="opacity-70">Code: </span>
-                <span className="font-semibold">{classItem.subject_code}</span>
-              </div>
+            <div className="text-xs">
               <div>
                 <span className="opacity-70">Year Level: </span>
                 <span className="font-semibold">{classItem.year_level}</span>
@@ -467,9 +463,6 @@ export default function Subjects() {
                   </p>
                   <p className="text-sm text-[#FFFFFF]/70 mt-1">
                     Section: {classToArchive.section}
-                  </p>
-                  <p className="text-sm text-[#FFFFFF]/70">
-                    Code: {classToArchive.subject_code}
                   </p>
                 </div>
               </div>

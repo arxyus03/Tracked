@@ -279,15 +279,16 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                             </div>
                           ) : studentSubjects.length > 0 ? (
                             studentSubjects.map((subject) => {
-                              const isActive = getCurrentCode() === subject.subject_code;
+                              const currentCode = getCurrentCode();
+                              const isSubjectActive = currentCode === subject.subject_code;
                               
                               return (
                                 <NavLink
                                   key={subject.subject_code}
-                                  to={`/SubjectAnnouncementStudent?code=${subject.subject_code}`}
+                                  to={`/SubjectOverviewStudent?code=${subject.subject_code}`}
                                   onClick={handleDropdownClick}
                                   className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mb-1 ${
-                                    isActive ? "bg-[#00A15D]/20 font-semibold" : ""
+                                    isSubjectActive ? "bg-[#00A15D]/20 font-semibold" : ""
                                   }`}
                                 >
                                   <div className="min-w-0 flex-1">
@@ -348,7 +349,8 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                             </div>
                           ) : teacherClasses.length > 0 ? (
                             teacherClasses.map((classItem) => {
-                              const isActive = getCurrentCode() === classItem.subject_code;
+                              const currentCode = getCurrentCode();
+                              const isClassActive = currentCode === classItem.subject_code;
                               
                               return (
                                 <NavLink
@@ -356,7 +358,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                                   to={`/Class?code=${classItem.subject_code}`}
                                   onClick={handleDropdownClick}
                                   className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mb-1 ${
-                                    isActive ? "bg-[#00A15D]/20 border-l-2 border-white font-semibold" : ""
+                                    isClassActive ? "bg-[#00A15D]/20 border-l-2 border-white font-semibold" : ""
                                   }`}
                                 >
                                   <div className="min-w-0 flex-1">

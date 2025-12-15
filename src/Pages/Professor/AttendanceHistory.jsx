@@ -4,11 +4,11 @@ import jsPDF from 'jspdf';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import AttendanceCard from "../../Components/AttendanceHistoryComponents/AttendanceCard";
-import RemoveStudent from "../../Components/AttendanceHistoryComponents/RemoveStudent";
+import AttendanceCard from "../../Components/ProfessorComponents/AttendanceCard";
+import RemoveStudent from "../../Components/ProfessorComponents/RemoveStudent";
 
-import AttendanceHistoryIcon from '../../assets/AttendanceHistory.svg';
-import BackButton from '../../assets/BackButton(Light).svg';
+import AttendanceHistoryIcon from '../../assets/History.svg';
+import BackButton from '../../assets/BackButton.svg';
 import Search from '../../assets/Search.svg';
 
 export default function AttendanceHistory() {
@@ -296,114 +296,117 @@ export default function AttendanceHistory() {
 
   if (loading) {
     return (
-      <div>
+      <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="teacher" isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
         <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen}/>
-          <div className="p-5 text-center">Loading...</div>
+          <div className="p-5 text-center text-[#FFFFFF]">Loading...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="teacher" isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen} />
 
         {/* Main Content */}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+        <div className="p-3 sm:p-4 md:p-5 lg:p-6">
           
-          {/* Page Header - Updated to match Attendance style */}
-          <div className="mb-4 sm:mb-4">
-            <div className="flex items-center mb-2">
+          {/* Page Header - Smaller */}
+          <div className="mb-3 sm:mb-4">
+            <div className="flex items-center mb-1">
               <img
                 src={AttendanceHistoryIcon}
                 alt="AttendanceHistoryIcon"
-                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
               />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
+              <h1 className="font-bold text-lg sm:text-xl lg:text-2xl text-[#FFFFFF]">
                 Attendance History
               </h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
+            <p className="text-xs sm:text-sm lg:text-base text-[#FFFFFF]/80">
               Academic Management
             </p>
           </div>
 
-          {/* Subject Information */}
-          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+          {/* Subject Information - Smaller */}
+          <div className="flex flex-col gap-1 text-xs sm:text-sm lg:text-base text-[#FFFFFF]/80 mb-3">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
               <span>{classInfo?.subject_code || 'Loading...'}</span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'Loading...'}</span>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">Section:</span>
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="font-semibold">SECTION:</span>
                 <span>{classInfo?.section || 'Loading...'}</span>
               </div>
-              <Link to={`/Attendance?code=${subjectCode}`}>
-                <img 
-                  src={BackButton} 
-                  alt="Back" 
-                  className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity" 
-                />
-              </Link>
+              <div className="flex justify-end">
+                <Link to={`/Attendance?code=${subjectCode}`}>
+                  <img 
+                    src={BackButton} 
+                    alt="Back" 
+                    className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
+                    title="Back to Attendance"
+                  />
+                </Link>
+              </div>
             </div>
           </div>
 
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+          <hr className="border-[#FFFFFF]/30 mb-3" />
 
-          {/* Search and Download All Button */}
-          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-4 sm:mt-5 gap-3">
+          {/* Search and Download All Button - Smaller */}
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-3 gap-2">
             <div className="relative flex-1 max-w-full sm:max-w-md">
               <input
                 type="text"
                 placeholder="Search by date or student..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 sm:h-10 lg:h-11 rounded-md pl-3 pr-10 shadow-md outline-none text-[#465746] bg-white text-xs sm:text-sm"
+                className="w-full h-8 sm:h-9 rounded-md pl-3 pr-9 shadow-md outline-none text-[#FFFFFF] bg-[#15151C] text-xs sm:text-sm border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors"
               />
               <button
                 type="button"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#465746]"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#FFFFFF]/60 hover:text-[#FFFFFF]"
               >
                 <img 
                   src={Search} 
                   alt="Search"
-                  className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6"
+                  className="h-3 w-3 sm:h-4 sm:w-4"
                 />
               </button>
             </div>
             
-            {/* Download All Button */}
+            {/* Download All Button - Smaller */}
             <button
               onClick={downloadAllAttendanceRecords}
               disabled={downloading || !attendanceHistory.length}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-[#00A15D] text-white font-semibold text-sm rounded-lg hover:bg-[#00874E] disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#00A15D] text-[#FFFFFF] font-semibold text-xs rounded-md hover:bg-[#00A15D]/90 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap cursor-pointer mt-2 sm:mt-0"
             >
               {downloading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Generating PDF...</span>
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-xs">Generating PDF...</span>
                 </>
               ) : (
                 <>
-                  <span>Download All Records</span>
+                  <span className="text-xs">Download All Records</span>
                 </>
               )}
             </button>
           </div>
 
-          {/* Attendance Cards */}
-          <div className="space-y-4 mt-4 sm:mt-5">
+          {/* Attendance Cards - Smaller */}
+          <div className="space-y-3 mt-3">
             {filteredHistory.length > 0 ? (
               filteredHistory.map((record, index) => (
                 <AttendanceCard 
@@ -416,8 +419,8 @@ export default function AttendanceHistory() {
                 />
               ))
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>No attendance records found.</p>
+              <div className="text-center py-6 text-[#FFFFFF]/60">
+                <p className="text-sm">No attendance records found.</p>
               </div>
             )}
           </div>

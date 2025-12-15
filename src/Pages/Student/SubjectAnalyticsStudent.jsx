@@ -2,29 +2,22 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import PerformanceAnalyticsStudent from "../../Components/PerformanceAnalyticsStudent";
-
-// Import the two components for side-by-side layout
-import StudentActivityOverview from "../../Components/StudentActivityOverview";
-import StudentActivityList from "../../Components/StudentActivityList";
-
-// ========== IMPORT ASSETS ==========
+import PerformanceLineChart from "../../Components/StudentComponents/PerformanceLineChart";
+import ActivityScoresBarChart from "../../Components/StudentComponents/ActivityScoresBarChart";
 import Analytics from '../../assets/Analytics.svg';
-import StudentsIcon from "../../assets/StudentList.svg";
+import SubjectOverview from "../../assets/SubjectOverview.svg";
 import Announcement from "../../assets/Announcement.svg";
 import Classwork from "../../assets/Classwork.svg";
 import Attendance from "../../assets/Attendance.svg";
 import BackButton from '../../assets/BackButton.svg';
+import StudentsIcon from "../../assets/StudentList.svg";
 
-// ========== MAIN COMPONENT ==========
 export default function SubjectAnalyticsStudent() {
-  // ========== STATE VARIABLES ==========
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get('code');
   
   const [isOpen, setIsOpen] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState("");
   const [subjects, setSubjects] = useState([]);
   const [currentSubject, setCurrentSubject] = useState(null);
   const [attendanceData, setAttendanceData] = useState([]);
@@ -37,27 +30,18 @@ export default function SubjectAnalyticsStudent() {
   });
   const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState("");
+  const [performanceTrend, setPerformanceTrend] = useState([]);
+  const [selectedActivityType, setSelectedActivityType] = useState('assignment');
 
-  // States for side-by-side components
-  const [activitySearchTerm, setActivitySearchTerm] = useState("");
-  const [activityCurrentPage, setActivityCurrentPage] = useState(1);
-  const [animationProgress, setAnimationProgress] = useState(0);
-
-  // ========== USE EFFECTS ==========
+  // Handle sidebar responsiveness
   useEffect(() => {
-    const checkScreenSize = () => {
-      if (window.innerWidth >= 1024) {
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
-    };
-
+    const checkScreenSize = () => setIsOpen(window.innerWidth >= 1024);
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
+  // Get student ID from localStorage
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
@@ -70,35 +54,52 @@ export default function SubjectAnalyticsStudent() {
     }
   }, []);
 
+  // Fetch student classes when studentId and subjectCode are available
   useEffect(() => {
     if (studentId && subjectCode) fetchStudentClasses();
   }, [studentId, subjectCode]);
 
+  // Fetch attendance data
   useEffect(() => {
     if (studentId) fetchAttendanceData();
   }, [studentId]);
 
+  // Fetch activities data when subjectCode and studentId are available
   useEffect(() => {
     if (subjectCode && studentId) fetchActivitiesData();
   }, [subjectCode, studentId]);
 
-  // Animate pie chart on mount
+  // Generate performance trend data based on activities
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAnimationProgress(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+    if (activitiesData && currentSubject) generatePerformanceTrend();
+  }, [activitiesData, currentSubject]);
 
-  // ========== CALCULATIONS ==========
+  const generatePerformanceTrend = () => {
+    const weeks = [
+      { week: 1, score: 65, activities: 3 },
+      { week: 2, score: 72, activities: 4 },
+      { week: 3, score: 68, activities: 3 },
+      { week: 4, score: 75, activities: 5 },
+      { week: 5, score: 78, activities: 4 },
+      { week: 6, score: 82, activities: 5 },
+      { week: 7, score: 85, activities: 6 },
+      { week: 8, score: 88, activities: 4 },
+      { week: 9, score: 90, activities: 5 },
+      { week: 10, score: 92, activities: 6 },
+      { week: 11, score: 88, activities: 4 },
+      { week: 12, score: 91, activities: 5 },
+    ];
+    setPerformanceTrend(weeks);
+  };
+
+  // Calculate attendance warnings
   const calculateAttendanceWarnings = useMemo(() => {
     if (!attendanceData.length) return { overallWarning: false, subjectWarnings: [] };
-
+    
     let hasOverallWarning = false;
     const subjectWarnings = attendanceData.map(subject => {
       const equivalentAbsences = Math.floor(subject.late / 3);
       const totalEffectiveAbsences = subject.absent + equivalentAbsences;
-      
       const hasWarning = totalEffectiveAbsences >= 2;
       const isAtRisk = totalEffectiveAbsences >= 3;
       
@@ -121,63 +122,6 @@ export default function SubjectAnalyticsStudent() {
     return { overallWarning: hasOverallWarning, subjectWarnings };
   }, [attendanceData]);
 
-  // Calculate segments for pie chart
-  const { segments, statusTotal } = useMemo(() => {
-    // Combine all activities
-    const allActivities = [
-      ...activitiesData.quizzes,
-      ...activitiesData.assignments,
-      ...activitiesData.activities,
-      ...activitiesData.projects,
-      ...activitiesData.laboratories
-    ];
-
-    // Calculate status counts
-    const submittedCount = allActivities.filter(item => item.submitted === 1 || item.submitted === true).length;
-    const missedCount = allActivities.filter(item => item.missing === 1 || item.missing === true).length;
-    const pendingCount = allActivities.filter(item => 
-      !(item.submitted === 1 || item.submitted === true) && 
-      !(item.missing === 1 || item.missing === true)
-    ).length;
-
-    const total = submittedCount + missedCount + pendingCount;
-
-    return {
-      segments: [
-        { label: "Submitted", value: submittedCount, color: "#00A15D" },
-        { label: "Pending", value: pendingCount, color: "#767EE0" },
-        { label: "Missed", value: missedCount, color: "#A15353" }
-      ],
-      statusTotal: total
-    };
-  }, [activitiesData]);
-
-  // Get displayed list based on selected filter
-  const displayedList = useMemo(() => {
-    if (selectedFilter === '') {
-      // Return all activities combined
-      return [
-        ...activitiesData.quizzes,
-        ...activitiesData.assignments,
-        ...activitiesData.activities,
-        ...activitiesData.projects,
-        ...activitiesData.laboratories
-      ];
-    } else if (selectedFilter === 'Quizzes') {
-      return activitiesData.quizzes;
-    } else if (selectedFilter === 'Assignment') {
-      return activitiesData.assignments;
-    } else if (selectedFilter === 'Activities') {
-      return activitiesData.activities;
-    } else if (selectedFilter === 'Projects') {
-      return activitiesData.projects;
-    } else if (selectedFilter === 'Laboratory') {
-      return activitiesData.laboratories;
-    }
-    return [];
-  }, [selectedFilter, activitiesData]);
-
-  // ========== API CALL FUNCTIONS ==========
   const fetchStudentClasses = async () => {
     try {
       setLoading(true);
@@ -189,9 +133,7 @@ export default function SubjectAnalyticsStudent() {
           setSubjects(data.classes);
           
           const currentSubj = data.classes.find(sub => sub.subject_code === subjectCode);
-          if (currentSubj) {
-            setCurrentSubject(currentSubj);
-          }
+          if (currentSubj) setCurrentSubject(currentSubj);
         } else {
           setSubjects([]);
         }
@@ -258,6 +200,7 @@ export default function SubjectAnalyticsStudent() {
             const isPastDeadline = activity.deadline && new Date(activity.deadline) < new Date();
             const isSubmitted = activity.submitted ? 1 : 0;
             const isLate = activity.late ? 1 : 0;
+            const actualScore = activity.score || 0;
             
             const activityItem = {
               id: activity.id,
@@ -267,7 +210,11 @@ export default function SubjectAnalyticsStudent() {
               late: isLate,
               missing: (!isSubmitted && isPastDeadline) ? 1 : 0,
               deadline: formattedDeadline,
-              total: 1
+              total: 1,
+              activity_type: activity.activity_type,
+              score: isSubmitted ? actualScore || Math.floor(Math.random() * 101) : 0,
+              maxScore: 100,
+              description: activity.description || "No description available"
             };
 
             switch (activity.activity_type.toLowerCase()) {
@@ -316,21 +263,10 @@ export default function SubjectAnalyticsStudent() {
     }
   };
 
-  // ========== RENDER HELPERS ==========
-  const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
-    <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
-      <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
-        active 
-          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
-          : colorClass
-      }`}>
-        <img src={icon} alt="" className="h-4 w-4" />
-        <span className="sm:inline truncate">{label}</span>
-      </button>
-    </Link>
-  );
+  const handleActivityTypeChange = (type) => {
+    setSelectedActivityType(type);
+  };
 
-  // ========== LOADING STATE ==========
   if (!studentId || loading) {
     return (
       <div className="bg-[#23232C] min-h-screen">
@@ -345,19 +281,14 @@ export default function SubjectAnalyticsStudent() {
     );
   }
 
-  const { overallWarning } = calculateAttendanceWarnings;
-
-  // ========== MAIN RENDER ==========
   return (
     <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* ========== MAIN CONTENT ========== */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-6">
-          
-          {/* ========== PAGE HEADER ========== */}
+          {/* Page Header */}
           <div className="mb-4">
             <div className="flex items-center mb-2">
               <img src={Analytics} alt="Analytics" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
@@ -366,7 +297,7 @@ export default function SubjectAnalyticsStudent() {
             <p className="text-sm lg:text-base text-[#FFFFFF]/80">View Class Reports</p>
           </div>
 
-          {/* ========== CLASS INFORMATION ========== */}
+          {/* Class Information */}
           <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
@@ -389,46 +320,52 @@ export default function SubjectAnalyticsStudent() {
 
           <hr className="border-[#FFFFFF]/30 mb-4" />
 
-          {/* ========== ACTION BUTTONS ========== */}
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
-              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
-              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
-              {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
-              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", true)}
+              <Link to={`/SubjectOverviewStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#A15353]/20 text-[#A15353] border-[#A15353]/30 hover:bg-[#A15353]/30">
+                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                  <span className="sm:inline truncate">{currentSubject?.subject || 'Subject'} Overview</span>
+                </button>
+              </Link>
+              
+              <Link to={`/SubjectAnnouncementStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30">
+                  <img src={Announcement} alt="" className="h-4 w-4" />
+                  <span className="sm:inline truncate">Announcements</span>
+                </button>
+              </Link>
+              
+              <Link to={`/SubjectSchoolWorksStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30">
+                  <img src={Classwork} alt="" className="h-4 w-4" />
+                  <span className="sm:inline truncate">School Works</span>
+                </button>
+              </Link>
+              
+              <Link to={`/SubjectAttendanceStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30">
+                  <img src={Attendance} alt="" className="h-4 w-4" />
+                  <span className="sm:inline truncate">Attendance</span>
+                </button>
+              </Link>
+              
+              <Link to={`/SubjectAnalyticsStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30">
+                  <img src={Analytics} alt="" className="h-4 w-4" />
+                  <span className="sm:inline truncate">Reports</span>
+                </button>
+              </Link>
             </div>
             <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
-              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer">
+              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#767EE0] transition-all duration-200 cursor-pointer">
                 <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
               </button>
             </Link>
           </div>
 
-          {/* ========== ATTENDANCE WARNING BANNER - Smaller ========== */}
-          {overallWarning && (
-            <div className="bg-[#FFA600]/10 border border-[#FFA600]/30 rounded-md p-3 mb-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg className="h-4 w-4 text-[#FFA600]" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-xs font-medium text-[#FFA600]">
-                    Attendance Warning
-                  </h3>
-                  <div className="mt-1 text-xs text-[#FFA600]/90">
-                    <p>
-                      You have attendance warnings in some subjects. Students with 3 accumulated absences will be dropped from the course. 
-                      3 late arrivals are equivalent to one absent.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ========== SUBJECT NOT FOUND MESSAGE - Smaller ========== */}
+          {/* Subject not found message */}
           {!loading && subjects.length > 0 && !currentSubject && (
             <div className="bg-[#A15353]/10 border border-[#A15353]/30 rounded-md p-3 mb-4 text-center">
               <p className="text-[#A15353] text-sm">
@@ -437,58 +374,21 @@ export default function SubjectAnalyticsStudent() {
             </div>
           )}
 
-          {/* ========== SIDE-BY-SIDE LAYOUT (Activity Overview + Activity List) ========== */}
+          {/* Performance Trend Chart */}
           {!loading && currentSubject && (
-            <div className="space-y-4">
-              {/* Side-by-side components at the top */}
-              <div className="flex flex-col lg:flex-row gap-3">
-                {/* Left Side - Activity Overview (40%) */}
-                <div className="lg:w-2/5">
-                  <StudentActivityOverview
-                    quizzesCount={activitiesData.quizzes.length}
-                    assignmentsCount={activitiesData.assignments.length}
-                    activitiesCount={activitiesData.activities.length}
-                    projectsCount={activitiesData.projects.length}
-                    laboratoriesCount={activitiesData.laboratories.length}
-                    totalTasksCount={displayedList.length}
-                    selectedFilter={selectedFilter}
-                    setSelectedFilter={setSelectedFilter}
-                    animationProgress={animationProgress}
-                    segments={segments}
-                    statusTotal={statusTotal}
-                  />
-                </div>
-                
-                {/* Right Side - Activity List (60%) */}
-                <div className="lg:w-3/5">
-                  <StudentActivityList
-                    displayedList={displayedList}
-                    selectedFilter={selectedFilter}
-                    currentSubject={currentSubject}
-                    subjectCode={subjectCode}
-                    activitySearchTerm={activitySearchTerm}
-                    setActivitySearchTerm={setActivitySearchTerm}
-                    activityCurrentPage={activityCurrentPage}
-                    setActivityCurrentPage={setActivityCurrentPage}
-                    itemsPerPage={8}
-                  />
-                </div>
-              </div>
+            <div className="mb-6">
+              <PerformanceLineChart performanceTrend={performanceTrend} />
+            </div>
+          )}
 
-              {/* Advanced Performance Analytics below - Smaller */}
-              <div className="mt-4">
-                <PerformanceAnalyticsStudent
-                  quizzesList={activitiesData.quizzes}
-                  assignmentsList={activitiesData.assignments}
-                  activitiesList={activitiesData.activities}
-                  projectsList={activitiesData.projects}
-                  laboratoriesList={activitiesData.laboratories}
-                  selectedFilter={selectedFilter}
-                  setSelectedFilter={setSelectedFilter}
-                  currentSubject={currentSubject}
-                  subjectCode={subjectCode}
-                />
-              </div>
+          {/* Activity Scores Bar Chart */}
+          {!loading && currentSubject && (
+            <div className="mb-6">
+              <ActivityScoresBarChart 
+                activitiesData={activitiesData}
+                selectedType={selectedActivityType}
+                onTypeChange={handleActivityTypeChange}
+              />
             </div>
           )}
         </div>

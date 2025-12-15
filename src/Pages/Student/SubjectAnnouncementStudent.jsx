@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import AnnouncementCardStudent from "../../Components/AnnouncementCardStudent";
+import AnnouncementCardStudent from "../../Components/StudentComponents/AnnouncementCardStudent";
 
 // ========== IMPORT ASSETS ==========
 import Announcement from "../../assets/Announcement.svg";
@@ -13,6 +13,7 @@ import StudentsIcon from "../../assets/StudentList.svg";
 import Classwork from "../../assets/Classwork.svg";
 import Attendance from "../../assets/Attendance.svg";
 import Analytics from "../../assets/Analytics.svg";
+import SubjectOverview from "../../assets/SubjectOverview.svg";
 
 export default function SubjectAnnouncementStudent() {
   // ========== STATE VARIABLES ==========
@@ -254,6 +255,15 @@ export default function SubjectAnnouncementStudent() {
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {/* Updated Subject Overview Button with Dynamic Subject Name */}
+              <Link to={`/SubjectOverviewStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30">
+                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                  <span className="sm:inline truncate">{classInfo?.subject || 'Subject'} Overview</span>
+                </button>
+              </Link>
+              
+              {/* Existing buttons */}
               {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", true)}
               {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
               {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
@@ -271,10 +281,22 @@ export default function SubjectAnnouncementStudent() {
             <div className="relative filter-dropdown sm:w-36">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className="flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border border-transparent hover:border-[#00A15D] transition-all duration-200 text-xs font-medium cursor-pointer"
+                className={`flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
+                  filterOption !== "All" 
+                    ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' 
+                    : 'border-[#FFFFFF]/10 hover:border-[#767EE0] text-[#FFFFFF]'
+                }`}
               >
-                <span className="text-[#FFFFFF]">{filterOption}</span>
-                <img src={ArrowDown} alt="" className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`} />
+                <span>{filterOption}</span>
+                <img 
+                  src={ArrowDown} 
+                  alt="" 
+                  className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${
+                    filterDropdownOpen ? 'rotate-180' : ''
+                  } ${
+                    filterOption !== "All" ? 'invert-[0.5] sepia-[1] saturate-[5] hue-rotate-[200deg]' : ''
+                  }`} 
+                />
               </button>
 
               {filterDropdownOpen && (
@@ -283,7 +305,9 @@ export default function SubjectAnnouncementStudent() {
                     <button
                       key={option}
                       className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
-                        filterOption === option ? 'bg-[#23232C] font-semibold' : 'text-[#FFFFFF]/80'
+                        filterOption === option 
+                          ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' 
+                          : 'text-[#FFFFFF]/80'
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -304,7 +328,7 @@ export default function SubjectAnnouncementStudent() {
                   placeholder="Search announcements..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-transparent focus:border-[#00A15D] transition-colors placeholder:text-[#FFFFFF]/40"
+                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors placeholder:text-[#FFFFFF]/40"
                 />
                 <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60">
                   <img src={Search} alt="Search" className="h-3.5 w-3.5" />

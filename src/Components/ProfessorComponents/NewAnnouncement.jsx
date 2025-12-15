@@ -45,6 +45,49 @@ const NewAnnouncement = ({
     }
   }, [showModal, selectedSubject, currentSubjectCode, setSelectedSubject]);
 
+  // Add CSS for styling the calendar icon
+  useEffect(() => {
+    if (showModal) {
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .announcement-deadline-input::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+          cursor: pointer;
+        }
+        .announcement-deadline-input::-moz-calendar-picker-indicator {
+          filter: invert(1);
+          cursor: pointer;
+        }
+        .announcement-deadline-input::-webkit-datetime-edit {
+          color: white;
+        }
+        .announcement-deadline-input::-webkit-datetime-edit-fields-wrapper {
+          color: white;
+        }
+        .announcement-deadline-input::-webkit-datetime-edit-text {
+          color: white;
+          padding: 0 0.3em;
+        }
+        .announcement-deadline-input::-webkit-datetime-edit-month-field,
+        .announcement-deadline-input::-webkit-datetime-edit-day-field,
+        .announcement-deadline-input::-webkit-datetime-edit-year-field,
+        .announcement-deadline-input::-webkit-datetime-edit-hour-field,
+        .announcement-deadline-input::-webkit-datetime-edit-minute-field,
+        .announcement-deadline-input::-webkit-datetime-edit-ampm-field {
+          color: white;
+        }
+        .announcement-deadline-input::-webkit-inner-spin-button {
+          display: none;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      return () => {
+        document.head.removeChild(style);
+      };
+    }
+  }, [showModal]);
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
       handlePost();
@@ -70,43 +113,43 @@ const NewAnnouncement = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+      className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-3"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleModalClose();
       }}
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-md p-6 sm:p-8 relative modal-pop max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#15151C] text-[#FFFFFF] rounded-lg shadow-2xl w-full max-w-md p-4 sm:p-5 relative modal-pop max-h-[90vh] overflow-y-auto">
         <button
           onClick={handleModalClose}
           aria-label="Close modal"
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors cursor-pointer touch-manipulation"
+          className="absolute top-3 right-3 p-1.5 hover:bg-[#23232C] active:bg-[#2A2A35] rounded-full transition-colors cursor-pointer touch-manipulation"
         >
           <img
             src={BackButton}
             alt="BackButton"
-            className="w-5 h-5"
+            className="w-4 h-4 brightness-0 invert"
           />
         </button>
 
-        <h2 className="text-xl sm:text-2xl font-bold mb-1 pr-10">
+        <h2 className="text-lg sm:text-xl font-bold mb-1 pr-8">
           {editingAnnouncement ? "Edit Announcement" : "New Announcement"}
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-xs text-[#FFFFFF]/70 mb-3">
           {editingAnnouncement ? "Update the announcement details" : "Fill in the details to create a new announcement"}
         </p>
-        <hr className="border-gray-200 mb-5" />
+        <hr className="border-[#FFFFFF]/20 mb-4" />
 
         {/* Modal Body */}
-        <div className="space-y-5">
+        <div className="space-y-3">
           {/* Subject Display (Non-editable) */}
           <div>
-            <label className="text-sm font-semibold mb-2 block text-gray-700">
-              Subject <span className="text-red-500">*</span>
+            <label className="text-xs font-semibold mb-1.5 block text-[#FFFFFF]/80">
+              Subject <span className="text-[#A15353]">*</span>
             </label>
-            <div className="w-full bg-gray-50 border-2 border-gray-300 text-black rounded-md px-4 py-3 flex items-center justify-between">
-              <span className="text-sm">
+            <div className="w-full bg-[#23232C] border-2 border-[#23232C] text-[#FFFFFF] rounded-md px-3 py-2.5 flex items-center justify-between">
+              <span className="text-xs">
                 {(() => {
                   const currentSubj = getFilteredSubjects().find(subj => subj.subject_code === (selectedSubject || currentSubjectCode));
                   return currentSubj ? `${currentSubj.subject_name} (${currentSubj.subject_code}) - ${currentSubj.section}` : "Loading subject...";
@@ -122,20 +165,20 @@ const NewAnnouncement = ({
 
           {/* Deadline Input */}
           <div>
-            <label className="text-sm font-semibold mb-2 block text-gray-700">Deadline</label>
+            <label className="text-xs font-semibold mb-1.5 block text-[#FFFFFF]/80">Deadline</label>
             <input
               type="datetime-local"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
               min={getCurrentDateTime()} // Prevent past dates
-              className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
+              className="announcement-deadline-input w-full border-2 border-[#23232C] bg-[#23232C] rounded-md px-3 py-2.5 outline-none text-xs focus:border-[#00A15D] transition-colors text-[#FFFFFF]"
             />
           </div>
 
           {/* Title Input */}
           <div>
-            <label className="text-sm font-semibold mb-2 block text-gray-700">
-              Title <span className="text-red-500">*</span>
+            <label className="text-xs font-semibold mb-1.5 block text-[#FFFFFF]/80">
+              Title <span className="text-[#A15353]">*</span>
             </label>
             <input
               type="text"
@@ -143,33 +186,33 @@ const NewAnnouncement = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
+              className="w-full border-2 border-[#23232C] bg-[#23232C] rounded-md px-3 py-2.5 outline-none text-xs focus:border-[#00A15D] transition-colors text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
             />
           </div>
 
           {/* Instruction Textarea - Changed from "Description" */}
           <div>
-            <label className="text-sm font-semibold mb-2 block text-gray-700">
-              Instruction <span className="text-red-500">*</span>
+            <label className="text-xs font-semibold mb-1.5 block text-[#FFFFFF]/80">
+              Instruction <span className="text-[#A15353]">*</span>
             </label>
             <textarea
               placeholder="Enter instruction..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none min-h-[120px] resize-none text-sm focus:border-[#00874E] transition-colors"
+              className="w-full border-2 border-[#23232C] bg-[#23232C] rounded-md px-3 py-2.5 outline-none min-h-[100px] resize-none text-xs focus:border-[#00A15D] transition-colors text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
             />
           </div>
 
           {/* Link Input */}
           <div>
-            <label className="text-sm font-semibold mb-2 block text-gray-700">Insert Link</label>
+            <label className="text-xs font-semibold mb-1.5 block text-[#FFFFFF]/80">Insert Link</label>
             <input
               type="text"
               placeholder="Enter link (optional)"
               value={link}
               onChange={(e) => setLink(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
+              className="w-full border-2 border-[#23232C] bg-[#23232C] rounded-md px-3 py-2.5 outline-none text-xs focus:border-[#00A15D] transition-colors text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
             />
           </div>
 
@@ -177,15 +220,15 @@ const NewAnnouncement = ({
           <button
             onClick={handlePost}
             disabled={postingAnnouncement}
-            className={`w-full text-white font-bold py-3 rounded-md transition-all duration-200 text-base cursor-pointer touch-manipulation active:scale-98 ${
+            className={`w-full text-[#FFFFFF] font-bold py-2.5 rounded-md transition-all duration-200 text-sm cursor-pointer touch-manipulation active:scale-98 ${
               postingAnnouncement 
-                ? 'bg-gray-400 cursor-not-allowed' 
+                ? 'bg-[#23232C] cursor-not-allowed text-[#FFFFFF]/50' 
                 : 'bg-[#00A15D] hover:bg-[#00874E] active:bg-[#006B3D]'
             }`}
           >
             {postingAnnouncement ? (
               <div className="flex items-center justify-center">
-                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent mr-2"></div>
+                <div className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-[#FFFFFF] border-r-transparent mr-1.5"></div>
                 Posting...
               </div>
             ) : (

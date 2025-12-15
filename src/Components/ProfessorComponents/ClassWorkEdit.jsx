@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import BackButton from '../../assets/BackButton(Light).svg';
-import ArrowDown from "../../assets/ArrowDown(Light).svg";
+import BackButton from '../../assets/BackButton.svg';
+import ArrowDown from "../../assets/ArrowDown.svg";
 
 const ClassWorkEdit = ({ 
   isOpen, 
@@ -172,7 +172,7 @@ const ClassWorkEdit = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+      className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 overlay-fade p-3"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           handleClose();
@@ -183,54 +183,54 @@ const ClassWorkEdit = ({
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white text-black rounded-lg shadow-2xl w-full max-w-4xl p-6 sm:p-8 relative modal-pop max-h-[95vh] overflow-y-auto">
+      <div className="bg-[#15151C] text-white rounded-lg shadow-2xl w-full max-w-3xl p-4 relative modal-pop max-h-[90vh] overflow-y-auto border border-gray-700">
         <button
           onClick={handleClose}
           aria-label="Close modal"
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 active:bg-gray-200 rounded-full transition-colors cursor-pointer touch-manipulation"
+          className="absolute top-3 right-3 p-1.5 hover:bg-[#23232C] active:bg-[#2D2D3A] rounded transition-colors cursor-pointer touch-manipulation"
         >
           <img
             src={BackButton}
             alt="BackButton"
-            className="w-5 h-5"
+            className="w-4 h-4"
           />
         </button>
 
-        <h2 className="text-xl sm:text-2xl font-bold mb-1 pr-10">
+        <h2 className="text-lg font-bold mb-0.5 pr-8">
           Edit School Work
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-xs text-gray-400 mb-3">
           Update the activity details
         </p>
-        <hr className="border-gray-200 mb-5" />
+        <hr className="border-gray-700 mb-4" />
 
         {/* Modal Body - 2 Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Column - Basic Information */}
-          <div className="space-y-5">
+          <div className="space-y-3">
             {/* Activity Type Dropdown */}
             <div className="relative">
-              <label className="text-sm font-semibold mb-2 block text-gray-700">
-                Activity Type <span className="text-red-500">*</span>
+              <label className="text-xs font-semibold mb-1 block text-gray-300">
+                Activity Type <span className="text-[#A15353]">*</span>
               </label>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setActivityTypeDropdownOpen(!activityTypeDropdownOpen);
                 }}
-                className="w-full bg-white border-2 border-gray-300 text-black rounded-md px-4 py-3 flex items-center justify-between hover:border-[#00874E] active:border-[#00874E] focus:border-[#00874E] transition-colors cursor-pointer touch-manipulation"
+                className="w-full bg-[#23232C] border border-gray-600 text-white rounded px-3 py-2 flex items-center justify-between hover:border-[#767EE0] active:border-[#767EE0] focus:border-[#767EE0] transition-colors cursor-pointer touch-manipulation text-xs"
               >
-                <span className={`text-sm ${!activityType ? 'text-gray-500' : ''}`}>
+                <span className={`${!activityType ? 'text-gray-500' : ''}`}>
                   {activityType || "Select Activity Type"}
                 </span>
                 <img 
                   src={ArrowDown} 
                   alt="" 
-                  className={`h-4 w-4 transition-transform ${activityTypeDropdownOpen ? 'rotate-180' : ''}`} 
+                  className={`h-3 w-3 transition-transform ${activityTypeDropdownOpen ? 'rotate-180' : ''}`} 
                 />
               </button>
               {activityTypeDropdownOpen && (
-                <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-xl border border-gray-200 z-10 overflow-hidden max-h-48 overflow-y-auto">
+                <div className="absolute top-full mt-0.5 w-full bg-[#23232C] rounded shadow-xl border border-gray-600 z-10 overflow-hidden max-h-32 overflow-y-auto">
                   {activityTypes.map((type) => (
                     <button
                       key={type}
@@ -239,7 +239,7 @@ const ClassWorkEdit = ({
                         setActivityType(type);
                         setActivityTypeDropdownOpen(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer touch-manipulation"
+                      className="block w-full text-left px-3 py-2 text-xs hover:bg-[#2D2D3A] active:bg-[#374151] transition-colors cursor-pointer touch-manipulation"
                     >
                       {type}
                     </button>
@@ -250,62 +250,62 @@ const ClassWorkEdit = ({
 
             {/* Task Number Input */}
             <div>
-              <label className="text-sm font-semibold mb-2 block text-gray-700">
-                Task Number <span className="text-red-500">*</span>
+              <label className="text-xs font-semibold mb-1 block text-gray-300">
+                Task Number <span className="text-[#A15353]">*</span>
               </label>
               <input
                 type="text"
                 placeholder="Activity 1"
                 value={taskNumber}
                 onChange={(e) => setTaskNumber(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
+                className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white placeholder:text-gray-500"
               />
             </div>
 
             {/* Title Input */}
             <div>
-              <label className="text-sm font-semibold mb-2 block text-gray-700">
-                Title <span className="text-red-500">*</span>
+              <label className="text-xs font-semibold mb-1 block text-gray-300">
+                Title <span className="text-[#A15353]">*</span>
               </label>
               <input
                 type="text"
                 placeholder="Enter title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
+                className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white placeholder:text-gray-500"
               />
             </div>
 
             {/* Assign To Dropdown */}
             <div className="relative">
-              <label className="text-sm font-semibold mb-2 block text-gray-700">
-                Assign To <span className="text-red-500">*</span>
+              <label className="text-xs font-semibold mb-1 block text-gray-300">
+                Assign To <span className="text-[#A15353]">*</span>
               </label>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setAssignToDropdownOpen(!assignToDropdownOpen);
                 }}
-                className="w-full bg-white border-2 border-gray-300 text-black rounded-md px-4 py-3 flex items-center justify-between hover:border-[#00874E] active:border-[#00874E] focus:border-[#00874E] transition-colors cursor-pointer touch-manipulation"
+                className="w-full bg-[#23232C] border border-gray-600 text-white rounded px-3 py-2 flex items-center justify-between hover:border-[#767EE0] active:border-[#767EE0] focus:border-[#767EE0] transition-colors cursor-pointer touch-manipulation text-xs"
               >
-                <span className="text-sm">
+                <span>
                   {assignTo === "wholeClass" ? "Whole Class" : "Individual Students"}
                 </span>
                 <img 
                   src={ArrowDown} 
                   alt="" 
-                  className={`h-4 w-4 transition-transform ${assignToDropdownOpen ? 'rotate-180' : ''}`} 
+                  className={`h-3 w-3 transition-transform ${assignToDropdownOpen ? 'rotate-180' : ''}`} 
                 />
               </button>
               {assignToDropdownOpen && (
-                <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-xl border border-gray-200 z-10 overflow-hidden">
+                <div className="absolute top-full mt-0.5 w-full bg-[#23232C] rounded shadow-xl border border-gray-600 z-10 overflow-hidden">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setAssignTo("wholeClass");
                       setAssignToDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer touch-manipulation"
+                    className="block w-full text-left px-3 py-2 text-xs hover:bg-[#2D2D3A] active:bg-[#374151] transition-colors cursor-pointer touch-manipulation"
                   >
                     Whole Class
                   </button>
@@ -315,7 +315,7 @@ const ClassWorkEdit = ({
                       setAssignTo("individual");
                       setAssignToDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-4 py-3 text-sm hover:bg-gray-100 active:bg-gray-200 transition-colors cursor-pointer touch-manipulation"
+                    className="block w-full text-left px-3 py-2 text-xs hover:bg-[#2D2D3A] active:bg-[#374151] transition-colors cursor-pointer touch-manipulation"
                   >
                     Individual Students
                   </button>
@@ -324,10 +324,10 @@ const ClassWorkEdit = ({
             </div>
 
             {/* Points and Deadline in a 2-column grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {/* Points Input */}
               <div>
-                <label className="text-sm font-semibold mb-2 block text-gray-700">Points</label>
+                <label className="text-xs font-semibold mb-1 block text-gray-300">Points</label>
                 <input
                   type="number"
                   placeholder="0"
@@ -340,49 +340,49 @@ const ClassWorkEdit = ({
                   }}
                   min="0"
                   max="999"
-                  className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
+                  className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white placeholder:text-gray-500"
                 />
               </div>
 
               {/* Deadline Input */}
               <div>
-                <label className="text-sm font-semibold mb-2 block text-gray-700">Deadline</label>
+                <label className="text-xs font-semibold mb-1 block text-gray-300">Deadline</label>
                 <input
                   type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
                   min={getCurrentDateTime()}
-                  className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
+                  className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white"
                 />
               </div>
             </div>
 
             {/* Link Input */}
             <div>
-              <label className="text-sm font-semibold mb-2 block text-gray-700">Link</label>
+              <label className="text-xs font-semibold mb-1 block text-gray-300">Link</label>
               <input
                 type="text"
                 placeholder="Enter link (optional)"
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none text-sm focus:border-[#00874E] transition-colors"
+                className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white placeholder:text-gray-500"
               />
             </div>
           </div>
 
           {/* Right Column - Student Selection and Instructions */}
-          <div className="space-y-5">
+          <div className="space-y-3">
             {/* Student Selection (only show when individual is selected) */}
             {assignTo === "individual" && (
-              <div className="border-2 border-gray-300 rounded-md p-4 bg-gray-50">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-semibold text-gray-700">
+              <div className="border border-gray-600 rounded p-3 bg-[#23232C]">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-gray-300">
                     Select Students
                   </label>
                   {!loadingStudents && realStudents.length > 0 && (
                     <button
                       onClick={handleSelectAllStudents}
-                      className="text-xs text-[#00874E] hover:text-[#006B3D] font-medium cursor-pointer"
+                      className="text-xs text-[#767EE0] hover:text-[#5a62c4] font-medium cursor-pointer"
                     >
                       {selectedStudents.length === realStudents.length ? "Deselect All" : "Select All"}
                     </button>
@@ -390,28 +390,28 @@ const ClassWorkEdit = ({
                 </div>
                 
                 {loadingStudents ? (
-                  <div className="text-center py-4">
-                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-[#00874E] border-r-transparent"></div>
-                    <p className="text-xs text-gray-500 mt-2">Loading students...</p>
+                  <div className="text-center py-2">
+                    <div className="inline-block h-4 w-4 animate-spin rounded-full border border-solid border-[#767EE0] border-r-transparent"></div>
+                    <p className="text-xs text-gray-500 mt-1">Loading students...</p>
                   </div>
                 ) : realStudents.length === 0 ? (
-                  <div className="text-center py-4 text-xs text-gray-500">
+                  <div className="text-center py-2 text-xs text-gray-500">
                     No students found in this class.
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                  <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
                     {realStudents.map((student) => (
-                      <div key={student.tracked_ID} className="flex items-center gap-3 p-2 hover:bg-white rounded-md transition-colors">
+                      <div key={student.tracked_ID} className="flex items-center gap-2 p-1.5 hover:bg-[#2D2D3A] rounded transition-colors">
                         <input
                           type="checkbox"
                           id={`student-${student.tracked_ID}`}
                           checked={selectedStudents.includes(student.tracked_ID)}
                           onChange={() => handleStudentSelection(student.tracked_ID)}
-                          className="h-4 w-4 text-[#00874E] border-gray-300 rounded focus:ring-[#00874E] cursor-pointer"
+                          className="h-3 w-3 text-[#767EE0] border-gray-600 rounded focus:ring-[#767EE0] cursor-pointer bg-[#2D2D3A]"
                         />
                         <label 
                           htmlFor={`student-${student.tracked_ID}`}
-                          className="flex-1 text-sm text-gray-700 cursor-pointer"
+                          className="flex-1 text-xs text-gray-300 cursor-pointer"
                         >
                           <div className="font-medium">
                             {student.tracked_firstname} {student.tracked_lastname}
@@ -424,7 +424,7 @@ const ClassWorkEdit = ({
                 )}
 
                 {selectedStudents.length > 0 && (
-                  <div className="mt-3 text-xs text-gray-600">
+                  <div className="mt-2 text-xs text-gray-500">
                     {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
                   </div>
                 )}
@@ -432,24 +432,24 @@ const ClassWorkEdit = ({
             )}
 
             {/* Instruction Textarea - Dynamic height based on content */}
-            <div className={assignTo === "individual" ? "min-h-[200px]" : "min-h-[300px]"}>
-              <label className="text-sm font-semibold mb-2 block text-gray-700">Instruction</label>
+            <div className={assignTo === "individual" ? "min-h-[150px]" : "min-h-[220px]"}>
+              <label className="text-xs font-semibold mb-1 block text-gray-300">Instruction</label>
               <textarea
                 placeholder="Enter instruction..."
                 value={instruction}
                 onChange={(e) => setInstruction(e.target.value)}
-                className="w-full border-2 border-gray-300 rounded-md px-4 py-3 outline-none resize-none text-sm focus:border-[#00874E] transition-colors h-full min-h-[120px]"
-                rows={assignTo === "individual" ? 8 : 12}
+                className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none resize-none text-xs focus:border-[#767EE0] transition-colors h-full min-h-[100px] text-white placeholder:text-gray-500"
+                rows={assignTo === "individual" ? 6 : 10}
               />
             </div>
           </div>
         </div>
 
         {/* Save Button - Full width below the columns */}
-        <div className="mt-6">
+        <div className="mt-4">
           <button
             onClick={handleSave}
-            className="w-full bg-[#00A15D] hover:bg-[#00874E] active:bg-[#006B3D] text-white font-bold py-3 rounded-md transition-all duration-200 text-base cursor-pointer touch-manipulation active:scale-98"
+            className="w-full bg-[#00A15D] hover:bg-[#00874E] active:bg-[#006B3D] text-white font-bold py-2 rounded transition-all duration-200 text-sm cursor-pointer touch-manipulation active:scale-98"
           >
             Save Changes
           </button>
@@ -457,15 +457,15 @@ const ClassWorkEdit = ({
       </div>
 
       <style>{`
-        .overlay-fade { animation: overlayFade .18s ease-out both; }
+        .overlay-fade { animation: overlayFade .15s ease-out both; }
         @keyframes overlayFade { from { opacity: 0 } to { opacity: 1 } }
 
         .modal-pop {
-          transform-origin: top center;
-          animation: popIn .22s cubic-bezier(.2,.8,.2,1) both;
+          transform-origin: center;
+          animation: popIn .2s cubic-bezier(.2,.8,.2,1) both;
         }
         @keyframes popIn {
-          from { opacity: 0; transform: translateY(-8px) scale(.98); }
+          from { opacity: 0; transform: translateY(-6px) scale(.96); }
           to   { opacity: 1; transform: translateY(0)   scale(1);    }
         }
       `}</style>

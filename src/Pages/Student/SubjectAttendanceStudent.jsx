@@ -15,6 +15,7 @@ import Analytics from "../../assets/Analytics.svg";
 import UserIcon from "../../assets/StudentList.svg";
 import ArrowLeft from '../../assets/ArrowLeft.svg';
 import ArrowRight from '../../assets/ArrowRight.svg';
+import SubjectOverview from "../../assets/SubjectOverview.svg"; // Add this import
 
 // ========== PAGINATION COMPONENT ==========
 const Pagination = ({ currentPage, totalPages, onPageChange, dataType, startIndex, endIndex, totalItems }) => {
@@ -291,7 +292,7 @@ export default function SubjectAttendanceStudent() {
     <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
       <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
         active 
-          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
+          ? 'bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30' 
           : colorClass
       }`}>
         <img src={icon} alt="" className="h-4 w-4" />
@@ -367,13 +368,22 @@ export default function SubjectAttendanceStudent() {
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
-              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcement", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
-              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
+              {/* New Subject Name Overview Button (Red) */}
+              <Link to={`/SubjectOverviewStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30">
+                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                  <span className="sm:inline truncate">{classInfo?.subject || 'Subject'} Overview</span>
+                </button>
+              </Link>
+              
+              {/* Existing buttons */}
+              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
+              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
               {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", true)}
               {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
             </div>
             <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
-              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer">
+              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#FFA600] transition-all duration-200 cursor-pointer">
                 <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
               </button>
             </Link>

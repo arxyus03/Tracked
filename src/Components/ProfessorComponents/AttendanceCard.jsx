@@ -29,17 +29,17 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
     switch (status) {
       case 'present': return 'text-[#00A15D]';
       case 'late': return 'text-[#767EE0]';
-      case 'absent': return 'text-[#EF4444]';
-      default: return 'text-gray-600';
+      case 'absent': return 'text-[#A15353]';
+      default: return 'text-[#FFFFFF]';
     }
   };
 
   const getStatusBgColor = (status) => {
     switch (status) {
-      case 'present': return 'bg-[#00A15D]/10';
-      case 'late': return 'bg-[#767EE0]/10';
-      case 'absent': return 'bg-[#EF4444]/10';
-      default: return 'bg-gray-100';
+      case 'present': return 'bg-[#00A15D]/20';
+      case 'late': return 'bg-[#767EE0]/20';
+      case 'absent': return 'bg-[#A15353]/20';
+      default: return 'bg-[#23232C]';
     }
   };
 
@@ -240,7 +240,7 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
             pdf.setTextColor(118, 126, 224);
             break;
           case 'absent':
-            pdf.setTextColor(239, 68, 68);
+            pdf.setTextColor(161, 83, 83);
             break;
           default:
             pdf.setTextColor(0, 0, 0);
@@ -301,20 +301,20 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+    <div className="bg-[#15151C] rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-[#23232C]">
       {/* Card Header */}
       <div 
-        className="p-4 sm:p-5 cursor-pointer"
+        className="p-3 cursor-pointer"
         onClick={() => setOpen(!open)}
       >
         {/* Mobile Layout */}
         <div className="sm:hidden">
-          <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1">
-              <span className="text-sm text-[#465746]">
-                Class Attendance for <span className="font-bold">{date}</span>
+              <span className="text-xs text-[#FFFFFF]">
+                Attendance for <span className="font-bold">{date}</span>
               </span>
-              <div className="text-xs text-gray-500 mt-1">
+              <div className="text-xs text-gray-400 mt-0.5">
                 ({students ? students.length : 0} students)
               </div>
             </div>
@@ -323,7 +323,7 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
             <img
               src={ArrowDown}
               alt="Expand"
-              className={`h-5 w-5 flex-shrink-0 transform transition-transform duration-300 ${
+              className={`h-4 w-4 flex-shrink-0 transform transition-transform duration-300 invert ${
                 open ? "rotate-180" : ""
               }`}
             />
@@ -331,15 +331,15 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
 
           {/* Summary badges */}
           {!open && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              <span className="px-2 py-1 bg-[#00A15D]/10 text-[#00A15D] text-xs rounded-full font-medium">
-                Present: {presentCount}
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              <span className="px-1.5 py-0.5 bg-[#00A15D]/20 text-[#00A15D] text-xs rounded-full font-medium">
+                P: {presentCount}
               </span>
-              <span className="px-2 py-1 bg-[#767EE0]/10 text-[#767EE0] text-xs rounded-full font-medium">
-                Late: {lateCount}
+              <span className="px-1.5 py-0.5 bg-[#767EE0]/20 text-[#767EE0] text-xs rounded-full font-medium">
+                L: {lateCount}
               </span>
-              <span className="px-2 py-1 bg-[#EF4444]/10 text-[#EF4444] text-xs rounded-full font-medium">
-                Absent: {absentCount}
+              <span className="px-1.5 py-0.5 bg-[#A15353]/20 text-[#A15353] text-xs rounded-full font-medium">
+                A: {absentCount}
               </span>
             </div>
           )}
@@ -347,7 +347,7 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
           {/* Download button for mobile */}
           <button 
             onClick={handleDownload}
-            className="w-full px-3 py-2 bg-[#00A15D] text-white font-semibold text-xs rounded-lg hover:bg-[#00874E] transition-all duration-200 shadow-md hover:shadow-lg"
+            className="w-full px-2 py-1.5 bg-[#767EE0] text-[#FFFFFF] font-medium text-xs rounded hover:bg-[#6366ce] transition-all duration-200"
           >
             Download PDF
           </button>
@@ -357,27 +357,27 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
         <div className="hidden sm:flex sm:items-center justify-between gap-3">
           <div className="flex-1">
             <div className="flex flex-row items-center gap-2">
-              <span className="text-base lg:text-lg text-[#465746]">
-                Class Attendance for <span className="font-bold">{date}</span>
+              <span className="text-sm text-[#FFFFFF]">
+                Attendance for <span className="font-bold">{date}</span>
               </span>
-              <span className="text-sm text-gray-500">
+              <span className="text-xs text-gray-400">
                 ({students ? students.length : 0} students)
               </span>
             </div>
           </div>
           
           {/* Action buttons for desktop */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button 
               onClick={handleDownload}
-              className="px-4 py-2 bg-[#00A15D] text-white font-semibold text-sm rounded-lg hover:bg-[#00874E] transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap cursor-pointer"
+              className="px-3 py-1.5 bg-[#767EE0] text-[#FFFFFF] font-medium text-xs rounded hover:bg-[#6366ce] transition-all duration-200 whitespace-nowrap cursor-pointer"
             >
               Download PDF
             </button>
             <img
               src={ArrowDown}
               alt="Expand"
-              className={`h-6 w-6 flex-shrink-0 transform transition-transform duration-300 ${
+              className={`h-5 w-5 flex-shrink-0 transform transition-transform duration-300 invert ${
                 open ? "rotate-180" : ""
               }`}
             />
@@ -387,53 +387,53 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
 
       {/* Expanded Content */}
       {open && (
-        <div className="border-t border-gray-200">
+        <div className="border-t border-[#23232C]">
           {/* Edit Button and Action Buttons - Inside the expanded card */}
-          <div className="flex flex-col sm:flex-row-reverse justify-end items-start sm:items-center gap-3 px-5 py-3 bg-gray-50 border-b border-gray-200">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row-reverse justify-end items-start sm:items-center gap-2 px-3 py-2 bg-[#23232C] border-b border-[#15151C]">
+            <div className="flex items-center gap-2">
               {!isEditing && (
                 <button 
                   onClick={handleEditClick}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#00A15D] text-white font-semibold text-sm rounded-lg hover:bg-[#00874E] transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap cursor-pointer"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-[#767EE0] text-[#FFFFFF] font-medium text-xs rounded hover:bg-[#6366ce] transition-all duration-200 whitespace-nowrap cursor-pointer"
                 >
-                  Edit Attendance
+                  Edit
                 </button>
               )}
               {/* Save/Cancel buttons when editing */}
               {isEditing && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button 
                     onClick={handleCancelEdit}
-                    className="px-4 py-2 bg-gray-500 text-white font-semibold text-sm rounded-lg hover:bg-gray-600 transition-all duration-200 shadow-md whitespace-nowrap cursor-pointer"
+                    className="px-3 py-1.5 bg-gray-600 text-[#FFFFFF] font-medium text-xs rounded hover:bg-gray-700 transition-all duration-200 whitespace-nowrap cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button 
                     onClick={handleSaveAttendance}
-                    className="px-4 py-2 bg-[#00A15D] text-white font-semibold text-sm rounded-lg hover:bg-[#00874E] transition-all duration-200 shadow-md whitespace-nowrap cursor-pointer"
+                    className="px-3 py-1.5 bg-[#00A15D] text-[#FFFFFF] font-medium text-xs rounded hover:bg-[#00874E] transition-all duration-200 whitespace-nowrap cursor-pointer"
                   >
-                    Save Changes
+                    Save
                   </button>
                 </div>
               )}
             </div>
             
             {/* Summary section */}
-            <div className="flex items-center gap-4 mr-auto">
-              <span className="px-3 py-1 bg-[#00A15D]/10 text-[#00A15D] text-sm rounded-full font-medium">
-                Present: {presentCount}
+            <div className="flex items-center gap-3 mr-auto mt-2 sm:mt-0">
+              <span className="px-2 py-1 bg-[#00A15D]/20 text-[#00A15D] text-xs rounded-full font-medium">
+                P: {presentCount}
               </span>
-              <span className="px-3 py-1 bg-[#767EE0]/10 text-[#767EE0] text-sm rounded-full font-medium">
-                Late: {lateCount}
+              <span className="px-2 py-1 bg-[#767EE0]/20 text-[#767EE0] text-xs rounded-full font-medium">
+                L: {lateCount}
               </span>
-              <span className="px-3 py-1 bg-[#EF4444]/10 text-[#EF4444] text-sm rounded-full font-medium">
-                Absent: {absentCount}
+              <span className="px-2 py-1 bg-[#A15353]/20 text-[#A15353] text-xs rounded-full font-medium">
+                A: {absentCount}
               </span>
             </div>
           </div>
 
           {/* MOBILE CARD VIEW */}
-          <div className="block sm:hidden p-4 space-y-3">
+          <div className="block sm:hidden p-3 space-y-2">
             {students && students.length > 0 ? (
               students.map((student, index) => {
                 const studentNumber = getStudentNumber(student);
@@ -443,28 +443,28 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                 return (
                   <div 
                     key={studentNumber + index} 
-                    className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                    className="bg-[#23232C] rounded p-2 border border-[#15151C]"
                   >
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-start justify-between mb-1">
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-[#465746] text-sm mb-1 truncate">
+                        <p className="font-medium text-[#FFFFFF] text-xs mb-0.5 truncate">
                           {studentName}
                         </p>
-                        <p className="text-xs text-gray-600">
-                          Student No: {studentNumber}
+                        <p className="text-xs text-gray-400">
+                          #{studentNumber}
                         </p>
                       </div>
                       {!isEditing ? (
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-2 ${getStatusBgColor(currentStatus)} ${getStatusColor(currentStatus)}`}>
-                          {getStatusText(currentStatus)}
+                        <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ml-2 ${getStatusBgColor(currentStatus)} ${getStatusColor(currentStatus)}`}>
+                          {getStatusText(currentStatus).charAt(0)}
                         </span>
                       ) : (
-                        <div className="flex flex-col gap-1 ml-2">
+                        <div className="flex flex-col gap-0.5 ml-2">
                           {/* Attendance radio buttons for mobile editing with labels - Updated order */}
                           {[
-                            { status: 'present', label: 'Present', color: '#00A15D' },
-                            { status: 'late', label: 'Late', color: '#767EE0' },
-                            { status: 'absent', label: 'Absent', color: '#EF4444' }
+                            { status: 'present', label: 'P', color: '#00A15D' },
+                            { status: 'late', label: 'L', color: '#767EE0' },
+                            { status: 'absent', label: 'A', color: '#A15353' }
                           ].map(({ status, label, color }) => (
                             <label key={status} className="flex items-center gap-1 cursor-pointer">
                               <input
@@ -476,10 +476,10 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                                   handleAttendanceChange(studentNumber, status);
                                 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="appearance-none w-4 h-4 border-2 rounded-md checked:bg-current cursor-pointer"
+                                className="appearance-none w-3 h-3 border-2 rounded-sm checked:bg-current cursor-pointer"
                                 style={{
                                   borderColor: color,
-                                  backgroundColor: currentStatus === status ? color : 'white'
+                                  backgroundColor: currentStatus === status ? color : 'transparent'
                                 }}
                               />
                               <span className="text-xs font-medium" style={{ color }}>{label}</span>
@@ -492,27 +492,27 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                 );
               })
             ) : (
-              <div className="text-center py-6 text-gray-500 text-sm">
+              <div className="text-center py-4 text-gray-400 text-xs">
                 No student data available
               </div>
             )}
           </div>
 
           {/* DESKTOP TABLE VIEW */}
-          <div className="hidden sm:block p-5 overflow-x-auto">
-            <table className="w-full bg-white border-collapse text-left min-w-[700px]">
+          <div className="hidden sm:block p-3 overflow-x-auto">
+            <table className="w-full bg-[#15151C] border-collapse text-left min-w-[600px]">
               <thead>
-                <tr className="text-xs sm:text-sm lg:text-base font-semibold">
-                  <th className="px-2 sm:px-3 md:px-4 py-2">No.</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2">Student No.</th>
-                  <th className="px-2 sm:px-3 md:px-4 py-2">Full Name</th>
+                <tr className="text-xs font-semibold text-[#FFFFFF]">
+                  <th className="px-2 py-1.5">#</th>
+                  <th className="px-2 py-1.5">Student No.</th>
+                  <th className="px-2 py-1.5">Full Name</th>
                   {!isEditing ? (
-                    <th className="px-2 sm:px-3 md:px-4 py-2 text-right">Status</th>
+                    <th className="px-2 py-1.5 text-right">Status</th>
                   ) : (
                     <>
-                      <th className="px-2 py-2 text-[#00A15D] text-center w-20">Present</th>
-                      <th className="px-2 py-2 text-[#767EE0] text-center w-20">Late</th>
-                      <th className="px-2 py-2 text-[#EF4444] text-center w-20">Absent</th>
+                      <th className="px-2 py-1.5 text-[#00A15D] text-center w-16">P</th>
+                      <th className="px-2 py-1.5 text-[#767EE0] text-center w-16">L</th>
+                      <th className="px-2 py-1.5 text-[#A15353] text-center w-16">A</th>
                     </>
                   )}
                 </tr>
@@ -527,55 +527,55 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                     return (
                       <tr 
                         key={studentNumber + index} 
-                        className="hover:bg-gray-50 text-xs sm:text-sm lg:text-base"
+                        className="hover:bg-[#23232C] text-xs text-[#FFFFFF] border-t border-[#23232C]"
                       >
-                        <td className="px-2 sm:px-3 md:px-4 py-2">{index + 1}</td>
-                        <td className="px-2 sm:px-3 md:px-4 py-2">{studentNumber}</td>
-                        <td className="px-2 sm:px-3 md:px-4 py-2">{studentName}</td>
+                        <td className="px-2 py-1.5">{index + 1}</td>
+                        <td className="px-2 py-1.5">{studentNumber}</td>
+                        <td className="px-2 py-1.5">{studentName}</td>
                         
                         {!isEditing ? (
-                          <td className="px-2 sm:px-3 md:px-4 py-2 text-right">
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs md:text-sm font-bold ${getStatusBgColor(currentStatus)} ${getStatusColor(currentStatus)}`}>
+                          <td className="px-2 py-1.5 text-right">
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${getStatusBgColor(currentStatus)} ${getStatusColor(currentStatus)}`}>
                               {getStatusText(currentStatus)}
                             </span>
                           </td>
                         ) : (
                           <>
                             {/* Present Column */}
-                            <td className="px-2 py-2 w-20">
+                            <td className="px-2 py-1.5 w-16">
                               <div className="flex justify-center items-center">
                                 <input
                                   type="radio"
                                   name={`attendance-${studentNumber}`}
                                   checked={currentStatus === "present"}
                                   onChange={() => handleAttendanceChange(studentNumber, "present")}
-                                  className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#00A15D] rounded-md checked:bg-[#00A15D] cursor-pointer"
+                                  className="appearance-none w-4 h-4 border-2 border-[#00A15D] rounded-sm checked:bg-[#00A15D] cursor-pointer"
                                 />
                               </div>
                             </td>
 
                             {/* Late Column */}
-                            <td className="px-2 py-2 w-20">
+                            <td className="px-2 py-1.5 w-16">
                               <div className="flex justify-center items-center">
                                 <input
                                   type="radio"
                                   name={`attendance-${studentNumber}`}
                                   checked={currentStatus === "late"}
                                   onChange={() => handleAttendanceChange(studentNumber, "late")}
-                                  className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#767EE0] rounded-md checked:bg-[#767EE0] cursor-pointer"
+                                  className="appearance-none w-4 h-4 border-2 border-[#767EE0] rounded-sm checked:bg-[#767EE0] cursor-pointer"
                                 />
                               </div>
                             </td>
 
                             {/* Absent Column */}
-                            <td className="px-2 py-2 w-20">
+                            <td className="px-2 py-1.5 w-16">
                               <div className="flex justify-center items-center">
                                 <input
                                   type="radio"
                                   name={`attendance-${studentNumber}`}
                                   checked={currentStatus === "absent"}
                                   onChange={() => handleAttendanceChange(studentNumber, "absent")}
-                                  className="appearance-none w-5 h-5 sm:w-6 sm:h-6 border-2 border-[#EF4444] rounded-md checked:bg-[#EF4444] cursor-pointer"
+                                  className="appearance-none w-4 h-4 border-2 border-[#A15353] rounded-sm checked:bg-[#A15353] cursor-pointer"
                                 />
                               </div>
                             </td>
@@ -588,7 +588,7 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                   <tr>
                     <td 
                       colSpan={isEditing ? "6" : "4"} 
-                      className="px-4 py-8 text-center text-gray-500 text-sm"
+                      className="px-4 py-6 text-center text-gray-400 text-xs"
                     >
                       No student data available
                     </td>
@@ -602,18 +602,18 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 sm:p-8 text-center">
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-4">
+          <div className="bg-[#15151C] rounded-lg shadow-2xl w-full max-w-sm p-5 text-center border border-[#23232C]">
             <img
               src={SuccessIcon}
               alt="Success"
-              className="h-16 w-16 mx-auto mb-4"
+              className="h-12 w-12 mx-auto mb-3"
             />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Success!</h3>
-            <p className="text-gray-600 mb-6">{modalMessage}</p>
+            <h3 className="text-lg font-bold text-[#FFFFFF] mb-2">Success!</h3>
+            <p className="text-gray-300 text-sm mb-4">{modalMessage}</p>
             <button
               onClick={() => setShowSuccessModal(false)}
-              className="w-full bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-3 rounded-md transition-colors cursor-pointer"
+              className="w-full bg-[#00A15D] hover:bg-[#00874E] text-[#FFFFFF] font-bold py-2 rounded transition-colors cursor-pointer text-sm"
             >
               OK
             </button>
@@ -623,18 +623,18 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
 
       {/* Error Modal */}
       {showErrorModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 sm:p-8 text-center">
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-4">
+          <div className="bg-[#15151C] rounded-lg shadow-2xl w-full max-w-sm p-5 text-center border border-[#23232C]">
             <img
               src={ErrorIcon}
               alt="Error"
-              className="h-16 w-16 mx-auto mb-4"
+              className="h-12 w-12 mx-auto mb-3"
             />
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Error</h3>
-            <p className="text-gray-600 mb-6">{modalMessage}</p>
+            <h3 className="text-lg font-bold text-[#FFFFFF] mb-2">Error</h3>
+            <p className="text-gray-300 text-sm mb-4">{modalMessage}</p>
             <button
               onClick={() => setShowErrorModal(false)}
-              className="w-full bg-[#EF4444] hover:bg-[#DC2626] text-white font-bold py-3 rounded-md transition-colors cursor-pointer"
+              className="w-full bg-[#A15353] hover:bg-[#8a4545] text-[#FFFFFF] font-bold py-2 rounded transition-colors cursor-pointer text-sm"
             >
               OK
             </button>

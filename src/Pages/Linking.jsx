@@ -52,6 +52,7 @@ import SubjectSchoolWorksStudent from './Student/SubjectSchoolWorksStudent.jsx';
 import SubjectAttendanceStudent from './Student/SubjectAttendanceStudent.jsx';
 import SubjectListStudent from './Student/SubjectListStudent.jsx';
 import SubjectAnalyticsStudent from './Student/SubjectAnalyticsStudent.jsx';
+import SubjectOverviewStudent from './Student/SubjectOverviewStudent.jsx';
 
 
 // Super Admin Links
@@ -123,6 +124,7 @@ function Linking() {
         <Route path="/SubjectAttendanceStudent" element={<SubjectAttendanceStudent />} />
         <Route path="/SubjectListStudent" element={<SubjectListStudent />} />
         <Route path="/SubjectAnalyticsStudent" element={<SubjectAnalyticsStudent />} />
+        <Route path="/SubjectOverviewStudent" element={<SubjectOverviewStudent />} />
 
         {/* Navigations for Super Admin */}
         <Route path="/SuperAdminAccountList" element={<SuperAdminAccountList />} />

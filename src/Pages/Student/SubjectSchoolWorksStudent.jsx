@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import StudentActivityDetails from "../../Components/StudentActivityDetails";
+import StudentActivityDetails from "../../Components/StudentComponents/StudentActivityDetails";
 
 // ========== IMPORT ASSETS ==========
 import BackButton from '../../assets/BackButton.svg';
@@ -14,7 +14,9 @@ import Classwork from "../../assets/Classwork.svg";
 import Attendance from "../../assets/Attendance.svg";
 import Analytics from "../../assets/Analytics.svg";
 import DeadlineIcon from "../../assets/Deadline.svg";
-import GradeIcon from "../../assets/Points.svg"; 
+import GradeIcon from "../../assets/Points.svg";
+import FileIcon from "../../assets/File.svg"; // Changed from Photo.svg to File.svg
+import SubjectOverview from "../../assets/SubjectOverview.svg";
 
 // ========== STUDENT ACTIVITY CARD COMPONENT ==========
 const StudentActivityCard = ({ activity, onViewDetails }) => {
@@ -65,6 +67,7 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
       'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
       'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
       'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
+      'Exam': 'bg-[#A15353]/20 text-[#A15353]', // Added Exam with same color as Laboratory
     };
     return colors[type] || 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80';
   };
@@ -82,20 +85,15 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
       } catch {}
     }
     
-    if (isSubmitted && isLate) return { 
-      status: "Awaiting Upload", 
-      color: "bg-[#FFA600]/20 text-[#FFA600]", 
-      type: "submitted" 
-    };
-    if (isSubmitted) return { 
-      status: "Awaiting Upload", 
-      color: "bg-[#767EE0]/20 text-[#00A15D]", 
-      type: "submitted" 
-    };
     if (isOverdue) return { 
       status: "Missed", 
       color: "bg-[#A15353]/20 text-[#A15353]", 
       type: "missed" 
+    };
+    if (isSubmitted) return { 
+      status: "", // Empty string for submitted activities
+      color: "", // No color needed since we won't display status
+      type: "submitted" 
     };
     return { 
       status: "Active", 
@@ -158,9 +156,28 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
           {activity.activity_type} #{activity.task_number}
         </span>
         <div className="flex items-center gap-1">
-          <span className={`px-1 py-0.5 text-xs font-medium rounded ${statusInfo.color}`}>
-            {statusInfo.status}
-          </span>
+          {/* Reference Materials Icon with Count */}
+          <div className="flex items-center gap-1 mr-1">
+            <img 
+              src={FileIcon} 
+              alt="Reference Materials" 
+              className={`w-3.5 h-3.5 ${hasProfessorSubmission ? 'opacity-100' : 'opacity-40'}`}
+            />
+            <span className={`text-xs font-bold ${
+              hasProfessorSubmission 
+                ? 'text-[#00A15D]' 
+                : 'text-[#767EE0]'
+            }`}>
+              {hasProfessorSubmission ? (activity.professor_file_count || 1) : 0}
+            </span>
+          </div>
+          
+          {/* Only show status if it's not empty (i.e., not submitted) */}
+          {statusInfo.status && (
+            <span className={`px-1 py-0.5 text-xs font-medium rounded ${statusInfo.color}`}>
+              {statusInfo.status}
+            </span>
+          )}
           {gradingStatus && (
             <span className={`px-1 py-0.5 text-xs font-medium rounded ${gradingStatus.color}`}>
               {gradingStatus.text}
@@ -197,22 +214,6 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
             </span>
           )}
         </div>
-      </div>
-
-      {/* Professor File Count - Ultra Minimal */}
-      <div className={`px-1.5 py-1 rounded text-xs flex items-center justify-between ${
-        hasProfessorSubmission 
-          ? 'bg-[#00A15D]/10 text-[#00A15D]' 
-          : 'bg-[#767EE0]/10 text-[#767EE0]'
-      }`}>
-        <span className="font-medium truncate mr-1">
-          {hasProfessorSubmission ? 'Reference Materials' : 'No Reference Materials'}
-        </span>
-        {hasProfessorSubmission && (
-          <span className="font-bold text-[10px]">
-            {activity.professor_file_count || 1}
-          </span>
-        )}
       </div>
     </div>
   );
@@ -301,6 +302,7 @@ export default function SubjectSchoolWorksStudent() {
     if (!studentId) return;
     
     try {
+      // FIXED: Changed from student_code to subject_code
       const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?subject_code=${subjectCode}&student_id=${studentId}`);
       if (response.ok) {
         const result = await response.json();
@@ -359,7 +361,14 @@ export default function SubjectSchoolWorksStudent() {
 
   // ========== HANDLER FUNCTIONS ==========
   const handleViewDetails = (activity) => {
-    setSelectedActivity(activity);
+    // Get the status of the activity
+    const status = getActivityStatus(activity);
+    // Create a new activity object with the status included
+    const activityWithStatus = {
+      ...activity,
+      status: status // Add the status to the activity object
+    };
+    setSelectedActivity(activityWithStatus);
     setDetailsModalOpen(true);
   };
 
@@ -434,7 +443,7 @@ export default function SubjectSchoolWorksStudent() {
     <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
       <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
         active 
-          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
+          ? 'bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30' 
           : colorClass
       }`}>
         <img src={icon} alt="" className="h-4 w-4" />
@@ -528,13 +537,22 @@ export default function SubjectSchoolWorksStudent() {
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {/* New Subject Name Overview Button (Red) */}
+              <Link to={`/SubjectOverviewStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30">
+                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                  <span className="sm:inline truncate">{classInfo?.subject || 'Subject'} Overview</span>
+                </button>
+              </Link>
+              
+              {/* Existing buttons */}
               {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
               {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", true)}
               {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
               {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
             </div>
             <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
-              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer">
+              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#767EE0] transition-all duration-200 cursor-pointer">
                 <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
               </button>
             </Link>
@@ -545,19 +563,34 @@ export default function SubjectSchoolWorksStudent() {
             <div className="relative filter-dropdown sm:w-36">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className="flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border border-transparent hover:border-[#00A15D] transition-all duration-200 text-xs font-medium cursor-pointer"
+                className={`flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
+                  filterOption !== "All" 
+                    ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' 
+                    : 'border-[#FFFFFF]/10 hover:border-[#767EE0] text-[#FFFFFF]'
+                }`}
               >
-                <span className="text-[#FFFFFF]">{filterOption}</span>
-                <img src={ArrowDown} alt="" className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`} />
+                <span>{filterOption}</span>
+                <img 
+                  src={ArrowDown} 
+                  alt="" 
+                  className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${
+                    filterDropdownOpen ? 'rotate-180' : ''
+                  } ${
+                    filterOption !== "All" ? 'invert-[0.5] sepia-[1] saturate-[5] hue-rotate-[200deg]' : ''
+                  }`} 
+                />
               </button>
 
               {filterDropdownOpen && (
                 <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-[#FFFFFF]/10 z-20 overflow-hidden">
-                  {["All", "Active", "Submitted", "Missed", "Assignment", "Quiz", "Activity", "Project", "Laboratory"].map((option) => (
+                  {/* Added "Exam" to the filter options */}
+                  {["All", "Active", "Submitted", "Missed", "Assignment", "Quiz", "Activity", "Project", "Laboratory", "Exam"].map((option) => (
                     <button
                       key={option}
                       className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
-                        filterOption === option ? 'bg-[#23232C] font-semibold' : 'text-[#FFFFFF]/80'
+                        filterOption === option 
+                          ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' 
+                          : 'text-[#FFFFFF]/80'
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -578,7 +611,7 @@ export default function SubjectSchoolWorksStudent() {
                   placeholder="Search activities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-transparent focus:border-[#00A15D] transition-colors placeholder:text-[#FFFFFF]/40"
+                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors placeholder:text-[#FFFFFF]/40"
                 />
                 <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60">
                   <img src={Search} alt="Search" className="h-3.5 w-3.5" />
@@ -603,8 +636,6 @@ export default function SubjectSchoolWorksStudent() {
         activity={selectedActivity}
         isOpen={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
-        onImageUpload={handleImageUpload}
-        studentImages={studentImages}
         studentId={studentId}
       />
     </div>

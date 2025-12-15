@@ -3,25 +3,26 @@ import { Link, useLocation } from 'react-router-dom';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import NewAnnouncement from "../../Components/AnnouncementTabComponentsProf/NewAnnouncement";
-import AnnouncementCard from "../../Components/AnnouncementTabComponentsProf/AnnouncementCard";
+import NewAnnouncement from "../../Components/ProfessorComponents/NewAnnouncement";
+import AnnouncementCard from "../../Components/ProfessorComponents/AnnouncementCard";
 
+// ========== IMPORT ASSETS ==========
 import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
-import BackButton from '../../assets/BackButton(Light).svg';
-import Add from "../../assets/Add(Light).svg";
-import Archive from "../../assets/Archive(Light).svg";
-import Attendance from "../../assets/Attendance(Light).svg";
-import Announcement from "../../assets/Announcement(Light).svg";
-import AnnouncementIcon from "../../assets/Announcement(Light).svg";
-import Classwork from "../../assets/Classwork(Light).svg";
-import ClassManagementIcon from "../../assets/ClassManagement(Light).svg";
-import ArrowDown from "../../assets/ArrowDown(Light).svg";
+import BackButton from '../../assets/BackButton.svg'; // Changed to dark theme version
+import Add from "../../assets/Add.svg"; // Changed to dark theme version
+import Archive from "../../assets/Archive.svg"; // Changed to dark theme version
+import Attendance from "../../assets/Attendance.svg"; // Changed to dark theme version
+import Announcement from "../../assets/Announcement.svg"; // Changed to dark theme version
+import AnnouncementIcon from "../../assets/Announcement.svg"; // Changed to dark theme version
+import Classwork from "../../assets/Classwork.svg"; // Changed to dark theme version
+import ClassManagementIcon from "../../assets/ClassManagement.svg"; // Changed to dark theme version
+import ArrowDown from "../../assets/ArrowDown.svg"; // Changed to dark theme version
 import SuccessIcon from '../../assets/Success(Green).svg';
 import ArchiveWarningIcon from '../../assets/Warning(Yellow).svg';
 import Search from "../../assets/Search.svg";
-import GradeIcon from "../../assets/Grade(Light).svg";
-import AnalyticsIcon from "../../assets/Analytics(Light).svg";
-import Copy from "../../assets/Copy(Light).svg"; 
+import GradeIcon from "../../assets/Grade.svg"; // Changed to dark theme version
+import AnalyticsIcon from "../../assets/Analytics.svg"; // Changed to dark theme version
+import Copy from "../../assets/Copy.svg"; // Changed to dark theme version
 
 export default function AnnouncementTab() {
   const location = useLocation();
@@ -146,6 +147,20 @@ export default function AnnouncementTab() {
 
     fetchAllData();
   }, [subjectCode]);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const fetchClassDetails = async () => {
     try {
@@ -629,56 +644,69 @@ export default function AnnouncementTab() {
 
   if (isLoading) {
     return (
-      <div>
+      <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-5 text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
-            <p className="mt-3 text-gray-600">Loading announcements...</p>
+          <div className="p-8 text-center text-[#FFFFFF]">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
+            <p className="mt-3 text-[#FFFFFF]/80">Loading announcements...</p>
           </div>
         </div>
       </div>
     );
   }
 
+  // ========== RENDER ACTION BUTTON HELPER ==========
+  const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
+    <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+      <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
+        active 
+          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
+          : colorClass
+      }`}>
+        <img src={icon} alt="" className="h-4 w-4" />
+        <span className="sm:inline truncate">{label}</span>
+      </button>
+    </Link>
+  );
+
   return (
-    <div>
+    <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* Main Content */}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+        {/* ========== MAIN CONTENT ========== */}
+        <div className="p-4 sm:p-5 md:p-6 lg:p-6">
           
-          {/* Page Header */}
-          <div className="mb-4 sm:mb-6">
+          {/* ========== PAGE HEADER ========== */}
+          <div className="mb-4">
             <div className="flex items-center mb-2">
               <img
                 src={AnnouncementIcon}
                 alt="Announcement"
-                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
-                title="Announcements section"
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
               />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
+              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">
                 Announcement
               </h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#465746]">
+            <p className="text-sm lg:text-base text-[#FFFFFF]/80">
               Post a class Announcement
             </p>
           </div>
 
-          {/* Subject Information with Copy Button */}
-          <div className="flex flex-col gap-2 text-sm sm:text-base lg:text-[1.125rem] text-[#465746] mb-4 sm:mb-5">
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+          {/* ========== SUBJECT INFORMATION ========== */}
+          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
               <div className="flex items-center gap-2">
                 <span>{classInfo?.subject_code || subjectCode || 'N/A'}</span>
                 {(classInfo?.subject_code || subjectCode) && (classInfo?.subject_code !== 'N/A' && subjectCode !== 'N/A') && (
                   <button
                     onClick={copySubjectCode}
-                    className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer flex items-center gap-1"
+                    className="p-1 text-[#FFFFFF]/60 hover:text-[#FFFFFF] hover:bg-[#15151C] rounded transition-colors cursor-pointer flex items-center gap-1"
                     title="Copy subject code"
                   >
                     <img 
@@ -691,166 +719,115 @@ export default function AnnouncementTab() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'Unknown Subject'}</span>
             </div>
 
-            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">Section:</span>
+                <span className="font-semibold">SECTION:</span>
                 <span>{classInfo?.section || 'Unknown Section'}</span>
               </div>
-              <div className="w-full flex justify-end">
+              <div className="flex justify-end">
                 <Link to={"/ClassManagement"}>
                   <img 
                     src={BackButton} 
                     alt="Back to Class Management" 
-                    className="h-6 w-6 cursor-pointer hover:opacity-70 transition-opacity"
-                    title="Back to Class Management"
+                    className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity"
                   />
                 </Link>
               </div>
             </div>
           </div>
 
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+          <hr className="border-[#FFFFFF]/30 mb-4" />
 
-          {/* ANNOUNCEMENT ACTION BUTTONS */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full mt-4 sm:mt-5 gap-3">
-            {/* Navigation buttons - Stack on mobile, row on tablet/desktop */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
-              {/* Announcement Button - Full width on mobile, auto on larger */}
-              <Link to={`/Class?code=${subjectCode}`} className="flex-1 sm:flex-initial">
-                <button 
-                  className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#e6f4ea] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4edd8] transition-all duration-300 cursor-pointer w-full sm:w-auto"
-                  title="View class announcements"
-                >
-                  <img 
-                    src={Announcement} 
-                    alt="Announcements" 
-                    className="h-4 w-4 sm:h-5 sm:w-5"
-                  />
-                  <span className="sm:inline">Announcement</span>
-                </button>
-              </Link>
-
-              {/* Classwork, Attendance, Grade and Analytics - Grid on mobile, row on desktop */}
-              <div className="grid grid-cols-2 gap-3 w-full sm:flex sm:gap-4 sm:w-auto">
-                <Link to={`/ClassworkTab?code=${subjectCode}`} className="min-w-0">
-                  <button 
-                    className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2 bg-[#e6f0ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#d4e3ff] transition-all duration-300 cursor-pointer w-full"
-                    title="Manage classwork and assignments"
-                  >
-                    <img 
-                      src={Classwork} 
-                      alt="Classwork" 
-                      className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
-                    />
-                    <span className="whitespace-nowrap truncate">Class work</span>
-                  </button>
-                </Link>
-
-                <Link to={`/Attendance?code=${subjectCode}`} className="sm:flex-initial">
-                  <button 
-                    className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#fff4e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffebd4] transition-all duration-300 cursor-pointer w-full sm:w-auto"
-                    title="Take and view attendance"
-                  >
-                    <img 
-                      src={Attendance} 
-                      alt="Attendance" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Attendance</span>
-                  </button>
-                </Link>
-
-                {/* NEW: Grade Button */}
-                <Link to={`/GradeTab?code=${subjectCode}`} className="sm:flex-initial">
-                  <button 
-                    className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#ffe6e6] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#ffd4d4] transition-all duration-300 cursor-pointer w-full sm:w-auto"
-                    title="Manage student grades"
-                  >
-                    <img 
-                      src={GradeIcon} 
-                      alt="Grades" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Grade</span>
-                  </button>
-                </Link>
-
-                {/* NEW: Analytics Button */}
-                <Link to={`/AnalyticsTab?code=${subjectCode}`} className="sm:flex-initial">
-                  <button 
-                    className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 bg-[#f0e6ff] font-semibold text-sm sm:text-base rounded-md shadow-md border-2 border-transparent hover:bg-[#e6d4ff] transition-all duration-300 cursor-pointer w-full sm:w-auto"
-                    title="View class analytics and insights"
-                  >
-                    <img 
-                      src={AnalyticsIcon} 
-                      alt="Analytics" 
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                    />
-                    <span className="sm:inline">Analytics</span>
-                  </button>
-                </Link>
-              </div>
+          {/* ========== ACTION BUTTONS ========== */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {/* Announcement Button - Active */}
+              {renderActionButton("/Class", Announcement, "Announcements", true)}
+              
+              {/* Classwork Button */}
+              {renderActionButton("/ClassworkTab", Classwork, "Class Work", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
+              
+              {/* Attendance Button */}
+              {renderActionButton("/Attendance", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
+              
+              {/* Grade Button - CHANGED TO RED */}
+              {renderActionButton("/GradeTab", GradeIcon, "Grade", false, "bg-[#A15353]/20 text-[#A15353] border-[#A15353]/30 hover:bg-[#A15353]/30")}
+              
+              {/* Analytics Button */}
+              {renderActionButton("/AnalyticsTab", AnalyticsIcon, "Analytics", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
             </div>
-
-            {/* Action buttons - Icons only on mobile/tablet, unchanged on desktop */}
-            <div className="flex items-center gap-2 justify-end sm:justify-start mt-3 sm:mt-0">
+            
+            {/* ========== ICON BUTTONS ========== */}
+            <div className="flex items-center gap-2 justify-end sm:justify-start">
+              {/* Class Management Button */}
               <Link to={`/StudentList?code=${subjectCode}`}>
                 <button 
-                  className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:px-2"
+                  className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer"
                   title="View and manage class list"
                 >
                   <img 
                     src={ClassManagementIcon} 
                     alt="Class Management" 
-                    className="h-5 w-5 sm:h-6 sm:w-6" 
+                    className="h-4 w-4" 
                   />
                 </button>
               </Link>
 
+              {/* Add Announcement Button */}
               <button 
                 onClick={() => setShowModal(true)}
-                className="p-2 bg-[#fff] rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] transition-all duration-200 flex-shrink-0 cursor-pointer flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:px-2"
+                className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer"
                 title="Create new announcement"
               >
                 <img 
                   src={Add} 
                   alt="Add Announcement" 
-                  className="h-5 w-5 sm:h-6 sm:w-6" 
+                  className="h-4 w-4" 
                 />
               </button>
             </div>
           </div>
 
-          {/* ANNOUNCEMENT FILTER AND SEARCH SECTION */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-5 sm:mb-6 mt-4 sm:mt-5">
+          {/* ========== FILTER & SEARCH ========== */}
+          <div className="flex flex-col sm:flex-row gap-2.5 mb-3">
             {/* Filter dropdown */}
-            <div className="relative sm:flex-initial filter-dropdown">
+            <div className="relative filter-dropdown sm:w-36">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className="flex items-center justify-between w-full sm:w-auto font-bold px-4 py-2.5 bg-white rounded-md shadow-md border-2 border-transparent hover:border-[#00874E] active:border-[#00874E] transition-all duration-200 text-sm sm:text-base sm:min-w-[160px] cursor-pointer touch-manipulation"
+                className={`flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
+                  filterOption !== "All" 
+                    ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' 
+                    : 'border-[#FFFFFF]/10 hover:border-[#767EE0] text-[#FFFFFF]'
+                }`}
                 title="Filter announcements by status"
               >
                 <span>{filterOption}</span>
                 <img
                   src={ArrowDown}
                   alt="Filter options"
-                  className={`ml-3 h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 ${filterDropdownOpen ? 'rotate-180' : ''}`}
+                  className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${
+                    filterDropdownOpen ? 'rotate-180' : ''
+                  } ${
+                    filterOption !== "All" ? 'invert-[0.5] sepia-[1] saturate-[5] hue-rotate-[200deg]' : ''
+                  }`}
                 />
               </button>
 
               {/* Dropdown options */}
               {filterDropdownOpen && (
-                <div className="absolute top-full mt-2 bg-white rounded-md w-full sm:min-w-[200px] shadow-xl border border-gray-200 z-20 overflow-hidden">
+                <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-[#FFFFFF]/10 z-20 overflow-hidden">
                   {["All", "Unread", "Read", "Newest"].map((option) => (
                     <button
                       key={option}
-                      className={`block px-4 py-2.5 w-full text-left hover:bg-gray-100 active:bg-gray-200 text-sm sm:text-base transition-colors duration-150 cursor-pointer touch-manipulation ${
-                        filterOption === option ? 'bg-gray-50 font-semibold' : ''
+                      className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
+                        filterOption === option 
+                          ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' 
+                          : 'text-[#FFFFFF]/80'
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -873,29 +850,29 @@ export default function AnnouncementTab() {
                   placeholder="Search announcements..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-11 sm:h-12 rounded-md px-4 py-2.5 pr-12 shadow-md outline-none bg-white text-sm sm:text-base border-2 border-transparent focus:border-[#00874E] transition-colors"
+                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors placeholder:text-[#FFFFFF]/40"
                   title="Search announcements by title, subject, or content"
                 />
                 <button 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60"
                   title="Search announcements"
                 >
                   <img
                     src={Search}
                     alt="Search"
-                    className="h-5 w-5 sm:h-6 sm:w-6"
+                    className="h-3.5 w-3.5"
                   />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ANNOUNCEMENT CARDS SECTION */}
-          <div className="space-y-4 sm:space-y-5">
+          {/* ========== ANNOUNCEMENT CARDS SECTION ========== */}
+          <div className="space-y-4">
             {loadingAnnouncements ? (
               <div className="text-center py-12">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
-                <p className="mt-3 text-gray-600">Loading announcements...</p>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
+                <p className="mt-3 text-[#FFFFFF]/80">Loading announcements...</p>
               </div>
             ) : sortedAnnouncements.length > 0 ? (
               sortedAnnouncements.map((announcement) => (
@@ -919,17 +896,23 @@ export default function AnnouncementTab() {
               ))
             ) : (
               <div className="text-center py-12">
-                <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                <div className="mx-auto w-20 h-20 mb-6 rounded-full bg-[#15151C] flex items-center justify-center">
                   <img 
                     src={AnnouncementIcon} 
                     alt="No announcements" 
-                    className="h-8 w-8 opacity-50"
+                    className="h-10 w-10 opacity-50"
                   />
                 </div>
-                <p className="text-gray-500 text-sm sm:text-base">
+                <p className="text-[#FFFFFF]/60 text-base mb-2">
                   {searchQuery || filterOption !== "All" 
                     ? "No announcements match your search criteria" 
                     : "No announcements found for this class"
+                  }
+                </p>
+                <p className="text-[#FFFFFF]/40 text-sm">
+                  {searchQuery || filterOption !== "All" 
+                    ? "Try adjusting your search or filter options." 
+                    : "Start by creating your first announcement."
                   }
                 </p>
               </div>
@@ -938,7 +921,7 @@ export default function AnnouncementTab() {
         </div>
       </div>
 
-      {/* Announcement Modal */}
+      {/* ========== ANNOUNCEMENT MODAL ========== */}
       <NewAnnouncement
         showModal={showModal}
         handleModalClose={handleModalClose}
@@ -957,9 +940,9 @@ export default function AnnouncementTab() {
         getUniqueSubjects={getUniqueSubjects}
         loadingClasses={loadingClasses}
         getCurrentDateTime={getCurrentDateTime}
-        currentSubjectCode={subjectCode} // Pass current subject code
-        restrictToCurrentSubject={true} // Restrict to current class
-        postingAnnouncement={postingAnnouncement} // Pass posting state
+        currentSubjectCode={subjectCode}
+        restrictToCurrentSubject={true}
+        postingAnnouncement={postingAnnouncement}
       />
     </div>
   );

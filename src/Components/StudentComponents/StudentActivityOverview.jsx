@@ -1,5 +1,5 @@
 import React from "react";
-import PieIcon from "../assets/Pie(Light).svg";
+import PieIcon from "../../assets/Pie(Light).svg";
 
 export default function StudentActivityOverview({
   quizzesCount,

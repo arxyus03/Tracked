@@ -5,13 +5,13 @@ import { Link } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import Dashboard from '../../assets/DashboardProf(Light).svg';
+import Dashboard from '../../assets/Dashboard.svg';
 import ClassHandled from '../../assets/ClassHandled.svg';
 import ActivitiesToGrade from '../../assets/ActivitiesToGrade.svg';
-import ID from '../../assets/ID(Light).svg';
-import Pie from '../../assets/Pie(Light).svg';
-import Details from '../../assets/Details(Light).svg';
-import Archive from '../../assets/Archive(Light).svg';
+import ID from '../../assets/ID.svg';
+import Pie from '../../assets/Pie.svg';
+import Details from '../../assets/Details.svg';
+import Archive from '../../assets/ArchiveBox.svg';
 
 export default function DashboardProf() {
   const [isOpen, setIsOpen] = useState(true);
@@ -25,20 +25,17 @@ export default function DashboardProf() {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    // Get user data from localStorage and fetch from database
     const fetchUserData = async () => {
       try {
         const userStr = localStorage.getItem("user");
         if (userStr) {
           const user = JSON.parse(userStr);
           
-          // Get user ID from localStorage
           const userIdFromStorage = user.id;
           
           if (userIdFromStorage) {
             setUserId(userIdFromStorage);
             
-            // Fetch complete user data from database
             const response = await fetch(`https://tracked.6minds.site/Professor/DashboardProfDB/get_class_count.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
@@ -46,14 +43,11 @@ export default function DashboardProf() {
               
               if (data.success) {
                 setUserData(data.user);
-                // Set username from database
                 const fullName = `${data.user.tracked_firstname} ${data.user.tracked_lastname}`;
                 setUserName(fullName);
                 
-                // Set email from database
                 setUserEmail(data.user.tracked_email);
                 
-                // Set handled subjects (only subject names)
                 if (data.user.handled_subjects && data.user.handled_subjects.length > 0) {
                   setHandledSubjects(data.user.handled_subjects.join(", "));
                   setClassesCount(data.user.handled_subjects_count);
@@ -62,7 +56,6 @@ export default function DashboardProf() {
                   setClassesCount(0);
                 }
 
-                // Fetch activities count
                 await fetchActivitiesCount(userIdFromStorage);
               }
             }
@@ -78,7 +71,6 @@ export default function DashboardProf() {
     fetchUserData();
   }, []);
 
-  // Fetch activities count
   const fetchActivitiesCount = async (professorId) => {
     try {
       const response = await fetch(`https://tracked.6minds.site/Professor/DashboardProfDB/get_activities_count.php?professor_id=${professorId}`);
@@ -94,8 +86,25 @@ export default function DashboardProf() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="bg-[#23232C] min-h-screen">
+        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`
+          transition-all duration-300
+          ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}
+        `}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
+          <div className="p-8 flex justify-center items-center h-64">
+            <div className="text-white text-sm">Loading...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="bg-[#23232C] min-h-screen">
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`
         transition-all duration-300
@@ -104,48 +113,48 @@ export default function DashboardProf() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
         {/* content of PROFESSOR DASHBOARD*/}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8">
+        <div className="p-3 sm:p-4 md:p-5 text-white">
 
           {/* "Header" of PROFESSOR DASHBOARD */}
-          <div className="mb-4 sm:mb-6">
-            <div className="flex items-center mb-2">
+          <div className="mb-3">
+            <div className="flex items-center mb-1">
               <img
                 src={Dashboard}
                 alt="Dashboard"
-                className="h-6 w-6 sm:h-7 sm:w-7 mr-3"
+                className="h-5 w-5 mr-2"
               />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#465746]">
+              <h1 className="font-bold text-lg text-white">
                 Dashboard
               </h1>
             </div>
-              <div className="text-sm sm:text-base lg:text-lg text-[#465746]">
+              <div className="text-sm text-white/80">
                 <span>Welcome back,</span>
-                <span className="font-bold ml-1 mr-1">{userName}!</span>
+                <span className="font-bold ml-1 mr-1 text-white">{userName}!</span>
                 <span>Let's see how your students are doing.</span>
               </div>
           </div>
 
-          <hr className="border-[#465746]/30 mb-5 sm:mb-6" />
+          <hr className="border-white/30 mb-4 border-1" />
 
           {/* main content of PROFESSOR ADMIN */}
 
           {/* WIDGETS */}
-          <div className='flex justify-center items-center mt-5'>
-            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-4 lg:gap-6 w-full max-w-7xl'>
+          <div className='flex justify-center items-center mt-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-7xl'>
 
               {/* Widgets ACTIVE ACCOUNTS */}
-              <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 text-[#465746] shadow-md'> 
-                <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
-                  <h1 className='mb-2'> Class Handled </h1>
+              <div className='bg-[#15151C] h-28 rounded-lg p-3 text-white shadow-md border-2 border-[#15151C]'> 
+                <div className='font-bold text-sm h-full flex flex-col'>
+                  <h1 className='mb-1'> Class Handled </h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#a7aef9] h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-lg sm:rounded-xl border-2 border-[#4951AA]'>
+                    <div className='flex justify-center items-center bg-[#767EE0]/50 h-10 w-10 rounded-lg'>
                       <img
                         src={ClassHandled}
                         alt="ClassHandled"
-                        className="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"
+                        className="h-5 w-5"
                       />
                     </div>
-                    <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
+                    <p className='pt-2 text-xl'>
                       {classesCount}
                     </p>
                   </div>
@@ -153,19 +162,19 @@ export default function DashboardProf() {
               </div>
 
               {/* UPDATED: Activities to Grade Widget */}
-              <div className='bg-[#fff] h-32 sm:h-40 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-5 text-[#465746] shadow-md'> 
-                <div className='font-bold text-sm sm:text-base lg:text-[1.5rem] h-full flex flex-col'>
-                  <h1 className='mb-2'> Activities to Grade </h1>
+              <div className='bg-[#15151C] h-28 rounded-lg p-3 text-white shadow-md border-2 border-[#15151C]'> 
+                <div className='font-bold text-sm h-full flex flex-col'>
+                  <h1 className='mb-1'> Activities to Grade </h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#ffb1b1] h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 rounded-lg sm:rounded-xl border-2 border-[#FF6666]'>
+                    <div className='flex justify-center items-center bg-[#A15353]/50 h-10 w-10 rounded-lg'>
                       <img 
                         src={ActivitiesToGrade}
                         alt="ActivitiesToGrade"
-                        className="h-6 w-6 sm:h-8 sm:w-8 lg:h-12 lg:w-12"
+                        className="h-5 w-5"
                       />
                     </div>
-                    <p className='pt-2 sm:pt-6 lg:pt-8 text-lg sm:text-xl lg:text-[2rem]'>
-                      {loading ? "..." : activitiesCount}
+                    <p className='pt-2 text-xl'>
+                      {activitiesCount}
                     </p>
                   </div>
                 </div>
@@ -175,56 +184,56 @@ export default function DashboardProf() {
           </div>
 
           {/* Prof Information Card */}
-          <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-4 sm:p-5">
+          <div className="bg-[#15151C] text-white text-sm rounded-lg shadow-md mt-4 p-3 border-2 border-[#15151C]">
             {/* Header: Name */}
             <div className="flex items-center">
               <img 
                 src={ID}
                 alt="ID"
-                className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3"
+                className="h-4 w-4 mr-2"
               />
-              <p className="font-bold text-sm sm:text-base lg:text-[1.125rem]">{userName}</p>
+              <p className="font-bold text-sm">{userName}</p>
             </div>
 
-            <hr className="opacity-60 border-[#465746] rounded border-1 my-2 sm:my-3" />
+            <hr className="opacity-60 border-white/30 rounded border-1 my-2" />
 
             {/* Info rows */}
-            <div className="pl-4 sm:pl-8 space-y-1 sm:space-y-2">
-              <div className="flex flex-col sm:flex-row">
-                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Faculty Number:</span>
-                <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : (userId || "N/A")}</span>
+            <div className="pl-4 space-y-1">
+              <div className="flex flex-col">
+                <span className="font-bold text-xs w-full mb-1 text-white/70">Faculty Number:</span>
+                <span className="text-xs">{userId || "N/A"}</span>
               </div>
-              <div className="flex flex-col sm:flex-row">
-                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">CvSU Email:</span>
-                <span className="text-xs sm:text-sm lg:text-base break-all sm:break-normal">{loading ? "Loading..." : (userEmail || "N/A")}</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-xs w-full mb-1 text-white/70">CvSU Email:</span>
+                <span className="text-xs break-all">{userEmail || "N/A"}</span>
               </div>
-              <div className="flex flex-col sm:flex-row">
-                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Handled Subject:</span>
-                <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : handledSubjects}</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-xs w-full mb-1 text-white/70">Handled Subject:</span>
+                <span className="text-xs">{handledSubjects}</span>
               </div>
-              <div className="flex flex-col sm:flex-row">
-                <span className="font-bold text-xs sm:text-sm lg:text-base w-full sm:w-40 mb-1 sm:mb-0">Department:</span>
-                <span className="text-xs sm:text-sm lg:text-base">{loading ? "Loading..." : (userData?.tracked_program || "N/A")}</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-xs w-full mb-1 text-white/70">Department:</span>
+                <span className="text-xs">{userData?.tracked_program || "N/A"}</span>
               </div>
             </div>
           </div>
 
           {/* Student Attendance Details Card */}
           <Link to={"/AnalyticsProf"}>
-            <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-3 sm:p-4 border-2 border-transparent hover:border-[#00874E] transition-all duration-200">
+            <div className="bg-[#15151C] text-white text-sm rounded-lg shadow-md mt-3 p-2 border-2 border-transparent hover:border-[#00A15D] transition-all duration-200">
               <div className="flex items-center">
                 <img
                   src={Pie}
                   alt="Pie"
-                  className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3"
+                  className="h-5 w-5 mr-2"
                 />
-                <p className="font-bold text-sm sm:text-base lg:text-[1.125rem] flex-1">
+                <p className="font-bold text-sm flex-1">
                   Student Attendance Details
                 </p>
                 <img 
                   src={Details}
                   alt="Details"
-                  className="h-6 w-6 sm:h-8 sm:w-8 ml-2 sm:ml-auto sm:mr-2"
+                  className="h-5 w-5 ml-2"
                 />
               </div>
             </div>
@@ -232,20 +241,20 @@ export default function DashboardProf() {
 
           {/* Archive Subjects Card */}
           <Link to={"/ArchiveClass"}>
-            <div className="bg-[#FFFFFF] text-[#465746] text-sm sm:text-base lg:text-[1.125rem] rounded-lg sm:rounded-xl shadow-md mt-5 p-3 sm:p-4 border-2 border-transparent hover:border-[#00874E] transition-all duration-200">
+            <div className="bg-[#15151C] text-white text-sm rounded-lg shadow-md mt-3 p-2 border-2 border-transparent hover:border-[#00A15D] transition-all duration-200">
               <div className="flex items-center">
                 <img 
                   src={Archive}
                   alt="Archive"
-                  className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3"
+                  className="h-5 w-5 mr-2"
                 />
-                <p className="font-bold text-sm sm:text-base lg:text-[1.125rem] flex-1"> 
+                <p className="font-bold text-sm flex-1"> 
                   Archive Subjects
                 </p>
                 <img 
                   src={Details}
                   alt="Details"
-                  className="h-6 w-6 sm:h-8 sm:w-8 ml-2 sm:ml-auto sm:mr-2"
+                  className="h-5 w-5 ml-2"
                 />
               </div>
             </div>

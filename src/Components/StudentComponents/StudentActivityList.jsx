@@ -1,10 +1,10 @@
 import React from "react";
-import Search from "../assets/Search.svg";
-import CheckSubmitted from "../assets/CheckTable(Green).svg";
-import CheckPending from "../assets/LateTable(Blue).svg";
-import Cross from "../assets/CrossTable(Red).svg";
-import ArrowLeft from '../assets/ArrowLeft.svg';
-import ArrowRight from '../assets/ArrowRight.svg';
+import Search from "../../assets/Search.svg";
+import CheckSubmitted from "../../assets/CheckTable(Green).svg";
+import CheckPending from "../../assets/LateTable(Blue).svg";
+import Cross from "../../assets/CrossTable(Red).svg";
+import ArrowLeft from '../../assets/ArrowLeft.svg';
+import ArrowRight from '../../assets/ArrowRight.svg';
 
 export default function ActivityList({
   displayedList,

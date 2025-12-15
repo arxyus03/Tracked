@@ -3,8 +3,8 @@ import ArrowDown from "../assets/ArrowDown(Light).svg";
 
 // Import the new components
 import AdvancedPerformanceReports from "./StudentAdvancedPerformanceReports";
-import ActivityOverview from "./StudentActivityOverview";
-import ActivityList from "./StudentActivityList";
+import ActivityOverview from "./StudentComponents/StudentActivityOverview";
+import ActivityList from "./StudentComponents/StudentActivityList";
 
 export default function PerformanceAnalyticsStudent({
   quizzesList = [],
