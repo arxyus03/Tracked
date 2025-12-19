@@ -10,6 +10,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+// Set timezone to match your location (Philippines)
+date_default_timezone_set('Asia/Manila');
+
 $host = 'localhost';
 $dbname = 'u713320770_tracked';
 $username = 'u713320770_trackedDB';
@@ -48,7 +51,7 @@ try {
         exit;
     }
 
-    // Get class info - FIXED: use 'subject' instead of 'subject_name'
+    // Get class info
     $classStmt = $pdo->prepare("
         SELECT subject as subject_name, section FROM classes WHERE subject_code = ?
     ");
@@ -81,9 +84,9 @@ try {
     foreach ($dates as $date_record) {
         $attendance_date = $date_record['attendance_date'];
         
-        // Get this student's attendance for this date
+        // Get this student's attendance for this date WITH CREATED_AT TIME
         $attendanceStmt = $pdo->prepare("
-            SELECT status 
+            SELECT status, created_at 
             FROM attendance 
             WHERE student_ID = ? AND subject_code = ? AND attendance_date = ?
         ");
@@ -91,6 +94,7 @@ try {
         $attendance_record = $attendanceStmt->fetch(PDO::FETCH_ASSOC);
         
         $status = $attendance_record ? $attendance_record['status'] : 'absent';
+        $created_at = $attendance_record ? $attendance_record['created_at'] : null;
         
         // Track dates for absent and late
         if ($status === 'absent') {
@@ -99,12 +103,39 @@ try {
             $late_dates[] = $attendance_date;
         }
         
-        $formatted_date = date('F j, Y', strtotime($attendance_date));
+        // Format date for display - use Asia/Manila timezone
+        $date_obj = new DateTime($attendance_date, new DateTimeZone('Asia/Manila'));
+        $formatted_date = $date_obj->format('F j, Y');
+        
+        // Format the time - convert created_at to Asia/Manila timezone
+        $marked_time = null;
+        if ($created_at) {
+            try {
+                // Parse the created_at timestamp
+                $created_at_obj = new DateTime($created_at, new DateTimeZone('UTC'));
+                
+                // Convert to Asia/Manila timezone
+                $created_at_obj->setTimezone(new DateTimeZone('Asia/Manila'));
+                
+                // Format the time portion
+                $marked_time = $created_at_obj->format('g:i A');
+                
+                // Also store the full datetime for debugging
+                $full_datetime = $created_at_obj->format('Y-m-d H:i:s');
+                
+            } catch (Exception $e) {
+                // Fallback to simple formatting if DateTime fails
+                $marked_time = date('g:i A', strtotime($created_at));
+            }
+        }
         
         $attendance_history[] = [
             "date" => $formatted_date,
             "raw_date" => $attendance_date,
-            "status" => $status
+            "status" => $status,
+            "created_at" => $created_at,
+            "marked_time" => $marked_time,
+            "full_datetime" => $full_datetime ?? null
         ];
     }
 
@@ -131,11 +162,13 @@ try {
 
     // Format dates for display
     $formatted_absent_dates = array_map(function($date) {
-        return date('F j, Y', strtotime($date));
+        $date_obj = new DateTime($date, new DateTimeZone('Asia/Manila'));
+        return $date_obj->format('F j, Y');
     }, $absent_dates);
     
     $formatted_late_dates = array_map(function($date) {
-        return date('F j, Y', strtotime($date));
+        $date_obj = new DateTime($date, new DateTimeZone('Asia/Manila'));
+        return $date_obj->format('F j, Y');
     }, $late_dates);
 
     echo json_encode([
@@ -159,7 +192,11 @@ try {
             "absent" => $formatted_absent_dates,
             "late" => $formatted_late_dates
         ],
-        "attendance_history" => $attendance_history
+        "attendance_history" => $attendance_history,
+        "timezone_info" => [
+            "server_timezone" => date_default_timezone_get(),
+            "display_timezone" => "Asia/Manila (PHT)"
+        ]
     ]);
 
 } catch (Exception $e) {

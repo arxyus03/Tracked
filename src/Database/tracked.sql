@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Dec 02, 2025 at 08:10 PM
+-- Generation Time: Dec 10, 2025 at 10:31 AM
 -- Server version: 11.8.3-MariaDB-log
 -- PHP Version: 7.2.34
 
@@ -49,27 +49,20 @@ CREATE TABLE `activities` (
 --
 
 INSERT INTO `activities` (`id`, `subject_code`, `professor_ID`, `activity_type`, `task_number`, `title`, `instruction`, `link`, `points`, `deadline`, `created_at`, `updated_at`, `archived`, `school_work_edited`) VALUES
-(53, 'DQ1766', '202210602', 'Assignment', 'Assignment', 'Song lyricist', 'Create a musicalkhfilubawlb', '', 10, '2025-11-12 20:45:00', '2025-11-11 12:47:49', '2025-11-11 12:47:49', 0, 0),
-(54, 'DQ1766', '202210602', 'Assignment', 'Assignment 2', 'Songerist', 'dubi dubi duwa', '', 20, '2025-11-13 20:58:00', '2025-11-11 12:58:14', '2025-11-11 13:15:59', 1, 0),
-(55, 'DQ1766', '202210602', 'Assignment', 'Assignment 2', 'Songerist', 'dubi dubi duwa', '', 20, '2025-11-13 20:58:00', '2025-11-11 12:58:18', '2025-11-11 13:15:54', 1, 0),
-(56, 'DQ1766', '202210602', 'Activity', 'Activity 1', 'Dance and Sing', 'Sing along with Elsa.', '', 30, '2025-11-14 22:52:00', '2025-11-11 14:52:26', '2025-11-11 14:52:26', 0, 0),
-(57, 'DQ1766', '202210602', 'Project', 'Project 1', 'Idol Project', 'Do a concert', '', 50, '2025-11-14 23:06:00', '2025-11-11 15:06:31', '2025-11-11 15:06:31', 0, 0),
-(58, 'DQ1766', '202210602', 'Laboratory', 'Laboratory 1', 'Lab Live', 'work as a team and produce a concert worthy of your fans', '', 50, '2025-11-17 06:42:00', '2025-11-11 22:42:15', '2025-11-11 22:42:15', 0, 0),
-(59, 'DQ1766', '202210602', 'Assignment', 'Assignment 5', 'Cover Up', 'Produce a cover song of a famous song', '', 30, '2025-11-19 07:40:00', '2025-11-11 23:40:19', '2025-11-11 23:40:19', 0, 0),
-(60, 'DQ1766', '202210602', 'Laboratory', 'Laboratory 2', 'Anonymous Concerto', 'Produce your own concert without the help of your agency', '', 30, '2025-11-20 08:04:00', '2025-11-12 00:04:55', '2025-11-12 00:04:55', 0, 0),
-(61, 'DQ1766', '202210602', 'Laboratory', 'Laboratory 3', 'Actingerist', 'Be more than just an Idol', '', 50, '2025-11-15 09:06:00', '2025-11-12 01:06:08', '2025-11-12 01:06:08', 0, 0),
-(62, 'DQ1766', '202210602', 'Laboratory', 'Laboratory 4', 'Musical Heart', 'Create a song that brings out your soul', '', 40, '2025-11-18 09:39:00', '2025-11-12 01:39:20', '2025-11-12 01:39:20', 0, 0),
-(64, 'DQ1766', '202210602', 'Quiz', 'Quiz 1', 'Fill in the Songs', 'You\'ll be given a song, and you must sing and figure out the lyrics blanked out.', '', 20, '2025-11-18 10:34:00', '2025-11-16 02:34:15', '2025-11-16 02:34:15', 0, 0),
-(65, 'AY0822', '202210602', 'Quiz', 'Quiz 1', 'How are you?', 'Simple quiz to test your knowledge.', '', 10, '2025-11-17 14:26:00', '2025-11-16 06:26:13', '2025-11-16 06:26:13', 0, 0),
-(66, 'SO0261', '202210602', 'Laboratory', 'Laboratory 1', 'Labubu', 'Make Labubu dance', '', 50, '2025-11-18 06:35:00', '2025-11-16 07:32:41', '2025-11-16 07:32:41', 0, 0),
-(67, 'SO0261', '202210602', 'Quiz', 'Quiz 1', 'Quizno', 'Heheyhey fortune cookie', '', 50, '2025-11-18 18:31:00', '2025-11-16 10:31:12', '2025-11-16 10:31:12', 0, 0),
-(68, 'DQ1766', '202210602', 'Quiz', '5', 'Birthday', 'happy birthday', '', 20, '2025-12-02 13:19:00', '2025-12-01 05:19:42', '2025-12-01 07:36:26', 1, 0),
-(69, 'DQ1766', '202210602', 'Assignment', '5', 'Birthday', 'dryhdfhydf', '', 20, '2025-12-04 15:00:00', '2025-12-01 07:00:48', '2025-12-01 07:00:48', 0, 0),
-(70, 'DQ1766', '202210602', 'Quiz', '1', 'h', 'ifyiufyiy', '', 20, '2025-12-11 15:15:00', '2025-12-01 07:16:15', '2025-12-01 07:16:15', 0, 0),
-(71, 'DQ1766', '202210602', 'Laboratory', '4', 'bday', 'ifyiufyiy', '', 20, '2025-12-11 15:15:00', '2025-12-01 07:16:53', '2025-12-01 07:16:53', 0, 0),
-(72, 'DQ1766', '202210602', 'Assignment', '10', 'abc', 'gmsekgnsgnaeeeeeeeeeeeeeeeoi[iw[[[[[[[[[[[[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[w[jgndijgnjdsgnsjkdgnsgnskjgnjgnsdggsgseggsgsg', '', 100, '2026-01-03 21:33:00', '2025-12-01 09:33:42', '2025-12-01 09:33:42', 0, 0),
-(73, 'LV3738', '202210602', 'Assignment', '1', 'SAMPLE', 'SAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLESAMPLE', '', 100, '2025-12-02 23:59:00', '2025-12-02 09:40:03', '2025-12-02 16:28:06', 0, 1),
-(74, 'LV3738', '202210602', 'Quiz', '1', 'TESTING', 'TESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTINGTESTING', '', 100, '2025-12-04 10:30:00', '2025-12-02 18:18:19', '2025-12-02 18:18:19', 0, 0);
+(79, 'LY0391', '202210602', 'Assignment', '1', 'Assignment #1', '', '', 100, '2025-12-04 17:33:00', '2025-12-03 09:34:17', '2025-12-03 09:34:17', 0, 0),
+(80, 'LY0391', '202210602', 'Quiz', '1', 'Quiz #1', '', '', 100, '2025-12-04 17:33:00', '2025-12-03 09:35:01', '2025-12-03 09:35:01', 0, 0),
+(81, 'LY0391', '202210602', 'Activity', '1', 'Activity #1', '', '', 100, '2025-12-04 17:33:00', '2025-12-03 09:35:32', '2025-12-03 09:35:32', 0, 0),
+(82, 'LY0391', '202210602', 'Project', '1', 'Project #1', '', '', 100, '2025-12-04 17:33:00', '2025-12-03 09:35:57', '2025-12-03 09:35:57', 0, 0),
+(83, 'LY0391', '202210602', 'Laboratory', '1', 'Laboratory #1', '', '', 100, '2025-12-04 17:33:00', '2025-12-03 09:36:21', '2025-12-03 09:36:21', 0, 0),
+(84, 'DF1710', '202210602', 'Assignment', '1', 'Assignment #1', '', '', 100, '2025-12-04 17:43:00', '2025-12-03 09:43:22', '2025-12-03 09:43:22', 0, 0),
+(85, 'DF1710', '202210602', 'Quiz', '1', 'Quiz #1', '', '', 100, '2025-12-04 17:43:00', '2025-12-03 09:45:06', '2025-12-03 09:45:06', 0, 0),
+(86, 'DF1710', '202210602', 'Activity', '1', 'Activity #1', '', '', 100, '2025-12-04 17:43:00', '2025-12-03 09:45:38', '2025-12-03 09:45:38', 0, 0),
+(87, 'DF1710', '202210602', 'Project', '1', 'Project #1', '', '', 100, '2025-12-04 17:43:00', '2025-12-03 09:46:01', '2025-12-03 09:46:01', 0, 0),
+(88, 'DF1710', '202210602', 'Laboratory', '1', 'Laboratory #1', '', '', 100, '2025-12-04 17:43:00', '2025-12-03 09:46:29', '2025-12-03 09:46:29', 0, 0),
+(89, 'DF1710', '202210602', 'Assignment', '2', 'Assignment #2', '', '', 99, '2025-12-05 17:51:00', '2025-12-03 09:51:33', '2025-12-03 09:51:33', 0, 0),
+(90, 'ZM6922', '1035', 'Assignment', '1', 'Introduction to API', 'build a small REST API. keep it simple but clear.\n\nmake an API that lets a user create, read, update, and delete items. you can choose the item type. for example: tasks, notes, products, movies.', '', 20, '2025-12-08 12:23:00', '2025-12-04 02:25:22', '2025-12-04 02:25:22', 0, 0),
+(91, 'ZM6922', '1035', 'Quiz', '1', 'API Quiz', 'API Quiz', '', 20, '2025-12-04 10:27:00', '2025-12-04 02:26:35', '2025-12-04 02:26:35', 0, 0),
+(92, 'SJ1849', '202210602', 'Assignment', '1', 'Sample', 'SAMPLE INSTRUCTION', 'https://www.youtube.com/shorts/wpC-uHqhqso', 50, '2025-12-05 16:23:00', '2025-12-04 08:25:02', '2025-12-04 08:26:33', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -95,7 +88,7 @@ CREATE TABLE `activity_files` (
 --
 
 INSERT INTO `activity_files` (`id`, `activity_id`, `student_id`, `file_name`, `original_name`, `file_url`, `file_size`, `file_type`, `uploaded_by`, `uploaded_at`) VALUES
-(1, 74, '202210870', '1764704924_692f429ca441c_chae-2.jpg', 'chae-2.jpg', 'https://tracked.6minds.site/TrackEd_Uploads/To_Students/1764704924_692f429ca441c_chae-2.jpg', 1878626, 'image/jpeg', 'professor', '2025-12-02 19:48:44');
+(36, 89, '202210718', '1764823654_693112667633b_Screenshot_20251204-122700.png', 'Screenshot_20251204-122700.png', 'https://tracked.6minds.site/TrackEd_Uploads/To_Students/1764823654_693112667633b_Screenshot_20251204-122700.png', 235295, 'image/png', 'student', '2025-12-04 04:47:34');
 
 -- --------------------------------------------------------
 
@@ -116,6 +109,46 @@ CREATE TABLE `activity_grades` (
   `uploaded_file_url` varchar(500) DEFAULT NULL,
   `uploaded_file_name` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `activity_grades`
+--
+
+INSERT INTO `activity_grades` (`id`, `activity_ID`, `student_ID`, `grade`, `submitted`, `submitted_at`, `late`, `created_at`, `updated_at`, `uploaded_file_url`, `uploaded_file_name`) VALUES
+(401, 79, '202210870', 75.00, 1, '2025-12-03 09:37:20', 0, '2025-12-03 09:34:17', '2025-12-03 09:37:20', NULL, NULL),
+(402, 79, '202210838', 50.00, 1, '2025-12-03 09:37:20', 0, '2025-12-03 09:34:17', '2025-12-03 09:37:20', NULL, NULL),
+(403, 79, '202210718', 100.00, 1, '2025-12-03 09:37:20', 0, '2025-12-03 09:34:17', '2025-12-03 09:37:20', NULL, NULL),
+(404, 80, '202210870', 55.00, 1, '2025-12-03 09:37:36', 0, '2025-12-03 09:35:01', '2025-12-03 09:37:36', NULL, NULL),
+(405, 80, '202210838', 100.00, 1, '2025-12-03 09:37:36', 0, '2025-12-03 09:35:01', '2025-12-03 09:37:36', NULL, NULL),
+(406, 80, '202210718', 76.00, 1, '2025-12-03 09:37:36', 0, '2025-12-03 09:35:01', '2025-12-03 09:37:36', NULL, NULL),
+(407, 81, '202210870', 100.00, 1, '2025-12-03 09:37:48', 0, '2025-12-03 09:35:32', '2025-12-03 09:37:49', NULL, NULL),
+(408, 81, '202210838', 10.00, 1, '2025-12-03 09:37:48', 0, '2025-12-03 09:35:32', '2025-12-03 09:37:49', NULL, NULL),
+(409, 81, '202210718', 95.00, 1, '2025-12-03 09:37:48', 0, '2025-12-03 09:35:32', '2025-12-03 09:37:49', NULL, NULL),
+(410, 82, '202210870', 60.00, 1, '2025-12-03 09:38:04', 0, '2025-12-03 09:35:57', '2025-12-03 09:38:04', NULL, NULL),
+(411, 82, '202210838', 75.00, 1, '2025-12-03 09:38:04', 0, '2025-12-03 09:35:57', '2025-12-03 09:38:04', NULL, NULL),
+(412, 82, '202210718', 100.00, 1, '2025-12-03 09:38:04', 0, '2025-12-03 09:35:57', '2025-12-03 09:38:04', NULL, NULL),
+(413, 83, '202210870', NULL, 0, NULL, 0, '2025-12-03 09:36:21', '2025-12-03 09:36:21', NULL, NULL),
+(414, 83, '202210838', NULL, 0, NULL, 0, '2025-12-03 09:36:21', '2025-12-03 09:36:21', NULL, NULL),
+(415, 83, '202210718', NULL, 0, NULL, 0, '2025-12-03 09:36:21', '2025-12-03 09:36:21', NULL, NULL),
+(425, 84, '202210870', 10.00, 1, '2025-12-03 09:46:54', 0, '2025-12-03 09:43:22', '2025-12-03 09:46:54', NULL, NULL),
+(426, 84, '202210838', 100.00, 1, '2025-12-03 09:46:54', 0, '2025-12-03 09:43:22', '2025-12-03 09:46:54', NULL, NULL),
+(427, 84, '202210718', 50.00, 1, '2025-12-03 09:46:54', 0, '2025-12-03 09:43:22', '2025-12-03 09:46:54', NULL, NULL),
+(428, 85, '202210870', 100.00, 1, '2025-12-03 09:47:05', 0, '2025-12-03 09:45:06', '2025-12-03 09:47:05', NULL, NULL),
+(429, 85, '202210838', 75.00, 1, '2025-12-03 09:47:05', 0, '2025-12-03 09:45:06', '2025-12-03 09:47:05', NULL, NULL),
+(430, 85, '202210718', 50.00, 1, '2025-12-03 09:47:05', 0, '2025-12-03 09:45:06', '2025-12-03 09:47:05', NULL, NULL),
+(431, 86, '202210870', 100.00, 1, '2025-12-03 09:47:16', 0, '2025-12-03 09:45:38', '2025-12-03 09:47:16', NULL, NULL),
+(432, 86, '202210838', 88.00, 1, '2025-12-03 09:47:16', 0, '2025-12-03 09:45:38', '2025-12-03 09:47:16', NULL, NULL),
+(433, 86, '202210718', 79.00, 1, '2025-12-03 09:47:16', 0, '2025-12-03 09:45:38', '2025-12-03 09:47:16', NULL, NULL),
+(434, 87, '202210870', 100.00, 1, '2025-12-03 09:48:00', 0, '2025-12-03 09:46:01', '2025-12-03 09:48:00', NULL, NULL),
+(435, 87, '202210838', 90.00, 1, '2025-12-03 09:48:00', 0, '2025-12-03 09:46:01', '2025-12-03 09:48:00', NULL, NULL),
+(436, 87, '202210718', 55.00, 1, '2025-12-03 09:48:00', 0, '2025-12-03 09:46:01', '2025-12-03 09:48:00', NULL, NULL),
+(437, 88, '202210870', 100.00, 1, '2025-12-03 09:48:14', 0, '2025-12-03 09:46:29', '2025-12-03 09:48:14', NULL, NULL),
+(438, 88, '202210838', 87.00, 1, '2025-12-03 09:48:14', 0, '2025-12-03 09:46:29', '2025-12-03 09:48:14', NULL, NULL),
+(439, 88, '202210718', 56.00, 1, '2025-12-03 09:48:14', 0, '2025-12-03 09:46:29', '2025-12-03 09:48:14', NULL, NULL),
+(455, 89, '202210870', 85.00, 1, '2025-12-03 09:52:07', 0, '2025-12-03 09:51:33', '2025-12-03 09:52:07', NULL, NULL),
+(456, 89, '202210838', 99.00, 1, '2025-12-03 09:52:07', 0, '2025-12-03 09:51:33', '2025-12-03 09:52:07', NULL, NULL),
+(457, 89, '202210718', 90.00, 1, '2025-12-04 04:47:34', 0, '2025-12-03 09:51:33', '2025-12-04 04:47:34', 'https://tracked.6minds.site/TrackEd_Uploads/To_Students/1764823654_693112667633b_Screenshot_20251204-122700.png', 'Screenshot_20251204-122700.png'),
+(461, 92, '202210870', 49.00, 1, '2025-12-04 08:29:59', 0, '2025-12-04 08:25:02', '2025-12-04 08:30:26', 'https://tracked.6minds.site/TrackEd_Uploads/To_Students/1764836999_693146870b77e_Capstone_TrackED.pdf', 'Capstone_TrackED.pdf');
 
 -- --------------------------------------------------------
 
@@ -140,8 +173,8 @@ CREATE TABLE `announcements` (
 --
 
 INSERT INTO `announcements` (`announcement_ID`, `professor_ID`, `classroom_ID`, `title`, `description`, `link`, `deadline`, `created_at`, `updated_at`) VALUES
-(15, '202210602', 'AY0822', 'SIngerist', 'Baby SHark doo doo', NULL, '2025-11-19 14:43:00', '2025-11-12 06:43:48', '2025-11-20 23:30:36'),
-(17, '202210602', 'DQ1766', 'CAPSTONE NA BAKLA', 'fdfsdf', 'facebook.com', NULL, '2025-12-01 05:34:39', '2025-12-01 05:57:20');
+(18, '202210602', 'LY0391', 'Presentation', 'For Presentation Use', NULL, '2025-12-04 17:26:00', '2025-12-03 09:27:32', '2025-12-03 09:27:32'),
+(19, '1035', 'ZM6922', 'Capstone Presentation', 'The defense will begin at 8 a.m. (call time is 7:30 a.m.), and each group will have 30–45 minutes to present. This means that being late is not allowed. Any group that arrives late will have their presentation time reduced. Please also ensure that the succeeding groups are already on standby one hour before their scheduled time.\n\nWhat the students will bring for the final defense:\n• Their system (with their own internet connection)\n• Hardware and move in/out forms (if applicable)\n• PPT presentation\n• 3 copies of printed documents\n• 5 copies of filled-out evaluation forms\n• Food/token for the panel\n• Their courage and commitment!\n\nRegarding the food or tokens for the panelists, the advisers will discuss it with their respective groups.\n\nThank you po and God bless.😊', NULL, '2025-12-04 12:00:00', '2025-12-04 02:13:26', '2025-12-04 02:13:26');
 
 -- --------------------------------------------------------
 
@@ -165,10 +198,13 @@ CREATE TABLE `attendance` (
 --
 
 INSERT INTO `attendance` (`id`, `subject_code`, `professor_ID`, `attendance_date`, `student_ID`, `status`, `created_at`, `updated_at`) VALUES
-(68, 'LV3738', '202210602', '2025-12-02', '202210870', 'present', '2025-12-02 16:05:14', '2025-12-02 16:05:14'),
-(69, 'SO0261', '202210602', '2025-12-02', '202210718', 'present', '2025-12-02 17:14:40', '2025-12-02 17:14:40'),
-(70, 'SO0261', '202210602', '2025-12-02', '202210784', 'present', '2025-12-02 17:14:40', '2025-12-02 17:14:40'),
-(71, 'SO0261', '202210602', '2025-12-02', '202210870', 'late', '2025-12-02 17:14:40', '2025-12-02 17:14:40');
+(72, 'LY0391', '202210602', '2025-12-03', '202210718', 'present', '2025-12-03 09:33:42', '2025-12-03 09:33:42'),
+(73, 'LY0391', '202210602', '2025-12-03', '202210838', 'present', '2025-12-03 09:33:42', '2025-12-03 09:33:42'),
+(74, 'LY0391', '202210602', '2025-12-03', '202210870', 'present', '2025-12-03 09:33:42', '2025-12-03 09:33:42'),
+(78, 'DF1710', '202210602', '2025-12-03', '202210718', 'present', '2025-12-03 09:48:40', '2025-12-03 09:48:40'),
+(79, 'DF1710', '202210602', '2025-12-03', '202210838', 'present', '2025-12-03 09:48:40', '2025-12-03 09:48:40'),
+(80, 'DF1710', '202210602', '2025-12-03', '202210870', 'present', '2025-12-03 09:48:40', '2025-12-03 09:48:40'),
+(81, 'SJ1849', '202210602', '2025-12-04', '202210870', 'present', '2025-12-04 08:32:18', '2025-12-04 08:32:18');
 
 -- --------------------------------------------------------
 
@@ -193,14 +229,12 @@ CREATE TABLE `classes` (
 --
 
 INSERT INTO `classes` (`subject_code`, `year_level`, `subject`, `subject_semester`, `section`, `professor_ID`, `created_at`, `updated_at`, `status`) VALUES
-('AY0822', '3rd Year', 'ITEC111', '', 'A', '202210602', '2025-11-16 06:20:18', '2025-11-16 06:20:18', 'Active'),
-('CD9416', '1st Year', 'DCIT101', '', 'P', '202210602', '2025-12-01 06:13:33', '2025-12-01 06:13:48', 'Archived'),
-('DQ1766', '1st Year', 'Song Class', '', 'A', '202210602', '2025-11-11 07:21:11', '2025-11-30 21:09:22', 'Active'),
-('LV3738', '1st Year', 'DCIT101', '', 'B', '202210602', '2025-11-30 13:53:52', '2025-11-30 13:53:52', 'Active'),
-('MT7838', '1st Year', 'DCIT101', '', 'B', '202210602', '2025-12-01 05:59:28', '2025-12-01 05:59:43', 'Archived'),
-('SO0261', '4th Year', 'OMG789', '', 'B', '202210602', '2025-11-16 07:31:13', '2025-11-16 07:31:13', 'Active'),
-('WF1124', '1st Year', 'DCIT102', '', 'B', '202210602', '2025-11-30 13:51:42', '2025-11-30 13:51:42', 'Active'),
-('YA5977', '2nd Year', 'DCIT101', '', 'A', '202210602', '2025-11-30 13:42:10', '2025-11-30 13:51:26', 'Archived');
+('CH0445', '4th Year', 'DCIT101', 'second_sem', 'A', '202210602', '2025-12-03 09:17:29', '2025-12-03 09:17:38', 'Archived'),
+('DF1710', '4th Year', 'DCIT101', 'FIRST SEMESTER', 'B', '202210602', '2025-12-03 09:26:25', '2025-12-03 09:26:25', 'Active'),
+('LY0391', '4th Year', 'DCIT101', 'FIRST SEMESTER', 'A', '202210602', '2025-12-03 09:25:50', '2025-12-03 09:25:50', 'Active'),
+('MB6161', '4th Year', 'DCIT101', 'first_sem', 'A', '202210602', '2025-12-03 09:24:49', '2025-12-03 09:25:38', 'Archived'),
+('SJ1849', '4th Year', 'ITEC90', 'FIRST SEMESTER', 'D', '202210602', '2025-12-04 08:23:00', '2025-12-04 08:23:00', 'Active'),
+('ZM6922', '4th Year', 'ITEC116', 'FIRST SEMESTER', 'D', '1035', '2025-12-04 02:07:26', '2025-12-04 02:07:26', 'Active');
 
 -- --------------------------------------------------------
 
@@ -216,6 +250,13 @@ CREATE TABLE `password_resets` (
   `used` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `password_resets`
+--
+
+INSERT INTO `password_resets` (`id`, `tracked_ID`, `token`, `expiry`, `used`, `created_at`) VALUES
+(15, '202210808', 'e15bea4364e9511c2cd23ce3b25544ebf8084c46476611071a6697f76ef26b3b', '2025-12-04 13:51:54', 1, '2025-12-03 13:00:17');
 
 -- --------------------------------------------------------
 
@@ -237,16 +278,26 @@ CREATE TABLE `student_classes` (
 --
 
 INSERT INTO `student_classes` (`id`, `student_ID`, `subject_code`, `enrolled_at`, `archived`, `archived_at`) VALUES
-(8, '202210718', 'DQ1766', '2025-11-11 07:29:15', 0, NULL),
-(11, '202210784', 'DQ1766', '2025-11-16 04:58:50', 0, NULL),
-(12, '202210784', 'AY0822', '2025-11-16 06:23:55', 0, NULL),
-(13, '202210870', 'AY0822', '2025-11-16 06:24:20', 0, NULL),
-(14, '202210718', 'AY0822', '2025-11-16 06:24:55', 0, NULL),
-(15, '202210784', 'SO0261', '2025-11-16 07:31:25', 0, NULL),
-(16, '202210718', 'SO0261', '2025-11-16 07:31:31', 0, NULL),
-(17, '202210870', 'SO0261', '2025-11-16 07:31:37', 0, NULL),
-(18, '202210870', 'DQ1766', '2025-12-01 05:07:20', 0, NULL),
-(19, '202210870', 'LV3738', '2025-12-02 09:40:21', 0, NULL);
+(20, '202210870', 'LY0391', '2025-12-03 09:30:40', 0, NULL),
+(21, '202210838', 'LY0391', '2025-12-03 09:33:26', 0, NULL),
+(22, '202210718', 'LY0391', '2025-12-03 09:33:28', 0, NULL),
+(23, '202210870', 'DF1710', '2025-12-03 09:30:40', 0, '0000-00-00 00:00:00'),
+(24, '202210838', 'DF1710', '2025-12-03 09:30:40', 0, '0000-00-00 00:00:00'),
+(25, '202210718', 'DF1710', '2025-12-03 09:30:40', 0, '0000-00-00 00:00:00'),
+(26, '202210609', 'DF1710', '2025-12-03 10:51:52', 0, NULL),
+(27, '202210625', 'DF1710', '2025-12-03 10:53:20', 0, NULL),
+(28, '202210625', 'LY0391', '2025-12-03 10:53:28', 0, NULL),
+(29, '202210784', 'DF1710', '2025-12-03 10:54:08', 0, NULL),
+(30, '202210784', 'LY0391', '2025-12-03 10:54:15', 0, NULL),
+(31, '202210781', 'DF1710', '2025-12-03 10:54:57', 0, NULL),
+(32, '202210781', 'LY0391', '2025-12-03 10:55:05', 0, NULL),
+(33, '202210808', 'DF1710', '2025-12-03 10:55:57', 0, NULL),
+(34, '202210808', 'LY0391', '2025-12-03 10:56:07', 0, NULL),
+(35, '202210834', 'DF1710', '2025-12-03 11:11:02', 0, NULL),
+(36, '202210834', 'LY0391', '2025-12-03 11:11:09', 0, NULL),
+(37, '202210836', 'DF1710', '2025-12-03 11:11:44', 0, NULL),
+(38, '202210836', 'LY0391', '2025-12-03 11:11:58', 0, NULL),
+(39, '202210870', 'SJ1849', '2025-12-04 08:23:28', 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -265,9 +316,9 @@ CREATE TABLE `tracked_semester` (
 --
 
 INSERT INTO `tracked_semester` (`semesterID`, `class_semester`, `semester_status`) VALUES
-(1, 'first_sem', 'INACTIVE'),
-(2, 'second_sem', 'ACTIVE'),
-(3, 'summer_sem', 'INACTIVE');
+(1, 'FIRST SEMESTER', 'ACTIVE'),
+(2, 'SECOND SEMESTER', 'INACTIVE'),
+(3, 'SUMMER SEMESTER', 'INACTIVE');
 
 -- --------------------------------------------------------
 
@@ -300,16 +351,29 @@ CREATE TABLE `tracked_users` (
 --
 
 INSERT INTO `tracked_users` (`tracked_ID`, `tracked_Role`, `tracked_email`, `tracked_password`, `tracked_firstname`, `tracked_lastname`, `tracked_middlename`, `tracked_program`, `tracked_yearandsec`, `tracked_semester`, `tracked_bday`, `tracked_gender`, `tracked_phone`, `tracked_Status`, `temporary_password`, `created_at`, `updated_at`) VALUES
-('1035', 'Professor', 'sherilyn.fajutagana@cvsu.edu.ph', '$2y$10$dmfo0xXTOqRVR6gOV50YSOBhCcGtBndDiy2eXzntdJDiNrlMYbA2O', 'Sherilyn', 'Fajutagana', 'Fontelo', 'Information Technology', 'Not Applicable', 'Not Applicable', '1993-08-15', 'Female', '9933302365', 'Active', '1993-08-15Professor10355XU', '2025-11-30 08:03:44', '2025-12-02 18:42:09'),
-('12345', 'Admin', 'ic.brielle.balatayo@cvsu.edu.ph', '$2y$10$X02sc4F0wAaSQu7hUV92lO8jAbJeABQXso2X.KGXGD7PQzEP/hZPC', 'Brielle Edrian', 'Balatayo', 'Ana', 'Not Applicable', 'Not Applicable', 'Not Applicable', '2002-08-18', 'Male', '9153406553', 'Active', '', '2025-11-10 18:51:38', '2025-12-02 12:45:40'),
-('202210602', 'Professor', 'ic.dhenizekristafaith.lopez@cvsu.edu.ph', '$2y$10$fs1xz27ArfH5sko9lE4JTeD526kP0h3KiqKwzeNuqh5JPdnpCHIj6', 'Dhenize Krista Faith', 'Lopez', 'Cabardo', 'Information Technology', 'Not Applicable', 'Not Applicable', '2004-11-24', 'Male', '9988262316', 'Active', '11242004Professor202210602RDO', '2025-11-10 18:51:38', '2025-11-30 21:08:58'),
-('202210718', 'Student', 'ic.michaelrhoi.gonzales@cvsu.edu.ph', '$2y$10$lpU4wtviArsHNWnSZYaUOeYLxrsMnI5RKrMg8zN7lEAaWF6msmG1a', 'Michael Rhoi', 'Gonzales', 'Ladrica', 'BSIT', '4D', 'FIRST', '2004-06-20', 'Female', '9085527790', 'Active', '06202004Student202210718RK0', '2025-11-12 06:13:21', '2025-11-30 08:03:51'),
-('202210781', 'Student', 'ic.cherlyvic.bakilid@cvsu.edu.ph', '$2y$10$kbrlN6VPTmT5vmJyQZMRH.wU/PpZR7FKFurLxMqucKtDuW8rU9sP6', 'Cherly Vic', 'Bakilid', 'C', 'Information Technology', '4D', 'FIRST', '2002-11-17', 'Female', '9168773102', 'Active', '2002-11-17Student202210781JRI', '2025-11-30 08:03:55', '2025-11-30 08:22:13'),
-('202210784', 'Student', 'ic.jeannen.basay@cvsu.edu.ph', '$2y$10$Y8QljkEcyQRr0QBbKc8FqO1o1whehjnplAonKds8Wy1pSVmA6pSqW', 'Jeannen', 'Basay', 'Kummer', 'BSIT', '4D', 'SECOND', '2002-03-24', 'Female', '0', 'Active', '03242002Student202210784U3A', '2025-11-10 18:51:38', '2025-11-30 08:03:58'),
-('202210838', 'Student', 'ic.katejustine.pades@cvsu.edu.ph', '$2y$10$qbyDvbBvhPWSopmVKpT9VOEr3ZothGXnHUmToGaKew/Pyf5OJjAhS', 'Kate Justine', 'Pades', 'B', 'Information Technology', '4D', 'FIRST', '2003-05-13', 'Female', '9777429816', 'Active', '2003-05-13Student202210838PT2', '2025-11-30 08:04:01', '2025-11-30 08:22:20'),
-('202210868', 'Student', 'ic.cristelnicole.vergara@cvsu.edu.ph', '$2y$10$5AixCxR0i1j2cTJQfEAMVeyIIWn63PapELYekn/SYeVE.KyxTqzqi', 'Cristel Nicole', 'Vergara', 'S', 'Information Technology', '4D', 'FIRST', '2003-06-21', 'Female', '9234400863', 'Active', '2003-06-21Student202210868EPJ', '2025-11-30 08:04:04', '2025-11-30 08:29:18'),
-('202210870', 'Student', 'ic.xyrilljohn.abreu@cvsu.edu.ph', '$2y$10$Fby1oL4QMAWABEui1Kjrh.HMxuSfnX4asnfNRPwv3gr.ky/dh9Bmy', 'Xyrill John', 'Abreu', 'Fecundo', 'BSIT', '4D', 'FIRST', '2003-08-03', 'Female', '9422169425', 'Active', '08032003Student202210870TWN', '2025-11-10 18:51:39', '2025-11-30 18:50:33'),
-('20230003', 'Student', 'ic.juliaann.fajardo@cvsu.edu.ph', '$2y$10$5K50hKPFr/Lb636q0/V0u.4JibNRoke9sGzWBkwlOv1oxNbThf/OO', 'Julia Ann', 'Fajardo', 'Sisno', 'Information Technology', 'Not Applicable', 'Not Applicable', '2001-06-07', 'Female', '9679532083', 'Active', '06072001Professor20230003VFR', '2025-11-10 18:51:39', '2025-11-30 08:12:28');
+('080806', 'Admin', 'ic.brielle.balatayo@cvsu.edu.ph', '$2y$10$g4Fm5KBCn0343QdT2UqcEuQmV.BHS3Q3UXfZbZhIQi7T.WGExiLTu', 'Brielle Edrian', 'Balatayo', 'Ana', 'Not Applicable', 'Not Applicable', 'Not Applicable', '2002-08-18', 'Male', '9153406553', 'Active', '2002-08-18Admin', '2025-12-03 09:04:16', '2025-12-10 10:21:57'),
+('1035', 'Professor', 'sherilyn.fajutagana@cvsu.edu.ph', '$2y$10$AFU5ft./tf9Zs89hjHAWY.H2cJkRGNXP1JZ8JGpIooSeCKuLcE.TO', 'Sherilyn', 'Fajutagana', 'Fontelo', 'Information Technology', 'Not Applicable', 'Not Applicable', '1993-08-15', 'Female', '9933302365', 'Active', '1993-08-15Professor10350WJ', '2025-12-03 09:04:12', '2025-12-04 05:05:13'),
+('202111683', 'Student', 'ic.noerjan.cleofe@cvsu.edu.ph', '$2y$10$q8aWgFVFrLfAPU796JAOb.SZ.Scns/7cZhppPB5pJ1D4NWJ829MeC', 'Noerjan', 'Cleofe', 'Catayong', 'Information Technology', '4D', 'FIRST', '2002-10-17', 'Male', '91234567891', 'Active', '2002-10-17Student202111683S8P', '2025-12-03 09:04:16', '2025-12-04 05:05:18'),
+('202210602', 'Professor', 'ic.dhenizekristafaith.lopez@cvsu.edu.ph', '$2y$10$t1qKXZGiO0a6bJchB5RrHO9F3O15.eA8he45uHkqqEkLLzmxDnhh2', 'Dhenize Krista Faith', 'Lopez', 'Cabardo', 'Information Technology', 'Not Applicable', 'Not Applicable', '2004-11-24', 'Male', '9988262316', 'Active', '11242004Professor2022106024EG', '2025-12-03 09:04:20', '2025-12-04 06:15:46'),
+('202210609', 'Student', 'ic.matthewkeane.mariano@cvsu.edu.ph', '$2y$10$1AWwTpZItqOpc0O1RHYVn.gWsI/IV1n67kez7cC0f.h5BRGs2o862', 'Matthew Keane', 'Mariano', 'Yap', 'Information Technology', '4D', 'FIRST', '2002-10-29', 'Male', '91234567891', 'Active', '2002-10-29Student202210609ZQB', '2025-12-03 09:04:23', '2025-12-04 05:05:25'),
+('202210625', 'Student', 'ic.kenclarence.orosco@cvsu.edu.ph', '$2y$10$p5r/cmMbsVBPhikg3SyYWeluHqZphy.bXX/FuT2g4ho1ApdyjqQNG', 'Ken Clarence', 'Orosco', 'Roque', 'Information Technology', '4D', 'FIRST', '2003-12-23', 'Male', '91234567891', 'Active', '2003-12-23Student202210625Q6F', '2025-12-03 09:04:26', '2025-12-04 05:05:29'),
+('202210631', 'Student', 'ic.marcedlin.pasquin.cvsu.edu.ph', '$2y$10$l806Bwa7JXDy05eKt6WjzeUx7QjPCRjdfHl9Yqz2QP2FT1.lcTizK', 'Marc Edlin', 'Pasquin', 'Reyes', 'Information Technology', '4D', 'FIRST', '2003-12-02', 'Male', '91234567891', 'Active', '2003-12-02Student20221063131G', '2025-12-03 09:04:30', '2025-12-04 05:05:32'),
+('202210669', 'Student', 'ic.geruel.alcaraz@cvsu.edu.ph', '$2y$10$JKf0RJBXVlNc4GfkpOi6c.NA43pF.wo6ulk0IVYQ993x/67wt1yca', 'Geruel', 'Alcaraz', 'Hilado', 'Information Technology', '4G', 'FIRST', '2002-12-09', 'Male', '91234567891', 'Active', '2002-12-09Student202210669QK1', '2025-12-03 09:04:30', '2025-12-04 05:05:32'),
+('202210700', 'Student', 'ic.johncarmichael.delosreyes@cvsu.edu.ph', '$2y$10$CvxZhnCFx/l.cIXcGAfe/epbNyMCR6uUrmhYn8GRZBsqC..B3H.8m', 'John Car Michael', 'Delos Reyes', 'Delos Santos', 'Information Technology', '4G', 'FIRST', '2002-05-18', 'Male', '91234567891', 'Active', '2002-05-18Student202210700HLR', '2025-12-03 09:04:33', '2025-12-04 05:05:35'),
+('202210718', 'Student', 'ic.michaelrhoi.gonzales@cvsu.edu.ph', '$2y$10$iG8mD2BKDjg/vftUtYpKEOXwXxC1zeWIhK.FcAz236HFJHtJKd10O', 'Michael Rhoi', 'Gonzales', 'Ladrica', 'Information Technology', '4D', 'FIRST', '2004-06-20', 'Female', '9085527790', 'Active', '06202004Student20221071868Q', '2025-12-03 09:04:36', '2025-12-04 06:00:21'),
+('202210781', 'Student', 'ic.cherlyvic.bakilid@cvsu.edu.ph', '$2y$10$KxGbbQPvNaR5agBvNZ2HeuZa5Qr2JdY/c0MgGvnNuD/MCQxo/1Tt.', 'Cherly Vic', 'Bakilid', 'C', 'Information Technology', '4F', 'FIRST', '2002-11-17', 'Female', '9168773102', 'Active', '2002-11-17Student2022107819E3', '2025-12-03 09:04:40', '2025-12-04 09:02:05'),
+('202210784', 'Student', 'ic.jeannen.basay@cvsu.edu.ph', '$2y$10$/F6PGAfJN6Z9VLmXEjfZkebkQ9DVgKGB4qj7Q5/EaevJKtlUXNHyG', 'Jeannen', 'Basay', 'Kummer', 'Information Technology', '4F', 'FIRST', '2002-03-24', 'Female', '0', 'Active', '03242002Student202210784TFR', '2025-12-03 09:04:43', '2025-12-04 05:05:45'),
+('202210808', 'Student', 'ic.walidbinsaid.dimao@cvsu.edu.ph', '$2y$10$yRX5DP6A4gT2l6n9eGrNg.fICNUyq62OQG40sfubxJTEo/g8Td3fW', 'Walid Binsaid', 'Dimao', 'Lucman', 'Information Technology', '4E', 'FIRST', '2003-05-18', 'Male', '91234567891', 'Active', '2003-05-18Student202210808BFW', '2025-12-03 09:04:46', '2025-12-04 05:05:49'),
+('202210834', 'Student', 'ic.shaunrusselle.obsenares@cvsu.edu.ph', '$2y$10$45mVFgb2/3INN05XTgWJFOnXk.nf0yoMD0XxH9W8jyCyz9oZBF296', 'Shaun Russelle', 'Obseñares', 'Merano', 'Information Technology', '4E', 'FIRST', '2002-07-31', 'Male', '91234567891', 'Active', '2002-07-31Student202210834EQ8', '2025-12-03 09:04:49', '2025-12-04 05:05:53'),
+('202210836', 'Student', 'ic.ferdinand.olaira@cvsu.edu.ph', '$2y$10$jNoL/NqcF7Iu0lqIvw94oObTeb987iT0kWdCh/qf1di.Xh1NSXS.6', 'Ferdinand', 'Olaira', 'Villamor', 'Information Technology', '4D', 'FIRST', '2004-12-04', 'Male', '91234567891', 'Active', '2004-12-04Student202210836C5Q', '2025-12-03 09:04:53', '2025-12-04 05:05:57'),
+('202210838', 'Student', 'ic.katejustine.pades@cvsu.edu.ph', '$2y$10$P8bdWUu0JUkdypvuTx8PbOecT6gzeCWjI5KlUxh0M3iW220fWrUWW', 'Kate Justine', 'Pades', 'B', 'Information Technology', '4D', 'FIRST', '2003-05-13', 'Female', '9777429816', 'Active', '2003-05-13Student20221083829U', '2025-12-03 09:04:56', '2025-12-04 05:06:00'),
+('202210844', 'Student', 'ic.reween.rambonanza@cvsu.edu.ph', '$2y$10$yiQKslghg7B4LcGZ7lc9nOgdmoMAJsco.kr3J2r8BSa2D00j4r0K6', 'Reween', 'Rambonanza', 'Ocampo', 'Information Technology', '4C', 'FIRST', '2000-12-25', 'Male', '91234567891', 'Active', '2000-12-25Student202210844NO8', '2025-12-03 09:04:59', '2025-12-04 05:06:04'),
+('202210867', 'Student', 'ic.erwin.vallez@cvsu.edu.ph', '$2y$10$2gZ1v/4B1i1GKJZI3o3hOOPiPggg3F6tSC73ASn5u0SnVEyLat8Sy', 'Erwin', 'Vallez', 'Manalo', 'Information Technology', '4C', 'FIRST', '2003-11-24', 'Male', '91234567891', 'Active', '2003-11-24Student202210867TFM', '2025-12-03 09:05:03', '2025-12-04 05:06:07'),
+('202210868', 'Student', 'ic.cristelnicole.vergara@cvsu.edu.ph', '$2y$10$ugvqRzbJRQ423jGX4wbVy.loWm4EqFn7z7K5Zp0gUCfarTBuvzyUS', 'Cristel Nicole', 'Vergara', 'S', 'Information Technology', '4B', 'First', '2003-06-21', 'Female', '9234400863', 'Active', '2003-06-21Student202210868AB1', '2025-12-03 09:05:06', '2025-12-04 05:06:10'),
+('202210870', 'Student', 'ic.xyrilljohn.abreu@cvsu.edu.ph', '$2y$10$jN6jA2Jd2bylgd5YFODUH.d4EZOOVQiq9jQrOCXikCAd7CkWkePFW', 'Xyrill John', 'Abreu', 'Fecundo', 'Information Technology', '4B', 'FIRST', '2003-08-03', 'Female', '9422169425', 'Active', '08032003Student202210870H0D', '2025-12-03 09:05:09', '2025-12-04 08:08:13'),
+('202210881', 'Student', 'ic.gerandyernest.buensuceso@cvsu.edu.ph', '$2y$10$zFUCGBAnFkJDquE9/UkHqes9SW/2TZtjQfZWoCRX4AZhTfzpv5L66', 'Gerandy Ernest', 'Buensuceso', 'Jamanila', 'Information Technology', '4A', 'FIRST', '2004-12-09', 'Male', '91234567891', 'Active', '2004-12-09Student202210881ZX0', '2025-12-03 09:05:12', '2025-12-04 05:06:17'),
+('202211199', 'Student', 'ic.desalit.jeann@cvsu.edu.ph', '$2y$10$Co1j1AI.ZeSC/UCaJOy/Sus9WLgp97wCAeqg1jSJmKJSqd4kLPVvG', 'Jeann', 'Desalit', 'Boaw', 'Information Technology', '4A', 'FIRST', '2002-01-07', 'Female', '91234567891', 'Active', '2002-01-07Student2022111990R2', '2025-12-03 09:05:16', '2025-12-04 05:06:20'),
+('20230003', 'Student', 'ic.juliaann.fajardo@cvsu.edu.ph', '$2y$10$KV3l3Llo8izhWkXBwWekp.cNvPGHEAQ05ICkKopYmt2t7HiRvQ/vW', 'Julia Ann', 'Fajardo', 'Sisno', 'Information Technology', '4A', 'FIRST', '2001-06-07', 'Female', '9679532083', 'Active', '06072001Student20230003NB3', '2025-12-03 09:05:19', '2025-12-04 05:06:24');
 
 -- --------------------------------------------------------
 
@@ -359,7 +423,8 @@ INSERT INTO `users` (`user_ID`, `user_firstname`, `user_middlename`, `user_lastn
 ('202210870', 'Xyrill John', 'Fecundo', 'Abreu', 'ic.xyrilljohn.abreu@cvsu.edu.ph', 9422169425, '08/03/2003', 'Female', 'Student', '4B', 'Information Technology', 'FIRST'),
 ('202210881', 'Gerandy Ernest', 'Jamanila', 'Buensuceso', 'ic.gerandyernest.buensuceso@cvsu.edu.ph', 91234567891, '2004-12-09', 'Male', 'Student', '4A', 'Information Technology', 'FIRST'),
 ('202211199', 'Jeann', 'Boaw', 'Desalit', 'ic.desalit.jeann@cvsu.edu.ph', 91234567891, '2002-01-07', 'Female', 'Student', '4A', 'Information Technology', 'FIRST'),
-('20230003', 'Julia Ann', 'Sisno', 'Fajardo', 'ic.juliaann.fajardo@cvsu.edu.ph', 9679532083, '06/07/2001', 'Female', 'Professor', 'Not Applicable', 'Information Technology', 'Not Applicable');
+('20230003', 'Julia Ann', 'Sisno', 'Fajardo', 'ic.juliaann.fajardo@cvsu.edu.ph', 9679532083, '06/07/2001', 'Female', 'Student', '4A', 'Information Technology', 'FIRST'),
+('789', 'Mei', 'Diablo', 'Deeto', 'brylebalatayo@gmail.com', 9052739644, '08-18-2002', 'Male', 'Admin', 'Not Applicable', 'Informatoion Technology', 'Not Applicable');
 
 --
 -- Indexes for dumped tables
@@ -458,43 +523,43 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `activities`
 --
 ALTER TABLE `activities`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
 
 --
 -- AUTO_INCREMENT for table `activity_files`
 --
 ALTER TABLE `activity_files`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `activity_grades`
 --
 ALTER TABLE `activity_grades`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=385;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=463;
 
 --
 -- AUTO_INCREMENT for table `announcements`
 --
 ALTER TABLE `announcements`
-  MODIFY `announcement_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `announcement_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
 -- AUTO_INCREMENT for table `password_resets`
 --
 ALTER TABLE `password_resets`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `student_classes`
 --
 ALTER TABLE `student_classes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- Constraints for dumped tables

@@ -11,6 +11,7 @@ import PdfIcon from "../../assets/PDF.svg";
 import VideoIcon from "../../assets/Video.svg";
 import AudioIcon from "../../assets/Audio.svg"; 
 import ArchiveIcon from "../../assets/Archive.svg"; 
+import ClockIcon from "../../assets/Clock.svg";
 
 const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherEmail, teacherName, subjectName }) => {
   const [professorFiles, setProfessorFiles] = useState([]);
@@ -197,18 +198,63 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
     }
   };
 
+  // Format deadline date in UTC (as originally intended)
   const formatDate = (dateString) => {
     if (!dateString || dateString === "No deadline") return "No deadline";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return dateString;
+      }
+      
+      // Format: Month Day, Year at HH:MM AM/PM (UTC)
+      const options = {
+        year: 'numeric',
+        month: 'long',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC' // Deadline in UTC as per original requirement
+      };
+      
+      const formattedDate = date.toLocaleDateString('en-US', options);
+      return formattedDate;
+    } catch (error) {
+      console.error('Error formatting date:', error);
       return dateString;
+    }
+  };
+
+  // Format created date in Philippine Time (UTC+8)
+  const formatCreatedDate = (dateString) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "";
+      }
+      
+      // Format: Month Day, Year at HH:MM AM/PM (Philippine Time)
+      const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Manila' // Philippine Time (UTC+8)
+      };
+      
+      const formattedDate = date.toLocaleDateString('en-US', options);
+      return formattedDate;
+    } catch (error) {
+      console.error('Error formatting created date:', error);
+      return "";
     }
   };
 
@@ -521,15 +567,29 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
                 {currentActivity.title}
               </h2>
               
-              {/* Deadline in header */}
-              <div className="flex items-center gap-2 mt-2">
-                <span className={`text-xs font-medium ${getDeadlineColor(currentActivity.deadline)}`}>
-                  {formatDate(currentActivity.deadline)}
-                </span>
-                {deadlineLabel && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-[#A15353]/20 text-[#A15353]">
-                    {deadlineLabel}
+              {/* Deadline and Created Date in header */}
+              <div className="mt-2 space-y-1">
+                {/* Deadline */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-[#FFFFFF]/60">Deadline:</span>
+                  <span className={`text-xs font-medium ${getDeadlineColor(currentActivity.deadline)}`}>
+                    {formatDate(currentActivity.deadline)}
                   </span>
+                  {deadlineLabel && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-[#A15353]/20 text-[#A15353]">
+                      {deadlineLabel}
+                    </span>
+                  )}
+                </div>
+                
+                {/* Created Date (Posted Date) */}
+                {currentActivity.created_at && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-[#FFFFFF]/60">Posted:</span>
+                    <span className="text-xs font-medium text-[#FFFFFF]/80">
+                      {formatCreatedDate(currentActivity.created_at)}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>

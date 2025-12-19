@@ -17,6 +17,43 @@ import DeadlineIcon from "../../assets/Deadline.svg";
 import GradeIcon from "../../assets/Points.svg";
 import FileIcon from "../../assets/File.svg"; // Changed from Photo.svg to File.svg
 import SubjectOverview from "../../assets/SubjectOverview.svg";
+import TimeIcon from "../../assets/Clock.svg"; // Added time icon
+
+// ========== TIME INDICATOR HELPER FUNCTION ==========
+const getTimeAgo = (createdAt) => {
+  if (!createdAt) return "";
+  
+  try {
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - createdDate) / 1000);
+    
+    // If the date is in the future or invalid, return empty
+    if (diffInSeconds < 0 || isNaN(diffInSeconds)) return "";
+    
+    // Calculate time differences
+    const seconds = diffInSeconds;
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30.44); // Average days in month
+    const years = Math.floor(days / 365.25); // Account for leap years
+    
+    if (years > 0) return `${years}y`;
+    if (months > 0) return `${months}mo`;
+    if (weeks > 0) return `${weeks}w`;
+    if (days > 0) return `${days}d`;
+    if (hours > 0) return `${hours}h`;
+    if (minutes > 0) return `${minutes}m`;
+    if (seconds >= 0) return `${seconds}s`;
+    
+    return "";
+  } catch (error) {
+    console.error("Error calculating time ago:", error);
+    return "";
+  }
+};
 
 // ========== STUDENT ACTIVITY CARD COMPONENT ==========
 const StudentActivityCard = ({ activity, onViewDetails }) => {
@@ -144,6 +181,7 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
   };
 
   const gradingStatus = getGradingStatus();
+  const timeAgo = getTimeAgo(activity.created_at);
 
   return (
     <div 
@@ -215,6 +253,16 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
           )}
         </div>
       </div>
+
+      {/* Time Indicator - Added below Grade Status */}
+      {timeAgo && (
+        <div className="flex items-center gap-1 mt-1">
+          <img src={TimeIcon} alt="Time" className="w-2.5 h-2.5 opacity-60" />
+          <span className="text-[10px] font-medium text-[#FFFFFF]/60">
+            {timeAgo} ago
+          </span>
+        </div>
+      )}
     </div>
   );
 };
