@@ -5,7 +5,7 @@ import Close from "../../assets/Close.svg";
 import Cross from "../../assets/Cross.svg";
 import DetailsIcon from "../../assets/Details.svg";
 import ClockIcon from "../../assets/Deadline.svg";
-import FileIcon from "../../assets/File(Light).svg";
+import FileIcon from "../../assets/File.svg";
 import ImageIcon from "../../assets/Image.svg";
 import PdfIcon from "../../assets/PDF.svg";
 import DocIcon from "../../assets/Document.svg";

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 import ClassRankingOverall from "../../Components/ProfessorComponents/ClassRankingOverall";
+import ActivitiesCard from "../../Components/ProfessorComponents/ActivitiesCard";
 
 // Import assets
 import SubjectOverviewIcon from "../../assets/SubjectOverview.svg";
@@ -126,7 +127,6 @@ export default function SubjectOverviewProfessor() {
           }));
           setStudentPerformance(studentsWithStatus);
         } else {
-          // Fallback dummy data
           const dummyStudents = generateDummyStudents();
           setStudentPerformance(dummyStudents);
         }
@@ -325,40 +325,10 @@ export default function SubjectOverviewProfessor() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-2 mb-6">
-            <div className="bg-[#15151C] rounded-lg border border-white/5 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#767EE0]/20 flex items-center justify-center">
-                    <img src={ClassManagementIcon} alt="Students" className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm text-gray-400">Students</span>
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">{classStats.totalStudents}</div>
-                <div className="text-xs text-gray-500">
-                  {classStats.atRiskStudents} at-risk • {classStats.failingStudents} failing
-                </div>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <div className="flex-1 text-center">
-                  <div className="text-sm font-semibold text-[#00A15D]">{classStats.passedStudents}</div>
-                  <div className="text-xs text-gray-500">Passing</div>
-                </div>
-                <div className="flex-1 text-center">
-                  <div className="text-sm font-semibold text-[#A15353]">{classStats.failingStudents}</div>
-                  <div className="text-xs text-gray-500">Failing</div>
-                </div>
-                <div className="flex-1 text-center">
-                  <div className="text-sm font-semibold text-[#FFA600]">{classStats.atRiskStudents}</div>
-                  <div className="text-xs text-gray-500">At Risk</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Use the ActivitiesCard component */}
+          <ActivitiesCard classStats={classStats} />
 
-                    {/* Use the ClassRankingOverall component */}
+          {/* Use the ClassRankingOverall component */}
           <ClassRankingOverall
             studentPerformance={studentPerformance}
             classInfo={classInfo}

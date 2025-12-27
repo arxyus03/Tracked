@@ -44,6 +44,16 @@ export default function Attendance() {
   // Email notification states for save_attendance
   const [sendingEmails,] = useState(false);
   const [emailResults, setEmailResults] = useState(null);
+  
+  // ========== ADDED: Date and Time State ==========
+  const [currentDateTime, setCurrentDateTime] = useState({
+    date: '',
+    time: '',
+    day: ''
+  });
+  
+  // ========== ADDED: Save Attendance Loading State ==========
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -57,6 +67,39 @@ export default function Attendance() {
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  // ========== ADDED: Date and Time Update Effect ==========
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      
+      // Format date: Month Day, Year (e.g., "January 1, 2024")
+      const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+      const formattedDate = now.toLocaleDateString('en-US', dateOptions);
+      
+      // Format time: HH:MM AM/PM (e.g., "12:30 PM")
+      const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+      const formattedTime = now.toLocaleTimeString('en-US', timeOptions);
+      
+      // Get day of week (e.g., "Monday")
+      const dayOptions = { weekday: 'long' };
+      const formattedDay = now.toLocaleDateString('en-US', dayOptions);
+      
+      setCurrentDateTime({
+        date: formattedDate,
+        time: formattedTime,
+        day: formattedDay
+      });
+    };
+    
+    // Update immediately
+    updateDateTime();
+    
+    // Update every minute
+    const intervalId = setInterval(updateDateTime, 60000);
+    
+    return () => clearInterval(intervalId);
   }, []);
 
   const getProfessorId = () => {
@@ -149,6 +192,9 @@ export default function Attendance() {
   };
 
   const handleSaveAttendance = async () => {
+    // ========== ADDED: Set saving state ==========
+    setIsSaving(true);
+    
     try {
       const professorId = getProfessorId();
       const today = new Date().toISOString().split("T")[0];
@@ -203,6 +249,9 @@ export default function Attendance() {
       console.error("Error saving attendance:", error);
       setModalMessage("Error saving attendance");
       setShowErrorModal(true);
+    } finally {
+      // ========== ADDED: Reset saving state ==========
+      setIsSaving(false);
     }
   };
 
@@ -425,6 +474,31 @@ export default function Attendance() {
             </div>
           </div>
 
+          {/* ========== ADDED: DATE AND TIME DISPLAY ========== */}
+          <div className="mb-4 p-3 bg-[#15151C] rounded-lg border border-[#FFFFFF]/10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-[#FFFFFF]">Today's Attendance</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="text-xs text-[#00A15D] font-medium bg-[#00A15D]/10 px-2 py-0.5 rounded">
+                    {currentDateTime.day}
+                  </div>
+                  <div className="text-xs text-[#FFFFFF]/70">
+                    {currentDateTime.date}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-[#FFFFFF]/60">
+                  Current Time:
+                </div>
+                <div className="text-sm font-semibold text-[#FFFFFF]">
+                  {currentDateTime.time}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* ========== SEARCH BAR ========== */}
           <div className="mt-4">
             <div className="relative">
@@ -603,9 +677,19 @@ export default function Attendance() {
                     </button>
                     <button
                       onClick={handleSaveAttendance}
-                      className="w-full sm:w-auto px-4 py-2 bg-[#00A15D] hover:bg-[#00874E] text-white font-semibold rounded-md transition-all duration-200 cursor-pointer text-sm"
+                      disabled={isSaving}
+                      className={`w-full sm:w-auto px-4 py-2 bg-[#00A15D] hover:bg-[#00874E] text-white font-semibold rounded-md transition-all duration-200 text-sm ${
+                        isSaving ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+                      }`}
                     >
-                      Save Attendance
+                      {isSaving ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                          <span>Saving...</span>
+                        </div>
+                      ) : (
+                        'Save Attendance'
+                      )}
                     </button>
                   </>
                 )}

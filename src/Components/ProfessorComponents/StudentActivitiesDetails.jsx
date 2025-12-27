@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import Cross from "../../assets/Cross(Light).svg";
-import EmailIcon from "../../assets/Email(Light).svg";
-import ArrowDown from "../../assets/ArrowDown(Light).svg";
+import Cross from "../../assets/Cross.svg";
+import EmailIcon from "../../assets/Email.svg";
+import ArrowDown from "../../assets/ArrowDown.svg";
 import Nothing from "../../assets/Nothing.svg";
 import NoSubmission from "../../assets/NoSubmission.svg";
 import Missed from "../../assets/Missing.svg";
-import FileIcon from "../../assets/File(Light).svg";
+import FileIcon from "../../assets/File.svg";
 import ImageIcon from "../../assets/Image.svg";
 import DownloadIcon from "../../assets/Download(Light).svg";
 

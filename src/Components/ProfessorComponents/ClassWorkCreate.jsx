@@ -7,7 +7,7 @@ const ClassWorkCreate = ({
   onClose, 
   onCreateActivity,
   onDuplicateTask,
-  activityTypes = ["Activity", "Assignment", "Quiz", "Laboratory", "Project"],
+  activityTypes = ["Activity", "Assignment", "Quiz", "Laboratory", "Project", "Remedial", "Exam"],
   getCurrentDateTime,
   subjectCode,
   creatingActivity = false
@@ -265,7 +265,7 @@ const ClassWorkCreate = ({
                 />
               </button>
               {activityTypeDropdownOpen && (
-                <div className="absolute top-full mt-1 w-full bg-[#23232C] rounded border border-gray-700 z-10 max-h-32 overflow-y-auto">
+                <div className="absolute top-full mt-1 w-full bg-[#23232C] rounded border border-gray-700 z-10 max-h-60 overflow-y-auto">
                   {filteredActivityTypes.map((type) => (
                     <button
                       key={type}
@@ -273,9 +273,14 @@ const ClassWorkCreate = ({
                         setActivityType(type);
                         setActivityTypeDropdownOpen(false);
                       }}
-                      className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800"
+                      className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white ${
+                        type === "Remedial" || type === "Exam" ? 'font-semibold' : ''
+                      }`}
                     >
+                      {type === "Remedial" && "🔄 "}
+                      {type === "Exam" && "📝 "}
                       {type}
+                      {(type === "Remedial" || type === "Exam") && " (NEW)"}
                     </button>
                   ))}
                 </div>
@@ -353,7 +358,7 @@ const ClassWorkCreate = ({
                       setAssignTo("wholeClass");
                       setAssignToDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800"
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
                   >
                     Whole Class
                   </button>
@@ -362,7 +367,7 @@ const ClassWorkCreate = ({
                       setAssignTo("individual");
                       setAssignToDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800"
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
                   >
                     Individual Students
                   </button>
@@ -404,7 +409,7 @@ const ClassWorkCreate = ({
                         />
                         <label 
                           htmlFor={`student-${student.tracked_ID}`}
-                          className="text-xs flex-1"
+                          className="text-xs flex-1 text-white"
                         >
                           {student.tracked_firstname} {student.tracked_lastname}
                           <span className="text-gray-500 text-xs block">ID: {student.tracked_ID}</span>
@@ -461,6 +466,11 @@ const ClassWorkCreate = ({
               />
             </div>
           </div>
+        </div>
+
+        {/* Debug: Show available activity types */}
+        <div className="mt-3 text-xs text-gray-500">
+          Available activity types: {filteredActivityTypes.join(', ')}
         </div>
 
         {/* Create Button */}
