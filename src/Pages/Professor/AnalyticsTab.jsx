@@ -26,6 +26,8 @@ import Classwork from "../../assets/Classwork.svg";
 import GradeIcon from "../../assets/Grade.svg";
 import AnalyticsIcon from "../../assets/Analytics.svg";
 import AttendanceIcon from '../../assets/Attendance.svg';
+// ADD THIS NEW IMPORT
+import SubjectOverview from "../../assets/SubjectOverview.svg";
 
 // Color palette for charts (adjusted for dark mode)
 const COLORS = ['#00874E', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#B39DDB', '#98D8C8'];
@@ -712,13 +714,13 @@ export default function AnalyticsTab() {
               <img
                 src={AnalyticsIcon}
                 alt="Analytics"
-                className="h-7 w-7 sm:h-9 sm:w-9 mr-2 sm:mr-3"
+                className="h-7 w-7 sm:h-7 sm:w-7 mr-2 sm:mr-3"
               />
-              <h1 className="font-bold text-xl sm:text-2xl lg:text-3xl text-[#FFFFFF]">
+              <h1 className="font-bold text-sm sm:text-2xl text-[#FFFFFF]">
                 Student Progress Tracking System
               </h1>
             </div>
-            <p className="text-sm sm:text-base lg:text-lg text-[#FFFFFF]/80">
+            <p className="text-sm sm:text-base text-[#FFFFFF]/80">
               Integrated Academic Data Analytics & Performance Insights
             </p>
           </div>
@@ -758,6 +760,18 @@ export default function AnalyticsTab() {
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {/* NEW: Subject Overview Button */}
+              <Link to={`/SubjectOverviewProfessor?code=${subjectCode}`} className="flex-1 sm:flex-initial">
+                <button className="flex items-center justify-center gap-2 px-3 py-2 bg-[#FF5252]/20 text-[#FF5252] border-2 border-[#FF5252]/30 font-semibold text-sm rounded-md shadow-md hover:bg-[#FF5252]/30 transition-all duration-300 cursor-pointer w-full sm:w-auto">
+                  <img 
+                    src={SubjectOverview} 
+                    alt="" 
+                    className="h-4 w-4 brightness-0 invert"
+                  />
+                  <span className="sm:inline">Subject Overview</span>
+                </button>
+              </Link>
+
               {/* Announcement Button */}
               <Link to={`/Class?code=${subjectCode}`} className="flex-1 sm:flex-initial">
                 <button className="flex items-center justify-center gap-2 px-3 py-2 bg-[#00A15D]/20 text-[#00A15D] border-2 border-[#00A15D]/30 font-semibold text-sm rounded-md shadow-md hover:bg-[#00A15D]/30 transition-all duration-300 cursor-pointer w-full sm:w-auto">

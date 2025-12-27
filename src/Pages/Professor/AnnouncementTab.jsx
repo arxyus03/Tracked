@@ -23,6 +23,8 @@ import Search from "../../assets/Search.svg";
 import GradeIcon from "../../assets/Grade.svg"; // Changed to dark theme version
 import AnalyticsIcon from "../../assets/Analytics.svg"; // Changed to dark theme version
 import Copy from "../../assets/Copy.svg"; // Changed to dark theme version
+// ADD THIS NEW IMPORT
+import SubjectOverview from "../../assets/SubjectOverview.svg";
 
 export default function AnnouncementTab() {
   const location = useLocation();
@@ -746,6 +748,9 @@ export default function AnnouncementTab() {
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {/* NEW: Subject Overview Button */}
+              {renderActionButton("/SubjectOverviewProfessor", SubjectOverview, "Subject Overview", false, "bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30")}
+              
               {/* Announcement Button - Active */}
               {renderActionButton("/Class", Announcement, "Announcements", true)}
               

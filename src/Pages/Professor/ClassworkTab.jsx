@@ -23,6 +23,8 @@ import ClassManagementIcon from "../../assets/ClassManagement.svg";
 import GradeIcon from "../../assets/Grade.svg";
 import AnalyticsIcon from "../../assets/Analytics.svg";
 import Copy from "../../assets/Copy.svg";
+// ADD THIS NEW IMPORT
+import SubjectOverview from "../../assets/SubjectOverview.svg";
 
 // New Minimal Small Activity Card Component
 const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) => {
@@ -960,6 +962,9 @@ export default function ClassworkTab() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4 flex-wrap">
             <div className="flex flex-col sm:flex-row gap-2 flex-1 flex-wrap min-w-0">
+              {/* NEW: Subject Overview Button */}
+              {renderActionButton("/SubjectOverviewProfessor", SubjectOverview, "Subject Overview", false, "bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30")}
+              
               {/* Announcement Button */}
               {renderActionButton("/Class", Announcement, "Announcements", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
               

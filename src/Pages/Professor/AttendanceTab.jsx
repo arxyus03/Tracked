@@ -18,6 +18,8 @@ import Classwork from "../../assets/Classwork.svg"; // Changed to dark theme
 import GradeIcon from "../../assets/Grade.svg"; // Changed to dark theme
 import AnalyticsIcon from "../../assets/Analytics.svg"; // Changed to dark theme
 import CopyIcon from "../../assets/Copy.svg"; // Added copy icon
+// ADD THIS NEW IMPORT
+import SubjectOverview from "../../assets/SubjectOverview.svg";
 
 export default function Attendance() {
   const [isOpen, setIsOpen] = useState(true);
@@ -372,6 +374,9 @@ export default function Attendance() {
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {/* NEW: Subject Overview Button */}
+              {renderActionButton("/SubjectOverviewProfessor", SubjectOverview, "Subject Overview", false, "bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30")}
+              
               {/* Announcement Button */}
               {renderActionButton("/Class", Announcement, "Announcements", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
               

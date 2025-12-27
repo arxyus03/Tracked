@@ -16,6 +16,10 @@ import AnalyticsIcon from '../../assets/Analytics.svg';
 import Attendance from "../../assets/Attendance.svg";
 import DownloadIcon from '../../assets/Download.svg';
 import Copy from '../../assets/Copy.svg';
+// ADD THIS NEW IMPORT
+import SubjectOverview from "../../assets/SubjectOverview.svg";
+
+
 
 export default function GradeTab() {
   const [isOpen, setIsOpen] = useState(true);
@@ -555,6 +559,9 @@ export default function GradeTab() {
           {/* ========== ACTION BUTTONS (Updated to match ClassworkTab) ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              {/* NEW: Subject Overview Button */}
+              {renderActionButton("/SubjectOverviewProfessor", SubjectOverview, "Subject Overview", false, "bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30")}
+              
               {/* Announcement Button */}
               {renderActionButton("/Class", Announcement, "Announcements", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
               

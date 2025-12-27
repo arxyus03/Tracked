@@ -120,7 +120,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
   useEffect(() => {
     if (role === "student" && (location.pathname === '/Subjects' || location.pathname.includes('/Subject'))) {
       setSubjectsDropdownOpen(true);
-    } else if (role === "teacher" && (location.pathname === '/ClassManagement' || location.pathname.includes('/Class'))) {
+    } else if (role === "teacher" && (location.pathname === '/ClassManagement' || location.pathname.includes('/SubjectOverviewProfessor') || location.pathname.includes('/Class') || location.pathname.includes('/Attendance') || location.pathname.includes('/GradeTab') || location.pathname.includes('/AnalyticsTab'))) {
       setClassesDropdownOpen(true);
     }
   }, [location.pathname, role]);
@@ -355,7 +355,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                               return (
                                 <NavLink
                                   key={classItem.subject_code}
-                                  to={`/Class?code=${classItem.subject_code}`}
+                                  to={`/SubjectOverviewProfessor?code=${classItem.subject_code}`}
                                   onClick={handleDropdownClick}
                                   className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mb-1 ${
                                     isClassActive ? "bg-[#00A15D]/20 border-l-2 border-white font-semibold" : ""

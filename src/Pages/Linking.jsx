@@ -37,6 +37,7 @@ import AnalyticsAttendanceInfo from './Professor/AnalyticsAttendanceInfo.jsx';
 import ArchiveClass from './Professor/ArchiveClass.jsx'; 
 import ArchiveActivities from './Professor/ArchiveActivities.jsx';
 import StudentList from './Professor/StudentList.jsx';
+import SubjectOverviewProfessor from './Professor/SubjectOverviewProfessor.jsx';
 
 // Student Links
 import DashboardStudent from './Student/DashboardStudent.jsx';
@@ -109,6 +110,7 @@ function Linking() {
         <Route path="/StudentList" element={<StudentList/>} /> 
         <Route path="/GradeTab" element={<GradeTab/>} /> 
         <Route path="/AnalyticsTab" element={<AnalyticsTab/>} /> 
+        <Route path="/SubjectOverviewProfessor" element={<SubjectOverviewProfessor/>} /> 
 
         {/* Navigations for Student */}
         <Route path="/DashboardStudent" element={<DashboardStudent />} />

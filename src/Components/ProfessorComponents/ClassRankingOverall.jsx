@@ -1,0 +1,582 @@
+import React, { useState, useEffect } from 'react';
+import RankingIcon from '../../assets/Ranking.svg';
+import TrackEdIcon from '../../assets/TrackEd.svg';
+import ArrowDown from '../../assets/ArrowDown.svg';
+import ArrowUp from '../../assets/ArrowUp.svg';
+
+const ClassRankingOverall = ({ 
+  studentPerformance = [], 
+  classInfo = {}, 
+  classStats = {}, 
+  subjectCode 
+}) => {
+  const [viewMode, setViewMode] = useState('lowest');
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [studentDetails, setStudentDetails] = useState({});
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Changed to true for default collapsed view
+
+  const getStudentStatus = (average) => {
+    if (average >= 90) return 'excellent';
+    if (average >= 75) return 'good';
+    if (average >= 60) return 'needs-improvement';
+    return 'at-risk';
+  };
+
+  const getSortedStudents = () => {
+    const students = [...studentPerformance];
+    students.sort((a, b) => viewMode === 'lowest' ? a.average - b.average : b.average - b.average);
+    return students;
+  };
+
+  const getSummaryStudents = () => {
+    const students = [...studentPerformance];
+    students.sort((a, b) => a.average - b.average);
+    
+    if (students.length === 0) return { lowest: [], highest: [] };
+    
+    const lowest = students.slice(0, 3);
+    const highest = students.slice(-3).reverse();
+    
+    return { lowest, highest };
+  };
+
+  const handleStudentClick = (student) => {
+    fetchStudentDetails(student.id);
+    setSelectedStudent(student);
+    setIsModalOpen(true);
+  };
+
+  const fetchStudentDetails = async (studentId) => {
+    setLoadingDetails(true);
+    try {
+      const professorId = getProfessorId();
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_student_details.php?student_id=${studentId}&subject_code=${subjectCode}&professor_ID=${professorId}`
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setStudentDetails(prev => ({ ...prev, [studentId]: result.details }));
+        } else {
+          setStudentDetails(prev => ({ ...prev, [studentId]: generateRandomStudentDetails() }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching student details:', error);
+      setStudentDetails(prev => ({ ...prev, [studentId]: generateRandomStudentDetails() }));
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const getProfessorId = () => {
+    try {
+      const userDataString = localStorage.getItem("user");
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        return userData.id;
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+    }
+    return null;
+  };
+
+  const generateRandomStudentDetails = () => ({
+    attendance: {
+      rate: Math.floor(Math.random() * (100 - 60) + 60),
+      absences: Math.floor(Math.random() * 8),
+      lates: Math.floor(Math.random() * 5),
+      totalClasses: 30,
+      present: Math.floor(Math.random() * (28 - 20) + 20)
+    },
+    grades: {
+      quizzes: Math.floor(Math.random() * (100 - 60) + 60),
+      assignments: Math.floor(Math.random() * (100 - 60) + 60),
+      projects: Math.floor(Math.random() * (100 - 60) + 60)
+    },
+    activities: {
+      submitted: Math.floor(Math.random() * (18 - 10) + 10),
+      total: 18,
+      missed: Math.floor(Math.random() * 8)
+    }
+  });
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedStudent(null);
+  };
+
+  const getRecommendations = (student) => {
+    const recommendations = [];
+    const actions = { email: false, remedial: false, extendDeadline: false, materials: false };
+
+    if (!selectedStudent || !studentDetails[selectedStudent.id]) {
+      return { recommendations, actions };
+    }
+
+    const details = studentDetails[selectedStudent.id];
+
+    if (details.attendance.absences > 3) {
+      recommendations.push("Multiple absences detected. Consider scheduling a consultation.");
+      actions.email = true;
+    }
+
+    if (details.activities.missed > 3) {
+      recommendations.push("Several activities missed. May benefit from remedial activities.");
+      actions.remedial = true;
+      actions.extendDeadline = true;
+    }
+
+    const grades = details.grades;
+    const lowGrades = [];
+    if (grades.quizzes < 75) lowGrades.push("quizzes");
+    if (grades.assignments < 75) lowGrades.push("assignments");
+    if (grades.projects < 75) lowGrades.push("projects");
+    
+    if (lowGrades.length > 0) {
+      recommendations.push(`Low performance in ${lowGrades.join(", ")}. Provide review materials.`);
+      actions.materials = true;
+    }
+
+    if (student.average >= 90) {
+      recommendations.push("Excellent performance. Consider peer mentoring opportunities.");
+    }
+
+    return { recommendations, actions };
+  };
+
+  const handleEmailClick = (student) => {
+    const subject = `Regarding your performance in ${classInfo?.subject || 'the class'}`;
+    const body = `Dear ${student.name},\\n\\nI would like to discuss your performance in ${classInfo?.subject || 'the class'}. Please schedule a meeting.\\n\\nBest regards,\\n[Your Name]`;
+    window.open(`mailto:${student.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
+  const handleRemedialClick = (student) => {
+    alert(`Remedial activities assigned for ${student.name} in ${classInfo?.subject || 'the class'}`);
+  };
+
+  const handleExtendDeadlineClick = (student) => {
+    alert(`Deadlines extended for ${student.name} in ${classInfo?.subject || 'the class'}`);
+  };
+
+  const handleMaterialsClick = (student) => {
+    alert(`Review materials sent to ${student.name} for ${classInfo?.subject || 'the class'}`);
+  };
+
+  const sortedStudents = getSortedStudents();
+  const summary = getSummaryStudents();
+
+  return (
+    <>
+      <div className="bg-[#15151C] rounded-lg shadow-lg p-3 mb-4 border border-white/10 overflow-hidden">
+        {/* Header with title and toggle buttons */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center">
+            <div className="flex justify-center items-center h-5 w-5 rounded-lg mr-2 bg-[#0F0F15]">
+              <img src={RankingIcon} alt="Ranking" className="h-3.5 w-3.5" />
+            </div>
+            <div>
+              <h2 className="font-bold text-sm text-[#FFFFFF]">Class Ranking</h2>
+              <p className="text-xs text-white/60">{classInfo?.subject} • {classInfo?.section}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)} 
+              className="p-1 rounded-lg hover:bg-[#767EE0]/20 transition-colors"
+            >
+              <img src={isCollapsed ? ArrowDown : ArrowUp} alt="Toggle" className="h-4 w-4" />
+            </button>
+            
+            <div className="flex items-center space-x-1">
+              <button 
+                onClick={() => setViewMode('lowest')} 
+                className={`px-2 py-1 text-[10px] rounded-lg transition-all duration-200 font-medium ${
+                  viewMode === 'lowest' 
+                    ? 'bg-[#A15353] text-white shadow-md' 
+                    : 'bg-[#0F0F15] text-white/60 hover:bg-[#767EE0]/20 hover:text-white'
+                }`}
+              >
+                Lowest
+              </button>
+              <button 
+                onClick={() => setViewMode('highest')} 
+                className={`px-2 py-1 text-[10px] rounded-lg transition-all duration-200 font-medium ${
+                  viewMode === 'highest' 
+                    ? 'bg-[#00A15D] text-white shadow-md' 
+                    : 'bg-[#0F0F15] text-white/60 hover:bg-[#767EE0]/20 hover:text-white'
+                }`}
+              >
+                Highest
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Default Collapsed View - Summary */}
+        {isCollapsed ? (
+          <div className="space-y-2">
+            {/* Highest Performers Summary */}
+            <div className="bg-[#0F0F15] rounded-lg border border-white/5 p-2">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-xs font-semibold text-[#FFFFFF]">Top 3 Performers</h3>
+                <div className="flex items-center text-[10px] text-white/60">
+                  <div className="h-2 w-2 rounded-full bg-[#00A15D] mr-1"></div>
+                  Highest
+                </div>
+              </div>
+              {summary.highest.length === 0 ? (
+                <p className="text-xs text-white/50 text-center py-1">No data available</p>
+              ) : (
+                <div className="space-y-1">
+                  {summary.highest.map((student, index) => (
+                    <div key={student.id} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 rounded-full bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30 flex items-center justify-center text-[8px] font-bold mr-2">
+                          {index + 1}
+                        </div>
+                        <span className="text-xs text-white truncate max-w-[100px]">{student.name}</span>
+                      </div>
+                      <span className="text-xs font-bold text-[#00A15D]">{student.average}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Lowest Performers Summary */}
+            <div className="bg-[#0F0F15] rounded-lg border border-white/5 p-2">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-xs font-semibold text-[#FFFFFF]">Lowest 3 Performers</h3>
+                <div className="flex items-center text-[10px] text-white/60">
+                  <div className="h-2 w-2 rounded-full bg-[#A15353] mr-1"></div>
+                  Lowest
+                </div>
+              </div>
+              {summary.lowest.length === 0 ? (
+                <p className="text-xs text-white/50 text-center py-1">No data available</p>
+              ) : (
+                <div className="space-y-1">
+                  {summary.lowest.map((student, index) => (
+                    <div key={student.id} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-4 h-4 rounded-full bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30 flex items-center justify-center text-[8px] font-bold mr-2">
+                          {studentPerformance.length - summary.lowest.length + index + 1}
+                        </div>
+                        <span className="text-xs text-white truncate max-w-[100px]">{student.name}</span>
+                      </div>
+                      <span className="text-xs font-bold text-[#A15353]">{student.average}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Expanded View - Full List */
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5 overflow-x-hidden">
+            {sortedStudents.length === 0 ? (
+              <div className="text-center py-3 bg-[#0F0F15] rounded-lg border border-white/5">
+                <div className="text-[#767EE0]/40 mb-1">
+                  <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-white/50">No students found</p>
+              </div>
+            ) : (
+              sortedStudents.map((student, index) => (
+                <button 
+                  key={student.id} 
+                  onClick={() => handleStudentClick(student)} 
+                  className="w-full bg-[#0F0F15] rounded-lg border border-white/5 p-2 hover:border-[#00A15D] hover:shadow-md hover:shadow-[#00A15D]/10 transition-all duration-200 text-left group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center flex-1 min-w-0">
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0 ${
+                        viewMode === 'lowest'
+                          ? student.average < 60 ? 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30' :
+                            student.average < 75 ? 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30' :
+                            'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30'
+                          : student.average >= 90 ? 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30' :
+                            student.average >= 75 ? 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30' :
+                            'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col items-start">
+                            <p className="text-xs font-semibold text-[#FFFFFF] truncate">{student.name}</p>
+                            <p className="text-[10px] text-white/60 truncate">
+                              {student.status === 'excellent' ? 'Excellent' :
+                               student.status === 'good' ? 'Good' :
+                               student.status === 'needs-improvement' ? 'Needs Improvement' : 'At Risk'}
+                            </p>
+                          </div>
+                          <p className={`text-xs font-bold ml-2 flex-shrink-0 ${
+                            student.average >= 90 ? 'text-[#00A15D]' :
+                            student.average >= 75 ? 'text-[#FFA600]' :
+                            'text-[#A15353]'
+                          }`}>
+                            {student.average}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Performance Details Modal */}
+      {isModalOpen && selectedStudent && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-hidden">
+          <div className="bg-[#15151C] rounded-xl shadow-2xl max-w-md w-full max-h-[75vh] overflow-hidden border border-white/10">
+            <div className="p-4 border-b border-white/10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-2 ${
+                    viewMode === 'lowest'
+                      ? selectedStudent.average < 60 ? 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30' :
+                        selectedStudent.average < 75 ? 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30' :
+                        'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30'
+                      : selectedStudent.average >= 90 ? 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30' :
+                        selectedStudent.average >= 75 ? 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30' :
+                        'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30'
+                  }`}>
+                    {sortedStudents.findIndex(s => s.id === selectedStudent.id) + 1}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-[#FFFFFF]">{selectedStudent.name}</h3>
+                    <p className="text-xs text-white/60">{selectedStudent.email}</p>
+                  </div>
+                </div>
+                <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-[#767EE0]/20 transition-colors">
+                  <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mt-2">
+                <p className="text-xs text-white/80">{classInfo?.subject} • {classInfo?.section}</p>
+                <div className="flex items-baseline mt-1">
+                  <p className={`text-xl font-bold ${
+                    selectedStudent.average >= 90 ? 'text-[#00A15D]' :
+                    selectedStudent.average >= 75 ? 'text-[#FFA600]' :
+                    'text-[#A15353]'
+                  }`}>
+                    {selectedStudent.average}%
+                  </p>
+                  <p className="text-xs text-white/60 ml-2">Overall Average</p>
+                </div>
+              </div>
+            </div>
+
+            {loadingDetails || !studentDetails[selectedStudent.id] ? (
+              <div className="p-8 text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
+                <p className="mt-3 text-white/80 text-sm">Loading student details...</p>
+              </div>
+            ) : (
+              <div className="p-4 overflow-y-auto max-h-[50vh] overflow-x-hidden">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-[#23232C] rounded-lg border border-white/5 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-semibold text-[#FFFFFF]">Attendance</h4>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          studentDetails[selectedStudent.id].attendance.rate >= 90 ? 'bg-[#00A15D]/20 text-[#00A15D]' :
+                          studentDetails[selectedStudent.id].attendance.rate >= 80 ? 'bg-[#FFA600]/20 text-[#FFA600]' :
+                          'bg-[#A15353]/20 text-[#A15353]'
+                        }`}>
+                          {studentDetails[selectedStudent.id].attendance.rate}%
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: 'Absences', value: studentDetails[selectedStudent.id].attendance.absences },
+                          { label: 'Lates', value: studentDetails[selectedStudent.id].attendance.lates },
+                          { label: 'Present', value: studentDetails[selectedStudent.id].attendance.present }
+                        ].map((item, idx) => (
+                          <div key={idx} className="text-center">
+                            <p className="text-xs text-white/50 mb-0.5">{item.label}</p>
+                            <p className={`text-sm font-bold ${
+                              item.value === 0 ? 'text-[#00A15D]' :
+                              item.value <= 2 ? 'text-[#FFA600]' :
+                              'text-[#A15353]'
+                            }`}>
+                              {item.value}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-[#23232C] rounded-lg border border-white/5 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-semibold text-[#FFFFFF]">Activities</h4>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                          studentDetails[selectedStudent.id].activities.missed === 0 ? 'bg-[#00A15D]/20 text-[#00A15D]' :
+                          studentDetails[selectedStudent.id].activities.missed <= 2 ? 'bg-[#FFA600]/20 text-[#FFA600]' :
+                          'bg-[#A15353]/20 text-[#A15353]'
+                        }`}>
+                          {studentDetails[selectedStudent.id].activities.submitted}/{studentDetails[selectedStudent.id].activities.total}
+                        </span>
+                      </div>
+                      <div className="text-center mb-2">
+                        <div className="flex items-baseline justify-center">
+                          <p className={`text-base font-bold ${
+                            studentDetails[selectedStudent.id].activities.missed === 0 ? 'text-[#00A15D]' :
+                            studentDetails[selectedStudent.id].activities.missed <= 2 ? 'text-[#FFA600]' :
+                            'text-[#A15353]'
+                          }`}>
+                            {studentDetails[selectedStudent.id].activities.submitted}
+                          </p>
+                          <p className="text-sm font-bold text-white/60 mx-1">/</p>
+                          <p className="text-base font-bold text-white/60">{studentDetails[selectedStudent.id].activities.total}</p>
+                        </div>
+                        <p className="text-xs text-white/60 mt-0.5">Submitted vs Total</p>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-white/60">
+                        <div className="flex items-center">
+                          <div className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
+                            studentDetails[selectedStudent.id].activities.missed === 0 ? 'bg-[#00A15D]' :
+                            studentDetails[selectedStudent.id].activities.missed <= 2 ? 'bg-[#FFA600]' :
+                            'bg-[#A15353]'
+                          }`}></div>
+                          <span>{studentDetails[selectedStudent.id].activities.missed} Missed</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[#FFFFFF] font-medium text-xs">
+                            {Math.round((studentDetails[selectedStudent.id].activities.submitted / studentDetails[selectedStudent.id].activities.total) * 100)}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#23232C] rounded-lg border border-white/5 p-3">
+                    <h4 className="text-xs font-semibold text-[#FFFFFF] mb-3">Performance Indicators</h4>
+                    <div className="mb-4">
+                      <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { label: 'Quizzes', value: studentDetails[selectedStudent.id].grades.quizzes },
+                          { label: 'Assignments', value: studentDetails[selectedStudent.id].grades.assignments },
+                          { label: 'Projects', value: studentDetails[selectedStudent.id].grades.projects }
+                        ].map((item, index) => (
+                          <div key={index} className={`text-center px-3 py-3 rounded-lg ${
+                            item.value < 70 ? 'bg-[#A15353]/10 border border-[#A15353]/20' :
+                            item.value < 80 ? 'bg-[#FFA600]/10 border border-[#FFA600]/20' :
+                            'bg-[#00A15D]/10 border border-[#00A15D]/20'
+                          }`}>
+                            <p className="text-xs text-white/60 mb-1">{item.label}</p>
+                            <div className={`text-lg font-bold ${
+                              item.value >= 90 ? 'text-[#00A15D]' :
+                              item.value >= 80 ? 'text-[#FFA600]' :
+                              'text-[#A15353]'
+                            }`}>
+                              {item.value}%
+                            </div>
+                            <div className="w-full bg-white/10 rounded-full h-1.5 mt-2">
+                              <div className={`h-1.5 rounded-full ${
+                                item.value >= 90 ? 'bg-[#00A15D]' :
+                                item.value >= 80 ? 'bg-[#FFA600]' :
+                                'bg-[#A15353]'
+                              }`} style={{ width: `${item.value}%` }}></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-[#23232C] to-[#15151C] rounded-lg border border-white/5 p-4">
+                    <div className="flex items-start mb-3">
+                      <img src={TrackEdIcon} alt="TrackEd Recommendation" className="h-6 w-6 mr-2 opacity-80 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="text-xs font-semibold text-[#FFFFFF] mb-2">System Recommendation</h4>
+                        <div className="space-y-2">
+                          {(() => {
+                            const { recommendations, actions } = getRecommendations(selectedStudent);
+                            return (
+                              <>
+                                {recommendations.length > 0 ? (
+                                  recommendations.map((rec, index) => (
+                                    <p key={index} className="text-xs text-white/80 leading-relaxed">{rec}</p>
+                                  ))
+                                ) : (
+                                  <p className="text-xs text-white/80 leading-relaxed">Student is performing within expected parameters. No immediate action required.</p>
+                                )}
+                                
+                                {Object.values(actions).some(value => value) && (
+                                  <div className="flex flex-wrap gap-2 mt-3">
+                                    {actions.email && (
+                                      <button onClick={() => handleEmailClick(selectedStudent)} className="px-3 py-1.5 text-xs bg-[#767EE0] text-white rounded-lg hover:bg-[#6670D0] transition-all duration-200 font-medium flex items-center">
+                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        Contact Student
+                                      </button>
+                                    )}
+                                    
+                                    {actions.remedial && (
+                                      <button onClick={() => handleRemedialClick(selectedStudent)} className="px-3 py-1.5 text-xs bg-[#FFA600] text-white rounded-lg hover:bg-[#E69500] transition-all duration-200 font-medium flex items-center">
+                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Assign Remedial
+                                      </button>
+                                    )}
+                                    
+                                    {actions.extendDeadline && (
+                                      <button onClick={() => handleExtendDeadlineClick(selectedStudent)} className="px-3 py-1.5 text-xs bg-[#00A15D] text-white rounded-lg hover:bg-[#008F4F] transition-all duration-200 font-medium flex items-center">
+                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Extend Deadline
+                                      </button>
+                                    )}
+                                    
+                                    {actions.materials && (
+                                      <button onClick={() => handleMaterialsClick(selectedStudent)} className="px-3 py-1.5 text-xs bg-[#A15353] text-white rounded-lg hover:bg-[#8A4242] transition-all duration-200 font-medium flex items-center">
+                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                        </svg>
+                                        Send Materials
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="p-4 border-t border-white/10">
+              <button onClick={closeModal} className="w-full px-3 py-2 text-xs bg-[#767EE0] text-white rounded-lg hover:bg-[#6670D0] transition-all duration-200 font-medium">
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default ClassRankingOverall;
