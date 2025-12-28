@@ -98,11 +98,7 @@ export default function SubjectAnnouncementStudent() {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          const announcementsWithReadStatus = result.announcements.map(announcement => ({
-            ...announcement,
-            isRead: false
-          }));
-          setAnnouncements(announcementsWithReadStatus);
+          setAnnouncements(result.announcements);
         } else {
           setAnnouncements([]);
         }
@@ -116,24 +112,70 @@ export default function SubjectAnnouncementStudent() {
   };
 
   // ========== HANDLER FUNCTIONS ==========
-  const handleMarkAsRead = (announcementId) => {
-    setAnnouncements(prev => 
-      prev.map(announcement => 
-        announcement.id === announcementId 
-          ? { ...announcement, isRead: true }
-          : announcement
-      )
-    );
+  const handleMarkAsRead = async (announcementId) => {
+    try {
+      const response = await fetch('https://tracked.6minds.site/Student/AnnouncementStudentDB/get_announcements_student.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          announcement_id: announcementId,
+          student_id: studentId,
+          is_read: 1
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local state
+        setAnnouncements(prev => 
+          prev.map(announcement => 
+            announcement.id === announcementId 
+              ? { ...announcement, isRead: true }
+              : announcement
+          )
+        );
+      } else {
+        console.error('Failed to mark as read:', result.message);
+      }
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
   };
 
-  const handleMarkAsUnread = (announcementId) => {
-    setAnnouncements(prev => 
-      prev.map(announcement => 
-        announcement.id === announcementId 
-          ? { ...announcement, isRead: false }
-          : announcement
-      )
-    );
+  const handleMarkAsUnread = async (announcementId) => {
+    try {
+      const response = await fetch('https://tracked.6minds.site/Student/AnnouncementStudentDB/get_announcements_student.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          announcement_id: announcementId,
+          student_id: studentId,
+          is_read: 0
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local state
+        setAnnouncements(prev => 
+          prev.map(announcement => 
+            announcement.id === announcementId 
+              ? { ...announcement, isRead: false }
+              : announcement
+          )
+        );
+      } else {
+        console.error('Failed to mark as unread:', result.message);
+      }
+    } catch (error) {
+      console.error('Error marking as unread:', error);
+    }
   };
 
   // ========== FILTER & SORT LOGIC ==========

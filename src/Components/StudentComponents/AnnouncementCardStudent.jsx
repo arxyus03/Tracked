@@ -93,6 +93,11 @@ export default function AnnouncementCardStudent({
     }
   }, [datePosted]);
 
+  // Update readStatus when isRead prop changes
+  useEffect(() => {
+    setReadStatus(isRead);
+  }, [isRead]);
+
   // Format deadline for display with local timezone
   const formatDeadline = (dateString) => {
     if (!dateString || dateString === "No deadline" || dateString === "N/A") return "N/A";
@@ -124,7 +129,7 @@ export default function AnnouncementCardStudent({
   };
 
   const handleCardClick = () => {
-    if (!readStatus) {
+    if (!readStatus && !open) {
       // Mark as read when card is opened for the first time
       setReadStatus(true);
       if (onMarkAsRead) onMarkAsRead();
@@ -194,17 +199,28 @@ export default function AnnouncementCardStudent({
         className="relative p-3 cursor-pointer" 
         onClick={handleCardClick}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pr-16 sm:pr-20">
+        <div className="flex flex-col gap-1">
           {/* Title section */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0 text-xs">
-            <span className="font-bold text-[#FFFFFF] truncate">{subject}:</span>
-            <span className="text-[#FFFFFF]/80 truncate">{title}</span>
-            {!readStatus && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[#00A15D]/20 text-[#00A15D]">
-                New
-              </span>
-            )}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pr-16 sm:pr-20">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-1 min-w-0 text-xs">
+              <span className="font-bold text-[#FFFFFF] truncate">{subject}:</span>
+              <span className="text-[#FFFFFF]/80 truncate">{title}</span>
+              {!readStatus && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-[#00A15D]/20 text-[#00A15D]">
+                  New
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Relative Time Below Header - Only show when card is closed */}
+          {!open && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[#FFFFFF]/60 font-medium">
+                {relativeTime}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Action Icons - absolute positioned on upper right */}
@@ -242,8 +258,8 @@ export default function AnnouncementCardStudent({
 
             {/* Right side */}
             <div className="text-xs text-[#FFFFFF]/60 sm:text-right">
-              <p className="text-[#00A15D] font-medium">
-                Date Posted: {relativeTime}
+              <p className="text-[#FFFFFF]/60 font-medium text-xs">
+                Posted: {relativeTime}
               </p>
               {deadline && deadline !== "N/A" && (
                 <p className={`mt-0.5 ${isDeadlinePassed(deadline) ? 'text-[#A15353]' : isDeadlineUrgent(deadline) ? 'text-[#FFA600]' : 'text-[#FFFFFF]/60'}`}>
