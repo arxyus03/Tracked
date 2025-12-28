@@ -11,6 +11,8 @@ const CalendarWidget = ({ professorId }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [monthlyAbsenceRate, setMonthlyAbsenceRate] = useState(0);
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [availableSubjects, setAvailableSubjects] = useState([]);
 
   useEffect(() => {
     if (professorId) {
@@ -51,12 +53,22 @@ const CalendarWidget = ({ professorId }) => {
         
         // Get dummy absences for this day
         const absencesForDay = await fetchDayAbsences(dateStr);
-        const hasAbsences = absencesForDay.length > 0;
+        
+        // Determine day status based on absences/lates
+        let dayStatus = 'present'; // default to present
+        const hasAbsences = absencesForDay.some(a => a.status === 'absent');
+        const hasLates = absencesForDay.some(a => a.status === 'late');
+        
+        if (hasAbsences) {
+          dayStatus = 'absent'; // Red if any absences
+        } else if (hasLates) {
+          dayStatus = 'late'; // Yellow if only lates (no absences)
+        }
         
         // Count only weekdays for absence rate
         if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday or Saturday
           totalDays++;
-          if (hasAbsences) {
+          if (hasAbsences || hasLates) {
             totalDaysWithAbsences++;
           }
         }
@@ -65,7 +77,7 @@ const CalendarWidget = ({ professorId }) => {
           date: dateStr,
           dayNumber: day,
           dayOfWeek,
-          status: hasAbsences ? 'absent' : 'present',
+          status: dayStatus,
           absences: absencesForDay,
           isToday: dateStr === todayStr,
           isFuture: dateObj > today,
@@ -95,61 +107,137 @@ const CalendarWidget = ({ professorId }) => {
 
   // Fetch dummy absences for a day
   const fetchDayAbsences = async (date) => {
-    // Dummy data - in real app, this would come from API
+    // Dummy data with subjects like ITEC111, ITEC101, DCIT16
     const dummyAbsences = [
       {
         id: 1,
         studentName: "Juan Dela Cruz",
         section: "BSIT 3-1",
-        subject: "Web Development"
+        subject: "ITEC111",
+        status: "absent", // absent or late
       },
       {
         id: 2,
         studentName: "Maria Santos",
         section: "BSIT 3-2", 
-        subject: "Database Management"
+        subject: "ITEC101",
+        status: "late",
       },
       {
         id: 3,
         studentName: "Pedro Reyes",
         section: "BSCS 2-1",
-        subject: "Data Structures"
+        subject: "DCIT16",
+        status: "absent",
       },
       {
         id: 4,
         studentName: "Ana Gonzales",
         section: "BSIT 3-1",
-        subject: "Web Development"
+        subject: "ITEC111",
+        status: "late",
       },
       {
         id: 5,
         studentName: "Luis Torres",
         section: "BSCS 2-1",
-        subject: "Data Structures"
+        subject: "DCIT16",
+        status: "absent",
+      },
+      {
+        id: 6,
+        studentName: "Sofia Martinez",
+        section: "BSIT 3-2",
+        subject: "ITEC101",
+        status: "late",
       }
     ];
 
-    // Return 0-5 random absences for the date
-    const randomCount = Math.floor(Math.random() * 6); // 0-5 absences
-    return dummyAbsences.slice(0, randomCount);
+    // Return 0-6 random absences for the date
+    const randomCount = Math.floor(Math.random() * 7); // 0-6 absences/lates
+    const selectedAbsences = dummyAbsences.slice(0, randomCount);
+    
+    // Extract unique subjects for this day
+    const subjects = [];
+    selectedAbsences.forEach(absence => {
+      if (!subjects.includes(absence.subject)) {
+        subjects.push(absence.subject);
+      }
+    });
+    
+    return selectedAbsences;
   };
 
   // Handle day click
-  const handleDayClick = (day) => {
+  const handleDayClick = async (day) => {
     if (!day.isDay || day.isFuture) return;
     
+    const absencesForDay = await fetchDayAbsences(day.date);
+    
     setSelectedDate(day);
-    setSelectedDayAbsences(day.absences || []);
+    setSelectedDayAbsences(absencesForDay);
+    
+    // Extract unique subjects from the day's absences
+    const subjects = [];
+    absencesForDay.forEach(absence => {
+      if (!subjects.includes(absence.subject)) {
+        subjects.push(absence.subject);
+      }
+    });
+    
+    setAvailableSubjects(subjects);
+    // Set the first subject as selected if available
+    if (subjects.length > 0) {
+      setSelectedSubject(subjects[0]);
+    } else {
+      setSelectedSubject('');
+    }
     setIsCalendarOpen(true);
   };
 
   // Get status color for calendar day
   const getStatusColor = (status) => {
     switch (status) {
-      case 'present': return 'bg-transparent border-white/20';
+      case 'present': return 'bg-[#00A15D] border-[#00A15D]';
       case 'absent': return 'bg-[#A15353] border-[#A15353]';
+      case 'late': return 'bg-[#FFA600] border-[#FFA600]';
       default: return 'bg-transparent border-white/20';
     }
+  };
+
+  // Get status badge color and text
+  const getStudentStatusBadge = (status) => {
+    switch (status) {
+      case 'absent':
+        return {
+          bgColor: 'bg-[#A15353]/20',
+          textColor: 'text-[#FF8A8A]',
+          borderColor: 'border-[#A15353]',
+          text: 'Absent'
+        };
+      case 'late':
+        return {
+          bgColor: 'bg-[#FFA600]/20',
+          textColor: 'text-[#FFA600]',
+          borderColor: 'border-[#FFA600]',
+          text: 'Late'
+        };
+      default:
+        return {
+          bgColor: 'bg-gray-500/20',
+          textColor: 'text-gray-400',
+          borderColor: 'border-gray-500',
+          text: 'Unknown'
+        };
+    }
+  };
+
+  // Filter absences by selected subject
+  const getFilteredAbsences = () => {
+    if (!selectedSubject || selectedSubject === '') {
+      return selectedDayAbsences;
+    }
+    return selectedDayAbsences.filter(absence => absence.subject === selectedSubject);
   };
 
   // Get month name
@@ -183,6 +271,16 @@ const CalendarWidget = ({ professorId }) => {
     const date = new Date(dateString);
     const options = { month: 'short', day: 'numeric', year: 'numeric' };
     return date.toLocaleDateString('en-US', options);
+  };
+
+  // Get counts by status for the selected subject
+  const getStatusCounts = () => {
+    const filtered = getFilteredAbsences();
+    return {
+      absent: filtered.filter(a => a.status === 'absent').length,
+      late: filtered.filter(a => a.status === 'late').length,
+      total: filtered.length
+    };
   };
 
   return (
@@ -267,7 +365,7 @@ const CalendarWidget = ({ professorId }) => {
                         ${day.isToday ? 'ring-0.5 ring-white ring-offset-0.5 ring-offset-[#15151C]' : ''}
                         ${day.isFuture ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110 transition-transform cursor-pointer'}
                         flex items-center justify-center
-                        ${day.status === 'absent' ? 'text-white' : 'text-white/40'}
+                        ${day.status === 'present' ? 'text-white' : 'text-white'}
                       `}
                     >
                       <span className="font-medium">
@@ -289,17 +387,17 @@ const CalendarWidget = ({ professorId }) => {
       {isCalendarOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3">
           <div className="bg-[#23232C] rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-hidden border-2 border-white/10">
-            {/* Modal header - Simplified without arrows and month toggles */}
+            {/* Modal header with subject filter */}
             <div className="p-3 border-b border-white/10">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   <img src={CalendarIcon} alt="Calendar" className="h-4 w-4 mr-2" />
                   <div>
                     <h3 className="font-bold text-sm text-white">
-                      Absences on {formatDateDisplay(selectedDate?.date)}
+                      Attendance on {formatDateDisplay(selectedDate?.date)}
                     </h3>
                     <div className="flex items-center gap-1 text-[10px] text-white/60">
-                      <span>{selectedDayAbsences.length} student(s) absent</span>
+                      <span>{getFilteredAbsences().length} student(s)</span>
                     </div>
                   </div>
                 </div>
@@ -312,45 +410,79 @@ const CalendarWidget = ({ professorId }) => {
                   </svg>
                 </button>
               </div>
+              
+              {/* Subject Filter Dropdown */}
+              {availableSubjects.length > 0 && (
+                <div className="mb-3">
+                  <label className="block text-xs text-white/70 mb-1.5">View by Subject:</label>
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    className="w-full bg-[#15151C] border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#767EE0] focus:border-transparent"
+                  >
+                    {availableSubjects.map((subject, index) => (
+                      <option key={index} value={subject} className="bg-[#15151C] text-white">
+                        {subject}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
+              {/* Status Summary */}
+              {getFilteredAbsences().length > 0 && (
+                <div className="flex gap-4 text-[10px]">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-[#A15353]"></div>
+                    <span className="text-white/60">Absent: {getStatusCounts().absent}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
+                    <span className="text-white/60">Late: {getStatusCounts().late}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Modal body - Simplified with only student name, section, and subject */}
+            {/* Modal body - Student cards */}
             <div className="p-3 overflow-y-auto max-h-[60vh]">
-              {selectedDayAbsences.length > 0 ? (
+              {getFilteredAbsences().length > 0 ? (
                 <div className="space-y-2">
-                  {selectedDayAbsences.map((absence) => (
-                    <div 
-                      key={absence.id} 
-                      className="bg-[#15151C] rounded border border-white/5 p-2 hover:border-[#A15353]/30 transition-colors"
-                    >
-                      <div className="mb-2">
-                        <p className="text-xs font-semibold text-white">{absence.studentName}</p>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-1 text-[10px]">
-                        <div>
-                          <p className="text-white/50">Section</p>
-                          <p className="text-white font-medium">{absence.section}</p>
-                        </div>
-                        <div>
-                          <p className="text-white/50">Subject</p>
-                          <p className="text-white font-medium">{absence.subject}</p>
+                  {getFilteredAbsences().map((absence) => {
+                    const statusBadge = getStudentStatusBadge(absence.status);
+                    return (
+                      <div 
+                        key={absence.id} 
+                        className="bg-[#15151C] rounded border border-white/5 p-2 hover:border-white/10 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-xs font-semibold text-white">{absence.studentName}</p>
+                            <p className="text-[10px] text-white/50">{absence.section}</p>
+                          </div>
+                          <div className={`px-2 py-0.5 rounded text-[9px] border ${statusBadge.bgColor} ${statusBadge.textColor} ${statusBadge.borderColor}`}>
+                            {statusBadge.text}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-4">
                   <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-sm text-white/60">No absences recorded for this day</p>
+                  <p className="text-sm text-white/60">
+                    {selectedSubject 
+                      ? `No absences or lateness recorded for ${selectedSubject}` 
+                      : "No absences or lateness recorded for this day"}
+                  </p>
                 </div>
               )}
             </div>
 
-            {/* Modal footer - Updated to link to Attendance page */}
+            {/* Modal footer */}
             <div className="p-3 border-t border-white/10">
               <div className="flex justify-between">
                 <button
@@ -362,7 +494,7 @@ const CalendarWidget = ({ professorId }) => {
                 <Link to="/Attendance">
                   <button
                     onClick={() => setIsCalendarOpen(false)}
-                    className="px-3 py-1 text-xs bg-[#A15353] text-white rounded hover:bg-[#A15353]/80 transition-colors"
+                    className="px-3 py-1 text-xs bg-[#767EE0] text-white rounded hover:bg-[#767EE0]/80 transition-colors"
                   >
                     View Full Report
                   </button>

@@ -206,16 +206,7 @@ const ClassWorkCreate = ({
   const existingTaskNumbers = getExistingTaskNumbers();
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-2 sm:p-3"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          handleClose();
-          setActivityTypeDropdownOpen(false);
-          setAssignToDropdownOpen(false);
-        }
-      }}
-    >
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-2 sm:p-3">
       <div className="bg-[#15151C] text-white rounded-lg w-full max-w-2xl mx-2 p-4 sm:p-5 relative max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">

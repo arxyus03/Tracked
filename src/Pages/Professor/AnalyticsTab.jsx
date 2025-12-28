@@ -1,704 +1,557 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  PieChart, Pie, Cell,
-  BarChart, Bar,
-  ResponsiveContainer,
-  Tooltip, 
-  Legend, 
-  CartesianGrid, 
-  XAxis, 
-  YAxis
-} from 'recharts';
-
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import StudentPerformanceCard from "../../Components/ProfessorComponents/StudentPerformanceCard";
-import PerformanceByAssessmentType from "../../Components/ProfessorComponents/PerformanceByAssessmentType";
-import PerformanceDistributionCard from "../../Components/ProfessorComponents/PerformanceDistributionCard";
-import StudentPerformanceRankingCard from "../../Components/ProfessorComponents/StudentPerformanceRankingCard";
 
 import BackButton from '../../assets/BackButton.svg';
-import Search from "../../assets/Search.svg";
 import ClassManagementIcon from "../../assets/ClassManagement.svg"; 
 import Announcement from "../../assets/Announcement.svg";
 import Classwork from "../../assets/Classwork.svg";
 import GradeIcon from "../../assets/Grade.svg";
 import AnalyticsIcon from "../../assets/Analytics.svg";
 import AttendanceIcon from '../../assets/Attendance.svg';
-// ADD THIS NEW IMPORT
 import SubjectOverview from "../../assets/SubjectOverview.svg";
+import LineGraphIcon from '../../assets/LineGraph.svg';
 
-// Color palette for charts (adjusted for dark mode)
-const COLORS = ['#00874E', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#B39DDB', '#98D8C8'];
-const ACTIVITY_TYPES = ['Assignment', 'Quiz', 'Activity', 'Project', 'Laboratory', 'Attendance'];
+// PerformanceLineChart Component
+const PerformanceLineChart = ({ performanceTrend }) => {
+  const [hoveredWeek, setHoveredWeek] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const svgRef = useRef(null);
+  const tooltipRef = useRef(null);
 
+  // Calculate trend insights
+  const trendInsights = useMemo(() => {
+    if (performanceTrend.length === 0) {
+      return {
+        currentWeekScore: 0,
+        previousWeekScore: 0,
+        trend: 'stable',
+        trendPercentage: 0,
+        highestWeek: null,
+        lowestWeek: null
+      };
+    }
+
+    const currentWeek = performanceTrend[performanceTrend.length - 1];
+    const previousWeek = performanceTrend[performanceTrend.length - 2] || currentWeek;
+    
+    const trendPercentage = previousWeek.score > 0 
+      ? ((currentWeek.score - previousWeek.score) / previousWeek.score * 100).toFixed(1)
+      : 0;
+    
+    const highestWeek = performanceTrend.reduce((max, week) => 
+      week.score > max.score ? week : max
+    );
+    
+    const lowestWeek = performanceTrend.reduce((min, week) => 
+      week.score < min.score ? week : min
+    );
+
+    return {
+      currentWeekScore: currentWeek.score,
+      previousWeekScore: previousWeek.score,
+      trend: currentWeek.score > previousWeek.score ? 'up' : currentWeek.score < previousWeek.score ? 'down' : 'stable',
+      trendPercentage: Math.abs(trendPercentage),
+      highestWeek,
+      lowestWeek,
+      currentWeekNumber: currentWeek.week
+    };
+  }, [performanceTrend]);
+
+  // Chart dimensions
+  const chartHeight = 280;
+  const margin = { top: 25, right: 30, bottom: 40, left: 40 };
+  const innerWidth = 1200;
+  const innerHeight = chartHeight - margin.top - margin.bottom;
+  
+  const maxScore = 100;
+  const weeks = performanceTrend;
+
+  // Handle mouse events
+  const handleMouseEnter = (week, event) => {
+    setHoveredWeek(week);
+    
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    
+    setTooltipPosition({ 
+      x: mouseX, 
+      y: mouseY 
+    });
+  };
+
+  // Calculate positions
+  const xScale = (week) => (week - 1) * (innerWidth / (weeks.length - 1));
+  const yScale = (score) => innerHeight - (score / maxScore) * innerHeight;
+
+  // Create smooth line path
+  const createSmoothLinePath = () => {
+    if (weeks.length < 2) return '';
+    
+    let path = `M ${margin.left + xScale(weeks[0].week)} ${margin.top + yScale(weeks[0].score)}`;
+    
+    for (let i = 1; i < weeks.length; i++) {
+      const prevX = margin.left + xScale(weeks[i-1].week);
+      const prevY = margin.top + yScale(weeks[i-1].score);
+      const currX = margin.left + xScale(weeks[i].week);
+      const currY = margin.top + yScale(weeks[i].score);
+      
+      const cp1x = prevX + (currX - prevX) * 0.25;
+      const cp1y = prevY;
+      const cp2x = prevX + (currX - prevX) * 0.75;
+      const cp2y = currY;
+      
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${currX} ${currY}`;
+    }
+    
+    return path;
+  };
+
+  const linePath = createSmoothLinePath();
+  const isCurrentWeek = (weekNumber) => weekNumber === trendInsights.currentWeekNumber;
+  const hoveredWeekData = weeks.find(w => w.week === hoveredWeek);
+  
+  // Simple trend arrow component
+  const TrendArrow = ({ direction, color, size = 4 }) => {
+    if (direction === 'up') {
+      return (
+        <div className={`w-${size} h-${size}`} style={{ color }}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 4l-8 8h6v8h4v-8h6z"/>
+          </svg>
+        </div>
+      );
+    } else if (direction === 'down') {
+      return (
+        <div className={`w-${size} h-${size}`} style={{ color }}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 20l8-8h-6V4h-4v8H4z"/>
+          </svg>
+        </div>
+      );
+    }
+    return (
+      <div className={`w-${size} h-${size}`} style={{ color }}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      </div>
+    );
+  };
+
+  // Collapse/Expand toggle function
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+    setHoveredWeek(null);
+  };
+
+  // Function to handle mouse move for tooltip positioning
+  const handleMouseMove = (event) => {
+    if (!hoveredWeek) return;
+    
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    
+    setTooltipPosition({ 
+      x: mouseX, 
+      y: mouseY 
+    });
+  };
+
+  if (weeks.length === 0) {
+    return (
+      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
+        <div className="p-4 border-b border-[#FFFFFF]/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center">
+                <img 
+                  src={LineGraphIcon} 
+                  alt="Analytics" 
+                  className="w-5 h-5"
+                />
+              </div>
+              <h3 className="font-bold text-lg text-[#FFFFFF]">Performance Trend</h3>
+            </div>
+            <div className="text-sm text-[#FFFFFF]/60">No data available</div>
+          </div>
+        </div>
+        <div className="h-48 flex items-center justify-center">
+          <div className="text-center">
+            <div className="flex items-center justify-center mx-auto mb-3">
+              <img 
+                src={LineGraphIcon} 
+                alt="Analytics" 
+                className="w-8 h-8 opacity-40"
+              />
+            </div>
+            <p className="text-[#FFFFFF]/60">Loading performance data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10 relative">
+      {/* Header - Always visible */}
+      <div className="p-4 border-b border-[#FFFFFF]/10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between">
+          <div className="flex items-center gap-3 mb-3 md:mb-0">
+            <div className="flex items-center justify-center">
+              <img 
+                src={LineGraphIcon} 
+                alt="Analytics" 
+                className="w-5 h-5"
+              />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-[#FFFFFF]">Performance Trend</h3>
+              <p className="text-sm text-[#FFFFFF]/60">Weekly progress overview</p>
+            </div>
+          </div>
+          
+          {/* Right side with stats and collapse button */}
+          <div className="flex items-center gap-3">
+            {/* Current week stats */}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-xs text-[#FFFFFF]/60">Current Week</div>
+                <div className="font-bold text-base text-[#FFFFFF]">{trendInsights.currentWeekScore}%</div>
+              </div>
+              <div className={`p-1.5 rounded-lg ${trendInsights.trend === 'up' ? 'bg-[#00A15D]/10' : trendInsights.trend === 'down' ? 'bg-[#FF5555]/10' : 'bg-[#FFA600]/10'}`}>
+                <div className={`w-3 h-3 flex items-center justify-center ${trendInsights.trend === 'up' ? 'text-[#00A15D]' : trendInsights.trend === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
+                  <TrendArrow 
+                    direction={trendInsights.trend} 
+                    color={trendInsights.trend === 'up' ? '#00A15D' : trendInsights.trend === 'down' ? '#FF5555' : '#FFA600'}
+                    size={3}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Collapse/Expand button */}
+            <button
+              onClick={toggleCollapse}
+              className="p-1.5 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
+              aria-label={isCollapsed ? "Expand chart" : "Collapse chart"}
+            >
+              <div className="w-4 h-4 flex items-center justify-center">
+                {isCollapsed ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF" className="w-3 h-3">
+                    <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF" className="w-3 h-3">
+                    <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+                  </svg>
+                )}
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Collapsible Content */}
+      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+        isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'
+      }`}>
+        <div className="p-4 pt-0">
+          {/* Chart container */}
+          <div 
+            className="relative pt-4" 
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => setHoveredWeek(null)}
+          >
+            <div style={{ width: innerWidth + margin.left + margin.right, minWidth: '100%' }}>
+              <svg 
+                ref={svgRef}
+                width="100%" 
+                height={chartHeight} 
+                viewBox={`0 0 ${innerWidth + margin.left + margin.right} ${chartHeight}`}
+                className="relative"
+              >
+                <defs>
+                  <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.15"/>
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+                  </linearGradient>
+                  
+                  <linearGradient id="lineGradient" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1"/>
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.8"/>
+                  </linearGradient>
+                </defs>
+
+                {/* Grid lines */}
+                {[0, 25, 50, 75, 85, 100].map((score) => (
+                  <g key={`grid-${score}`}>
+                    <line
+                      x1={margin.left}
+                      y1={margin.top + yScale(score)}
+                      x2={innerWidth + margin.left}
+                      y2={margin.top + yScale(score)}
+                      stroke="#2A2A35"
+                      strokeWidth={1}
+                      strokeDasharray={score === 75 || score === 85 ? "5,5" : "2,2"}
+                      opacity={0.5}
+                    />
+                    <text
+                      x={margin.left - 10}
+                      y={margin.top + yScale(score)}
+                      textAnchor="end"
+                      dominantBaseline="middle"
+                      fill="#FFFFFF"
+                      fontSize="10"
+                      fontWeight={score === 75 || score === 85 ? "bold" : "normal"}
+                      opacity={0.7}
+                    >
+                      {score}%
+                    </text>
+                  </g>
+                ))}
+
+                {/* Orange line at 75% */}
+                <line
+                  x1={margin.left}
+                  y1={margin.top + yScale(75)}
+                  x2={innerWidth + margin.left}
+                  y2={margin.top + yScale(75)}
+                  stroke="#FFA600"
+                  strokeWidth="1.5"
+                  strokeDasharray="5,5"
+                  opacity={0.7}
+                />
+
+                {/* Green line at 85% */}
+                <line
+                  x1={margin.left}
+                  y1={margin.top + yScale(85)}
+                  x2={innerWidth + margin.left}
+                  y2={margin.top + yScale(85)}
+                  stroke="#00A15D"
+                  strokeWidth="1.5"
+                  strokeDasharray="5,5"
+                  opacity={0.7}
+                />
+
+                {/* Area under curve */}
+                {linePath && (
+                  <path
+                    d={`${linePath} L ${margin.left + xScale(weeks[weeks.length-1].week)} ${margin.top + innerHeight} L ${margin.left + xScale(weeks[0].week)} ${margin.top + innerHeight} Z`}
+                    fill="url(#areaGradient)"
+                  />
+                )}
+
+                {/* Performance line */}
+                {linePath && (
+                  <path
+                    d={linePath}
+                    fill="none"
+                    stroke="url(#lineGradient)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                )}
+
+                {/* X-axis labels */}
+                {weeks.map((week, index) => {
+                  if (index % 2 === 0) {
+                    return (
+                      <text
+                        key={`label-${week.week}`}
+                        x={margin.left + xScale(week.week)}
+                        y={chartHeight - 10}
+                        textAnchor="middle"
+                        fill="#FFFFFF"
+                        fontSize="10"
+                        opacity={0.7}
+                      >
+                        Week {week.week}
+                      </text>
+                    );
+                  }
+                  return null;
+                })}
+
+                {/* Data points */}
+                {weeks.map((week) => {
+                  const x = margin.left + xScale(week.week);
+                  const y = margin.top + yScale(week.score);
+                  const isHovered = hoveredWeek === week.week;
+                  const isCurrent = isCurrentWeek(week.week);
+                  const scoreColor = week.score >= 85 ? "#00A15D" : 
+                                   week.score >= 75 ? "#FFA600" : "#FF5555";
+                  
+                  return (
+                    <g key={`point-${week.week}`}>
+                      {/* Hover area */}
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r={16}
+                        fill="transparent"
+                        onMouseEnter={(e) => handleMouseEnter(week.week, e)}
+                        onMouseLeave={() => setHoveredWeek(null)}
+                        className="cursor-pointer"
+                      />
+                      
+                      {/* Current week indicator */}
+                      {isCurrent && (
+                        <circle
+                          cx={x}
+                          cy={y}
+                          r={isHovered ? 10 : 8}
+                          fill="none"
+                          stroke="#FFFFFF"
+                          strokeWidth="2"
+                          strokeOpacity="0.8"
+                        />
+                      )}
+                      
+                      {/* Data point */}
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r={isHovered ? 6 : 4}
+                        fill={scoreColor}
+                        stroke="#15151C"
+                        strokeWidth={isCurrent ? "3" : "2"}
+                        onMouseEnter={(e) => handleMouseEnter(week.week, e)}
+                        onMouseLeave={() => setHoveredWeek(null)}
+                        className="cursor-pointer"
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+
+          {/* Performance zones legend */}
+          <div className="mt-4 flex flex-wrap gap-2 text-xs justify-center">
+            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
+              <span className="text-[#FF5555] text-xs">Below 75%</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
+              <span className="text-[#FFA600] text-xs">75-84%</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className="w-2 h-2 rounded-full bg-[#00A15D]"></div>
+              <span className="text-[#00A15D] text-xs">85%+</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className="w-3 h-3 rounded-full border border-[#FFFFFF] flex items-center justify-center">
+                <div className="w-1 h-1 rounded-full bg-[#FFFFFF]"></div>
+              </div>
+              <span className="text-[#FFFFFF] text-xs">Current Week</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Collapsed State Summary - Made smaller */}
+      {isCollapsed && (
+        <div className="p-4 border-t border-[#FFFFFF]/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Left side - Stats summary */}
+            <div className="flex items-center gap-4">
+              <div className="text-left">
+                <div className="text-xs text-[#FFFFFF]/60">Highest Score</div>
+                <div className="font-bold text-base text-[#00A15D]">{trendInsights.highestWeek?.score || 0}%</div>
+              </div>
+              
+              <div className="text-left">
+                <div className="text-xs text-[#FFFFFF]/60">Lowest Score</div>
+                <div className="font-bold text-base text-[#FF5555]">{trendInsights.lowestWeek?.score || 0}%</div>
+              </div>
+              
+              <div className="text-left">
+                <div className="text-xs text-[#FFFFFF]/60">Trend</div>
+                <div className={`font-bold text-base ${trendInsights.trend === 'up' ? 'text-[#00A15D]' : trendInsights.trend === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
+                  {trendInsights.trend === 'up' ? '↑' : trendInsights.trend === 'down' ? '↓' : '→'} {trendInsights.trendPercentage}%
+                </div>
+              </div>
+            </div>
+            
+            {/* Right side - Weeks info */}
+            <div className="text-right">
+              <div className="text-xs text-[#FFFFFF]/60">
+                {weeks.length} weeks tracked
+              </div>
+              <div className="text-xs text-[#FFFFFF]/40">
+                Week {trendInsights.currentWeekNumber} current
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* External Tooltip */}
+      {hoveredWeekData && !isCollapsed && (
+        <div 
+          ref={tooltipRef}
+          className="fixed bg-[#23232C] border border-[#FFFFFF]/20 rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150"
+          style={{
+            left: `${tooltipPosition.x + 10}px`,
+            top: `${tooltipPosition.y - 100}px`,
+            transform: 'translateX(-50%)',
+            minWidth: '140px'
+          }}
+        >
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[#FFFFFF] text-sm font-semibold">Week {hoveredWeekData.week}</span>
+              {isCurrentWeek(hoveredWeekData.week) && (
+                <span className="text-xs text-[#FFFFFF] font-medium bg-[#6366F1] px-2 py-0.5 rounded">
+                  Current Week
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${hoveredWeekData.score >= 85 ? "bg-[#00A15D]" : 
+                hoveredWeekData.score >= 75 ? "bg-[#FFA600]" : "bg-[#FF5555]"}`} />
+              <span className={`text-lg font-bold ${hoveredWeekData.score >= 85 ? "text-[#00A15D]" : 
+                hoveredWeekData.score >= 75 ? "text-[#FFA600]" : "text-[#FF5555]"}`}>
+                {hoveredWeekData.score}%
+              </span>
+            </div>
+            <div className="text-[#FFFFFF]/60 text-xs mt-1">
+              {hoveredWeekData.activities} activities completed
+            </div>
+          </div>
+          
+          {/* Tooltip arrow */}
+          <div className="absolute w-2 h-2 bg-[#23232C] border-r border-b border-[#FFFFFF]/20 
+            transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Main AnalyticsTab Component
 export default function AnalyticsTab() {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get("code");
 
-  const [classInfo, setClassInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [analyticsData, setAnalyticsData] = useState(null);
-  const [selectedActivityType, setSelectedActivityType] = useState('All');
-  const [error, setError] = useState(null);
-  const [barChartSort, setBarChartSort] = useState('desc');
-  const [attendanceData, setAttendanceData] = useState(null);
-  const [activitiesData, setActivitiesData] = useState(null);
-  const [studentsData, setStudentsData] = useState(null);
-
-  // Get professor ID from localStorage
-  const getProfessorId = () => {
-    try {
-      const userDataString = localStorage.getItem("user");
-      if (userDataString) {
-        const userData = JSON.parse(userDataString);
-        
-        // Try different possible keys
-        if (userData.tracked_ID) return userData.tracked_ID;
-        if (userData.id) return userData.id;
-        if (userData.userId) return userData.userId;
-        if (userData.professor_ID) return userData.professor_ID;
-      }
-    } catch (error) {
-      console.error("Error parsing user data:", error);
-    }
-    
-    // Default to the professor ID from your database
-    return "202210602";
-  };
-
-  useEffect(() => {
-    const loadAllData = async () => {
-      if (!subjectCode) return;
-      
-      setLoading(true);
-      
-      try {
-        // 1. Load class info
-        await fetchClassInfo();
-        
-        // 2. Load all data in parallel but wait for all to complete
-        const [attendanceResult, activitiesResult] = await Promise.all([
-          fetchAttendanceData(),
-          fetchActivitiesData()
-        ]);
-        
-        // 3. Process all data together
-        if (activitiesResult && activitiesResult.success) {
-          await processAllData(activitiesResult.activities, activitiesResult.students, attendanceResult);
-        } else {
-          setAnalyticsData(null);
-        }
-        
-      } catch (error) {
-        console.error("Error loading data:", error);
-        setError("Failed to load analytics data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (subjectCode) {
-      loadAllData();
-    }
-  }, [subjectCode]);
-
-  // Process analytics whenever attendance or activities data changes
-  useEffect(() => {
-    if (activitiesData && studentsData) {
-      processAnalyticsData(activitiesData, studentsData);
-    }
-  }, [attendanceData, activitiesData, studentsData]);
-
-  const fetchClassInfo = async () => {
-    try {
-      const response = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_students_by_section.php?subject_code=${subjectCode}`
-      );
-      const result = await response.json();
-      if (result.success) {
-        setClassInfo(result.class_info);
-      }
-    } catch (error) {
-      console.error("Error fetching class info:", error);
-    }
-  };
-
-  const fetchAttendanceData = async () => {
-    try {
-      const professorId = getProfessorId();
-      
-      const url = `https://tracked.6minds.site/Professor/AttendanceDB/get_attendance_history.php?subject_code=${subjectCode}&professor_ID=${professorId}`;
-      
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        if (result.attendance_history && result.attendance_history.length > 0) {
-          setAttendanceData(result.attendance_history);
-          return result.attendance_history;
-        } else {
-          setAttendanceData([]);
-          return [];
-        }
-      } else {
-        setAttendanceData([]);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching attendance data:", error);
-      setAttendanceData([]);
-      return [];
-    }
-  };
-
-  const fetchActivitiesData = async () => {
-    try {
-      const response = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`
-      );
-      
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error("Error fetching activities data:", error);
-      return null;
-    }
-  };
-
-  const processAllData = async (activities, students, attendance) => {
-    // Store raw data for reprocessing if needed
-    setActivitiesData(activities);
-    setStudentsData(students);
-    
-    // Process analytics with all data
-    processAnalyticsData(activities, students);
-  };
-
-  const processAnalyticsData = (activities, students) => {
-    // Check if we have any data at all
-    const hasActivities = activities && activities.length > 0;
-    const hasStudents = students && students.length > 0;
-    const hasAttendance = attendanceData && attendanceData.length > 0;
-    
-    if (!hasActivities && !hasAttendance) {
-      setAnalyticsData(null);
-      return;
-    }
-
-    const studentPerformance = calculateStudentPerformance(activities, students);
-    
-    const lineChartData = prepareLineChartData(activities, studentPerformance);
-    const pieChartData = preparePieChartData(studentPerformance);
-    const barChartData = prepareBarChartData(studentPerformance, barChartSort);
-    const activityTypeData = prepareActivityTypeData(activities, students);
-    const assessmentTypeBarData = prepareAssessmentTypeBarData(activities, students);
-
-    const analyticsResult = {
-      studentPerformance,
-      lineChartData,
-      pieChartData,
-      barChartData,
-      activityTypeData,
-      assessmentTypeBarData,
-      activities,
-      students,
-      attendanceData: attendanceData || [],
-      summary: calculateSummary(studentPerformance, activities, attendanceData)
-    };
-    
-    setAnalyticsData(analyticsResult);
-    
-    return analyticsResult;
-  };
-
-  const calculateAttendanceRecord = (studentId) => {
-    if (!attendanceData || attendanceData.length === 0) {
-      return null;
-    }
-    
-    const attendanceSummary = {
-      totalDays: attendanceData.length,
-      present: 0,
-      late: 0,
-      absent: 0,
-      excused: 0,
-      records: []
-    };
-    
-    attendanceData.forEach(dateRecord => {
-      // Find student's attendance record for this date
-      const studentRecord = dateRecord.students.find(s => 
-        s.student_ID == studentId || 
-        s.user_ID == studentId
-      );
-      
-      let status = 'absent'; // Default status
-      
-      if (studentRecord) {
-        status = studentRecord.status ? studentRecord.status.toLowerCase() : 'absent';
-      }
-      
-      attendanceSummary.records.push({
-        date: dateRecord.date,
-        rawDate: dateRecord.raw_date,
-        status: status
-      });
-      
-      switch (status) {
-        case 'present':
-        case 'on-time':
-          attendanceSummary.present++;
-          break;
-        case 'late':
-          attendanceSummary.late++;
-          break;
-        case 'absent':
-          attendanceSummary.absent++;
-          break;
-        case 'excused':
-          attendanceSummary.excused++;
-          break;
-        default:
-          attendanceSummary.absent++;
-      }
-    });
-    
-    return attendanceSummary;
-  };
-
-  const calculateStudentPerformance = (activities, students) => {
-    return students.map(student => {
-      const studentActivities = activities.filter(activity => 
-        activity.students && activity.students.some(s => s.user_ID === student.user_ID)
-      );
-
-      const submittedActivities = studentActivities.filter(activity => {
-        const studentData = activity.students.find(s => s.user_ID === student.user_ID);
-        return studentData && studentData.submitted;
-      });
-
-      const gradedActivities = submittedActivities.filter(activity => {
-        const studentData = activity.students.find(s => s.user_ID === student.user_ID);
-        return studentData && studentData.grade !== null && studentData.grade !== undefined;
-      });
-
-      let totalPoints = 0;
-      let maxPossiblePoints = 0;
-      let performanceByType = {};
-      
-      gradedActivities.forEach(item => {
-        const studentData = item.students.find(s => s.user_ID === student.user_ID);
-        const grade = parseFloat(studentData.grade) || 0;
-        const maxPoints = parseFloat(item.points) || 0;
-        
-        totalPoints += grade;
-        maxPossiblePoints += maxPoints;
-        
-        const type = item.activity_type || 'Other';
-        if (!performanceByType[type]) {
-          performanceByType[type] = { total: 0, max: 0, count: 0 };
-        }
-        performanceByType[type].total += grade;
-        performanceByType[type].max += maxPoints;
-        performanceByType[type].count += 1;
-      });
-
-      Object.keys(performanceByType).forEach(type => {
-        const data = performanceByType[type];
-        performanceByType[type] = data.max > 0 ? (data.total / data.max) * 100 : 0;
-      });
-
-      const averageGrade = maxPossiblePoints > 0 ? (totalPoints / maxPossiblePoints) * 100 : 0;
-      
-      let attendanceRate = 0;
-      if (attendanceData && attendanceData.length > 0) {
-        const attendanceSummary = calculateAttendanceRecord(student.user_ID);
-        if (attendanceSummary && attendanceSummary.totalDays > 0) {
-          const totalAttended = attendanceSummary.present + attendanceSummary.excused;
-          attendanceRate = (totalAttended / attendanceSummary.totalDays) * 100;
-        }
-      }
-
-      return {
-        studentId: student.user_ID,
-        studentName: student.user_Name,
-        totalActivities: studentActivities.length,
-        submittedActivities: submittedActivities.length,
-        gradedActivities: gradedActivities.length,
-        averageGrade: Math.round(averageGrade * 100) / 100,
-        performanceByType,
-        submissionRate: studentActivities.length > 0 ? 
-          (submittedActivities.length / studentActivities.length) * 100 : 0,
-        attendanceRate: Math.round(attendanceRate * 100) / 100
-      };
-    });
-  };
-
-  const prepareAssessmentTypeBarData = (activities, students) => {
-    const typeData = {};
-    
-    [...ACTIVITY_TYPES].forEach(type => {
-      typeData[type] = {
-        total: 0,
-        count: 0,
-        students: 0
-      };
-    });
-
-    // Process regular activities
-    activities.forEach(activity => {
-      const type = activity.activity_type || 'Other';
-      if (!typeData[type]) {
-        typeData[type] = { total: 0, count: 0, students: 0 };
-      }
-      
-      const gradedStudents = students.filter(student => {
-        const studentData = activity.students?.find(s => s.user_ID === student.user_ID);
-        return studentData && studentData.grade !== null && activity.points > 0;
-      });
-      
-      gradedStudents.forEach(student => {
-        const studentData = activity.students.find(s => s.user_ID === student.user_ID);
-        const grade = parseFloat(studentData.grade) || 0;
-        const percentage = (grade / activity.points) * 100;
-        
-        typeData[type].total += percentage;
-        typeData[type].count += 1;
-      });
-      
-      typeData[type].students = Math.max(typeData[type].students, gradedStudents.length);
-    });
-
-    // Process attendance data
-    if (attendanceData && attendanceData.length > 0) {
-      students.forEach(student => {
-        const attendanceSummary = calculateAttendanceRecord(student.user_ID);
-        if (attendanceSummary && attendanceSummary.totalDays > 0) {
-          const totalAttended = attendanceSummary.present + attendanceSummary.excused;
-          const attendanceRate = (totalAttended / attendanceSummary.totalDays) * 100;
-          typeData['Attendance'].total += attendanceRate;
-          typeData['Attendance'].count += 1;
-        }
-      });
-    }
-
-    return Object.entries(typeData)
-      .filter(([type, data]) => data.count > 0)
-      .map(([type, data]) => ({
-        type: type,
-        average: Math.round((data.total / data.count) * 100) / 100,
-        count: data.count,
-        students: data.students || data.count,
-        color: COLORS[ACTIVITY_TYPES.indexOf(type) % COLORS.length]
-      }))
-      .sort((a, b) => b.average - b.average);
-  };
-
-  const calculateSummary = (studentPerformance, activities, attendanceData) => {
-    const avgGrade = studentPerformance.length > 0 ? 
-      studentPerformance.reduce((sum, student) => sum + student.averageGrade, 0) / studentPerformance.length : 0;
-    
-    const avgSubmissionRate = studentPerformance.length > 0 ? 
-      studentPerformance.reduce((sum, student) => sum + student.submissionRate, 0) / studentPerformance.length : 0;
-
-    let avgAttendanceRate = 0;
-    if (attendanceData && attendanceData.length > 0) {
-      const totalAttendanceRates = studentPerformance.reduce((sum, student) => sum + student.attendanceRate, 0);
-      avgAttendanceRate = totalAttendanceRates / studentPerformance.length;
-    }
-
-    const activityTypes = {};
-    activities.forEach(activity => {
-      const type = activity.activity_type || 'Other';
-      activityTypes[type] = (activityTypes[type] || 0) + 1;
-    });
-
-    if (attendanceData && attendanceData.length > 0) {
-      activityTypes['Attendance'] = attendanceData.length;
-    }
-
-    return {
-      averageGrade: Math.round(avgGrade * 100) / 100,
-      averageSubmissionRate: Math.round(avgSubmissionRate * 100) / 100,
-      averageAttendanceRate: Math.round(avgAttendanceRate * 100) / 100,
-      totalStudents: studentPerformance.length,
-      totalActivities: activities.length,
-      totalAttendanceDays: attendanceData ? attendanceData.length : 0,
-      activityTypeDistribution: activityTypes
-    };
-  };
-
-  const prepareLineChartData = (activities, studentPerformance) => {
-    if (!activities.length) return [];
-
-    const allActivitiesSorted = [...activities].sort((a, b) => 
-      new Date(a.created_at) - new Date(b.created_at)
-    );
-    
-    const activityPositionMap = {};
-    allActivitiesSorted.forEach((activity, index) => {
-      activityPositionMap[activity.id] = index + 1;
-    });
-
-    const sortedActivities = [...activities].sort((a, b) => 
-      new Date(a.created_at) - new Date(b.created_at)
-    );
-
-    return sortedActivities.map((activity) => {
-      const originalPosition = activityPositionMap[activity.id] || 1;
-      
-      const dataPoint = {
-        activity: `A${originalPosition}`,
-        activityType: activity.activity_type || 'Other',
-        fullTitle: activity.title,
-        maxPoints: activity.points || 0,
-        originalPosition: originalPosition,
-        filteredPosition: sortedActivities.findIndex(a => a.id === activity.id) + 1
-      };
-
-      studentPerformance.forEach(student => {
-        const studentData = activity.students?.find(s => s.user_ID === student.studentId);
-        if (studentData && studentData.grade !== null && activity.points > 0) {
-          const percentage = (studentData.grade / activity.points) * 100;
-          dataPoint[student.studentId] = Math.round(percentage * 100) / 100;
-        } else {
-          dataPoint[student.studentId] = null;
-        }
-      });
-
-      const studentsWithGrades = studentPerformance.filter(student => {
-        const studentData = activity.students?.find(s => s.user_ID === student.studentId);
-        return studentData && studentData.grade !== null && activity.points > 0;
-      });
-      
-      if (studentsWithGrades.length > 0) {
-        const totalPercentage = studentsWithGrades.reduce((sum, student) => {
-          const studentData = activity.students?.find(s => s.user_ID === student.studentId);
-          return sum + (studentData.grade / activity.points * 100);
-        }, 0);
-        dataPoint['Class Average'] = Math.round((totalPercentage / studentsWithGrades.length) * 100) / 100;
-      }
-
-      return dataPoint;
-    });
-  };
-
-  const preparePieChartData = (studentPerformance) => {
-    const performanceRanges = [
-      { name: 'Excellent (90-100%)', range: [90, 100], count: 0, color: '#00874E' },
-      { name: 'Good (80-89%)', range: [80, 89], count: 0, color: '#4ECDC4' },
-      { name: 'Average (70-79%)', range: [70, 79], count: 0, color: '#45B7D1' },
-      { name: 'Needs Improvement (60-69%)', range: [60, 69], count: 0, color: '#FFEAA7' },
-      { name: 'Poor (<60%)', range: [0, 59], count: 0, color: '#FF6B6B' }
-    ];
-
-    studentPerformance.forEach(student => {
-      const range = performanceRanges.find(r => 
-        student.averageGrade >= r.range[0] && student.averageGrade <= r.range[1]
-      );
-      if (range) range.count++;
-    });
-
-    return performanceRanges.filter(range => range.count > 0);
-  };
-
-  const prepareBarChartData = (studentPerformance, sortOrder = 'desc') => {
-    const sortedPerformance = [...studentPerformance]
-      .filter(student => student.gradedActivities > 0)
-      .sort((a, b) => sortOrder === 'desc' ? b.averageGrade - a.averageGrade : a.averageGrade - b.averageGrade);
-
-    return sortedPerformance.map((student, index) => ({
-      name: student.studentId,
-      fullName: student.studentName,
-      grade: student.averageGrade,
-      submissions: student.submittedActivities,
-      totalActivities: student.totalActivities,
-      rank: sortOrder === 'desc' ? index + 1 : sortedPerformance.length - index,
-      totalStudents: studentPerformance.length
-    }));
-  };
-
-  const prepareActivityTypeData = (activities, students) => {
-    const typeData = {};
-    
-    [...ACTIVITY_TYPES].forEach(type => {
-      typeData[type] = [];
-    });
-
-    // Process regular activities
-    const activitiesByType = {};
-    activities.forEach(activity => {
-      const type = activity.activity_type || 'Other';
-      if (!activitiesByType[type]) {
-        activitiesByType[type] = [];
-      }
-      activitiesByType[type].push(activity);
-    });
-
-    Object.keys(activitiesByType).forEach(type => {
-      const typeActivities = activitiesByType[type];
-      
-      const typePerformance = students.map(student => {
-        const gradedActivities = typeActivities.filter(activity => {
-          const studentData = activity.students?.find(s => s.user_ID === student.user_ID);
-          return studentData && studentData.submitted && studentData.grade !== null;
-        });
-
-        if (gradedActivities.length === 0) {
-          return null;
-        }
-
-        const total = gradedActivities.reduce((sum, activity) => {
-          const studentData = activity.students?.find(s => s.user_ID === student.user_ID);
-          return sum + (parseFloat(studentData?.grade) || 0);
-        }, 0);
-
-        const maxPossible = gradedActivities.reduce((sum, activity) => 
-          sum + (parseFloat(activity.points) || 0), 0);
-
-        const average = maxPossible > 0 ? (total / maxPossible) * 100 : 0;
-
-        return {
-          studentName: student.user_ID,
-          fullName: student.user_Name,
-          average: Math.round(average * 100) / 100,
-          activityCount: gradedActivities.length
-        };
-      }).filter(student => student !== null && student.average > 0)
-        .sort((a, b) => b.average - a.average)
-        .slice(0, 8);
-
-      typeData[type] = typePerformance;
-    });
-
-    // Process attendance data separately
-    if (attendanceData && students.length > 0) {
-      const attendancePerformance = students.map(student => {
-        const attendanceSummary = calculateAttendanceRecord(student.user_ID);
-        
-        if (!attendanceSummary || attendanceSummary.totalDays === 0) {
-          return null;
-        }
-        
-        // Calculate attendance rate
-        const totalAttended = attendanceSummary.present + attendanceSummary.excused;
-        const attendanceRate = (totalAttended / attendanceSummary.totalDays) * 100;
-        
-        return {
-          studentName: student.user_ID,
-          fullName: student.user_Name,
-          average: Math.round(attendanceRate * 100) / 100,
-          activityCount: attendanceSummary.totalDays,
-          attendanceSummary: attendanceSummary
-        };
-      }).filter(student => student !== null && student.activityCount > 0)
-        .sort((a, b) => b.average - a.average)
-        .slice(0, 8);
-
-      typeData['Attendance'] = attendancePerformance;
-    }
-
-    return typeData;
-  };
-
-  // Helper function to extract surname from full name
-  const getStudentDisplayName = (studentId, studentName) => {
-    if (!studentName) {
-      return `Student ${studentId}`;
-    }
-    
-    // Extract surname (last word) from full name
-    const nameParts = studentName.trim().split(' ');
-    if (nameParts.length === 0) {
-      return `Student ${studentId}`;
-    }
-    
-    const surname = nameParts[nameParts.length - 1];
-    return `${surname} (${studentId})`;
-  };
-
-  const AssessmentTypeBarTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-xl p-3">
-          <p className="font-semibold text-[#FFFFFF] mb-1">{label}</p>
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-sm text-[#FFFFFF]/80">Average Performance:</span>
-              <span className="text-sm font-medium ml-2 text-[#FFFFFF]">{data.average}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-[#FFFFFF]/80">Students with data:</span>
-              <span className="text-sm font-medium ml-2 text-[#FFFFFF]">{data.students}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-[#FFFFFF]/80">Data points:</span>
-              <span className="text-sm font-medium ml-2 text-[#FFFFFF]">{data.count}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const handleBarChartSortChange = () => {
-    const newSort = barChartSort === 'desc' ? 'asc' : 'desc';
-    setBarChartSort(newSort);
-    
-    if (analyticsData) {
-      const updatedBarChartData = prepareBarChartData(analyticsData.studentPerformance, newSort);
-      setAnalyticsData(prev => ({
-        ...prev,
-        barChartData: updatedBarChartData
-      }));
-    }
-  };
-
-  const reloadAllData = async () => {
-    setLoading(true);
-    try {
-      await fetchClassInfo();
-      const attendance = await fetchAttendanceData();
-      const activitiesResult = await fetchActivitiesData();
-      
-      if (activitiesResult && activitiesResult.success) {
-        await processAllData(activitiesResult.activities, activitiesResult.students, attendance);
-      }
-    } catch (error) {
-      console.error("Error reloading data:", error);
-      setError("Failed to reload data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div>
-        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
-          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-5 text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00874E] border-r-transparent"></div>
-            <p className="mt-3 text-[#FFFFFF]/80">Loading Student Progress Analytics...</p>
-            <p className="text-sm text-[#FFFFFF]/60 mt-1">This may take a moment as we load all data</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Dummy performance trend data
+  const performanceTrendData = [
+    { week: 1, score: 65, activities: 3 },
+    { week: 2, score: 72, activities: 4 },
+    { week: 3, score: 68, activities: 5 },
+    { week: 4, score: 80, activities: 4 },
+    { week: 5, score: 85, activities: 3 },
+    { week: 6, score: 82, activities: 4 },
+    { week: 7, score: 88, activities: 5 },
+    { week: 8, score: 90, activities: 3 },
+  ];
 
   return (
     <div className="bg-[#15151C] min-h-screen">
@@ -725,22 +578,22 @@ export default function AnalyticsTab() {
             </p>
           </div>
 
-          {/* ========== SUBJECT INFORMATION - UPDATED TO WHITE AND SMALLER ========== */}
+          {/* ========== SUBJECT INFORMATION ========== */}
           <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
-              <span>{classInfo?.subject_code || subjectCode || 'N/A'}</span>
+              <span>{subjectCode || 'N/A'}</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
-              <span>{classInfo?.subject || 'N/A'}</span>
+              <span>N/A</span>
             </div>
 
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">SECTION:</span>
-                <span>{classInfo?.section || 'N/A'}</span>
+                <span>N/A</span>
               </div>
               <div className="flex justify-end">
                 <Link to="/ClassManagement">
@@ -847,173 +700,24 @@ export default function AnalyticsTab() {
             </div>
           </div>
 
-          {/* ========== EVERYTHING BELOW ACTION BUTTONS MADE SMALLER ========== */}
-          <div className="mt-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1 max-w-md">
-                <input
-                  type="text"
-                  placeholder="Search by Student ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-10 rounded-md px-3 py-2 pr-10 shadow-md outline-none bg-[#2A2A35] text-[#FFFFFF] text-sm border-2 border-transparent focus:border-[#00874E] transition-colors placeholder:text-[#FFFFFF]/50"
-                />
-                <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#FFFFFF]/50" title="Search">
-                  <img
-                    src={Search}
-                    alt="Search"
-                    className="h-4 w-4 brightness-0 invert"
-                  />
-                </button>
-              </div>
-              
-              <div className="flex gap-2">
-                <select
-                  value={selectedActivityType}
-                  onChange={(e) => setSelectedActivityType(e.target.value)}
-                  className="px-2 py-1.5 border border-[#3A3A45] rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[#00874E] focus:border-transparent bg-[#2A2A35] text-[#FFFFFF]"
-                >
-                  <option value="All">All Types</option>
-                  {ACTIVITY_TYPES.filter(type => type !== 'Attendance').map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          {/* ========== PERFORMANCE LINE CHART ========== */}
+          <div className="mb-6">
+            <PerformanceLineChart performanceTrend={performanceTrendData} />
           </div>
 
-          {analyticsData ? (
-            <div className="mt-4 space-y-6">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#00874E] hover:shadow-lg transition-shadow">
-                  <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Total Students</h3>
-                  <p className="text-lg font-bold text-[#FFFFFF]">{analyticsData.summary.totalStudents}</p>
-                  <p className="text-xs text-[#FFFFFF]/40">Enrolled in class</p>
-                </div>
-                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#4ECDC4] hover:shadow-lg transition-shadow">
-                  <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Learning Activities</h3>
-                  <p className="text-lg font-bold text-[#FFFFFF]">{analyticsData.summary.totalActivities}</p>
-                  <p className="text-xs text-[#FFFFFF]/40">Assignments & Assessments</p>
-                </div>
-                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#45B7D1] hover:shadow-lg transition-shadow">
-                  <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Class Average</h3>
-                  <p className="text-lg font-bold text-[#FFFFFF]">
-                    {analyticsData.summary.averageGrade}%
-                  </p>
-                  <p className="text-xs text-[#FFFFFF]/40">Overall Performance</p>
-                </div>
-                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#FF6B6B] hover:shadow-lg transition-shadow">
-                  <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Engagement Rate</h3>
-                  <p className="text-lg font-bold text-[#FFFFFF]">
-                    {analyticsData.summary.averageSubmissionRate}%
-                  </p>
-                  <p className="text-xs text-[#FFFFFF]/40">Average Submission Rate</p>
-                </div>
-              </div>
-
-              {/* Always show attendance section if we have data */}
-              {analyticsData.summary.averageAttendanceRate > 0 ? (
-                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#96CEB4] hover:shadow-lg transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Average Attendance</h3>
-                      <p className="text-lg font-bold text-[#FFFFFF]">
-                        {analyticsData.summary.averageAttendanceRate}%
-                      </p>
-                      <p className="text-xs text-[#FFFFFF]/40">
-                        {analyticsData.summary.totalAttendanceDays || 0} days tracked
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-[#FFFFFF]/60">Attendance Rate Distribution</div>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <div className="w-12 h-1.5 bg-[#EF5350] rounded-full"></div>
-                        <div className="w-12 h-1.5 bg-[#FFB74D] rounded-full"></div>
-                        <div className="w-12 h-1.5 bg-[#66BB6A] rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-[#2A2A35] rounded-lg shadow-md p-3 border-l-4 border-[#3A3A45] hover:shadow-lg transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xs font-semibold text-[#FFFFFF]/60">Attendance Data</h3>
-                      <p className="text-lg font-bold text-[#FFFFFF]/40">Not Available</p>
-                      <p className="text-xs text-[#FFFFFF]/40">
-                        No attendance records found
-                      </p>
-                    </div>
-                    <Link to={`/Attendance?code=${subjectCode}`}>
-                      <button className="px-2 py-1.5 bg-[#00A15D]/20 text-[#00A15D] border-2 border-[#00A15D]/30 rounded-md shadow-md hover:bg-[#00A15D]/30 transition-all duration-300 text-xs">
-                        Take Attendance
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {/* Use the new StudentPerformanceCard component */}
-              <StudentPerformanceCard 
-                analyticsData={analyticsData}
-                selectedActivityType={selectedActivityType}
-                setSelectedActivityType={setSelectedActivityType}
-                getStudentDisplayName={getStudentDisplayName}
-              />
-
-              {/* Separated Chart Components */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <PerformanceDistributionCard 
-                  pieChartData={analyticsData.pieChartData}
-                  totalStudents={analyticsData.summary.totalStudents}
-                />
-
-                <StudentPerformanceRankingCard
-                  barChartData={analyticsData.barChartData}
-                  barChartSort={barChartSort}
-                  handleBarChartSortChange={handleBarChartSortChange}
-                  totalStudents={analyticsData.students.length}
-                  getStudentDisplayName={getStudentDisplayName}
-                />
-              </div>
-
-              {/* Use the new PerformanceByAssessmentType component */}
-              <PerformanceByAssessmentType 
-                analyticsData={analyticsData}
-                getStudentDisplayName={getStudentDisplayName}
-              />
-
+          {/* ========== CONTENT AREA (Now with just the chart) ========== */}
+          <div className="text-center py-8 text-[#FFFFFF]/50">
+            <div className="mb-4">
+              <svg className="w-12 h-12 mx-auto text-[#FFFFFF]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
             </div>
-          ) : (
-            <div className="mt-6">
-              <div className="bg-[#2A2A35] rounded-lg shadow-md p-6 text-center">
-                <div className="text-[#FFFFFF]/60">
-                  <svg className="w-12 h-12 mx-auto mb-3 text-[#FFFFFF]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  <h3 className="text-lg font-semibold text-[#FFFFFF] mb-1">Ready for Analytics</h3>
-                  <p className="mb-3 text-[#FFFFFF]/60 text-sm max-w-md mx-auto">
-                    Create activities and grade student submissions to generate comprehensive academic analytics.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                    <Link to={`/ClassworkTab?code=${subjectCode}`}>
-                      <button className="px-2 py-1.5 bg-[#00A15D]/20 text-[#00A15D] border-2 border-[#00A15D]/30 rounded-md shadow-md hover:bg-[#00A15D]/30 transition-all duration-300 text-xs">
-                        Create Activities
-                      </button>
-                    </Link>
-                    <button 
-                      onClick={reloadAllData}
-                      className="px-2 py-1.5 bg-[#3A3A45] text-[#FFFFFF] rounded-md hover:bg-[#4A4A55] transition-colors text-xs"
-                    >
-                      Refresh Data
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
+            <p className="text-lg font-semibold mb-2">Additional Analytics Coming Soon</p>
+            <p className="text-sm">More charts and insights will be added here</p>
+            <p className="text-xs mt-2 text-[#FFFFFF]/40">
+              Subject Code: {subjectCode || 'Not specified'}
+            </p>
+          </div>
         </div>
       </div>
     </div>
