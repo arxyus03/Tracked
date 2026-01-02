@@ -27,6 +27,9 @@ if ($conn->connect_error) {
     exit();
 }
 
+// Set timezone for PHP
+date_default_timezone_set('Asia/Manila'); // Set to Philippines timezone for input processing
+
 $response = array();
 
 try {
@@ -66,9 +69,27 @@ try {
                      WHERE announcement_ID = ? AND professor_ID = ?";
     $update_stmt = $conn->prepare($update_query);
     
+    // Format deadline for database
     $formatted_deadline = null;
-    if ($deadline) {
-        $formatted_deadline = date('Y-m-d H:i:s', strtotime($deadline));
+    if ($deadline && $deadline !== "") {
+        // Frontend sends datetime in format: "2026-01-05T17:00" (which is UTC time)
+        // We need to treat it as UTC and store as UTC
+        
+        // Remove the 'T' and add seconds for MySQL
+        $mysql_format = str_replace('T', ' ', $deadline) . ':00';
+        
+        // Create DateTime object, explicitly set as UTC
+        $dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $mysql_format, new DateTimeZone('UTC'));
+        
+        if ($dateTime) {
+            $formatted_deadline = $dateTime->format('Y-m-d H:i:s');
+        } else {
+            // Fallback to simple conversion
+            $formatted_deadline = date('Y-m-d H:i:s', strtotime($deadline . ' UTC'));
+        }
+        
+        // Debug log
+        error_log("Deadline processing - Input: $deadline, Output: $formatted_deadline");
     }
 
     $update_stmt->bind_param("ssssis", $title, $description, $link, $formatted_deadline, $announcement_ID, $professor_ID);
@@ -87,6 +108,7 @@ try {
 } catch (Exception $e) {
     $response['success'] = false;
     $response['message'] = "Server error: " . $e->getMessage();
+    $response['debug'] = $e->getTraceAsString();
 }
 
 echo json_encode($response);

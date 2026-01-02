@@ -23,8 +23,47 @@ import ClassManagementIcon from "../../assets/ClassManagement.svg";
 import GradeIcon from "../../assets/Grade.svg";
 import AnalyticsIcon from "../../assets/Analytics.svg";
 import Copy from "../../assets/Copy.svg";
-// ADD THIS NEW IMPORT
 import SubjectOverview from "../../assets/SubjectOverview.svg";
+import TimeIcon from "../../assets/Clock.svg"; // Added time icon
+
+// ========== TIME INDICATOR HELPER FUNCTION ==========
+const getTimeAgo = (createdAt) => {
+  if (!createdAt) return "";
+  
+  try {
+    // Parse the UTC date from the database
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+    
+    // Calculate difference in milliseconds
+    const diffInSeconds = Math.floor((now - createdDate) / 1000);
+    
+    // If the date is in the future or invalid, return empty
+    if (diffInSeconds < 0 || isNaN(diffInSeconds)) return "";
+    
+    // Calculate time differences
+    const seconds = diffInSeconds;
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30.44); // Average days in month
+    const years = Math.floor(days / 365.25); // Account for leap years
+    
+    if (years > 0) return `${years}y`;
+    if (months > 0) return `${months}mo`;
+    if (weeks > 0) return `${weeks}w`;
+    if (days > 0) return `${days}d`;
+    if (hours > 0) return `${hours}h`;
+    if (minutes > 0) return `${minutes}m`;
+    if (seconds >= 0) return `${seconds}s`;
+    
+    return "";
+  } catch (error) {
+    console.error("Error calculating time ago:", error);
+    return "";
+  }
+};
 
 // New Minimal Small Activity Card Component
 const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) => {
@@ -148,6 +187,9 @@ const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions })
     return 'bg-[#15151C] border-[#FFFFFF]/10';
   };
 
+  // Get relative time
+  const timeAgo = getTimeAgo(activity.created_at);
+
   return (
     <div 
       className={`rounded-lg border p-2.5 hover:shadow-sm transition-all cursor-pointer hover:border-[#00A15D]/30 ${getCardBackground()}`}
@@ -161,6 +203,13 @@ const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions })
         
         {/* Top Right Section: Labels first, then Action Buttons at the far right */}
         <div className="flex items-center gap-2">
+          {/* Edited Label - Show if school_work_edited is 1 */}
+          {activity.school_work_edited === 1 && (
+            <span className="px-1 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
+              Edited
+            </span>
+          )}
+          
           {/* Grading Status - First label */}
           {gradingStatus && (
             <span className={`px-1 py-0.5 text-xs font-medium rounded ${gradingStatus.color}`}>
@@ -239,6 +288,16 @@ const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions })
           </span>
         </div>
       </div>
+
+      {/* Time Indicator - Added below the main info row */}
+      {timeAgo && (
+        <div className="flex items-center gap-1 mt-1">
+          <img src={TimeIcon} alt="Time" className="w-2.5 h-2.5 opacity-60" />
+          <span className="text-[10px] font-medium text-[#FFFFFF]/60">
+            {timeAgo} ago
+          </span>
+        </div>
+      )}
     </div>
   );
 };

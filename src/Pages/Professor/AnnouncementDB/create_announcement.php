@@ -27,6 +27,9 @@ if ($conn->connect_error) {
     exit();
 }
 
+// Set timezone for PHP
+date_default_timezone_set('Asia/Manila'); // Set to Philippines timezone for input processing
+
 $response = array();
 
 try {
@@ -68,10 +71,27 @@ try {
                      VALUES (?, ?, ?, ?, ?, ?)";
     $insert_stmt = $conn->prepare($insert_query);
     
-    // Format deadline for database if provided
+    // Format deadline for database
     $formatted_deadline = null;
-    if ($deadline) {
-        $formatted_deadline = date('Y-m-d H:i:s', strtotime($deadline));
+    if ($deadline && $deadline !== "") {
+        // Frontend sends datetime in format: "2026-01-05T17:00" (which is UTC time)
+        // We need to treat it as UTC and store as UTC
+        
+        // Remove the 'T' and add seconds for MySQLa
+        $mysql_format = str_replace('T', ' ', $deadline) . ':00';
+        
+        // Create DateTime object, explicitly set as UTC
+        $dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $mysql_format, new DateTimeZone('UTC'));
+        
+        if ($dateTime) {
+            $formatted_deadline = $dateTime->format('Y-m-d H:i:s');
+        } else {
+            // Fallback to simple conversion
+            $formatted_deadline = date('Y-m-d H:i:s', strtotime($deadline . ' UTC'));
+        }
+        
+        // Debug log
+        error_log("Deadline processing - Input: $deadline, Output: $formatted_deadline");
     }
 
     $insert_stmt->bind_param("ssssss", $professor_ID, $classroom_ID, $title, $description, $link, $formatted_deadline);
@@ -106,10 +126,19 @@ try {
             
             $emailSubject = "New Announcement: " . $title;
             $emailTitle = "New Announcement in " . $class['subject'] . " (" . $class['section'] . ")";
+            
+            // Format deadline for email display (show in Philippines time)
+            $displayDeadline = "";
+            if ($formatted_deadline) {
+                $utcDate = new DateTime($formatted_deadline, new DateTimeZone('UTC'));
+                $utcDate->setTimezone(new DateTimeZone('Asia/Manila'));
+                $displayDeadline = $utcDate->format('M j, Y g:i A');
+            }
+            
             $emailMessage = "Professor has posted a new announcement:\n\n" . 
                            "Title: " . $title . "\n" .
                            "Instruction: " . $description . "\n" .
-                           ($deadline ? "Deadline: " . date('M j, Y g:i A', strtotime($deadline)) : "");
+                           ($displayDeadline ? "Deadline: " . $displayDeadline . " (PHT)" : "");
             
             $emailResults = sendBatchStudentEmails($students, $emailSubject, $emailTitle, $emailMessage, 'general');
             $response['email_notifications'] = $emailResults;
@@ -127,6 +156,7 @@ try {
 } catch (Exception $e) {
     $response['success'] = false;
     $response['message'] = "Server error: " . $e->getMessage();
+    $response['debug'] = $e->getTraceAsString();
 }
 
 echo json_encode($response);

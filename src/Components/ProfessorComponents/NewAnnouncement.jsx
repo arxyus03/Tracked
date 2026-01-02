@@ -163,15 +163,17 @@ const NewAnnouncement = ({
             />
           </div>
 
-          {/* Deadline Input */}
+          {/* Deadline Input - FIXED: Remove min attribute when editing */}
           <div>
             <label className="text-xs font-semibold mb-1.5 block text-[#FFFFFF]/80">Deadline</label>
             <input
               type="datetime-local"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
-              min={getCurrentDateTime()} // Prevent past dates
+              // Only apply min attribute for NEW announcements, not when editing
+              min={editingAnnouncement ? undefined : getCurrentDateTime()}
               className="announcement-deadline-input w-full border-2 border-[#23232C] bg-[#23232C] rounded-md px-3 py-2.5 outline-none text-xs focus:border-[#00A15D] transition-colors text-[#FFFFFF]"
+              title={deadline ? `Current deadline: ${deadline}` : "Set a deadline"}
             />
           </div>
 
@@ -190,7 +192,7 @@ const NewAnnouncement = ({
             />
           </div>
 
-          {/* Instruction Textarea - Changed from "Description" */}
+          {/* Instruction Textarea */}
           <div>
             <label className="text-xs font-semibold mb-1.5 block text-[#FFFFFF]/80">
               Instruction <span className="text-[#A15353]">*</span>

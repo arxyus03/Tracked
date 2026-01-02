@@ -4,66 +4,93 @@ import ArrowDown from "../../assets/ArrowDown.svg";
 import Edit from "../../assets/Edit.svg";
 import Delete from "../../assets/Delete.svg";
 
-export default function AnnouncementCard({
-  subject,
-  title,
-  postedBy,
-  datePosted,
-  deadline,
-  description,  // Changed from "instructions" to "description"
-  link = "#",
-  section,
-  isRead = false,
-  onEdit,
-  onDelete,
-  onMarkAsRead,
-  onMarkAsUnread
-}) {
+export default function AnnouncementCard(props) {
+  // Destructure with defaults to prevent undefined errors
+  const {
+    subject = 'Unknown Subject',
+    title = 'No Title',
+    postedBy = 'Unknown Professor',
+    datePosted = new Date().toISOString(),
+    deadline = null,
+    instructions = 'No instructions provided.',
+    link = "#",
+    section = 'Unknown Section',
+    isRead = false,
+    onEdit,
+    onDelete,
+    onMarkAsRead,
+    onMarkAsUnread,
+    announcementId,
+    updatedAt = datePosted
+  } = props;
+
   const [open, setOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [readStatus, setReadStatus] = useState(isRead);
   const [showFullInstructions, setShowFullInstructions] = useState(false);
   const [relativeTime, setRelativeTime] = useState("");
+  const [, setFormattedPostedDate] = useState("");
+  const [formattedDeadline, setFormattedDeadline] = useState("");
 
-  // Function to parse and convert server timestamp to local time
-  const parseServerTimestamp = (dateString) => {
+  // Load read status from localStorage on component mount
+  useEffect(() => {
+    if (announcementId) {
+      const savedReadStatus = localStorage.getItem(`announcement_${announcementId}_read`);
+      if (savedReadStatus !== null) {
+        setReadStatus(savedReadStatus === 'true');
+      }
+    }
+  }, [announcementId]);
+
+  // Save read status to localStorage whenever it changes
+  useEffect(() => {
+    if (announcementId) {
+      localStorage.setItem(`announcement_${announcementId}_read`, readStatus.toString());
+    }
+  }, [readStatus, announcementId]);
+
+  // Function to properly parse date string
+  const parseDate = (dateString) => {
     if (!dateString || dateString === "No deadline" || dateString === "N/A") return null;
     
     try {
-      // If the dateString is already a valid ISO string with timezone info, use it directly
-      if (dateString.includes('Z') || dateString.includes('+')) {
-        return new Date(dateString);
+      // If it's a MySQL datetime without timezone, treat it as UTC
+      if (dateString && !dateString.includes('+') && !dateString.includes('Z')) {
+        // Add Z to indicate UTC
+        const date = new Date(dateString + 'Z');
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
       }
       
-      // If it's a MySQL datetime format (YYYY-MM-DD HH:MM:SS), assume UTC and convert to local
-      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateString)) {
-        // Append 'Z' to indicate UTC, then let JavaScript convert to local time
-        return new Date(dateString + 'Z');
-      }
-      
-      // Fallback: try parsing as is
+      // Otherwise, parse normally
       return new Date(dateString);
-    } catch {
+    } catch (error) {
+      console.error('Error parsing date:', error, dateString);
       return null;
     }
   };
 
-  // Function to calculate relative time with proper timezone handling
+  // Function to calculate relative time
   const getRelativeTime = (dateString) => {
     if (!dateString || dateString === "No deadline" || dateString === "N/A") return "N/A";
     
     try {
-      const date = parseServerTimestamp(dateString);
-      if (!date || isNaN(date.getTime())) {
+      const postedDate = parseDate(dateString);
+      if (!postedDate) {
         return "Recently";
       }
       
       const now = new Date();
-      const diffInSeconds = Math.floor((now - date) / 1000);
+      const diffInSeconds = Math.floor((now - postedDate) / 1000);
       
+      // Handle future dates (just in case)
       if (diffInSeconds < 0) {
         return "Just now";
-      } else if (diffInSeconds < 60) {
+      }
+      
+      // Calculate time differences
+      if (diffInSeconds < 60) {
         return `${diffInSeconds}s ago`;
       } else if (diffInSeconds < 3600) {
         const minutes = Math.floor(diffInSeconds / 60);
@@ -86,49 +113,142 @@ export default function AnnouncementCard({
     }
   };
 
-  // Update relative time periodically
-  useEffect(() => {
-    if (datePosted) {
-      setRelativeTime(getRelativeTime(datePosted));
-      
-      // Update every minute for recent posts
-      const interval = setInterval(() => {
-        setRelativeTime(getRelativeTime(datePosted));
-      }, 60000); // Update every minute
-      
-      return () => clearInterval(interval);
+  // Format date for display in local timezone
+  const formatDateForDisplay = (dateString, includeTimezone = false) => {
+    if (!dateString || dateString === "No deadline" || dateString === "N/A") {
+      return dateString === "No deadline" ? "No deadline" : "N/A";
     }
-  }, [datePosted]);
-
-  // Format deadline for display with local timezone
-  const formatDeadline = (dateString) => {
-    if (!dateString || dateString === "No deadline" || dateString === "N/A") return "N/A";
     
     try {
-      const date = parseServerTimestamp(dateString);
-      if (!date || isNaN(date.getTime())) {
-        return dateString;
+      const date = parseDate(dateString);
+      if (!date) {
+        return "Recently";
       }
       
-      // Format date: Month Day, Year | Time (in user's local timezone)
+      // Format for display in local timezone (which should be PHT if user is in Philippines)
       const dateFormatted = date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
       });
       
-      // Format time: 00:00 AM/PM (in user's local timezone)
       const timeFormatted = date.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
       });
       
-      return `${dateFormatted} | ${timeFormatted}`;
+      // Get timezone abbreviation
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const timeZoneAbbr = getTimezoneAbbreviation(timeZone);
+      
+      return includeTimezone ? 
+        `${dateFormatted} at ${timeFormatted} (${timeZoneAbbr})` :
+        `${dateFormatted} at ${timeFormatted}`;
     } catch {
       return dateString;
     }
   };
+
+  // Format deadline in UTC time (exactly as stored in database)
+  const formatDeadlineUTC = (dateString) => {
+    if (!dateString || dateString === "No deadline" || dateString === "N/A") {
+      return "No deadline";
+    }
+    
+    try {
+      const date = parseDate(dateString);
+      if (!date) {
+        return dateString;
+      }
+      
+      // Format in UTC timezone
+      const dateFormatted = date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC'
+      });
+      
+      const timeFormatted = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC'
+      });
+      
+      // Return in 12-hour format with AM/PM
+      return `${dateFormatted} at ${timeFormatted}`;
+    } catch (error) {
+      console.error('Error formatting UTC deadline:', error, dateString);
+      return dateString;
+    }
+  };
+
+  // Helper function to get timezone abbreviation
+  const getTimezoneAbbreviation = (timeZone) => {
+    try {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timeZone,
+        timeZoneName: 'short'
+      });
+      const parts = formatter.formatToParts();
+      const tzPart = parts.find(part => part.type === 'timeZoneName');
+      return tzPart ? tzPart.value : timeZone;
+    } catch {
+      return timeZone;
+    }
+  };
+
+  // Update relative time and formatted date
+  useEffect(() => {
+    if (datePosted) {
+      setRelativeTime(getRelativeTime(datePosted));
+      setFormattedPostedDate(formatDateForDisplay(datePosted, false));
+    }
+    
+    if (deadline) {
+      // Debug logging
+      console.log('Deadline debug:', {
+        rawDeadline: deadline,
+        parsedDate: parseDate(deadline),
+        formattedUTC: formatDeadlineUTC(deadline)
+      });
+      
+      // Use UTC formatting for deadline
+      setFormattedDeadline(formatDeadlineUTC(deadline));
+    }
+    
+    // Update every minute for recent posts
+    const interval = setInterval(() => {
+      if (datePosted) {
+        setRelativeTime(getRelativeTime(datePosted));
+      }
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [datePosted, deadline]);
+
+  // Check if announcement has been edited
+  const isEdited = () => {
+    if (!updatedAt || !datePosted) return false;
+    
+    try {
+      const updatedDate = parseDate(updatedAt);
+      const createdDate = parseDate(datePosted);
+      
+      if (!updatedDate || !createdDate) {
+        return false;
+      }
+      
+      // Return true if updated_at is after created_at by more than 1 second
+      return (updatedDate.getTime() - createdDate.getTime()) > 1000;
+    } catch {
+      return false;
+    }
+  };
+
+  const edited = isEdited();
 
   const handleCardClick = () => {
     if (!readStatus) {
@@ -160,14 +280,11 @@ export default function AnnouncementCard({
     if (onMarkAsUnread) onMarkAsUnread();
   };
 
-  // Check if description are long (more than 150 characters)
-  const isDescriptionLong = description && description.length > 150;
-  const displayDescription = showFullInstructions 
-    ? description 
-    : (isDescriptionLong ? description.substring(0, 150) + '...' : description);
-
-  // Format the deadline for display
-  const formattedDeadline = formatDeadline(deadline);
+  // Check if instructions are long (more than 150 characters)
+  const isInstructionsLong = instructions && instructions.length > 150;
+  const displayInstructions = showFullInstructions 
+    ? instructions 
+    : (isInstructionsLong ? instructions.substring(0, 150) + '...' : instructions);
 
   return (
     <>
@@ -183,24 +300,41 @@ export default function AnnouncementCard({
           className="relative p-3 cursor-pointer" 
           onClick={handleCardClick}
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pr-24">
-            {/* Title section */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 flex-1 min-w-0 text-sm">
-              <span className="font-bold text-[#FFFFFF]">{subject}:</span>
-              <span className="text-[#FFFFFF]/90 break-words">{title}</span>
-              {section && (
-                <span className="text-xs text-[#FFFFFF]/60">({section})</span>
-              )}
-              {!readStatus && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#00A15D] text-[#FFFFFF]">
-                  New
-                </span>
-              )}
+          <div className="flex flex-col gap-1 pr-28">
+            {/* Title and subject section */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 flex-1 min-w-0 text-sm">
+                <span className="font-bold text-[#FFFFFF]">{subject}:</span>
+                <span className="text-[#FFFFFF]/90 break-words">{title}</span>
+                {section && (
+                  <span className="text-xs text-[#FFFFFF]/60">({section})</span>
+                )}
+                {/* Show "Edited" badge when announcement has been updated */}
+                {edited && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#767EE0] text-[#FFFFFF]">
+                    Edited
+                  </span>
+                )}
+                {/* Show "New" badge only when unread */}
+                {!readStatus && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#00A15D] text-[#FFFFFF]">
+                    New
+                  </span>
+                )}
+              </div>
             </div>
+            
+            {/* Posted by and timestamp - only shown when card is CLOSED */}
+            {!open && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs text-[#FFFFFF]/60">
+                <span>{relativeTime}</span>
+              </div>
+            )}
           </div>
 
           {/* Action Icons - absolute positioned on upper right */}
           <div className="absolute top-3 right-3 flex items-center gap-2">
+            {/* Only show "Mark Unread" button when announcement is read */}
             {readStatus && (
               <button
                 onClick={handleMarkAsUnreadClick}
@@ -241,15 +375,18 @@ export default function AnnouncementCard({
             <div className="flex flex-col sm:flex-row justify-between gap-2 mb-3">
               <div className="mb-2 sm:mb-0">
                 <p className="font-semibold text-base text-[#FFFFFF]">{title}</p>
-                <p className="text-xs text-[#FFFFFF]/60">Posted By: {postedBy}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-[#FFFFFF]/60">Posted By: {postedBy}</p>
+                </div>
                 {section && (
-                  <p className="text-xs text-[#FFFFFF]/60">Section: {section}</p>
+                  <p className="text-xs text-[#FFFFFF]/60 mt-1">Section: {section}</p>
                 )}
               </div>
 
+              {/* Timestamp and deadline - shown when card is OPEN */}
               <div className="text-xs text-[#FFFFFF]/60 sm:text-right">
-                <p>Date Posted: {relativeTime}</p>
-                {deadline && deadline !== "N/A" && (
+                <p>{relativeTime}</p>
+                {deadline && deadline !== "N/A" && deadline !== "No deadline" && (
                   <p className="text-[#A15353] font-bold mt-1">
                     Deadline: {formattedDeadline}
                   </p>
@@ -257,15 +394,15 @@ export default function AnnouncementCard({
               </div>
             </div>
 
-            {/* Description/Instructions with Show More/Less */}
+            {/* Instructions with Show More/Less */}
             <div className="mt-4">
               <p className="font-semibold mb-1 text-sm text-[#FFFFFF]">Instructions:</p>
-              {description ? (
+              {instructions ? (
                 <>
                   <p className="text-xs text-[#FFFFFF]/80 whitespace-pre-wrap break-words">
-                    {displayDescription}
+                    {displayInstructions}
                   </p>
-                  {isDescriptionLong && (
+                  {isInstructionsLong && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

@@ -25,7 +25,7 @@ const StudentActivitiesDetails = ({
   const [professorFiles, setProfessorFiles] = useState({});
   const [studentFiles, setStudentFiles] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
-  const [selectedActivityDetails, setSelectedActivityDetails] = useState(null);
+  const [, setSelectedActivityDetails] = useState(null);
 
   // Set first student as default when component opens
   useEffect(() => {

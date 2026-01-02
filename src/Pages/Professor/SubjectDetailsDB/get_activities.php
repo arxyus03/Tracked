@@ -68,8 +68,8 @@ try {
             link,
             points,
             DATE_FORMAT(deadline, '%Y-%m-%d %H:%i:%s') as deadline,
-            created_at,
-            updated_at,
+            DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') as created_at,
+            DATE_FORMAT(updated_at, '%Y-%m-%dT%H:%i:%sZ') as updated_at,
             archived,
             school_work_edited
         FROM activities 

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import AnnouncementCardStudent from "../../Components/StudentComponents/AnnouncementCardStudent";
 
 // ========== IMPORT ASSETS ==========
 import Announcement from "../../assets/Announcement.svg";
@@ -97,8 +96,16 @@ export default function SubjectAnnouncementStudent() {
       
       if (response.ok) {
         const result = await response.json();
+        console.log('Fetched announcements for student:', result);
+        
         if (result.success) {
-          setAnnouncements(result.announcements);
+          // Transform announcements to include updated_at field with proper parsing
+          const transformedAnnouncements = result.announcements.map(announcement => ({
+            ...announcement,
+            updated_at: announcement.updated_at || null
+          }));
+          console.log('Transformed announcements:', transformedAnnouncements);
+          setAnnouncements(transformedAnnouncements);
         } else {
           setAnnouncements([]);
         }
@@ -176,6 +183,290 @@ export default function SubjectAnnouncementStudent() {
     } catch (error) {
       console.error('Error marking as unread:', error);
     }
+  };
+
+const AnnouncementCard = ({ announcement }) => {
+    const [open, setOpen] = useState(false);
+    const [readStatus, setReadStatus] = useState(announcement.isRead);
+    const [showFullInstructions, setShowFullInstructions] = useState(false);
+    const [relativeTime, setRelativeTime] = useState("");
+
+    // Load read status from localStorage on component mount
+    useEffect(() => {
+      if (announcement.id) {
+        const savedReadStatus = localStorage.getItem(`announcement_${announcement.id}_read_student`);
+        if (savedReadStatus !== null) {
+          setReadStatus(savedReadStatus === 'true');
+        }
+      }
+    }, [announcement.id]);
+
+    // Save read status to localStorage whenever it changes
+    useEffect(() => {
+      if (announcement.id) {
+        localStorage.setItem(`announcement_${announcement.id}_read_student`, readStatus.toString());
+      }
+    }, [readStatus, announcement.id]);
+
+    // Function to calculate relative time
+    const getRelativeTime = (dateString) => {
+      if (!dateString || dateString === "No deadline" || dateString === "N/A") return "N/A";
+      
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          return "Recently";
+        }
+        
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 0) {
+          return "Just now";
+        } else if (diffInSeconds < 60) {
+          return `${diffInSeconds}s ago`;
+        } else if (diffInSeconds < 3600) {
+          const minutes = Math.floor(diffInSeconds / 60);
+          return `${minutes}m ago`;
+        } else if (diffInSeconds < 86400) {
+          const hours = Math.floor(diffInSeconds / 3600);
+          return `${hours}h ago`;
+        } else if (diffInSeconds < 2592000) {
+          const days = Math.floor(diffInSeconds / 86400);
+          return `${days}d ago`;
+        } else if (diffInSeconds < 31536000) {
+          const months = Math.floor(diffInSeconds / 2592000);
+          return `${months}mo ago`;
+        } else {
+          const years = Math.floor(diffInSeconds / 31536000);
+          return `${years}y ago`;
+        }
+      } catch {
+        return "Recently";
+      }
+    };
+
+    // Update relative time periodically
+    useEffect(() => {
+      if (announcement.datePosted) {
+        setRelativeTime(getRelativeTime(announcement.datePosted));
+        
+        const interval = setInterval(() => {
+          setRelativeTime(getRelativeTime(announcement.datePosted));
+        }, 60000);
+        
+        return () => clearInterval(interval);
+      }
+    }, [announcement.datePosted]);
+
+    // Format deadline for display
+    const formatDeadline = (dateString) => {
+      if (!dateString || dateString === "No deadline" || dateString === "N/A") return "No deadline";
+      
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          return dateString;
+        }
+        
+        const dateFormatted = date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+        
+        const timeFormatted = date.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+        
+        return `${dateFormatted} | ${timeFormatted}`;
+      } catch {
+        return dateString;
+      }
+    };
+
+    // FIXED: Check if announcement has been edited
+    const isEdited = () => {
+      if (!announcement.updated_at) return false;
+      
+      try {
+        const updatedDate = new Date(announcement.updated_at);
+        const createdDate = new Date(announcement.datePosted);
+        
+        if (isNaN(updatedDate.getTime()) || isNaN(createdDate.getTime())) {
+          return false;
+        }
+        
+        // Check if updated_at is significantly different from created_at (more than 1 second)
+        const timeDifference = Math.abs(updatedDate.getTime() - createdDate.getTime());
+        return timeDifference > 1000; // More than 1 second difference
+      } catch (error) {
+        console.error('Error checking if edited:', error);
+        return false;
+      }
+    };
+
+    const edited = isEdited();
+
+    const handleCardClick = () => {
+      if (!readStatus) {
+        setReadStatus(true);
+        handleMarkAsRead(announcement.id);
+      }
+      setOpen(!open);
+    };
+
+    const handleMarkAsUnreadClick = (e) => {
+      e.stopPropagation();
+      setReadStatus(false);
+      handleMarkAsUnread(announcement.id);
+      // DO NOT setOpen(false) here - let the card stay open
+    };
+
+    // Check if instructions are long
+    const isInstructionsLong = announcement.instructions && announcement.instructions.length > 150;
+    const displayInstructions = showFullInstructions 
+      ? announcement.instructions 
+      : (isInstructionsLong ? announcement.instructions.substring(0, 150) + '...' : announcement.instructions);
+
+    const formattedDeadline = formatDeadline(announcement.deadline);
+
+    return (
+      <div 
+        className={`shadow-md rounded-md mt-3 w-full transition-all duration-200 ${
+          readStatus 
+            ? 'bg-[#15151C]' 
+            : 'bg-[#00A15D]/10 border-l-4 border-[#00A15D]'
+        } hover:shadow-lg hover:border-[#767EE0] hover:border-1`}
+      >
+        {/* Header */}
+        <div 
+          className="relative p-3 cursor-pointer" 
+          onClick={handleCardClick}
+        >
+          <div className="flex flex-col gap-1 pr-16">
+            {/* Title and subject section */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 flex-1 min-w-0 text-sm">
+                <span className="font-bold text-[#FFFFFF]">{announcement.subject}:</span>
+                <span className="text-[#FFFFFF]/90 break-words">{announcement.title}</span>
+                {announcement.section && (
+                  <span className="text-xs text-[#FFFFFF]/60">({announcement.section})</span>
+                )}
+                {/* Show "Edited" badge when announcement has been updated */}
+                {edited && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#767EE0] text-[#FFFFFF]">
+                    Edited
+                  </span>
+                )}
+                {/* Show "New" badge only when unread */}
+                {!readStatus && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#00A15D] text-[#FFFFFF]">
+                    New
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {/* Timestamp - only shown when card is CLOSED */}
+            {!open && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs text-[#FFFFFF]/60">
+                <span>{relativeTime}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Action Icons */}
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            {/* Only show "Mark Unread" button when announcement is read */}
+            {readStatus && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAsUnreadClick(e);
+                }}
+                className="text-xs text-[#00A15D] hover:text-[#00874E] font-medium hover:underline transition-colors cursor-pointer"
+                title="Mark as unread"
+              >
+                Mark Unread
+              </button>
+            )}
+            <img
+              src={ArrowDown}
+              alt="Expand"
+              className={`h-4 w-4 transform transition-transform duration-300 brightness-0 invert ${
+                open ? "rotate-180" : ""
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* Content - Only visible when expanded */}
+        {open && (
+          <div className="p-3 border-t border-[#FFFFFF]/10">
+            <div className="flex flex-col sm:flex-row justify-between gap-2 mb-3">
+              <div className="mb-2 sm:mb-0">
+                <p className="font-semibold text-base text-[#FFFFFF]">{announcement.title}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-xs text-[#FFFFFF]/60">Posted By: {announcement.postedBy}</p>
+                </div>
+                {announcement.section && (
+                  <p className="text-xs text-[#FFFFFF]/60 mt-1">Section: {announcement.section}</p>
+                )}
+              </div>
+
+              {/* Timestamp and deadline - shown when card is OPEN */}
+              <div className="text-xs text-[#FFFFFF]/60 sm:text-right">
+                <p className=''>{relativeTime}</p>
+                {announcement.deadline && announcement.deadline !== "N/A" && announcement.deadline !== "No deadline" && (
+                  <p className="text-[#A15353] font-bold mt-1">
+                    Deadline: {formattedDeadline}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Instructions with Show More/Less */}
+            <div className="mt-4">
+              <p className="font-semibold mb-1 text-sm text-[#FFFFFF]">Instructions:</p>
+              {announcement.instructions ? (
+                <>
+                  <p className="text-xs text-[#FFFFFF]/80 whitespace-pre-wrap break-words">
+                    {displayInstructions}
+                  </p>
+                  {isInstructionsLong && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowFullInstructions(!showFullInstructions);
+                      }}
+                      className="mt-1 text-[#00A15D] font-medium hover:underline text-xs cursor-pointer"
+                    >
+                      {showFullInstructions ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-[#FFFFFF]/60 italic">No instructions provided.</p>
+              )}
+              {announcement.link && announcement.link !== "#" && announcement.link !== null && announcement.link !== "" && (
+                <a
+                  href={announcement.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-[#767EE0] font-semibold hover:underline text-xs break-all"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  🔗 View Link
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   // ========== FILTER & SORT LOGIC ==========
@@ -383,20 +674,9 @@ export default function SubjectAnnouncementStudent() {
           <div className="space-y-4">
             {sortedAnnouncements.length > 0 ? (
               sortedAnnouncements.map((announcement) => (
-                <AnnouncementCardStudent
+                <AnnouncementCard
                   key={announcement.id}
-                  id={announcement.id}
-                  subject={announcement.subject}
-                  title={announcement.title}
-                  postedBy={announcement.postedBy}
-                  datePosted={announcement.datePosted}
-                  deadline={announcement.deadline}
-                  instructions={announcement.instructions}
-                  link={announcement.link}
-                  section={announcement.section}
-                  isRead={announcement.isRead}
-                  onMarkAsRead={() => handleMarkAsRead(announcement.id)}
-                  onMarkAsUnread={() => handleMarkAsUnread(announcement.id)}
+                  announcement={announcement}
                 />
               ))
             ) : (

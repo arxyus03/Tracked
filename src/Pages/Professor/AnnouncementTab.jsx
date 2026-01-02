@@ -8,22 +8,21 @@ import AnnouncementCard from "../../Components/ProfessorComponents/AnnouncementC
 
 // ========== IMPORT ASSETS ==========
 import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
-import BackButton from '../../assets/BackButton.svg'; // Changed to dark theme version
-import Add from "../../assets/Add.svg"; // Changed to dark theme version
-import Archive from "../../assets/Archive.svg"; // Changed to dark theme version
-import Attendance from "../../assets/Attendance.svg"; // Changed to dark theme version
-import Announcement from "../../assets/Announcement.svg"; // Changed to dark theme version
-import AnnouncementIcon from "../../assets/Announcement.svg"; // Changed to dark theme version
-import Classwork from "../../assets/Classwork.svg"; // Changed to dark theme version
-import ClassManagementIcon from "../../assets/ClassManagement.svg"; // Changed to dark theme version
-import ArrowDown from "../../assets/ArrowDown.svg"; // Changed to dark theme version
+import BackButton from '../../assets/BackButton.svg';
+import Add from "../../assets/Add.svg";
+import Archive from "../../assets/Archive.svg";
+import Attendance from "../../assets/Attendance.svg";
+import Announcement from "../../assets/Announcement.svg";
+import AnnouncementIcon from "../../assets/Announcement.svg";
+import Classwork from "../../assets/Classwork.svg";
+import ClassManagementIcon from "../../assets/ClassManagement.svg";
+import ArrowDown from "../../assets/ArrowDown.svg";
 import SuccessIcon from '../../assets/Success(Green).svg';
 import ArchiveWarningIcon from '../../assets/Warning(Yellow).svg';
 import Search from "../../assets/Search.svg";
-import GradeIcon from "../../assets/Grade.svg"; // Changed to dark theme version
-import AnalyticsIcon from "../../assets/Analytics.svg"; // Changed to dark theme version
-import Copy from "../../assets/Copy.svg"; // Changed to dark theme version
-// ADD THIS NEW IMPORT
+import GradeIcon from "../../assets/Grade.svg";
+import AnalyticsIcon from "../../assets/Analytics.svg";
+import Copy from "../../assets/Copy.svg";
 import SubjectOverview from "../../assets/SubjectOverview.svg";
 
 export default function AnnouncementTab() {
@@ -33,7 +32,7 @@ export default function AnnouncementTab() {
   
   const [isOpen, setIsOpen] = useState(true);
   
-  // ANNOUNCEMENT STATES (from Announcement page)
+  // ANNOUNCEMENT STATES
   const [showModal, setShowModal] = useState(false);
   
   // Modal form states
@@ -42,6 +41,7 @@ export default function AnnouncementTab() {
   const [description, setDescription] = useState("");
   const [link, setLink] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [originalDeadline, setOriginalDeadline] = useState("");
 
   // Editing state
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
@@ -50,8 +50,9 @@ export default function AnnouncementTab() {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Classes state (for dropdowns)
+  // Classes state
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
 
@@ -64,10 +65,10 @@ export default function AnnouncementTab() {
   const [classInfo, setClassInfo] = useState(null);
   const [loadingClassInfo, setLoadingClassInfo] = useState(true);
 
-  // ✅ NEW: Posting state
+  // Posting state
   const [postingAnnouncement, setPostingAnnouncement] = useState(false);
 
-  // Get professor ID from localStorage - FIXED VERSION
+  // Get professor ID from localStorage
   const getProfessorId = () => {
     try {
       const userDataString = localStorage.getItem('user');
@@ -96,19 +97,18 @@ export default function AnnouncementTab() {
     return null;
   };
 
-  // Get current datetime in YYYY-MM-DDTHH:mm format for min attribute
+  // Get current datetime for min attribute
   const getCurrentDateTime = () => {
     const now = new Date();
     return now.toISOString().slice(0, 16);
   };
 
-  // Copy subject code to clipboard function
+  // Copy subject code to clipboard
   const copySubjectCode = () => {
     const codeToCopy = classInfo?.subject_code || subjectCode;
     if (codeToCopy && codeToCopy !== 'N/A') {
       navigator.clipboard.writeText(codeToCopy)
         .then(() => {
-          // Show temporary feedback
           const copyButtons = document.querySelectorAll('.copy-text');
           copyButtons.forEach(button => {
             button.textContent = 'Copied!';
@@ -128,6 +128,7 @@ export default function AnnouncementTab() {
     const fetchAllData = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // Fetch class details
         if (subjectCode) {
@@ -142,6 +143,7 @@ export default function AnnouncementTab() {
         
       } catch (error) {
         console.error('Error fetching data:', error);
+        setError('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -185,11 +187,9 @@ export default function AnnouncementTab() {
         
         if (result.success) {
           setClassInfo(result.class_data);
-          // Set the selected subject for announcements to the current class
           setSelectedSubject(subjectCode);
         } else {
           console.error('Error fetching class details:', result.message);
-          // Set default class info if API fails
           setClassInfo({
             subject_code: subjectCode,
             subject: 'Unknown Subject',
@@ -198,7 +198,6 @@ export default function AnnouncementTab() {
         }
       } else {
         console.error('Failed to fetch class details, status:', response.status);
-        // Set default class info if API fails
         setClassInfo({
           subject_code: subjectCode,
           subject: 'Unknown Subject',
@@ -207,7 +206,6 @@ export default function AnnouncementTab() {
       }
     } catch (error) {
       console.error('Error fetching class details:', error);
-      // Set default class info on error
       setClassInfo({
         subject_code: subjectCode,
         subject: 'Unknown Subject',
@@ -255,7 +253,7 @@ export default function AnnouncementTab() {
     }
   };
 
-  // Fetch announcements from database - UPDATED to handle actual backend response
+  // Fetch announcements from database - FIXED VERSION
   const fetchAnnouncements = async () => {
     try {
       setLoadingAnnouncements(true);
@@ -267,10 +265,14 @@ export default function AnnouncementTab() {
         return;
       }
       
-      console.log('Fetching announcements for:', { professorId, subjectCode });
+      console.log('Fetching announcements for professor:', professorId, 'subject:', subjectCode);
       
-      // Build URL with parameters
-      const url = `https://tracked.6minds.site/Professor/AnnouncementDB/get_announcements.php?professor_ID=${professorId}${subjectCode ? `&classroom_ID=${subjectCode}` : ''}`;
+      // Build URL - always include classroom_ID if available
+      let url = `https://tracked.6minds.site/Professor/AnnouncementDB/get_announcements.php?professor_ID=${professorId}`;
+      
+      if (subjectCode) {
+        url += `&classroom_ID=${subjectCode}`;
+      }
       
       console.log('Fetching from URL:', url);
       
@@ -280,29 +282,32 @@ export default function AnnouncementTab() {
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Fetched announcements:', result);
+        console.log('Fetched announcements raw:', result);
         
-        if (result.success) {
+        if (result.success && result.announcements) {
           // Transform backend data to match frontend expectations
-          const transformedAnnouncements = result.announcements.map(announcement => ({
-            ...announcement,
-            // Map 'description' from backend to 'instructions' for frontend
-            instructions: announcement.description,
-            // Ensure all required fields are present
-            isRead: false, // Default to unread
-            // Use the actual fields from backend response
-            id: announcement.id || announcement.announcement_ID,
-            subject: announcement.subject,
-            title: announcement.title,
-            postedBy: announcement.postedBy || announcement.posted_by,
-            // Don't format date here - let the component handle it
-            datePosted: announcement.datePosted || announcement.created_at,
-            deadline: announcement.deadline,
-            link: announcement.link || '#',
-            section: announcement.section,
-            subject_code: announcement.subject_code
-          }));
+          const transformedAnnouncements = result.announcements.map(announcement => {
+            // Load read status from localStorage
+            const savedReadStatus = localStorage.getItem(`announcement_${announcement.id}_read`);
+            const isRead = savedReadStatus === 'true';
+            
+            return {
+              id: announcement.id || announcement.announcement_ID,
+              subject: announcement.subject || 'Unknown Subject',
+              title: announcement.title || 'No Title',
+              postedBy: announcement.postedBy || 'Unknown Professor',
+              datePosted: announcement.datePosted || announcement.created_at,
+              deadline: announcement.deadline || null,
+              instructions: announcement.instructions || announcement.description || 'No instructions provided.',
+              link: announcement.link || '#',
+              section: announcement.section || 'Unknown Section',
+              subject_code: announcement.subject_code || subjectCode,
+              isRead: isRead,
+              updated_at: announcement.updated_at || announcement.datePosted
+            };
+          });
           
+          console.log('Transformed announcements:', transformedAnnouncements);
           setAnnouncements(transformedAnnouncements);
         } else {
           console.error('Error fetching announcements:', result.message);
@@ -316,6 +321,7 @@ export default function AnnouncementTab() {
     } catch (error) {
       console.error('Error fetching announcements:', error);
       setAnnouncements([]);
+      setError('Failed to fetch announcements. Please check your connection.');
     } finally {
       setLoadingAnnouncements(false);
     }
@@ -323,7 +329,6 @@ export default function AnnouncementTab() {
 
   // Get unique subjects from classes
   const getUniqueSubjects = () => {
-    // Use a Map to ensure uniqueness by subject_code while keeping the first occurrence
     const subjectMap = new Map();
     
     classes.forEach(classItem => {
@@ -340,7 +345,10 @@ export default function AnnouncementTab() {
   };
 
   // Handle marking announcement as read
-  const handleMarkAsRead = (announcementId) => {
+  const handleMarkAsRead = async (announcementId) => {
+    const professorId = getProfessorId();
+    
+    // Update local state
     setAnnouncements(prevAnnouncements => 
       prevAnnouncements.map(announcement => 
         announcement.id === announcementId 
@@ -348,10 +356,33 @@ export default function AnnouncementTab() {
           : announcement
       )
     );
+    
+    // Save to localStorage for persistence
+    localStorage.setItem(`announcement_${announcementId}_read`, 'true');
+    
+    // Optional: Send to backend
+    try {
+      await fetch('https://tracked.6minds.site/Professor/AnnouncementDB/update_read_status.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          announcement_id: announcementId,
+          professor_id: professorId,
+          is_read: 1
+        })
+      });
+    } catch (error) {
+      console.error('Error updating read status:', error);
+    }
   };
 
   // Handle marking announcement as unread
-  const handleMarkAsUnread = (announcementId) => {
+  const handleMarkAsUnread = async (announcementId) => {
+    const professorId = getProfessorId();
+    
+    // Update local state
     setAnnouncements(prevAnnouncements => 
       prevAnnouncements.map(announcement => 
         announcement.id === announcementId 
@@ -359,6 +390,26 @@ export default function AnnouncementTab() {
           : announcement
       )
     );
+    
+    // Save to localStorage for persistence
+    localStorage.setItem(`announcement_${announcementId}_read`, 'false');
+    
+    // Optional: Send to backend
+    try {
+      await fetch('https://tracked.6minds.site/Professor/AnnouncementDB/update_read_status.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          announcement_id: announcementId,
+          professor_id: professorId,
+          is_read: 0
+        })
+      });
+    } catch (error) {
+      console.error('Error updating read status:', error);
+    }
   };
 
   // Filter announcements based on filter option and search query
@@ -383,7 +434,6 @@ export default function AnnouncementTab() {
   // Sort announcements based on filter option
   const sortedAnnouncements = [...filteredAnnouncements].sort((a, b) => {
     if (filterOption === "Newest") {
-      // Sort by date posted (newest first)
       return new Date(b.datePosted) - new Date(a.datePosted);
     }
     // For other filters, maintain original order or sort by unread first
@@ -403,11 +453,16 @@ export default function AnnouncementTab() {
       return;
     }
 
-    // Validate deadline (should not be in the past)
+    // Validate deadline if it's being changed when editing
     if (deadline) {
-      const selectedDate = new Date(deadline);
+      const selectedDate = new Date(deadline + 'Z'); // Treat as UTC
       const now = new Date();
-      if (selectedDate < now) {
+      
+      const isSameDeadline = editingAnnouncement && 
+                            originalDeadline && 
+                            deadline === originalDeadline;
+      
+      if (!isSameDeadline && selectedDate < now) {
         alert("Deadline cannot be in the past. Please select a current or future date.");
         return;
       }
@@ -419,17 +474,12 @@ export default function AnnouncementTab() {
       return;
     }
 
-    console.log('Posting announcement with data:', {
-      professor_ID: professorId,
-      classroom_ID: selectedSubject,
-      title: title,
-      description: description,
-      link: link || null,
-      deadline: deadline
-    });
+    console.log('=== POSTING ANNOUNCEMENT DEBUG ===');
+    console.log('Deadline from form:', deadline);
+    console.log('Treating as UTC time');
+    console.log('Is editing?', !!editingAnnouncement);
 
     try {
-      // ✅ NEW: Set posting state
       setPostingAnnouncement(true);
 
       if (editingAnnouncement) {
@@ -440,7 +490,7 @@ export default function AnnouncementTab() {
           title: title,
           description: description,
           link: link || null,
-          deadline: deadline
+          deadline: deadline || null // Send as-is (YYYY-MM-DDTHH:mm format)
         };
 
         console.log('Sending UPDATE data:', updateData);
@@ -459,7 +509,6 @@ export default function AnnouncementTab() {
         console.log('Update response:', result);
 
         if (result.success) {
-          // Refresh announcements
           await fetchAnnouncements();
           resetForm();
           setShowModal(false);
@@ -474,7 +523,7 @@ export default function AnnouncementTab() {
           title: title,
           description: description,
           link: link || null,
-          deadline: deadline
+          deadline: deadline || null // Send as-is (YYYY-MM-DDTHH:mm format)
         };
 
         console.log('Sending CREATE data:', postData);
@@ -493,7 +542,6 @@ export default function AnnouncementTab() {
         console.log('Create response:', result);
 
         if (result.success) {
-          // Refresh announcements
           await fetchAnnouncements();
           resetForm();
           setShowModal(false);
@@ -505,19 +553,18 @@ export default function AnnouncementTab() {
       console.error('Error posting announcement:', error);
       alert('Error posting announcement. Please try again.');
     } finally {
-      // ✅ NEW: Reset posting state
       setPostingAnnouncement(false);
     }
   };
 
   // Reset form function
   const resetForm = () => {
-    // Reset to current class subject code instead of empty string
     setSelectedSubject(subjectCode || "");
     setTitle("");
     setDescription("");
     setLink("");
     setDeadline("");
+    setOriginalDeadline("");
     setEditingAnnouncement(null);
   };
 
@@ -544,7 +591,6 @@ export default function AnnouncementTab() {
       const result = await response.json();
 
       if (result.success) {
-        // Refresh announcements
         fetchAnnouncements();
       } else {
         alert('Error deleting announcement: ' + result.message);
@@ -555,49 +601,51 @@ export default function AnnouncementTab() {
     }
   };
 
-  // Handle edit announcement
+  // Handle edit announcement - FIXED VERSION
   const handleEdit = (announcement) => {
+    console.log('=== EDITING ANNOUNCEMENT DEBUG ===');
+    console.log('Original deadline from DB:', announcement.deadline);
+    
     setEditingAnnouncement(announcement);
     
-    // Use the announcement's subject code directly
     setSelectedSubject(announcement.subject_code || subjectCode);
     setTitle(announcement.title);
     setDescription(announcement.instructions || announcement.description);
     setLink(announcement.link === "#" ? "" : announcement.link);
     
-    // Convert deadline back to datetime-local format if it exists
+    let formattedDeadline = "";
     if (announcement.deadline && announcement.deadline !== "No deadline") {
       try {
-        // Parse the formatted deadline back to datetime-local format
-        const deadlineParts = announcement.deadline.split(' | ');
-        if (deadlineParts.length === 2) {
-          const datePart = deadlineParts[0];
-          const timePart = deadlineParts[1];
+        const deadlineDate = new Date(announcement.deadline);
+        if (!isNaN(deadlineDate.getTime())) {
+          // Use UTC methods to get the UTC time for the form
+          const year = deadlineDate.getUTCFullYear();
+          const month = String(deadlineDate.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(deadlineDate.getUTCDate()).padStart(2, '0');
+          const hours = String(deadlineDate.getUTCHours()).padStart(2, '0');
+          const minutes = String(deadlineDate.getUTCMinutes()).padStart(2, '0');
           
-          // Parse the formatted date (e.g., "January 20, 2024")
-          const date = new Date(datePart);
-          if (timePart) {
-            const [time, modifier] = timePart.split(' ');
-            let [hours, minutes] = time.split(':');
-            
-            if (modifier === 'pm' && hours !== '12') {
-              hours = parseInt(hours) + 12;
-            } else if (modifier === 'am' && hours === '12') {
-              hours = '00';
-            }
-            
-            date.setHours(parseInt(hours), parseInt(minutes));
-          }
+          formattedDeadline = `${year}-${month}-${day}T${hours}:${minutes}`;
           
-          setDeadline(date.toISOString().slice(0, 16));
+          console.log('Debug info:', {
+            dbDeadline: announcement.deadline,
+            parsedDate: deadlineDate.toISOString(),
+            utcHours: deadlineDate.getUTCHours(),
+            utcMinutes: deadlineDate.getUTCMinutes(),
+            formattedForForm: formattedDeadline,
+            expectedCardDisplay: `Card will show: Jan ${day}, ${year} at ${hours}:${minutes}`
+          });
         }
       } catch (error) {
         console.error('Error parsing deadline:', error);
-        setDeadline("");
       }
-    } else {
-      setDeadline("");
     }
+    
+    console.log('Formatted deadline for form:', formattedDeadline);
+    console.log('=== END DEBUG ===');
+    
+    setDeadline(formattedDeadline);
+    setOriginalDeadline(formattedDeadline);
     
     setShowModal(true);
   };
@@ -611,7 +659,6 @@ export default function AnnouncementTab() {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Close filter dropdown
       if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
         setFilterDropdownOpen(false);
       }
@@ -632,19 +679,23 @@ export default function AnnouncementTab() {
       classInfo,
       announcementsCount: announcements.length,
       classesCount: classes.length,
+      sortedCount: sortedAnnouncements.length,
       loading: {
         overall: loading,
         announcements: loadingAnnouncements,
         classes: loadingClasses,
         classInfo: loadingClassInfo
-      }
+      },
+      error,
+      filterOption,
+      searchQuery
     });
-  }, [loading, loadingAnnouncements, loadingClasses, loadingClassInfo, announcements, classes, classInfo, subjectCode]);
+  }, [loading, loadingAnnouncements, loadingClasses, loadingClassInfo, announcements, classes, classInfo, subjectCode, error, filterOption, searchQuery]);
 
-  // Show loading only if all data is still loading
-  const isLoading = loading && loadingAnnouncements;
+  // Show loading only if announcements are still loading
+  const isLoading = loadingAnnouncements || loading;
 
-  if (isLoading) {
+  if (isLoading && announcements.length === 0) {
     return (
       <div className="bg-[#23232C] min-h-screen">
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
@@ -653,6 +704,7 @@ export default function AnnouncementTab() {
           <div className="p-8 text-center text-[#FFFFFF]">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
             <p className="mt-3 text-[#FFFFFF]/80">Loading announcements...</p>
+            {error && <p className="mt-2 text-[#FF5252] text-sm">{error}</p>}
           </div>
         </div>
       </div>
@@ -760,7 +812,7 @@ export default function AnnouncementTab() {
               {/* Attendance Button */}
               {renderActionButton("/Attendance", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
               
-              {/* Grade Button - CHANGED TO RED */}
+              {/* Grade Button */}
               {renderActionButton("/GradeTab", GradeIcon, "Grade", false, "bg-[#A15353]/20 text-[#A15353] border-[#A15353]/30 hover:bg-[#A15353]/30")}
               
               {/* Analytics Button */}
@@ -872,6 +924,22 @@ export default function AnnouncementTab() {
             </div>
           </div>
 
+          {/* Error message display */}
+          {error && (
+            <div className="mb-4 p-3 bg-[#FF5252]/10 border border-[#FF5252] rounded">
+              <p className="text-[#FFFFFF] text-sm">{error}</p>
+              <button 
+                onClick={() => {
+                  setError(null);
+                  fetchAnnouncements();
+                }}
+                className="mt-2 text-[#FF5252] font-medium hover:underline text-xs cursor-pointer"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* ========== ANNOUNCEMENT CARDS SECTION ========== */}
           <div className="space-y-4">
             {loadingAnnouncements ? (
@@ -897,6 +965,9 @@ export default function AnnouncementTab() {
                   onDelete={() => handleDelete(announcement.id)}
                   onMarkAsRead={() => handleMarkAsRead(announcement.id)}
                   onMarkAsUnread={() => handleMarkAsUnread(announcement.id)}
+                  announcementId={announcement.id}
+                  professorId={getProfessorId()}
+                  updatedAt={announcement.updated_at}
                 />
               ))
             ) : (
@@ -948,6 +1019,7 @@ export default function AnnouncementTab() {
         currentSubjectCode={subjectCode}
         restrictToCurrentSubject={true}
         postingAnnouncement={postingAnnouncement}
+        originalDeadline={originalDeadline}
       />
     </div>
   );

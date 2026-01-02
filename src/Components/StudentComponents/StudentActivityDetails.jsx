@@ -552,6 +552,12 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
                 <span className="text-[#767EE0] font-bold text-sm">
                   {currentActivity.activity_type} #{currentActivity.task_number}
                 </span>
+                {/* Added Edited label next to title */}
+                {currentActivity.school_work_edited === 1 && (
+                  <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
+                    Edited
+                  </span>
+                )}
                 {submitted && (
                   <span className="text-xs bg-[#00A15D] text-white px-2 py-0.5 rounded-full">
                     Submitted

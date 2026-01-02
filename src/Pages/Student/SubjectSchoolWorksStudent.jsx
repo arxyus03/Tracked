@@ -133,8 +133,8 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
       type: "submitted" 
     };
     return { 
-      status: "Active", 
-      color: "bg-[#767EE0]/20 text-[#767EE0]", 
+      status: "", // CHANGED: Empty string for active activities (removed "Active" label)
+      color: "", // No color needed since we won't display status
       type: "active" 
     };
   };
@@ -210,7 +210,14 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
             </span>
           </div>
           
-          {/* Only show status if it's not empty (i.e., not submitted) */}
+          {/* Edited Label - Show if school_work_edited is 1 */}
+          {activity.school_work_edited === 1 && (
+            <span className="px-1 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
+              Edited
+            </span>
+          )}
+          
+          {/* Only show status if it's not empty (i.e., not submitted or active) */}
           {statusInfo.status && (
             <span className={`px-1 py-0.5 text-xs font-medium rounded ${statusInfo.color}`}>
               {statusInfo.status}

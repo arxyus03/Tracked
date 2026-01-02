@@ -58,56 +58,87 @@ function handleGetRequest($conn) {
     $student_id = $_GET['student_id'] ?? '';
     $subject_code = $_GET['subject_code'] ?? '';
 
-    if (empty($student_id) || empty($subject_code)) {
+    if (empty($student_id)) {
         $response['success'] = false;
-        $response['message'] = "Student ID and Subject Code are required";
+        $response['message'] = "Student ID is required";
         echo json_encode($response);
         exit();
     }
 
-    // Verify student is enrolled in this class
-    $check_query = "SELECT sc.* FROM student_classes sc 
-                   WHERE sc.student_ID = ? AND sc.subject_code = ? AND sc.archived = 0";
-    $check_stmt = $conn->prepare($check_query);
-    $check_stmt->bind_param("ss", $student_id, $subject_code);
-    $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
+    // If subject_code is provided, get announcements for that specific class
+    if (!empty($subject_code)) {
+        // Verify student is enrolled in this specific class
+        $check_query = "SELECT sc.* FROM student_classes sc 
+                       WHERE sc.student_ID = ? AND sc.subject_code = ? AND sc.archived = 0";
+        $check_stmt = $conn->prepare($check_query);
+        $check_stmt->bind_param("ss", $student_id, $subject_code);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
 
-    if ($check_result->num_rows === 0) {
-        $response['success'] = false;
-        $response['message'] = "Student is not enrolled in this class or class does not exist";
-        echo json_encode($response);
+        if ($check_result->num_rows === 0) {
+            $response['success'] = false;
+            $response['message'] = "Student is not enrolled in this class or class does not exist";
+            $response['debug'] = array(
+                'student_id' => $student_id,
+                'subject_code' => $subject_code
+            );
+            echo json_encode($response);
+            $check_stmt->close();
+            exit();
+        }
         $check_stmt->close();
-        exit();
-    }
-    $check_stmt->close();
 
-    // Get announcements for the specific classroom that the student is enrolled in
-    // Include read status from announcement_read_status table
-    $query = "SELECT 
-                a.announcement_ID as id,
-                a.title,
-                a.description,
-                a.link,
-                a.deadline,
-                a.created_at,
-                CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by_fullname,
-                t.tracked_lastname,
-                t.tracked_gender,
-                c.subject,
-                c.section,
-                c.subject_code,
-                COALESCE(ars.is_read, 0) as is_read
-            FROM announcements a
-            JOIN tracked_users t ON a.professor_ID = t.tracked_ID
-            JOIN classes c ON a.classroom_ID = c.subject_code
-            LEFT JOIN announcement_read_status ars ON a.announcement_ID = ars.announcement_ID 
-                AND ars.student_ID = ?
-            WHERE a.classroom_ID = ?
-            ORDER BY a.created_at DESC";
+        // Get announcements for the specific classroom
+        $query = "SELECT 
+                    a.announcement_ID as id,
+                    a.title,
+                    a.description,
+                    a.link,
+                    a.deadline,
+                    a.created_at,
+                    a.updated_at,
+                    CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by_fullname,
+                    t.tracked_lastname,
+                    t.tracked_gender,
+                    c.subject,
+                    c.section,
+                    c.subject_code,
+                    COALESCE(ars.is_read, 0) as is_read
+                FROM announcements a
+                JOIN tracked_users t ON a.professor_ID = t.tracked_ID
+                JOIN classes c ON a.classroom_ID = c.subject_code
+                LEFT JOIN announcement_read_status ars ON a.announcement_ID = ars.announcement_ID 
+                    AND ars.student_ID = ?
+                WHERE a.classroom_ID = ?
+                ORDER BY a.created_at DESC";
 
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("ss", $student_id, $subject_code);
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ss", $student_id, $subject_code);
+    } else {
+        // Get announcements for all classes the student is enrolled in
+        $query = "SELECT 
+                    a.announcement_ID as id,
+                    a.title,
+                    a.description,
+                    a.link,
+                    a.deadline,
+                    a.created_at,
+                    a.updated_at,
+                    CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by_fullname,
+                    c.subject,
+                    c.section,
+                    c.subject_code,
+                    t.tracked_lastname as prof_lastname
+                FROM announcements a
+                JOIN tracked_users t ON a.professor_ID = t.tracked_ID
+                JOIN classes c ON a.classroom_ID = c.subject_code
+                WHERE a.professor_ID = ?
+                ORDER BY a.created_at DESC";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bind_param("ss", $student_id, $student_id);
+            }
+
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -127,12 +158,18 @@ function handleGetRequest($conn) {
             'link' => $row['link'] ?: '#',
             'section' => $row['section'],
             'subject_code' => $row['subject_code'],
-            'isRead' => (bool)$row['is_read'] // Convert to boolean
+            'isRead' => (bool)$row['is_read'],
+            'updated_at' => $row['updated_at']
         );
     }
 
     $response['success'] = true;
     $response['announcements'] = $announcements;
+    $response['debug'] = array(
+        'student_id' => $student_id,
+        'subject_code' => $subject_code,
+        'count' => count($announcements)
+    );
 
     $stmt->close();
     

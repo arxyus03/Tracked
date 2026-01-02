@@ -27,6 +27,9 @@ if ($conn->connect_error) {
     exit();
 }
 
+// Set timezone to UTC for consistency
+date_default_timezone_set('UTC');
+
 $response = array();
 
 try {
@@ -51,10 +54,12 @@ try {
                     a.link,
                     a.deadline,
                     a.created_at,
-                    CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by,
+                    a.updated_at,
+                    CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by_fullname,
                     c.subject,
                     c.section,
-                    c.subject_code
+                    c.subject_code,
+                    t.tracked_lastname as prof_lastname
                   FROM announcements a
                   JOIN tracked_users t ON a.professor_ID = t.tracked_ID
                   JOIN classes c ON a.classroom_ID = c.subject_code
@@ -92,15 +97,17 @@ try {
                     a.link,
                     a.deadline,
                     a.created_at,
-                    CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by,
+                    a.updated_at,
+                    CONCAT(t.tracked_lastname, ', ', t.tracked_firstname, ' ', COALESCE(t.tracked_middlename, '')) as posted_by_fullname,
                     c.subject,
                     c.section,
-                    c.subject_code
-                FROM announcements a
-                JOIN tracked_users t ON a.professor_ID = t.tracked_ID
-                JOIN classes c ON a.classroom_ID = c.subject_code
-                WHERE a.professor_ID = ? AND a.classroom_ID = ?
-                ORDER BY a.created_at DESC";
+                    c.subject_code,
+                    t.tracked_lastname as prof_lastname
+                  FROM announcements a
+                  JOIN tracked_users t ON a.professor_ID = t.tracked_ID
+                  JOIN classes c ON a.classroom_ID = c.subject_code
+                  WHERE a.professor_ID = ? AND a.classroom_ID = ?
+                  ORDER BY a.created_at DESC";
 
         $stmt = $conn->prepare($query);
         $stmt->bind_param("ss", $professor_ID, $classroom_ID);
@@ -111,28 +118,44 @@ try {
 
     $announcements = array();
     while ($row = $result->fetch_assoc()) {
-        // Send raw timestamp - let frontend handle timezone conversion
-        $row['datePosted'] = $row['created_at']; // Send raw timestamp
+        // Format posted_by name for professor side
+        $postedBy = 'Prof. ' . $row['prof_lastname'];
         
-        // For deadline, also send raw timestamp
-        $row['deadline'] = $row['deadline']; // Send raw timestamp
-
+        // Convert MySQL datetime to ISO 8601 format in UTC
+        $createdAt = $row['created_at'];
+        $updatedAt = $row['updated_at'];
+        $deadline = $row['deadline'];
+        
+        // Format dates properly
+        $formattedCreatedAt = date('c', strtotime($createdAt)); // ISO 8601 format
+        $formattedUpdatedAt = date('c', strtotime($updatedAt)); // ISO 8601 format
+        $formattedDeadline = $deadline ? date('c', strtotime($deadline)) : null;
+        
         $announcements[] = array(
             'id' => $row['id'],
             'subject' => $row['subject'],
             'title' => $row['title'],
-            'postedBy' => $row['posted_by'],
-            'datePosted' => $row['datePosted'], // Raw timestamp
-            'deadline' => $row['deadline'], // Raw timestamp
-            'instructions' => $row['description'],
+            'postedBy' => $postedBy,
+            'postedByFull' => $row['posted_by_fullname'],
+            'datePosted' => $formattedCreatedAt, // Use formatted ISO date
+            'deadline' => $formattedDeadline,
+            'description' => $row['description'],
+            'instructions' => $row['description'], // For compatibility
             'link' => $row['link'] ?: '#',
             'section' => $row['section'],
-            'subject_code' => $row['subject_code']
+            'subject_code' => $row['subject_code'],
+            'updated_at' => $formattedUpdatedAt
         );
     }
 
     $response['success'] = true;
     $response['announcements'] = $announcements;
+    $response['debug'] = array(
+        'professor_ID' => $professor_ID,
+        'classroom_ID' => $classroom_ID,
+        'count' => count($announcements),
+        'timezone' => date_default_timezone_get()
+    );
 
     $stmt->close();
 

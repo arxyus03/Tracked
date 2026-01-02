@@ -14,6 +14,7 @@ import AudioIcon from "../../assets/Audio.svg";
 import ArchiveIcon from "../../assets/Archive.svg";
 import DownloadIcon from "../../assets/Download(Light).svg";
 import TrackEd from "../../assets/TrackEd.svg";
+import TimeIcon from "../../assets/Clock.svg"; // Added time icon for posted time
 
 import StudentActivitiesDetails from './StudentActivitiesDetails';
 
@@ -42,6 +43,7 @@ const ClassWorkSubmission = ({
   const [isUploading, setIsUploading] = useState(false);
   
   const scrollContainerRef = useRef(null);
+  const filterButtonRef = useRef(null); // New ref for filter button
   const BACKEND_URL = 'https://tracked.6minds.site/Professor/SubjectDetailsDB';
 
   // Circular Progress Bar Component
@@ -98,6 +100,81 @@ const ClassWorkSubmission = ({
     );
   };
 
+  // ========== DATE FORMATTING FUNCTIONS ==========
+  
+  // Format deadline date in UTC (as originally intended)
+  const formatDeadline = (dateString) => {
+    if (!dateString || dateString === "No deadline") return "No deadline";
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return dateString;
+      }
+      
+      // Format: Month Day, Year at HH:MM AM/PM (UTC)
+      const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC' // Deadline in UTC as per original requirement
+      };
+      
+      const formattedDate = date.toLocaleDateString('en-US', options);
+      return formattedDate;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString;
+    }
+  };
+
+  // Format created date in Philippine Time (UTC+8)
+  const formatCreatedDate = (dateString) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "";
+      }
+      
+      // Format: Month Day, Year at HH:MM AM/PM (Philippine Time)
+      const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Manila' // Philippine Time (UTC+8)
+      };
+      
+      const formattedDate = date.toLocaleDateString('en-US', options);
+      return formattedDate;
+    } catch (error) {
+      console.error('Error formatting created date:', error);
+      return "";
+    }
+  };
+
+  // Get deadline color for styling
+  const getDeadlineColor = (deadline) => {
+    if (!deadline || deadline === "No deadline") return 'text-[#767EE0]';
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    const timeDiff = deadlineDate.getTime() - now.getTime();
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
+    
+    if (timeDiff < 0) return 'text-[#A15353]';
+    if (hoursDiff <= 24) return 'text-[#FFA600]';
+    return 'text-[#00A15D]';
+  };
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
@@ -115,6 +192,20 @@ const ClassWorkSubmission = ({
           input.parentNode.removeChild(input);
         }
       });
+    };
+  }, []);
+
+  // Close filter dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterButtonRef.current && !filterButtonRef.current.contains(event.target)) {
+        setFilterDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -897,12 +988,6 @@ const ClassWorkSubmission = ({
 
   const handleStatusClick = (status) => setFilter(status);
 
-  const formatDeadline = (deadline) => {
-    if (!deadline) return 'No deadline';
-    const date = new Date(deadline);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
   const scrollToStudents = () => {
     if (isMobile && scrollContainerRef.current) {
       setActiveView('students');
@@ -969,7 +1054,7 @@ const ClassWorkSubmission = ({
                   e.target.src = `https://via.placeholder.com/64/374151/FFFFFF?text=${file.name.substring(0, 1).toUpperCase()}`;
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-center pb-1">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-1">
                 <span className="text-xs text-white bg-black/50 px-1 rounded">Click to expand</span>
               </div>
             </div>
@@ -1076,11 +1161,44 @@ const ClassWorkSubmission = ({
           {/* Header */}
           <div className="flex items-center justify-between p-3 border-b border-gray-700 flex-shrink-0">
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-bold text-white truncate">Student Submissions - {activity.title}</h2>
-              <p className="text-xs text-gray-400 mt-0.5">{activity.activity_type} #{activity.task_number}</p>
-              <div className="flex items-center gap-1 mt-1">
-                <img src={ClockIcon} alt="Deadline" className="w-3 h-3 text-[#A15353]" />
-                <span className="text-xs text-[#A15353] font-bold">Deadline: {formatDeadline(activity.deadline)}</span>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[#767EE0] font-bold text-sm">
+                  {activity.activity_type} #{activity.task_number}
+                </span>
+                {/* Added Edited label next to title */}
+                {activity.school_work_edited === 1 && (
+                  <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
+                    Edited
+                  </span>
+                )}
+                <h2 className="text-sm font-bold text-white truncate">Student Submissions - {activity.title}</h2>
+              </div>
+              
+              {/* Deadline and Created Date in header */}
+              <div className="space-y-1">
+                {/* Deadline */}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <img src={ClockIcon} alt="Deadline" className="w-3 h-3 text-[#A15353]" />
+                    <span className="text-xs font-medium text-[#FFFFFF]/60">Deadline:</span>
+                  </div>
+                  <span className={`text-xs font-medium ${getDeadlineColor(activity.deadline)}`}>
+                    {formatDeadline(activity.deadline)}
+                  </span>
+                </div>
+                
+                {/* Posted Date */}
+                {activity.created_at && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <img src={TimeIcon} alt="Posted" className="w-3 h-3 opacity-60" />
+                      <span className="text-xs font-medium text-[#FFFFFF]/60">Posted:</span>
+                    </div>
+                    <span className="text-xs font-medium text-[#FFFFFF]/80">
+                      {formatCreatedDate(activity.created_at)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -1121,23 +1239,25 @@ const ClassWorkSubmission = ({
                         instructionExpanded ? '' : 'max-h-16 overflow-hidden'
                       }`}>
                         {renderInstructionWithLinks(activity.instruction)}
-                        {activity.link && !hasLinkInInstruction(activity.instruction) && (
-                          <div className="mt-2">
-                            <p className="text-white text-xs font-medium mb-1">Reference Link:</p>
-                            <a href={activity.link} target="_blank" rel="noopener noreferrer"
-                              className="text-[#767EE0] hover:text-[#5a62c4] hover:underline text-xs break-all">
-                              {activity.link}
-                            </a>
-                          </div>
-                        )}
                       </div>
-                      {(activity.instruction && activity.instruction.length > 150) || activity.link ? (
+                      {activity.instruction && activity.instruction.length > 150 ? (
                         <button onClick={() => setInstructionExpanded(!instructionExpanded)}
                           className="text-xs text-[#767EE0] hover:text-[#5a62c4] font-medium mt-0.5 cursor-pointer">
                           {instructionExpanded ? 'Show less' : 'Show more'}
                         </button>
                       ) : null}
                     </div>
+                    
+                    {/* Reference Link - Moved outside the expandable section */}
+                    {activity.link && !hasLinkInInstruction(activity.instruction) && (
+                      <div className="mt-2">
+                        <p className="text-white text-xs font-medium mb-1">Reference Link:</p>
+                        <a href={activity.link} target="_blank" rel="noopener noreferrer"
+                          className="text-[#767EE0] hover:text-[#5a62c4] hover:underline text-xs break-all">
+                          {activity.link}
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   {/* Status Rectangles */}
@@ -1165,21 +1285,22 @@ const ClassWorkSubmission = ({
                   </div>
 
                   {/* Filter Section */}
-                  <div className="px-3 pb-3">
+                  <div className="px-3 pb-3 relative">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                      <div className="relative">
-                        <label className="text-xs font-medium text-gray-300 mr-1">Filter:</label>
+                      <div className="relative" ref={filterButtonRef}>
+                        <label className="text-xs font-medium text-white mr-1">Filter:</label>
                         <button onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                          className="flex items-center gap-1 px-2 py-1 border border-gray-600 rounded bg-[#23232C] text-xs font-medium text-gray-300 hover:bg-[#2D2D3A] cursor-pointer">
+                          className="flex items-center gap-1 px-2 py-1 border border-gray-600 rounded bg-[#23232C] text-xs font-medium text-white hover:bg-[#2D2D3A] cursor-pointer">
                           {filter}
                           <img src={ArrowDown} alt="" className={`w-3 h-3 transition-transform ${filterDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
 
+                        {/* Filter Dropdown - Now positioned absolutely above the table */}
                         {filterDropdownOpen && (
-                          <div className="absolute top-full left-0 mt-1 w-32 bg-[#23232C] rounded shadow-lg border border-gray-600 z-10">
+                          <div className="absolute top-full left-0 mt-1 w-32 bg-[#23232C] rounded shadow-lg border border-gray-600 z-20">
                             {filterOptions.map(option => (
                               <button key={option} onClick={() => { setFilter(option); setFilterDropdownOpen(false); }}
-                                className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-[#2D2D3A] cursor-pointer ${
+                                className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-[#2D2D3A] cursor-pointer text-white ${
                                   filter === option ? 'bg-[#2D2D3A] font-medium' : ''
                                 }`}>
                                 {option}

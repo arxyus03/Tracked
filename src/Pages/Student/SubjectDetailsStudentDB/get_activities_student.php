@@ -70,6 +70,7 @@ try {
     $class = $classStmt->fetch(PDO::FETCH_ASSOC);
 
     // Get activities for this subject with UTC formatted timestamps, grade, and professor files info
+    // UPDATED: Added school_work_edited field to the SELECT query
     $stmt = $pdo->prepare("
         SELECT 
             a.id,
@@ -80,6 +81,7 @@ try {
             a.instruction,
             a.link,
             a.points,
+            a.school_work_edited,  -- ADDED THIS LINE
             DATE_FORMAT(a.deadline, '%Y-%m-%dT%H:%i:%sZ') as deadline,
             DATE_FORMAT(a.created_at, '%Y-%m-%dT%H:%i:%sZ') as created_at,
             DATE_FORMAT(a.updated_at, '%Y-%m-%dT%H:%i:%sZ') as updated_at,
