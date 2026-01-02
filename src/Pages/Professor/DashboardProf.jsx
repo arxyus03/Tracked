@@ -15,8 +15,8 @@ import ID from '../../assets/ID.svg';
 import Pie from '../../assets/Pie.svg';
 import Details from '../../assets/Details.svg';
 import Archive from '../../assets/ArchiveBox.svg';
-import AlertIcon from '../../assets/TrackEd.svg'; // Add this import
-import CloseIcon from '../../assets/Close.svg'; // Add this import
+import AlertIcon from '../../assets/TrackEd.svg'; // Keep this for the icon
+import CrossIcon from '../../assets/Cross.svg'; // Changed from CloseIcon to CrossIcon
 
 export default function DashboardProf() {
   const [isOpen, setIsOpen] = useState(true);
@@ -165,41 +165,14 @@ export default function DashboardProf() {
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const currentDayName = dayNames[dayOfWeek];
       
-      // For demo purposes, let's show alert for all subjects
-      // In a real app, you would check attendance records from an API
-      const subjectsNeedingAttendance = handledSubjects.filter(subject => {
-        // Check if today is a class day based on schedule
-        const classDays = subject.classDays || "MWF";
-        const dayMap = {
-          'M': 'Monday',
-          'T': 'Tuesday',
-          'W': 'Wednesday',
-          'TH': 'Thursday',
-          'F': 'Friday',
-          'S': 'Saturday'
-        };
-        
-        // Check if current day matches any of the class days
-        const daysArray = classDays.split('');
-        const hasClassToday = daysArray.some(day => dayMap[day] === currentDayName);
-        
-        // For demo, show alert for 2 random subjects
-        return hasClassToday && Math.random() > 0.5;
-      });
-      
-      // If no subjects found, show for at least one for demo
-      if (subjectsNeedingAttendance.length === 0 && handledSubjects.length > 0) {
-        // Pick first subject for demo
-        setSubjectsNeedingAttendance([handledSubjects[0]]);
-      } else {
-        setSubjectsNeedingAttendance(subjectsNeedingAttendance);
-      }
+      // Show all subjects in the alert (removed the filter)
+      setSubjectsNeedingAttendance(handledSubjects);
       
       // Check if alert has been dismissed today
       const alertDismissed = localStorage.getItem('attendanceAlertDismissed');
       const todayDateKey = today.toISOString().split('T')[0]; // YYYY-MM-DD format
       
-      if (alertDismissed !== todayDateKey && subjectsNeedingAttendance.length > 0) {
+      if (alertDismissed !== todayDateKey && handledSubjects.length > 0) {
         setShowAttendanceAlert(true);
       }
     } catch (error) {
@@ -265,74 +238,6 @@ export default function DashboardProf() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
         <div className="p-3 sm:p-4 md:p-5 text-white">
-          
-          {/* Attendance Alert Notification */}
-          {showAttendanceAlert && subjectsNeedingAttendance.length > 0 && (
-            <div className="mb-4 bg-gradient-to-r from-[#FFA600]/20 to-[#FFA600]/10 border-l-4 border-[#FFA600] rounded-lg p-4 relative">
-              <button 
-                onClick={dismissAlert}
-                className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors"
-              >
-                <img src={CloseIcon} alt="Close" className="h-4 w-4" />
-              </button>
-              
-              <div className="flex items-start">
-                <div className="mr-3 mt-1">
-                  <img src={AlertIcon} alt="Alert" className="h-6 w-6 text-[#FFA600]" />
-                </div>
-                
-                <div className="flex-1">
-                  <h3 className="font-bold text-white mb-1 flex items-center">
-                    <span>Attendance Reminder</span>
-                    <span className="ml-2 text-xs bg-[#FFA600] text-black px-2 py-0.5 rounded-full">
-                      Today
-                    </span>
-                  </h3>
-                  
-                  <p className="text-sm text-white/80 mb-2">
-                    Record attendance for today ({todayDate})
-                  </p>
-                  
-                  <div className="space-y-2 mt-3">
-                    {subjectsNeedingAttendance.map((subject, index) => (
-                      <div key={index} className="bg-[#23232C]/50 rounded p-2">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-white text-sm">
-                              {subject.subject}
-                            </p>
-                            <p className="text-xs text-white/60">
-                              Section: {subject.section} • {subject.subjectCode}
-                            </p>
-                          </div>
-                          <Link to={`/Attendance?code=${subject.subjectCode}`}>
-                            <button className="bg-[#FFA600] hover:bg-[#E59400] text-black font-medium text-xs px-3 py-1.5 rounded transition-colors">
-                              Take Attendance
-                            </button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="mt-3 flex justify-between items-center">
-                    <button 
-                      onClick={dismissAlert}
-                      className="text-xs text-white/60 hover:text-white transition-colors"
-                    >
-                      Remind me later
-                    </button>
-                    <Link to="/Classes">
-                      <button className="text-xs bg-transparent hover:bg-[#23232C] text-white px-3 py-1.5 rounded border border-white/20 transition-colors">
-                        View All Classes
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="mb-3">
             <div className="flex items-center mb-1">
               <img src={Dashboard} alt="Dashboard" className="h-5 w-5 mr-2" />
@@ -346,6 +251,67 @@ export default function DashboardProf() {
           </div>
 
           <hr className="border-white/30 mb-4 border-1" />
+
+          {/* Attendance Alert Notification - Updated with green background with low opacity */}
+          {showAttendanceAlert && subjectsNeedingAttendance.length > 0 && (
+            <div className="mb-4 bg-[#00A15D]/20 rounded-lg p-3 relative border border-[#00A15D]/50">
+              <button 
+                onClick={dismissAlert}
+                className="absolute top-1.5 right-1.5 text-white/60 hover:text-white transition-colors p-0.5"
+              >
+                <img src={CrossIcon} alt="Close" className="h-3 w-3" />
+              </button>
+              
+              <div className="flex items-start pr-4">
+                <div className="mr-2 mt-0.5">
+                  <img src={AlertIcon} alt="Alert" className="h-4 w-4" />
+                </div>
+                
+                <div className="flex-1">
+                  <h3 className="font-bold text-white text-sm mb-0.5 flex items-center">
+                    <span>Attendance Reminder</span>
+                    <span className="ml-2 text-xs bg-[#00A15D] text-white px-1.5 py-0.5 rounded-full">
+                      Today
+                    </span>
+                  </h3>
+                  
+                  <p className="text-xs text-white/80 mb-1.5">
+                    Record attendance for today ({todayDate})
+                  </p>
+                  
+                  <div className="space-y-1.5 mt-2">
+                    {subjectsNeedingAttendance.map((subject, index) => (
+                      <div key={index} className="bg-[#23232C]/60 rounded p-1.5">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-white text-xs">
+                              {subject.subject}
+                            </p>
+                            <p className="text-xs text-white/60">
+                              Section: {subject.section} • {subject.subjectCode}
+                            </p>
+                          </div>
+                          <Link to={`/Attendance?code=${subject.subjectCode}`}>
+                            <button className="bg-[#00A15D] hover:bg-[#008F4F] text-white font-medium text-xs px-2 py-1 rounded transition-colors">
+                              Take Attendance
+                            </button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-2 flex justify-end items-center">
+                    <Link to="/ClassManagement">
+                      <button className="text-xs bg-transparent hover:bg-[#00A15D]/30 text-white px-2 py-1 rounded border border-white/20 transition-colors">
+                        View All Classes
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 mb-6">
             {/* Handled Subjects Section */}

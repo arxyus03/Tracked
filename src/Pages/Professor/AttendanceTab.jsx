@@ -54,6 +54,10 @@ export default function Attendance() {
   
   // ========== ADDED: Save Attendance Loading State ==========
   const [isSaving, setIsSaving] = useState(false);
+  
+  // ========== ADDED: Today's Attendance Recorded State ==========
+  const [todayAttendanceRecorded, setTodayAttendanceRecorded] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState(null);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -147,8 +151,48 @@ export default function Attendance() {
   };
 
   useEffect(() => {
-    if (subjectCode) fetchClassAndStudents();
+    if (subjectCode) {
+      fetchClassAndStudents();
+      checkTodayAttendance();
+    }
   }, [subjectCode]);
+
+  // ========== ADDED: Check Today's Attendance Function ==========
+  const checkTodayAttendance = async () => {
+    try {
+      const professorId = getProfessorId();
+      const today = new Date().toISOString().split("T")[0];
+      
+      const response = await fetch(
+        "https://tracked.6minds.site/Professor/AttendanceDB/check_today_attendance.php",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject_code: subjectCode,
+            professor_ID: professorId,
+            attendance_date: today
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.success && result.attendance_exists) {
+        setTodayAttendanceRecorded(true);
+        setIsEditing(false);
+        if (result.last_saved_time) {
+          setLastSavedTime(result.last_saved_time);
+        }
+      } else {
+        setTodayAttendanceRecorded(false);
+        setIsEditing(true);
+        setLastSavedTime(null);
+      }
+    } catch (error) {
+      console.error("Error checking today's attendance:", error);
+      setTodayAttendanceRecorded(false);
+    }
+  };
 
   const fetchClassAndStudents = async () => {
     setLoading(true);
@@ -192,7 +236,6 @@ export default function Attendance() {
   };
 
   const handleSaveAttendance = async () => {
-    // ========== ADDED: Set saving state ==========
     setIsSaving(true);
     
     try {
@@ -223,6 +266,12 @@ export default function Attendance() {
       const result = await response.json();
       if (result.success) {
         setIsEditing(false);
+        setTodayAttendanceRecorded(true);
+        setLastSavedTime(new Date().toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        }));
         
         // Show email notification results if any
         if (result.email_notifications && 
@@ -250,7 +299,6 @@ export default function Attendance() {
       setModalMessage("Error saving attendance");
       setShowErrorModal(true);
     } finally {
-      // ========== ADDED: Reset saving state ==========
       setIsSaving(false);
     }
   };
@@ -474,17 +522,40 @@ export default function Attendance() {
             </div>
           </div>
 
-          {/* ========== ADDED: DATE AND TIME DISPLAY ========== */}
+          {/* ========== ADDED: DATE AND TIME DISPLAY WITH ATTENDANCE STATUS ========== */}
           <div className="mb-4 p-3 bg-[#15151C] rounded-lg border border-[#FFFFFF]/10">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <div>
+              <div className="flex-1">
                 <h3 className="text-sm font-semibold text-[#FFFFFF]">Today's Attendance</h3>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   <div className="text-xs text-[#00A15D] font-medium bg-[#00A15D]/10 px-2 py-0.5 rounded">
                     {currentDateTime.day}
                   </div>
                   <div className="text-xs text-[#FFFFFF]/70">
                     {currentDateTime.date}
+                  </div>
+                  
+                  {/* ========== ATTENDANCE RECORDED INDICATOR ========== */}
+                  <div className="flex items-center gap-2">
+                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${
+                      todayAttendanceRecorded 
+                        ? 'bg-[#00A15D]/20 text-[#00A15D]' 
+                        : 'bg-[#A15353]/20 text-[#A15353]'
+                    }`}>
+                      <div className={`h-1.5 w-1.5 rounded-full ${
+                        todayAttendanceRecorded ? 'bg-[#00A15D]' : 'bg-[#A15353]'
+                      }`}></div>
+                      <span>
+                        {todayAttendanceRecorded ? 'Attendance Recorded' : 'Not Recorded'}
+                      </span>
+                    </div>
+                    
+                    {/* Show last saved time if attendance is recorded */}
+                    {todayAttendanceRecorded && lastSavedTime && (
+                      <div className="text-xs text-[#FFFFFF]/60">
+                        (Last saved: {lastSavedTime})
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -497,6 +568,35 @@ export default function Attendance() {
                 </div>
               </div>
             </div>
+            
+            {/* ========== ADDED: ATTENDANCE STATUS SUMMARY ========== */}
+            {todayAttendanceRecorded && (
+              <div className="mt-2 pt-2 border-t border-[#FFFFFF]/10">
+                <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-[#00A15D]"></div>
+                    <span className="text-[#FFFFFF]/70">Present: </span>
+                    <span className="font-semibold text-[#FFFFFF]">
+                      {Object.values(attendance).filter(status => status === 'present').length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-[#767EE0]"></div>
+                    <span className="text-[#FFFFFF]/70">Late: </span>
+                    <span className="font-semibold text-[#FFFFFF]">
+                      {Object.values(attendance).filter(status => status === 'late').length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="h-2 w-2 rounded-full bg-[#A15353]"></div>
+                    <span className="text-[#FFFFFF]/70">Absent: </span>
+                    <span className="font-semibold text-[#FFFFFF]">
+                      {Object.values(attendance).filter(status => status === 'absent').length}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ========== SEARCH BAR ========== */}
@@ -662,7 +762,10 @@ export default function Attendance() {
               <div className="flex flex-col sm:flex-row justify-end gap-2">
                 {!isEditing ? (
                   <button
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => {
+                      setIsEditing(true);
+                      setTodayAttendanceRecorded(false);
+                    }}
                     className="w-full sm:w-auto px-4 py-2 bg-[#00A15D] hover:bg-[#00874E] text-white font-semibold rounded-md transition-all duration-200 cursor-pointer text-sm"
                   >
                     Edit Attendance
