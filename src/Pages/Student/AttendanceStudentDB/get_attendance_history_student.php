@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 date_default_timezone_set('Asia/Manila');
 
 $host = 'localhost';
-$dbname = 'u7 3320770_tracked';
+$dbname = 'u713320770_tracked'; // FIXED: Removed space from database name
 $username = 'u713320770_trackedDB';
 $password = 'Tracked@2025';
 
@@ -117,6 +117,7 @@ try {
         
         // Format the time - convert created_at to Asia/Manila timezone
         $marked_time = null;
+        $full_datetime = null; // Initialize variable
         if ($created_at) {
             try {
                 // Parse the created_at timestamp
@@ -134,6 +135,7 @@ try {
             } catch (Exception $e) {
                 // Fallback to simple formatting if DateTime fails
                 $marked_time = date('g:i A', strtotime($created_at));
+                $full_datetime = date('Y-m-d H:i:s', strtotime($created_at));
             }
         }
         
@@ -143,7 +145,7 @@ try {
             "status" => $status,
             "created_at" => $created_at,
             "marked_time" => $marked_time,
-            "full_datetime" => $full_datetime ?? null
+            "full_datetime" => $full_datetime
         ];
     }
 

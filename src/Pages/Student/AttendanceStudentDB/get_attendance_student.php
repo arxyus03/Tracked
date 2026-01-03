@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 $host = 'localhost';
-$dbname = 'u713320770_tracked';
+$dbname = 'u713320770_tracked'; // FIXED: Same database name without space
 $username = 'u713320770_trackedDB';
 $password = 'Tracked@2025';
 
@@ -89,7 +89,7 @@ try {
         $total_result = $totalStmt->fetch(PDO::FETCH_ASSOC);
         $total_classes = $total_result ? (int)$total_result['total_classes'] : 0;
         
-        // Check if student has warning (2 or more absences)
+        // Check if student has warning (2 or more absents)
         $has_warning = $absent >= 2;
 
         $attendance_summary[] = [

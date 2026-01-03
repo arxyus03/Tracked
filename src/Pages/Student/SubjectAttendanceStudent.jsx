@@ -310,12 +310,12 @@ export default function SubjectAttendanceStudent() {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('API Response:', data);
+        console.log('API Response (History):', data);
         
         if (data.success) {
           setAttendanceData(data);
           console.log('Attendance history:', data.attendance_history);
-          console.log('Attendance summary:', data.attendance_summary);
+          console.log('Attendance summary from history API:', data.attendance_summary);
         } else {
           console.error('API returned error:', data.message);
           setAttendanceData(null);
@@ -336,16 +336,29 @@ export default function SubjectAttendanceStudent() {
     if (!studentId) return;
 
     try {
+      console.log('Fetching attendance summary data for student:', studentId);
       const response = await fetch(`https://tracked.6minds.site/Student/AttendanceStudentDB/get_attendance_student.php?student_id=${studentId}`);
+      
+      console.log('Summary response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('API Response (Summary):', data);
+        
         if (data.success) {
+          console.log('Attendance summary data:', data.attendance_summary);
           setAttendanceSummaryData(data.attendance_summary);
+        } else {
+          console.error('Summary API returned error:', data.message);
+          setAttendanceSummaryData([]);
         }
+      } else {
+        console.error('Summary HTTP error:', response.status);
+        setAttendanceSummaryData([]);
       }
     } catch (error) {
       console.error('Error fetching attendance summary data:', error);
+      setAttendanceSummaryData([]);
     }
   };
 
@@ -367,13 +380,16 @@ export default function SubjectAttendanceStudent() {
   };
 
   const calculateAttendanceWarnings = () => {
-    if (!attendanceSummaryData.length) return { 
-      overallWarning: false, 
-      subjectWarnings: [], 
-      criticalSubjects: [],
-      totalEffectiveAbsences: 0,
-      hasDroppableSubject: false
-    };
+    if (!attendanceSummaryData.length) {
+      console.log('No attendance summary data available');
+      return { 
+        overallWarning: false, 
+        subjectWarnings: [], 
+        criticalSubjects: [],
+        totalEffectiveAbsences: 0,
+        hasDroppableSubject: false
+      };
+    }
 
     let hasOverallWarning = false;
     let hasDroppableSubject = false;
@@ -423,6 +439,13 @@ export default function SubjectAttendanceStudent() {
       };
     });
 
+    console.log('Calculated warnings:', {
+      overallWarning: hasOverallWarning,
+      subjectWarningsCount: subjectWarnings.length,
+      criticalSubjectsCount: criticalSubjects.length,
+      hasDroppableSubject
+    });
+
     return { 
       overallWarning: hasOverallWarning, 
       subjectWarnings, 
@@ -433,8 +456,8 @@ export default function SubjectAttendanceStudent() {
   };
 
   const filteredAttendance = () => {
-    if (!subjectCode) {
-      console.log('No subject code provided');
+    if (!subjectCode || !attendanceSummaryData.length) {
+      console.log('No subject code or attendance data');
       return [];
     }
     
@@ -443,7 +466,7 @@ export default function SubjectAttendanceStudent() {
       subject && subject.subject_code === subjectCode
     );
     
-    console.log('Filtered by subject code:', filtered);
+    console.log('Filtered by subject code:', subjectCode, filtered);
     return filtered;
   };
 
@@ -617,6 +640,7 @@ export default function SubjectAttendanceStudent() {
   const generateAttendanceSummaryPDF = () => {
     console.log('Generating Attendance Summary PDF...');
     
+    // Use attendanceData from the history API for summary data
     if (!attendanceData || !attendanceData.attendance_summary) {
       console.error('No attendance summary data to generate PDF');
       alert('No attendance summary data available to download.');
@@ -714,9 +738,6 @@ export default function SubjectAttendanceStudent() {
         doc.setFont('helvetica', 'bold');
         doc.text(item.value.toString(), x + boxSize / 2, boxesStartY + 22, { align: 'center' });
       });
-      
-      // REMOVED: The table header lines that were creating the unwanted line
-      // No line should be drawn between boxes and detailed table
       
       // Detailed Summary Section - Moved closer to the boxes
       const detailsY = boxesStartY + boxSize + 8; // Reduced from 12 to 8px below boxes
@@ -1178,6 +1199,19 @@ export default function SubjectAttendanceStudent() {
               {currentAttendanceCardData.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-[#FFFFFF]/80 text-sm">No attendance data available for {getCurrentSubjectName()}.</p>
+                  <p className="text-[#FFFFFF]/60 text-xs mt-2">
+                    This could mean: <br/>
+                    1. No attendance has been recorded yet for this subject<br/>
+                    2. The student is not enrolled in this subject<br/>
+                    3. There's no data in the attendance summary API
+                  </p>
+                  <div className="mt-4 text-left text-xs text-[#FFFFFF]/50 bg-[#23232C] p-3 rounded">
+                    <p><strong>Debug Info:</strong></p>
+                    <p>Student ID: {studentId}</p>
+                    <p>Subject Code: {subjectCode}</p>
+                    <p>Total Summary Data: {attendanceSummaryData.length} subjects</p>
+                    <p>Filtered Data: {filteredAttendance().length} subjects</p>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -1236,7 +1270,6 @@ export default function SubjectAttendanceStudent() {
                             </td>
                             <td className="px-3 py-2">
                               <AttendanceStatusIndicator
-                                effectiveAbsences={subject.totalEffectiveAbsences}
                                 remainingLates={subject.remainingLates}
                                 isCritical={subject.isCritical}
                                 isAtRisk={subject.isAtRisk}
