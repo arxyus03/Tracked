@@ -140,6 +140,8 @@ const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions })
       'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
       'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
       'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
+      'Exam': 'bg-[#FF5252]/20 text-[#FF5252]',
+      'Remedial': 'bg-[#3B82F6]/20 text-[#3B82F6]'
     };
     return colors[type] || 'bg-gray-500/20 text-gray-400';
   };
@@ -329,7 +331,7 @@ export default function ClassworkTab() {
   const [showSubmissionsModal, setShowSubmissionsModal] = useState(false);
   const [creatingActivity, setCreatingActivity] = useState(false);
   
-  const activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory"];
+  const activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Exam", "Remedial"];
 
   // Search and Filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -738,7 +740,7 @@ export default function ClassworkTab() {
           setShowArchiveSuccessModal(false);
         }, 2000);
       } else {
-        alert('Error archiving activity: ' + result.message);
+        alert('Error archiving activity: ' +result.message);
         setShowArchiveModal(false);
       }
     } catch (error) {

@@ -104,7 +104,8 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
       'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
       'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
       'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
-      'Exam': 'bg-[#A15353]/20 text-[#A15353]', // Added Exam with same color as Laboratory
+      'Exam': 'bg-[#FF5252]/20 text-[#FF5252]',
+      'Remedial': 'bg-[#3B82F6]/20 text-[#3B82F6]'
     };
     return colors[type] || 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80';
   };
@@ -638,8 +639,8 @@ export default function SubjectSchoolWorksStudent() {
 
               {filterDropdownOpen && (
                 <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-[#FFFFFF]/10 z-20 overflow-hidden">
-                  {/* Added "Exam" to the filter options */}
-                  {["All", "Active", "Submitted", "Missed", "Assignment", "Quiz", "Activity", "Project", "Laboratory", "Exam"].map((option) => (
+                  {/* Added "Remedial" and "Exam" to the filter options */}
+                  {["All", "Active", "Submitted", "Missed", "Assignment", "Quiz", "Activity", "Project", "Laboratory", "Exam", "Remedial"].map((option) => (
                     <button
                       key={option}
                       className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
@@ -682,7 +683,7 @@ export default function SubjectSchoolWorksStudent() {
             {renderActivitySection("Missed Activities", groupedActivities.missed, "bg-[#A15353]")}
             
             {filteredActivities.length === 0 && renderEmptyState()}
-          </div>
+          </div>fz
         </div>
       </div>
 

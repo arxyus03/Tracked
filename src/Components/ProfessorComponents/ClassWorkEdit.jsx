@@ -7,7 +7,7 @@ const ClassWorkEdit = ({
   onClose, 
   onSave,
   activity,
-  activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Announcement"],
+  activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Remedial", "Exam", "Announcement"],
   getCurrentDateTime,
   subjectCode
 }) => {

@@ -81,7 +81,7 @@ try {
             a.instruction,
             a.link,
             a.points,
-            a.school_work_edited,  -- ADDED THIS LINE
+            a.school_work_edited,
             DATE_FORMAT(a.deadline, '%Y-%m-%dT%H:%i:%sZ') as deadline,
             DATE_FORMAT(a.created_at, '%Y-%m-%dT%H:%i:%sZ') as created_at,
             DATE_FORMAT(a.updated_at, '%Y-%m-%dT%H:%i:%sZ') as updated_at,
@@ -115,26 +115,69 @@ try {
 
     // Check each activity for notification conditions
     foreach ($activities as $activity) {
+        // Check notification history for this student and activity
+        $notificationHistoryStmt = $pdo->prepare("
+            SELECT notification_type, last_notified_at 
+            FROM activity_notification_history 
+            WHERE student_id = ? AND activity_id = ?
+        ");
+        $notificationHistoryStmt->execute([$student_id, $activity['id']]);
+        $notificationHistory = $notificationHistoryStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Create a map of notification types and their last sent times
+        $lastNotifications = [];
+        foreach ($notificationHistory as $history) {
+            $lastNotifications[$history['notification_type']] = strtotime($history['last_notified_at']);
+        }
+
+        // Helper function to check if notification should be sent
+        $shouldSendNotification = function($notificationType) use ($lastNotifications) {
+            // If never sent before, send it
+            if (!isset($lastNotifications[$notificationType])) {
+                return true;
+            }
+            
+            // Check if 3 days (259200 seconds) have passed since last notification
+            $currentTime = time();
+            $lastNotifiedTime = $lastNotifications[$notificationType];
+            $timeDiff = $currentTime - $lastNotifiedTime;
+            
+            return $timeDiff >= 259200; // 3 days in seconds
+        };
+
+        // Helper function to update notification history
+        $updateNotificationHistory = function($activityId, $studentId, $notificationType) use ($pdo) {
+            $stmt = $pdo->prepare("
+                INSERT INTO activity_notification_history 
+                (student_id, activity_id, notification_type, last_notified_at) 
+                VALUES (?, ?, ?, UTC_TIMESTAMP())
+                ON DUPLICATE KEY UPDATE last_notified_at = UTC_TIMESTAMP()
+            ");
+            $stmt->execute([$studentId, $activityId, $notificationType]);
+        };
+
         // 1. Check if activity is missed (deadline passed and not submitted)
         if ($activity['missing'] == 1 && $activity['submitted'] == 0) {
-            // Send missed activity notification
-            $emailSent = sendSchoolWorksNotification(
-                $student['tracked_email'],
-                $student['student_name'],
-                $class['subject_name'],
-                $class['section'],
-                $activity['activity_type'],
-                $activity['task_number'],
-                $activity['title'],
-                $activity['deadline'],
-                "MISSED_ACTIVITY"
-            );
-            if ($emailSent) {
-                $emailNotifications[] = [
-                    'activity_id' => $activity['id'],
-                    'type' => 'missed_activity',
-                    'status' => 'sent'
-                ];
+            if ($shouldSendNotification("MISSED_ACTIVITY")) {
+                $emailSent = sendSchoolWorksNotification(
+                    $student['tracked_email'],
+                    $student['student_name'],
+                    $class['subject_name'],
+                    $class['section'],
+                    $activity['activity_type'],
+                    $activity['task_number'],
+                    $activity['title'],
+                    $activity['deadline'],
+                    "MISSED_ACTIVITY"
+                );
+                if ($emailSent) {
+                    $updateNotificationHistory($activity['id'], $student_id, "MISSED_ACTIVITY");
+                    $emailNotifications[] = [
+                        'activity_id' => $activity['id'],
+                        'type' => 'missed_activity',
+                        'status' => 'sent'
+                    ];
+                }
             }
         }
 
@@ -146,28 +189,35 @@ try {
             
             // Only send notification if submitted within the last 5 minutes (300 seconds)
             if ($timeDiff <= 300) {
-                $emailSent = sendSchoolWorksNotification(
-                    $student['tracked_email'],
-                    $student['student_name'],
-                    $class['subject_name'],
-                    $class['section'],
-                    $activity['activity_type'],
-                    $activity['task_number'],
-                    $activity['title'],
-                    $activity['deadline'],
-                    "ACTIVITY_SUBMITTED"
-                );
-                if ($emailSent) {
-                    $emailNotifications[] = [
-                        'activity_id' => $activity['id'],
-                        'type' => 'activity_submitted',
-                        'status' => 'sent'
-                    ];
+                // For submitted notifications, we want to send them immediately, not wait 3 days
+                // But we should still check if we've sent one recently to avoid duplicates
+                if (!isset($lastNotifications["ACTIVITY_SUBMITTED"]) || 
+                    (time() - $lastNotifications["ACTIVITY_SUBMITTED"]) >= 300) { // 5 minutes
+                    
+                    $emailSent = sendSchoolWorksNotification(
+                        $student['tracked_email'],
+                        $student['student_name'],
+                        $class['subject_name'],
+                        $class['section'],
+                        $activity['activity_type'],
+                        $activity['task_number'],
+                        $activity['title'],
+                        $activity['deadline'],
+                        "ACTIVITY_SUBMITTED"
+                    );
+                    if ($emailSent) {
+                        $updateNotificationHistory($activity['id'], $student_id, "ACTIVITY_SUBMITTED");
+                        $emailNotifications[] = [
+                            'activity_id' => $activity['id'],
+                            'type' => 'activity_submitted',
+                            'status' => 'sent'
+                        ];
+                    }
                 }
             }
         }
 
-        // 3. Check if deadline is approaching (within 24 hours) - SIMPLIFIED VERSION
+        // 3. Check if deadline is approaching (within 24 hours) - WITH 3-DAY COOLDOWN
         if ($activity['deadline'] && $activity['deadline'] !== 'No deadline' && $activity['submitted'] == 0) {
             $deadlineTime = strtotime($activity['deadline']);
             $currentTime = time();
@@ -175,25 +225,27 @@ try {
             
             // Check if deadline is within 24 hours (86400 seconds) and not passed yet
             if ($timeDiff > 0 && $timeDiff <= 86400) {
-                // SIMPLIFIED: Always send notification without duplicate checking
-                $emailSent = sendSchoolWorksNotification(
-                    $student['tracked_email'],
-                    $student['student_name'],
-                    $class['subject_name'],
-                    $class['section'],
-                    $activity['activity_type'],
-                    $activity['task_number'],
-                    $activity['title'],
-                    $activity['deadline'],
-                    "DEADLINE_APPROACHING"
-                );
-                
-                if ($emailSent) {
-                    $emailNotifications[] = [
-                        'activity_id' => $activity['id'],
-                        'type' => 'deadline_approaching',
-                        'status' => 'sent'
-                    ];
+                if ($shouldSendNotification("DEADLINE_APPROACHING")) {
+                    $emailSent = sendSchoolWorksNotification(
+                        $student['tracked_email'],
+                        $student['student_name'],
+                        $class['subject_name'],
+                        $class['section'],
+                        $activity['activity_type'],
+                        $activity['task_number'],
+                        $activity['title'],
+                        $activity['deadline'],
+                        "DEADLINE_APPROACHING"
+                    );
+                    
+                    if ($emailSent) {
+                        $updateNotificationHistory($activity['id'], $student_id, "DEADLINE_APPROACHING");
+                        $emailNotifications[] = [
+                            'activity_id' => $activity['id'],
+                            'type' => 'deadline_approaching',
+                            'status' => 'sent'
+                        ];
+                    }
                 }
             }
         }

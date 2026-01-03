@@ -256,25 +256,20 @@ const ClassWorkCreate = ({
                 />
               </button>
               {activityTypeDropdownOpen && (
-                <div className="absolute top-full mt-1 w-full bg-[#23232C] rounded border border-gray-700 z-10 max-h-60 overflow-y-auto">
-                  {filteredActivityTypes.map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => {
-                        setActivityType(type);
-                        setActivityTypeDropdownOpen(false);
-                      }}
-                      className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white ${
-                        type === "Remedial" || type === "Exam" ? 'font-semibold' : ''
-                      }`}
-                    >
-                      {type === "Remedial" && "🔄 "}
-                      {type === "Exam" && "📝 "}
-                      {type}
-                      {(type === "Remedial" || type === "Exam") && " (NEW)"}
-                    </button>
-                  ))}
-                </div>
+              <div className="absolute top-full mt-1 w-full bg-[#23232C] rounded border border-gray-700 z-10 max-h-60 overflow-y-auto">
+                {filteredActivityTypes.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => {
+                      setActivityType(type);
+                      setActivityTypeDropdownOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
               )}
             </div>
 

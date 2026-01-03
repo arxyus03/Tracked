@@ -29,7 +29,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
   
   // Error states for file loading
   const [imageError, setImageError] = useState(false);
-  const [pendingFileError, setPendingFileError] = useState(false);
+  const [, setPendingFileError] = useState(false);
   const [professorFileErrors, setProfessorFileErrors] = useState({});
 
   const BACKEND_URL = 'https://tracked.6minds.site/Student/SubjectDetailsStudentDB';
@@ -127,6 +127,20 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
         performanceLevel: "Needs Work"
       };
     }
+  };
+
+  // Get activity type color - Updated to include Remedial and Exam
+  const getActivityTypeColor = (type) => {
+    const colors = {
+      'Assignment': 'bg-[#767EE0]/20 text-[#767EE0]',
+      'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
+      'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
+      'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
+      'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
+      'Exam': 'bg-[#FF5252]/20 text-[#FF5252]',
+      'Remedial': 'bg-[#3B82F6]/20 text-[#3B82F6]'
+    };
+    return colors[type] || 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80';
   };
 
   // Function to email professor about missed activity
@@ -471,7 +485,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
       } else {
         alert('Delete failed');
       }
-    } catch (error) {
+    } catch {
       alert('Delete failed');
     }
   };
@@ -508,7 +522,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
       } else {
         alert('Submission failed');
       }
-    } catch (error) {
+    } catch {
       alert('Submit error');
     }
   };
@@ -549,7 +563,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
           <div className="flex items-start justify-between p-3 border-b border-gray-800">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[#767EE0] font-bold text-sm">
+                <span className={`px-1.5 py-0.5 ${getActivityTypeColor(currentActivity.activity_type)} text-xs font-medium rounded`}>
                   {currentActivity.activity_type} #{currentActivity.task_number}
                 </span>
                 {/* Added Edited label next to title */}
