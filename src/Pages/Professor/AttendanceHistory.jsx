@@ -39,6 +39,87 @@ export default function AttendanceHistory() {
     return null;
   };
 
+  // Format date with correct timezone
+  const formatDateWithTime = (rawDate, rawTime) => {
+    if (!rawDate) return { formatted: 'Unknown Date', time: '' };
+    
+    try {
+      // Parse the date
+      const dateObj = new Date(rawDate);
+      
+      // Format date (F j, Y)
+      const formattedDate = dateObj.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      // Try to get time from rawTime (created_at field)
+      let formattedTime = '';
+      if (rawTime) {
+        try {
+          // Parse the timestamp - handle both UTC and local times
+          const timeObj = new Date(rawTime);
+          
+          // Check if the time is in UTC (ends with Z or has UTC timezone)
+          const isUTC = rawTime.includes('Z') || rawTime.includes('+00:00');
+          
+          if (isUTC) {
+            // UTC to Philippines time (UTC+8)
+            timeObj.setHours(timeObj.getHours() + 8);
+          }
+          
+          // Format time in 12-hour format
+          formattedTime = timeObj.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'Asia/Manila'
+          });
+        } catch (timeError) {
+          console.error('Error formatting time:', timeError);
+          
+          // Fallback: Try to extract time from string
+          const timeMatch = rawTime.match(/(\d{1,2}):(\d{2})/);
+          if (timeMatch) {
+            let hours = parseInt(timeMatch[1]);
+            const minutes = timeMatch[2];
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            formattedTime = `${hours}:${minutes} ${ampm}`;
+          }
+        }
+      }
+      
+      // If no time from rawTime, try to get current time (for today's attendance)
+      if (!formattedTime) {
+        const now = new Date();
+        const today = new Date().toISOString().split('T')[0];
+        const recordDate = new Date(rawDate).toISOString().split('T')[0];
+        
+        if (today === recordDate) {
+          // For today's attendance, show current time
+          formattedTime = now.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'Asia/Manila'
+          });
+        }
+      }
+      
+      return {
+        formatted: formattedDate,
+        time: formattedTime,
+        raw: rawDate,
+        rawTime: rawTime
+      };
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return { formatted: rawDate, time: '', raw: rawDate, rawTime: rawTime };
+    }
+  };
+
   // Fetch class details and attendance history
   useEffect(() => {
     if (subjectCode) {
@@ -75,8 +156,34 @@ export default function AttendanceHistory() {
         console.log('Attendance history API response:', result);
         
         if (result.success) {
-          console.log('Attendance history data:', result.attendance_history);
-          setAttendanceHistory(result.attendance_history);
+          // Process dates to show correct time
+          const processedHistory = result.attendance_history.map(record => {
+            const dateInfo = formatDateWithTime(record.raw_date || record.date, record.raw_time || record.created_at);
+            return {
+              ...record,
+              displayDate: dateInfo.formatted,
+              displayTime: dateInfo.time,
+              rawDate: dateInfo.raw,
+              rawTime: dateInfo.rawTime
+            };
+          });
+          
+          // Sort by date and time (newest first)
+          processedHistory.sort((a, b) => {
+            if (!a.rawTime || !b.rawTime) {
+              // Fallback to date comparison
+              const dateA = new Date(a.rawDate || a.date);
+              const dateB = new Date(b.rawDate || b.date);
+              return dateB - dateA;
+            }
+            
+            const timeA = new Date(a.rawTime);
+            const timeB = new Date(b.rawTime);
+            return timeB - timeA;
+          });
+          
+          console.log('Processed attendance history with times:', processedHistory);
+          setAttendanceHistory(processedHistory);
         } else {
           console.error('API returned error:', result.message);
         }
@@ -92,7 +199,9 @@ export default function AttendanceHistory() {
 
   // Filter attendance history based on search term
   const filteredHistory = attendanceHistory.filter(record =>
-    record.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    record.displayDate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    record.displayTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    record.rawDate.toLowerCase().includes(searchTerm.toLowerCase()) ||
     record.students.some(student => 
       student.user_Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.user_ID.toLowerCase().includes(searchTerm.toLowerCase())
@@ -155,7 +264,7 @@ export default function AttendanceHistory() {
         yPosition += 6;
       }
       
-      pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+      pdf.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`, margin, yPosition);
       yPosition += 15;
 
       // Process each attendance date
@@ -166,10 +275,15 @@ export default function AttendanceHistory() {
           yPosition = margin;
         }
 
-        // Date header
+        // Date header with time if available
+        let dateHeader = `Attendance for ${record.displayDate}`;
+        if (record.displayTime) {
+          dateHeader += ` at ${record.displayTime}`;
+        }
+        
         pdf.setFontSize(16);
         pdf.setFont(undefined, 'bold');
-        pdf.text(`Attendance for ${record.date}`, margin, yPosition);
+        pdf.text(dateHeader, margin, yPosition);
         yPosition += 8;
 
         // Calculate statistics for this date
@@ -369,7 +483,7 @@ export default function AttendanceHistory() {
             <div className="relative flex-1 max-w-full sm:max-w-md">
               <input
                 type="text"
-                placeholder="Search by date or student..."
+                placeholder="Search by date, time, or student..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-8 sm:h-9 rounded-md pl-3 pr-9 shadow-md outline-none text-[#FFFFFF] bg-[#15151C] text-xs sm:text-sm border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors"
@@ -411,9 +525,11 @@ export default function AttendanceHistory() {
               filteredHistory.map((record, index) => (
                 <AttendanceCard 
                   key={index} 
-                  date={record.date} 
+                  date={record.displayDate} 
+                  time={record.displayTime}
                   students={record.students}
-                  rawDate={record.raw_date}
+                  rawDate={record.rawDate}
+                  rawTime={record.rawTime}
                   subjectCode={subjectCode}
                   onRemoveStudent={handleOpenRemoveStudent}
                 />

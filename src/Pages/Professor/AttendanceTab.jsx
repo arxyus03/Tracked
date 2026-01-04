@@ -58,6 +58,7 @@ export default function Attendance() {
   // ========== ADDED: Today's Attendance Recorded State ==========
   const [todayAttendanceRecorded, setTodayAttendanceRecorded] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState(null);
+  const [todayDate, setTodayDate] = useState('');
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -90,11 +91,19 @@ export default function Attendance() {
       const dayOptions = { weekday: 'long' };
       const formattedDay = now.toLocaleDateString('en-US', dayOptions);
       
+      // Get today's date in YYYY-MM-DD format for API calls
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayFormatted = `${year}-${month}-${day}`;
+      
       setCurrentDateTime({
         date: formattedDate,
         time: formattedTime,
         day: formattedDay
       });
+      
+      setTodayDate(todayFormatted);
     };
     
     // Update immediately
@@ -153,7 +162,6 @@ export default function Attendance() {
   useEffect(() => {
     if (subjectCode) {
       fetchClassAndStudents();
-      checkTodayAttendance();
     }
   }, [subjectCode]);
 
@@ -161,7 +169,13 @@ export default function Attendance() {
   const checkTodayAttendance = async () => {
     try {
       const professorId = getProfessorId();
-      const today = new Date().toISOString().split("T")[0];
+      
+      // Get today's date in YYYY-MM-DD format
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
       
       const response = await fetch(
         "https://tracked.6minds.site/Professor/AttendanceDB/check_today_attendance.php",
@@ -177,11 +191,22 @@ export default function Attendance() {
       );
 
       const result = await response.json();
+      console.log("Attendance check result:", result);
+      
       if (result.success && result.attendance_exists) {
         setTodayAttendanceRecorded(true);
         setIsEditing(false);
         if (result.last_saved_time) {
           setLastSavedTime(result.last_saved_time);
+        }
+        
+        // Load the saved attendance data
+        if (result.attendance_records && result.attendance_records.length > 0) {
+          const savedAttendance = {};
+          result.attendance_records.forEach(record => {
+            savedAttendance[record.student_ID] = record.status;
+          });
+          setAttendance(savedAttendance);
         }
       } else {
         setTodayAttendanceRecorded(false);
@@ -212,6 +237,9 @@ export default function Attendance() {
           initialAttendance[s.tracked_ID] = "present";
         });
         setAttendance(initialAttendance);
+        
+        // After fetching students, check today's attendance
+        await checkTodayAttendance();
       } else {
         setModalMessage(result.message || "Failed to fetch students");
         setShowErrorModal(true);
@@ -226,21 +254,32 @@ export default function Attendance() {
   };
 
   const handleAttendanceChange = (studentId, status) => {
-    setAttendance((prev) => ({ ...prev, [studentId]: status }));
+    if (isEditing) {
+      setAttendance((prev) => ({ ...prev, [studentId]: status }));
+    }
   };
 
   const handleMarkAllPresent = () => {
-    const newAttendance = {};
-    students.forEach((s) => (newAttendance[s.tracked_ID] = "present"));
-    setAttendance(newAttendance);
+    if (isEditing) {
+      const newAttendance = {};
+      students.forEach((s) => (newAttendance[s.tracked_ID] = "present"));
+      setAttendance(newAttendance);
+    }
   };
 
   const handleSaveAttendance = async () => {
+    if (!isEditing) return;
+    
     setIsSaving(true);
     
     try {
       const professorId = getProfessorId();
-      const today = new Date().toISOString().split("T")[0];
+      // Get current date in YYYY-MM-DD format
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
 
       const attendanceData = {
         subject_code: subjectCode,
@@ -254,6 +293,8 @@ export default function Attendance() {
         ),
       };
 
+      console.log("Saving attendance data:", attendanceData);
+
       const response = await fetch(
         "https://tracked.6minds.site/Professor/AttendanceDB/save_attendance.php",
         {
@@ -264,14 +305,23 @@ export default function Attendance() {
       );
 
       const result = await response.json();
+      console.log("Save attendance response:", result);
+      
       if (result.success) {
         setIsEditing(false);
         setTodayAttendanceRecorded(true);
-        setLastSavedTime(new Date().toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: true 
-        }));
+        
+        // Use the server-provided time from the response
+        if (result.saved_time) {
+          setLastSavedTime(result.saved_time);
+        } else {
+          // Fallback to local time
+          setLastSavedTime(new Date().toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+          }));
+        }
         
         // Show email notification results if any
         if (result.email_notifications && 
@@ -727,8 +777,9 @@ export default function Attendance() {
                             <div className="flex justify-center items-center">
                               <button
                                 onClick={(e) => handleRemoveStudent(student, e)}
-                                className="bg-[#23232C] rounded-md w-8 h-8 shadow-sm flex items-center justify-center border-2 border-transparent hover:border-[#A15353] hover:scale-105 transition-all duration-200 cursor-pointer"
-                                title="Remove student"
+                                disabled={!isEditing}
+                                className={`bg-[#23232C] rounded-md w-8 h-8 shadow-sm flex items-center justify-center border-2 border-transparent hover:border-[#A15353] hover:scale-105 transition-all duration-200 ${isEditing ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                                title={isEditing ? "Remove student" : "Cannot remove while attendance is locked"}
                               >
                                 <img
                                   src={RemoveIcon}

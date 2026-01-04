@@ -8,6 +8,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+// Set timezone to Philippines
+date_default_timezone_set('Asia/Manila');
+
 $host = 'localhost';
 $dbname = 'u713320770_tracked';
 $username = 'u713320770_trackedDB';
@@ -40,8 +43,12 @@ try {
     $deleteStmt = $pdo->prepare("DELETE FROM attendance WHERE subject_code = ? AND attendance_date = ?");
     $deleteStmt->execute([$input['subject_code'], $input['attendance_date']]);
 
-    // Insert new attendance records
-    $insertStmt = $pdo->prepare("INSERT INTO attendance (subject_code, professor_ID, attendance_date, student_ID, status) VALUES (?, ?, ?, ?, ?)");
+    // Get current timestamp in Asia/Manila timezone
+    $current_time = new DateTime('now', new DateTimeZone('Asia/Manila'));
+    $created_at = $current_time->format('Y-m-d H:i:s');
+    
+    // Insert new attendance records with proper timestamp
+    $insertStmt = $pdo->prepare("INSERT INTO attendance (subject_code, professor_ID, attendance_date, student_ID, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
     
     $recordsSaved = 0;
     $absentStudents = [];
@@ -53,7 +60,9 @@ try {
             $input['professor_ID'],
             $input['attendance_date'],
             $record['student_ID'],
-            $record['status']
+            $record['status'],
+            $created_at,
+            $created_at
         ]);
         $recordsSaved++;
         
@@ -67,6 +76,10 @@ try {
 
     $pdo->commit();
 
+    // Format date and time for response
+    $display_date = (new DateTime($input['attendance_date']))->format('F j, Y');
+    $display_time = $current_time->format('g:i A');
+    
     // ✅ NEW: Send email notifications for absent and late students
     $emailResults = [];
     if (!empty($absentStudents) || !empty($lateStudents)) {
@@ -84,7 +97,7 @@ try {
                 $emailSubject = "Absent Notification - " . $class['subject'];
                 $emailTitle = "Absent Recorded";
                 $emailMessage = "You were marked as absent in " . $class['subject'] . " (" . $class['section'] . ") on " . 
-                               date('M j, Y', strtotime($input['attendance_date'])) . ".\n\n" .
+                               $display_date . " at " . $display_time . ".\n\n" .
                                "Please coordinate with your professor if you have any concerns.";
                 
                 $emailSent = sendStudentEmailNotification(
@@ -111,7 +124,7 @@ try {
                 $emailSubject = "Late Arrival Notification - " . $class['subject'];
                 $emailTitle = "Late Arrival Recorded";
                 $emailMessage = "You were marked as late in " . $class['subject'] . " (" . $class['section'] . ") on " . 
-                               date('M j, Y', strtotime($input['attendance_date'])) . ".\n\n" .
+                               $display_date . " at " . $display_time . ".\n\n" .
                                "Remember that three (3) late marks count as one (1) absent.";
                 
                 $emailSent = sendStudentEmailNotification(
@@ -136,11 +149,18 @@ try {
         "success" => true,
         "message" => "Attendance saved successfully",
         "records_saved" => $recordsSaved,
+        "saved_date" => $display_date,
+        "saved_time" => $display_time, // This is the correctly formatted time
+        "created_at" => $created_at,
         "email_notifications" => $emailResults,
         "summary" => [
             "absent_students" => count($absentStudents),
             "late_students" => count($lateStudents),
             "present_students" => $recordsSaved - count($absentStudents) - count($lateStudents)
+        ],
+        "timezone_info" => [
+            "timezone" => "Asia/Manila",
+            "utc_offset" => "+08:00"
         ]
     ]);
 

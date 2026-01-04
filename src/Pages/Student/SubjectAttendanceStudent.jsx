@@ -380,8 +380,9 @@ export default function SubjectAttendanceStudent() {
   };
 
   const calculateAttendanceWarnings = () => {
-    if (!attendanceSummaryData.length) {
-      console.log('No attendance summary data available');
+    // Use the data from the history API instead of the summary API
+    if (!attendanceData || !attendanceData.attendance_summary) {
+      console.log('No attendance summary data available from history API');
       return { 
         overallWarning: false, 
         subjectWarnings: [], 
@@ -396,59 +397,69 @@ export default function SubjectAttendanceStudent() {
     const criticalSubjects = [];
     let totalEffectiveAbsences = 0;
     
-    const subjectWarnings = attendanceSummaryData.map(subject => {
-      const equivalentAbsences = Math.floor(subject.late / 3);
-      const remainingLates = subject.late % 3;
-      const totalEffectiveAbsences = subject.absent + equivalentAbsences;
-      
-      const hasWarning = totalEffectiveAbsences >= 1;
-      const isAtRisk = totalEffectiveAbsences >= 2;
-      const isCritical = totalEffectiveAbsences >= 3;
-      
-      if (hasWarning) hasOverallWarning = true;
-      if (isCritical) {
-        criticalSubjects.push(subject);
-        hasDroppableSubject = true;
-      }
+    // Create a single subject warning from the history API data
+    const summary = attendanceData.attendance_summary;
+    const subjectData = {
+      subject_code: subjectCode,
+      subject_name: classInfo?.subject || 'Unknown Subject',
+      section: classInfo?.section || 'N/A',
+      present: summary.present || 0,
+      late: summary.late || 0,
+      absent: summary.absent || 0,
+      total_classes: summary.total || 0
+    };
+    
+    const equivalentAbsences = Math.floor(subjectData.late / 3);
+    const remainingLates = subjectData.late % 3;
+    totalEffectiveAbsences = subjectData.absent + equivalentAbsences;
+    
+    const hasWarning = totalEffectiveAbsences >= 1;
+    const isAtRisk = totalEffectiveAbsences >= 2;
+    const isCritical = totalEffectiveAbsences >= 3;
+    
+    if (hasWarning) hasOverallWarning = true;
+    if (isCritical) {
+      criticalSubjects.push(subjectData);
+      hasDroppableSubject = true;
+    }
 
-      let statusLevel = 'normal';
-      let statusMessage = 'Attendance is satisfactory';
-      
-      if (isCritical) {
-        statusLevel = 'critical';
-        statusMessage = `DROPPABLE: ${totalEffectiveAbsences} effective absences reached`;
-      } else if (isAtRisk) {
-        statusLevel = 'warning';
-        statusMessage = `WARNING: ${totalEffectiveAbsences} effective absences - 1 more leads to being droppable`;
-      } else if (hasWarning) {
-        statusLevel = 'notice';
-        statusMessage = `NOTICE: ${totalEffectiveAbsences} effective absence${totalEffectiveAbsences !== 1 ? 's' : ''}`;
-      }
+    let statusLevel = 'normal';
+    let statusMessage = 'Attendance is satisfactory';
+    
+    if (isCritical) {
+      statusLevel = 'critical';
+      statusMessage = `DROPPABLE: ${totalEffectiveAbsences} effective absences reached`;
+    } else if (isAtRisk) {
+      statusLevel = 'warning';
+      statusMessage = `WARNING: ${totalEffectiveAbsences} effective absences - 1 more leads to being droppable`;
+    } else if (hasWarning) {
+      statusLevel = 'notice';
+      statusMessage = `NOTICE: ${totalEffectiveAbsences} effective absence${totalEffectiveAbsences !== 1 ? 's' : ''}`;
+    }
 
-      return {
-        ...subject,
-        equivalentAbsences,
-        remainingLates,
-        totalEffectiveAbsences,
-        hasWarning,
-        isAtRisk,
-        isCritical,
-        statusLevel,
-        statusMessage,
-        warningMessage: `${statusMessage} (${subject.absent} absents + ${equivalentAbsences} from ${subject.late} lates)`
-      };
-    });
+    const subjectWarning = {
+      ...subjectData,
+      equivalentAbsences,
+      remainingLates,
+      totalEffectiveAbsences,
+      hasWarning,
+      isAtRisk,
+      isCritical,
+      statusLevel,
+      statusMessage,
+      warningMessage: `${statusMessage} (${subjectData.absent} absents + ${equivalentAbsences} from ${subjectData.late} lates)`
+    };
 
-    console.log('Calculated warnings:', {
+    console.log('Calculated warnings from history API:', {
+      subject: subjectWarning,
       overallWarning: hasOverallWarning,
-      subjectWarningsCount: subjectWarnings.length,
-      criticalSubjectsCount: criticalSubjects.length,
-      hasDroppableSubject
+      hasDroppableSubject,
+      totalEffectiveAbsences
     });
 
     return { 
       overallWarning: hasOverallWarning, 
-      subjectWarnings, 
+      subjectWarnings: [subjectWarning], // Return as array with single subject
       criticalSubjects,
       totalEffectiveAbsences,
       hasDroppableSubject
@@ -456,18 +467,10 @@ export default function SubjectAttendanceStudent() {
   };
 
   const filteredAttendance = () => {
-    if (!subjectCode || !attendanceSummaryData.length) {
-      console.log('No subject code or attendance data');
-      return [];
-    }
-    
+    // Use the calculated warnings from history API
     const warnings = calculateAttendanceWarnings();
-    const filtered = warnings.subjectWarnings.filter(subject => 
-      subject && subject.subject_code === subjectCode
-    );
-    
-    console.log('Filtered by subject code:', subjectCode, filtered);
-    return filtered;
+    console.log('Filtered attendance (from history API):', warnings.subjectWarnings);
+    return warnings.subjectWarnings;
   };
 
   // ========== PDF GENERATION FUNCTIONS ==========

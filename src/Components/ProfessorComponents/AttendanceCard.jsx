@@ -5,13 +5,15 @@ import SuccessIcon from "../../assets/Success(Green).svg";
 import ErrorIcon from "../../assets/Error(Red).svg";
 import jsPDF from "jspdf";
 
-function AttendanceCard({ date, students, rawDate, subjectCode }) {
+function AttendanceCard({ date, time, rawTime, students, rawDate, subjectCode }) {
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [attendanceData, setAttendanceData] = useState({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const [displayTime, setDisplayTime] = useState("");
+  const [sortedStudents, setSortedStudents] = useState([]);
 
   // Initialize attendance data when students prop changes
   useEffect(() => {
@@ -22,8 +24,96 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
         initialData[studentId] = student.status || 'absent';
       });
       setAttendanceData(initialData);
+      
+      // Sort students by surname
+      const sorted = sortStudentsBySurname(students);
+      setSortedStudents(sorted);
     }
   }, [students]);
+
+  // Format time display - run when time or rawTime changes
+  useEffect(() => {
+    const getDisplayTime = () => {
+      // If time is already provided and not empty, use it
+      if (time && time.trim() !== '') return time;
+      
+      // Try to parse time from rawTime
+      if (rawTime) {
+        try {
+          // Check if it's a valid date string
+          let timeObj;
+          if (typeof rawTime === 'string' && rawTime.includes('T')) {
+            // ISO format
+            timeObj = new Date(rawTime);
+          } else if (typeof rawTime === 'string') {
+            // Try to parse as regular date string
+            timeObj = new Date(rawTime.replace(' ', 'T'));
+          } else {
+            // Assume it's already a timestamp
+            timeObj = new Date(rawTime);
+          }
+          
+          // Check if the date is valid
+          if (isNaN(timeObj.getTime())) {
+            console.log('Invalid date object from rawTime:', rawTime);
+            return '';
+          }
+          
+          // Convert to Philippines time (always handle as UTC to local conversion)
+          const philippinesTime = new Date(timeObj.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+          
+          // Format the time
+          return philippinesTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+        } catch (error) {
+          console.error('Error parsing time:', error, rawTime);
+          
+          // Try simple string extraction as fallback
+          const timeMatch = rawTime.toString().match(/(\d{1,2}):(\d{2})/);
+          if (timeMatch) {
+            let hours = parseInt(timeMatch[1]);
+            const minutes = timeMatch[2];
+            
+            // If hours is 0-23 format, convert to 12-hour
+            if (hours >= 0 && hours <= 23) {
+              const ampm = hours >= 12 ? 'PM' : 'AM';
+              hours = hours % 12 || 12;
+              return `${hours}:${minutes} ${ampm}`;
+            }
+          }
+          
+          return '';
+        }
+      }
+      
+      // If no time available, check if it's today
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const recordDate = new Date(rawDate).toISOString().split('T')[0];
+        
+        if (today === recordDate) {
+          // For today's attendance, show current time
+          return new Date().toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'Asia/Manila'
+          });
+        }
+      } catch (error) {
+        console.error('Error comparing dates:', error);
+      }
+      
+      return '';
+    };
+
+    const formattedTime = getDisplayTime();
+    console.log('Display time calculation:', { time, rawTime, formattedTime });
+    setDisplayTime(formattedTime);
+  }, [time, rawTime, rawDate]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -57,9 +147,118 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
     return student.student_ID || student.user_ID || student.id || 'N/A';
   };
 
-  // Function to get student name
+  // Function to extract surname from a student object
+  const getSurname = (student) => {
+    // Check if we have separate name fields
+    if (student.tracked_lastname) {
+      return student.tracked_lastname.toLowerCase();
+    }
+    
+    // Check for user_Name field
+    if (student.user_Name) {
+      const nameParts = student.user_Name.trim().split(" ");
+      if (nameParts.length > 0) {
+        // Last part is the surname
+        return nameParts[nameParts.length - 1].toLowerCase();
+      }
+    }
+    
+    // Check for name field
+    if (student.name) {
+      const nameParts = student.name.trim().split(" ");
+      if (nameParts.length > 0) {
+        // Last part is the surname
+        return nameParts[nameParts.length - 1].toLowerCase();
+      }
+    }
+    
+    return '';
+  };
+
+  // Function to sort students by surname alphabetically
+  const sortStudentsBySurname = (studentList) => {
+    if (!studentList || studentList.length === 0) return [];
+    
+    return [...studentList].sort((a, b) => {
+      const surnameA = getSurname(a);
+      const surnameB = getSurname(b);
+      
+      // Compare surnames
+      return surnameA.localeCompare(surnameB);
+    });
+  };
+
+  // Function to format name as "Surname, First Name Middle Name Middle Initial" 
+  const formatName = (fullName) => {
+    if (!fullName) return "";
+    
+    // Clean the name - remove extra spaces
+    const cleanedName = fullName.trim().replace(/\s+/g, ' ');
+    
+    // Split the full name into parts
+    const nameParts = cleanedName.split(" ");
+    
+    // If only one part, return as is
+    if (nameParts.length === 1) return nameParts[0];
+    
+    // If two parts, format as "Last, First"
+    if (nameParts.length === 2) {
+      return `${nameParts[1]}, ${nameParts[0]}`;
+    }
+    
+    // If three or more parts:
+    // The last part is always the surname
+    const surname = nameParts[nameParts.length - 1];
+    
+    // All parts except the last one are given names
+    const givenNames = nameParts.slice(0, nameParts.length - 1);
+    
+    // Keep all given names as is except the last one before surname
+    // If there are 3+ given names, keep first two as is, convert rest to initials
+    if (givenNames.length >= 3) {
+      const firstTwoNames = givenNames.slice(0, 2);
+      const remainingNames = givenNames.slice(2).map(name => `${name.charAt(0)}.`);
+      const allGivenNames = [...firstTwoNames, ...remainingNames].join(" ");
+      return `${surname}, ${allGivenNames}`;
+    } else {
+      // If only 1 or 2 given names, keep them as is
+      return `${surname}, ${givenNames.join(" ")}`;
+    }
+  };
+
+  // Function to get student name from student object
   const getStudentName = (student) => {
-    return student.user_Name || student.name || 'Unknown';
+    // Try different ways to get the name
+    let fullName = "";
+    
+    // Check if we have separate name fields (from tracked_users table)
+    if (student.tracked_firstname && student.tracked_lastname) {
+      const firstName = student.tracked_firstname || "";
+      const middleName = student.tracked_middlename || "";
+      const lastName = student.tracked_lastname || "";
+      
+      // Construct full name
+      if (middleName) {
+        fullName = `${firstName} ${middleName} ${lastName}`;
+      } else {
+        fullName = `${firstName} ${lastName}`;
+      }
+    } 
+    // Check for user_Name field (from attendance history)
+    else if (student.user_Name) {
+      fullName = student.user_Name;
+    }
+    // Check for name field (fallback)
+    else if (student.name) {
+      fullName = student.name;
+    }
+    // Last resort
+    else {
+      return 'Unknown';
+    }
+    
+    // Format the name
+    return formatName(fullName);
   };
 
   // Handle attendance status change
@@ -85,6 +284,8 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
         })),
       };
 
+      console.log('Saving attendance data:', attendanceDataToSave);
+
       const response = await fetch(
         "https://tracked.6minds.site/Professor/AttendanceDB/update_attendance.php",
         {
@@ -95,10 +296,18 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
       );
 
       const result = await response.json();
+      console.log('Update response:', result);
+      
       if (result.success) {
         setIsEditing(false);
         setModalMessage("Attendance updated successfully!");
         setShowSuccessModal(true);
+        
+        // Update the display time if the API returns a new updated_at time
+        if (result.display_time) {
+          setDisplayTime(result.display_time);
+        }
+        
         // Refresh the page to show updated data
         setTimeout(() => {
           window.location.reload();
@@ -129,24 +338,39 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
   };
 
   // Calculate attendance statistics
-  const presentCount = students ? students.filter(s => {
+  const presentCount = sortedStudents ? sortedStudents.filter(s => {
     const studentId = getStudentNumber(s);
     return (isEditing ? attendanceData[studentId] : s.status) === 'present';
   }).length : 0;
   
-  const lateCount = students ? students.filter(s => {
+  const lateCount = sortedStudents ? sortedStudents.filter(s => {
     const studentId = getStudentNumber(s);
     return (isEditing ? attendanceData[studentId] : s.status) === 'late';
   }).length : 0;
   
-  const absentCount = students ? students.filter(s => {
+  const absentCount = sortedStudents ? sortedStudents.filter(s => {
     const studentId = getStudentNumber(s);
     return (isEditing ? attendanceData[studentId] : s.status) === 'absent';
   }).length : 0;
 
+  // Function to format name for PDF
+  const formatNameForPDF = (fullName) => {
+    if (!fullName) return "";
+    
+    const nameParts = fullName.trim().split(" ");
+    if (nameParts.length === 1) return nameParts[0];
+    if (nameParts.length === 2) return `${nameParts[1]}, ${nameParts[0]}`;
+    
+    const surname = nameParts[nameParts.length - 1];
+    const givenNames = nameParts.slice(0, nameParts.length - 1);
+    
+    // For PDF, use the same formatting as the display
+    return formatName(`${givenNames.join(" ")} ${surname}`);
+  };
+
   // Function to download as PDF
   const downloadAttendancePDF = () => {
-    if (!students || students.length === 0) {
+    if (!sortedStudents || sortedStudents.length === 0) {
       alert('No attendance data to download');
       return;
     }
@@ -158,10 +382,14 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
       const margin = 20;
       let yPosition = margin;
       
-      // Add title
+      // Add title with time if available
       pdf.setFontSize(20);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Class Attendance Record', pageWidth / 2, yPosition, { align: 'center' });
+      let pdfTitle = 'Class Attendance Record';
+      if (displayTime) {
+        pdfTitle += ` (${displayTime})`;
+      }
+      pdf.text(pdfTitle, pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 10;
       
       // Add date
@@ -177,11 +405,26 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
       yPosition += 7;
       
       pdf.setFont(undefined, 'normal');
-      pdf.text(`Total Students: ${students.length}`, margin, yPosition);
+      pdf.text(`Total Students: ${sortedStudents.length}`, margin, yPosition);
       pdf.text(`Present: ${presentCount}`, margin + 50, yPosition);
       pdf.text(`Late: ${lateCount}`, margin + 90, yPosition);
       pdf.text(`Absent: ${absentCount}`, margin + 120, yPosition);
       yPosition += 15;
+      
+      // Add timezone info
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Timezone: Asia/Manila (Philippine Time)`, margin, yPosition);
+      if (rawTime) {
+        const formattedRawTime = new Date(rawTime).toLocaleString('en-US', {
+          timeZone: 'Asia/Manila'
+        });
+        pdf.text(`Recorded: ${formattedRawTime}`, pageWidth - margin, yPosition, { align: 'right' });
+      }
+      yPosition += 8;
+      
+      pdf.setFontSize(12);
+      pdf.setTextColor(0, 0, 0);
       
       // Add table headers
       pdf.setFont(undefined, 'bold');
@@ -195,11 +438,11 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 7;
       
-      // Add student data
+      // Add student data (already sorted by surname)
       pdf.setFont(undefined, 'normal');
       const lineHeight = 8;
       
-      students.forEach((student, index) => {
+      sortedStudents.forEach((student, index) => {
         // Check if we need a new page
         if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
           pdf.addPage();
@@ -216,7 +459,21 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
         }
         
         const studentNumber = getStudentNumber(student);
-        const studentName = getStudentName(student);
+        
+        // Get student name for PDF
+        let studentName = "";
+        if (student.tracked_firstname && student.tracked_lastname) {
+          const firstName = student.tracked_firstname || "";
+          const middleName = student.tracked_middlename || "";
+          const lastName = student.tracked_lastname || "";
+          const fullName = middleName ? `${firstName} ${middleName} ${lastName}` : `${firstName} ${lastName}`;
+          studentName = formatNameForPDF(fullName);
+        } else if (student.user_Name) {
+          studentName = formatNameForPDF(student.user_Name);
+        } else {
+          studentName = 'Unknown';
+        }
+        
         const status = getStatusText(student.status);
         
         // Add student data
@@ -254,19 +511,25 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
         yPosition += lineHeight;
       });
       
-      // Add footer with generation date
+      // Add footer with generation date and time
       yPosition += 10;
       pdf.setFontSize(10);
       pdf.setTextColor(128, 128, 128);
+      const generatedTime = new Date().toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Manila'
+      });
       pdf.text(
-        `Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
+        `Generated on ${new Date().toLocaleDateString()} at ${generatedTime} (Philippine Time)`,
         pageWidth / 2,
         pdf.internal.pageSize.getHeight() - 10,
         { align: 'center' }
       );
       
       // Save the PDF
-      const fileName = `attendance-${date.replace(/\s+/g, '-')}.pdf`;
+      const fileName = `attendance-${date.replace(/\s+/g, '-')}-${displayTime ? displayTime.replace(/[: ]/g, '-') : ''}.pdf`;
       pdf.save(fileName);
       
     } catch (error) {
@@ -313,9 +576,12 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
             <div className="flex-1">
               <span className="text-xs text-[#FFFFFF]">
                 Attendance for <span className="font-bold">{date}</span>
+                {displayTime && (
+                  <span className="ml-1 text-xs text-[#FFFFFF]/70">at {displayTime}</span>
+                )}
               </span>
               <div className="text-xs text-gray-400 mt-0.5">
-                ({students ? students.length : 0} students)
+                ({sortedStudents ? sortedStudents.length : 0} students)
               </div>
             </div>
             
@@ -359,9 +625,12 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
             <div className="flex flex-row items-center gap-2">
               <span className="text-sm text-[#FFFFFF]">
                 Attendance for <span className="font-bold">{date}</span>
+                {displayTime && (
+                  <span className="ml-2 text-sm text-[#FFFFFF]/70">at {displayTime}</span>
+                )}
               </span>
               <span className="text-xs text-gray-400">
-                ({students ? students.length : 0} students)
+                ({sortedStudents ? sortedStudents.length : 0} students)
               </span>
             </div>
           </div>
@@ -430,12 +699,19 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                 A: {absentCount}
               </span>
             </div>
+            
+            {/* Time info in expanded view */}
+            {displayTime && (
+              <div className="text-xs text-[#FFFFFF]/60 ml-2">
+                Recorded at {displayTime} (Philippine Time)
+              </div>
+            )}
           </div>
 
           {/* MOBILE CARD VIEW */}
           <div className="block sm:hidden p-3 space-y-2">
-            {students && students.length > 0 ? (
-              students.map((student, index) => {
+            {sortedStudents && sortedStudents.length > 0 ? (
+              sortedStudents.map((student, index) => {
                 const studentNumber = getStudentNumber(student);
                 const studentName = getStudentName(student);
                 const currentStatus = isEditing ? attendanceData[studentNumber] : student.status;
@@ -453,6 +729,16 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                         <p className="text-xs text-gray-400">
                           #{studentNumber}
                         </p>
+                        {student.created_at && (
+                          <p className="text-[10px] text-[#FFFFFF]/40 mt-0.5">
+                            Marked: {new Date(student.created_at).toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true,
+                              timeZone: 'Asia/Manila'
+                            })}
+                          </p>
+                        )}
                       </div>
                       {!isEditing ? (
                         <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ml-2 ${getStatusBgColor(currentStatus)} ${getStatusColor(currentStatus)}`}>
@@ -518,8 +804,8 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                 </tr>
               </thead>
               <tbody>
-                {students && students.length > 0 ? (
-                  students.map((student, index) => {
+                {sortedStudents && sortedStudents.length > 0 ? (
+                  sortedStudents.map((student, index) => {
                     const studentNumber = getStudentNumber(student);
                     const studentName = getStudentName(student);
                     const currentStatus = isEditing ? attendanceData[studentNumber] : student.status;
@@ -531,7 +817,11 @@ function AttendanceCard({ date, students, rawDate, subjectCode }) {
                       >
                         <td className="px-2 py-1.5">{index + 1}</td>
                         <td className="px-2 py-1.5">{studentNumber}</td>
-                        <td className="px-2 py-1.5">{studentName}</td>
+                        <td className="px-2 py-1.5">
+                          <div className="font-medium">
+                            {studentName}
+                          </div>
+                        </td>
                         
                         {!isEditing ? (
                           <td className="px-2 py-1.5 text-right">
