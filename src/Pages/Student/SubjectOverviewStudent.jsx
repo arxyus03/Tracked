@@ -1272,7 +1272,7 @@ export default function SubjectOverviewStudent() {
                   </h3>
                   <div className="mt-1 text-xs text-[#FFA600]/90">
                     <p>
-                      You have attendance warnings in some subjects. Students with 3 accumulated absences will be dropped from the course. 
+                      Students with 3 accumulated absences will be dropped from the course. 
                       3 late arrivals are equivalent to one absent.
                     </p>
                   </div>
