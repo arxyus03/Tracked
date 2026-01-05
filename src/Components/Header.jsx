@@ -20,7 +20,6 @@ function Header({ setIsOpen }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    // Update date and time
     const updateDateTime = () => {
       const today = new Date();
       setWeekday(today.toLocaleDateString("en-US", { weekday: "long" }));
@@ -36,7 +35,6 @@ function Header({ setIsOpen }) {
     updateDateTime();
     const timeInterval = setInterval(updateDateTime, 60000);
 
-    // Get user data from localStorage
     try {
       const userStr = localStorage.getItem("user");
       if (userStr) {
@@ -62,7 +60,6 @@ function Header({ setIsOpen }) {
     return () => clearInterval(timeInterval);
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -76,7 +73,6 @@ function Header({ setIsOpen }) {
 
   const shouldShowId = userRole === "Student" || userRole === "Professor";
 
-  // Get navigation paths based on role
   const getNavigationPaths = () => {
     if (userRole === "Professor") {
       return {
@@ -93,6 +89,30 @@ function Header({ setIsOpen }) {
       profile: "/#",
       accountSettings: "/#"
     };
+  };
+
+  const getGradientStyle = () => {
+    const startColor = "#23232C";
+    
+    switch(userRole) {
+      case "Professor":
+        return {
+          background: `linear-gradient(90deg, ${startColor} 0%, rgba(37, 99, 235, 0.5) 100%)`
+        };
+      case "Student":
+        return {
+          background: `linear-gradient(90deg, ${startColor} 0%, rgba(202, 138, 4, 0.5) 100%)`
+        };
+      case "Admin":
+      case "Super Admin":
+        return {
+          background: `linear-gradient(90deg, ${startColor} 0%, rgba(55, 65, 81, 0.5) 100%)`
+        };
+      default:
+        return {
+          background: `linear-gradient(90deg, ${startColor} 0%, rgba(31, 41, 55, 0.5) 100%)`
+        };
+    }
   };
 
   const paths = getNavigationPaths();
@@ -118,9 +138,8 @@ function Header({ setIsOpen }) {
   };
 
   return (
-    <div>
+    <div style={getGradientStyle()}>
       <div className="flex items-center justify-between px-2 sm:px-4 py-3">
-        {/* Left side - Menu and date */}
         <div className="flex items-center gap-2 sm:gap-4">
           <img
             src={Menu}
@@ -139,7 +158,6 @@ function Header({ setIsOpen }) {
           </div>
         </div>
 
-        {/* Right side - Profile dropdown */}
         <div className="flex items-center gap-2 sm:gap-4 mr-1">
           <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-3 sm:gap-2 cursor-pointer" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
@@ -165,7 +183,6 @@ function Header({ setIsOpen }) {
               </div>
             </div>
             
-            {/* Dropdown menu */}
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 sm:w-52 bg-[#15151C] rounded-lg shadow-lg border border-[#23232C] z-50">
                 {(userRole === "Student" || userRole === "Professor") && (
