@@ -37,7 +37,7 @@ const ClassWorkSubmission = ({
   const [viewingPhoto, setViewingPhoto] = useState(null);
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [assignTo, setAssignTo] = useState("wholeClass");
+  const [, setAssignTo] = useState("wholeClass");
   
   // File Upload States
   const [uploadedFilesList, setUploadedFilesList] = useState({});
@@ -1213,19 +1213,6 @@ const ClassWorkSubmission = ({
                   </span>
                 )}
                 <h2 className="text-sm font-bold text-white truncate">Student Submissions - {activity.title}</h2>
-              </div>
-              
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${
-                  assignTo === 'individual' 
-                    ? 'bg-[#FFA600]/20 text-[#FFA600]' 
-                    : 'bg-[#00A15D]/20 text-[#00A15D]'
-                }`}>
-                  {assignTo === 'individual' ? 'Individual Assignment' : 'Whole Class Assignment'}
-                </span>
-                <span className="text-xs text-gray-400">
-                  ({localStudents.length} student{localStudents.length !== 1 ? 's' : ''})
-                </span>
               </div>
               
               <div className="space-y-1 mt-1">

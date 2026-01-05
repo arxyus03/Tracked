@@ -24,7 +24,7 @@ const ClassWorkCreate = ({
   const [realStudents, setRealStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [existingActivities, setExistingActivities] = useState([]);
-  const [loadingActivities, setLoadingActivities] = useState(false);
+  const [, setLoadingActivities] = useState(false);
   
   const [activityTypeDropdownOpen, setActivityTypeDropdownOpen] = useState(false);
   const [assignToDropdownOpen, setAssignToDropdownOpen] = useState(false);

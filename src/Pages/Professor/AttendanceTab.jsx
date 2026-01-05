@@ -867,29 +867,6 @@ export default function Attendance() {
             <h3 className="text-lg font-bold mb-2">Success!</h3>
             <p className="text-sm text-[#FFFFFF]/70 mb-4">{modalMessage}</p>
             
-            {/* Show email results details */}
-            {emailResults && (
-              <div className="mb-4 p-3 bg-[#23232C] rounded-md text-left text-xs">
-                <h4 className="font-semibold mb-1">Email Results:</h4>
-                {emailResults.students_at_risk && (
-                  <p>Students at risk notified: {emailResults.students_at_risk}</p>
-                )}
-                {emailResults.notifications_sent && (
-                  <p>Daily reports sent: {emailResults.notifications_sent}</p>
-                )}
-                {emailResults.email_notifications && (
-                  <div>
-                    {emailResults.email_notifications.absent && (
-                      <p>Absent notifications: {emailResults.email_notifications.absent.length}</p>
-                    )}
-                    {emailResults.email_notifications.late && (
-                      <p>Late notifications: {emailResults.email_notifications.late.length}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            
             <button
               onClick={() => {
                 setShowSuccessModal(false);

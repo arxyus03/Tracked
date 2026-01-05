@@ -326,7 +326,7 @@ export default function SubjectOverviewProfessor() {
           </div>
 
           {/* Use the ActivitiesCard component */}
-          <ActivitiesCard classStats={classStats} />
+          <ActivitiesCard classStats={classStats} subjectCode={subjectCode} />
 
           {/* Use the ClassRankingOverall component */}
           <ClassRankingOverall
