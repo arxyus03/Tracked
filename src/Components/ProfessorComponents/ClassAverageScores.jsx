@@ -539,76 +539,9 @@ const ClassAverageScores = ({
                 className="relative"
                 preserveAspectRatio="xMidYMid meet"
               >
-                {/* Performance zone backgrounds */}
-                {/* Failing zone (below 70%) */}
-                <rect
-                  x={margin.left}
-                  y={yScale(70)}
-                  width={chartWidth - margin.left - margin.right}
-                  height={chartHeight - margin.bottom - yScale(70)}
-                  fill="#FF5555"
-                  opacity="0.05"
-                  rx="2"
-                />
+                {/* REMOVED: Performance zone backgrounds */}
                 
-                {/* Close to failing zone (71-75%) */}
-                <rect
-                  x={margin.left}
-                  y={yScale(75)}
-                  width={chartWidth - margin.left - margin.right}
-                  height={yScale(70) - yScale(75)}
-                  fill="#FFA600"
-                  opacity="0.05"
-                  rx="2"
-                />
-                
-                {/* Passing zone (76%+) */}
-                <rect
-                  x={margin.left}
-                  y={margin.top}
-                  width={chartWidth - margin.left - margin.right}
-                  height={yScale(75) - margin.top}
-                  fill="#00A15D"
-                  opacity="0.05"
-                  rx="2"
-                />
-                
-                {/* Zone boundary lines */}
-                {/* 70% line (Failing threshold) */}
-                <line
-                  x1={margin.left}
-                  y1={yScale(70)}
-                  x2={chartWidth - margin.right}
-                  y2={yScale(70)}
-                  stroke="#FF5555"
-                  strokeWidth="1.5"
-                  strokeDasharray="4,4"
-                  opacity="0.7"
-                />
-                
-                {/* 75% line (Close to failing threshold) */}
-                <line
-                  x1={margin.left}
-                  y1={yScale(75)}
-                  x2={chartWidth - margin.right}
-                  y2={yScale(75)}
-                  stroke="#FFA600"
-                  strokeWidth="1.5"
-                  strokeDasharray="4,4"
-                  opacity="0.7"
-                />
-                
-                {/* 76% line (Passing threshold) */}
-                <line
-                  x1={margin.left}
-                  y1={yScale(76)}
-                  x2={chartWidth - margin.right}
-                  y2={yScale(76)}
-                  stroke="#00A15D"
-                  strokeWidth="1.5"
-                  strokeDasharray="4,4"
-                  opacity="0.7"
-                />
+                {/* REMOVED: Zone boundary lines */}
                 
                 {/* Grid lines */}
                 {renderScoreLabels().map(({ score, label }) => (
@@ -793,23 +726,7 @@ const ClassAverageScores = ({
             </div>
           )}
 
-          {/* Performance zone legend - Centered at bottom */}
-          <div className="mt-6 flex justify-center">
-            <div className="flex flex-wrap justify-center gap-2 text-xs">
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
-                <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
-                <span className="text-[#FF5555] text-xs">Below 70% (Failing)</span>
-              </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
-                <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
-                <span className="text-[#FFA600] text-xs">71-75% (Close to Failing)</span>
-              </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
-                <div className="w-2 h-2 rounded-full bg-[#00A15D]"></div>
-                <span className="text-[#00A15D] text-xs">76%+ (Passing)</span>
-              </div>
-            </div>
-          </div>
+          {/* REMOVED: Performance zone legend */}
         </div>
       </div>
 
