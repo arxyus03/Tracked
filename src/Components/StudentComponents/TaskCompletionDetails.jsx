@@ -16,7 +16,8 @@ const TaskCompletionDetails = ({
   getActivityStatusColor,
   getActivityStatusLabel,
   formatModalDate,
-  getGradingStatus
+  getGradingStatus,
+  userName
 }) => {
   const navigate = useNavigate();
 
@@ -36,7 +37,7 @@ const TaskCompletionDetails = ({
     navigate(`/SubjectSchoolWorksStudent?code=${activity.subjectCode}${filterParam}`);
   };
 
-  // Format date function similar to StudentActivityCard
+  // Format date function
   const formatDate = (dateString) => {
     if (!dateString || dateString === "No deadline") return "No deadline";
     try {
@@ -81,7 +82,7 @@ const TaskCompletionDetails = ({
 
   // Get student status for an activity
   const getStudentStatus = (activity) => {
-    const isSubmitted = activity.submitted === 1 || activity.submitted === true || activity.submitted === '1';
+    const isSubmitted = activity.submitted === 1 || activity.submitted === true || activity.submitted === '1' || activity.submitted === true;
     const isLate = activity.late === 1 || activity.late === true || activity.late === '1';
     
     let isOverdue = false;
@@ -115,6 +116,22 @@ const TaskCompletionDetails = ({
     if (statusType === 'missed') return 'bg-[#A15353]/10';
     if (statusType === 'submitted') return 'bg-[#15151C]';
     return 'bg-[#15151C]';
+  };
+
+  // Generate professor email from professor ID
+  const getProfessorEmail = (professorId) => {
+    // This is a simple example - you might want to fetch actual professor email from your database
+    // For now, we'll generate a generic email based on the professor ID
+    return `${professorId.toLowerCase()}@university.edu`;
+  };
+
+  // Handle email professor click
+  const handleEmailClick = (e, activity) => {
+    e.stopPropagation(); // Prevent card click
+    const professorEmail = getProfessorEmail(activity.professor_ID);
+    const subject = encodeURIComponent(`Regarding: ${activity.title}`);
+    const body = encodeURIComponent(`Dear Professor,\n\nI would like to inquire about the activity "${activity.title}" in ${activity.subject}. Could you please let me know what I can do to make up for this task?\n\nThank you,\n${userName}`);
+    window.open(`mailto:${professorEmail}?subject=${subject}&body=${body}`);
   };
 
   if (!isOpen) return null;
@@ -157,8 +174,7 @@ const TaskCompletionDetails = ({
             {modalActivities.length > 0 ? (
               modalActivities.map((activity) => {
                 const statusInfo = getStudentStatus(activity);
-                const hasProfessorSubmission = activity.professor_file_count > 0 || 
-                                             (activity.professor_file_url && activity.professor_file_url !== null);
+                const hasProfessorSubmission = activity.link && activity.link.trim() !== '';
                 const deadlineColor = isDeadlinePassed(activity.deadline) || isDeadlineUrgent(activity.deadline) 
                   ? 'text-[#A15353]' 
                   : 'text-[#FFFFFF]/80';
@@ -189,7 +205,7 @@ const TaskCompletionDetails = ({
                               ? 'text-[#00A15D]' 
                               : 'text-[#767EE0]'
                           }`}>
-                            {hasProfessorSubmission ? (activity.professor_file_count || 1) : 0}
+                            {hasProfessorSubmission ? 1 : 0}
                           </span>
                         </div>
                         
@@ -254,10 +270,7 @@ const TaskCompletionDetails = ({
                       {/* Contact Teacher Button (only for missed activities) */}
                       {selectedActivityType === 'missed' && (
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent card click
-                            handleEmailProfessor(activity.professorEmail, activity.title);
-                          }}
+                          onClick={(e) => handleEmailClick(e, activity)}
                           className="bg-[#A15353] text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-[#8a3c3c] transition-colors border border-[#A15353]/30 flex items-center justify-center gap-1.5"
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

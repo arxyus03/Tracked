@@ -1,10 +1,10 @@
 <?php
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
-header('Access-Control-Allow-Methods: GET');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// Database connection
+// Database connection for localhost - UPDATED WITH YOUR CREDENTIALS
 $host = 'localhost';
 $dbname = 'u713320770_tracked';
 $username = 'u713320770_trackedDB';
@@ -25,7 +25,7 @@ try {
     
     $studentId = $_GET['student_id'];
     
-    // 1. COMPLETED ACTIVITIES: Activities with submitted = 1 AND grade IS NOT NULL
+    // 1. COMPLETED ACTIVITIES
     $completedStmt = $conn->prepare("
         SELECT COUNT(DISTINCT ag.activity_ID) as completed_count
         FROM activity_grades ag
@@ -40,7 +40,7 @@ try {
     $completedResult = $completedStmt->fetch(PDO::FETCH_ASSOC);
     $completedActivities = $completedResult['completed_count'] ?? 0;
     
-    // 2. OVERALL SUBMITTED: All activities with submitted = 1 (regardless of grade)
+    // 2. OVERALL SUBMITTED
     $submittedStmt = $conn->prepare("
         SELECT COUNT(DISTINCT ag.activity_ID) as submitted_count
         FROM activity_grades ag
@@ -54,7 +54,7 @@ try {
     $submittedResult = $submittedStmt->fetch(PDO::FETCH_ASSOC);
     $overallSubmitted = $submittedResult['submitted_count'] ?? 0;
     
-    // 3. OVERALL DAYS ABSENT: Count of 'absent' status in attendance
+    // 3. OVERALL DAYS ABSENT
     $absentStmt = $conn->prepare("
         SELECT COUNT(*) as absent_count
         FROM attendance att
@@ -67,7 +67,7 @@ try {
     $absentResult = $absentStmt->fetch(PDO::FETCH_ASSOC);
     $overallDaysAbsent = $absentResult['absent_count'] ?? 0;
     
-    // 4. PENDING TASK: Activities not submitted AND deadline not passed
+    // 4. PENDING TASK
     $pendingStmt = $conn->prepare("
         SELECT COUNT(DISTINCT a.id) as pending_count
         FROM activities a
@@ -82,7 +82,7 @@ try {
     $pendingResult = $pendingStmt->fetch(PDO::FETCH_ASSOC);
     $pendingTask = $pendingResult['pending_count'] ?? 0;
     
-    // 5. TOTAL DAYS PRESENT: Count of 'present' status in attendance
+    // 5. TOTAL DAYS PRESENT
     $presentStmt = $conn->prepare("
         SELECT COUNT(*) as present_count
         FROM attendance att
@@ -95,7 +95,7 @@ try {
     $presentResult = $presentStmt->fetch(PDO::FETCH_ASSOC);
     $totalDaysPresent = $presentResult['present_count'] ?? 0;
     
-    // 6. OVERALL MISSED: Activities not submitted AND deadline passed
+    // 6. OVERALL MISSED
     $missedStmt = $conn->prepare("
         SELECT COUNT(DISTINCT a.id) as missed_count
         FROM activities a

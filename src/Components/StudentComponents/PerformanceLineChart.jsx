@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import Analytics from '../../assets/LineGraph.svg';
 import WeekPerformancePopup from './WeekPerformancePopup';
 
-const PerformanceLineChart = ({ performanceTrend }) => {
+const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
   const [hoveredWeek, setHoveredWeek] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -558,7 +558,8 @@ const PerformanceLineChart = ({ performanceTrend }) => {
         isOpen={isPopupOpen}
         onClose={handleClosePopup}
         weekData={selectedWeekData}
-        performanceChange={selectedWeekData?.performanceChange || 0}
+        studentId={studentId}
+        subjectCode={subjectCode}
       />
     </>
   );

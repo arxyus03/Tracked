@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+// Database configuration
 $host = 'localhost';
 $dbname = 'u713320770_tracked'; // FIXED: Same database name without space
 $username = 'u713320770_trackedDB';
@@ -33,7 +34,7 @@ if (empty($student_id)) {
 }
 
 try {
-    // Get all classes the student is enrolled in - FIXED: use 'subject' instead of 'subject_name'
+    // Get all classes the student is enrolled in
     $classesStmt = $pdo->prepare("
         SELECT c.subject_code, c.subject as subject_name, c.section
         FROM classes c 

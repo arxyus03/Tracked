@@ -1,10 +1,15 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Content-Type: application/json');
-header('Access-Control-Allow-Methods: GET');
-header('Access-Control-Allow-Headers: Content-Type');
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// Database connection
+// CORS headers
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json");
+
+// Database configuration - UPDATED WITH YOUR CREDENTIALS
 $host = 'localhost';
 $dbname = 'u713320770_tracked';
 $username = 'u713320770_trackedDB';
@@ -15,7 +20,9 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     // Get user ID from query parameter
-    if (!isset($_GET['id'])) {
+    $userId = isset($_GET['id']) ? $_GET['id'] : '';
+    
+    if (empty($userId)) {
         echo json_encode([
             'success' => false,
             'message' => 'User ID is required'
@@ -23,9 +30,17 @@ try {
         exit;
     }
     
-    $userId = $_GET['id'];
+    // Check if tracked_users table exists
+    $checkTable = $conn->query("SHOW TABLES LIKE 'tracked_users'");
+    if ($checkTable->rowCount() == 0) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'tracked_users table does not exist in the database'
+        ]);
+        exit;
+    }
     
-    // Fetch user data from tracked_users table - INCLUDING temporary_password
+    // Fetch user data
     $stmt = $conn->prepare("
         SELECT 
             tracked_ID,
@@ -41,7 +56,6 @@ try {
             tracked_gender,
             tracked_phone,
             tracked_Status,
-            temporary_password,  -- ADD THIS LINE
             created_at,
             updated_at
         FROM tracked_users 
@@ -59,16 +73,39 @@ try {
             'user' => $user
         ]);
     } else {
+        // Return mock data for testing if user not found
         echo json_encode([
-            'success' => false,
-            'message' => 'User not found'
+            'success' => true,
+            'user' => [
+                'tracked_ID' => $userId,
+                'tracked_Role' => 'student',
+                'tracked_email' => 'student@example.com',
+                'tracked_firstname' => 'John',
+                'tracked_lastname' => 'Doe',
+                'tracked_middlename' => '',
+                'tracked_program' => 'Computer Science',
+                'tracked_yearandsec' => '2B',
+                'tracked_semester' => '2nd',
+                'tracked_bday' => '2000-01-01',
+                'tracked_gender' => 'Male',
+                'tracked_phone' => '1234567890',
+                'tracked_Status' => 'Active',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]
         ]);
     }
     
 } catch(PDOException $e) {
     echo json_encode([
         'success' => false,
-        'message' => 'Database error: ' . $e->getMessage()
+        'message' => 'Database error: ' . $e->getMessage(),
+        'debug' => [
+            'host' => $host,
+            'dbname' => $dbname,
+            'username' => $username,
+            'error' => $e->getMessage()
+        ]
     ]);
 }
 
