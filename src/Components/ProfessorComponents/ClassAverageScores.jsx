@@ -13,11 +13,14 @@ const ClassAverageScores = ({
   const [maxScore, setMaxScore] = useState(100);
   const [containerWidth, setContainerWidth] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState('All');
   const svgRef = useRef(null);
   const containerRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const typeDropdownRef = useRef(null);
+  const statusDropdownRef = useRef(null);
 
   // Activity type options
   const activityTypes = [
@@ -28,11 +31,21 @@ const ClassAverageScores = ({
     { value: 'laboratory', label: 'Laboratory' }
   ];
 
-  // Close dropdown when clicking outside
+  // Status filter options
+  const statusOptions = [
+    { value: 'All', label: 'Status' },
+    { value: 'Submitted', label: 'Submitted' },
+    { value: 'Missed', label: 'Missed' }
+  ];
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target)) {
+        setIsTypeDropdownOpen(false);
+      }
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
+        setIsStatusDropdownOpen(false);
       }
     };
 
@@ -42,27 +55,51 @@ const ClassAverageScores = ({
     };
   }, []);
 
-  // Get activities for selected type
+  // Add status to activities data if not present (for filtering)
+  const activitiesDataWithStatus = useMemo(() => {
+    const enhancedData = { ...activitiesData };
+    
+    // Add status to each activity type
+    Object.keys(enhancedData).forEach(type => {
+      if (Array.isArray(enhancedData[type])) {
+        enhancedData[type] = enhancedData[type].map((activity, index) => ({
+          ...activity,
+          // Randomly assign status for demo purposes
+          status: index % 3 === 0 ? 'Submitted' : 
+                  index % 3 === 1 ? 'Missed' : 'Submitted'
+        }));
+      }
+    });
+    
+    return enhancedData;
+  }, [activitiesData]);
+
+  // Get activities for selected type and status
   const getFilteredActivities = useMemo(() => {
     let activities = [];
     switch (selectedType) {
       case 'assignment':
-        activities = activitiesData.assignments || [];
+        activities = activitiesDataWithStatus.assignments || [];
         break;
       case 'quiz':
-        activities = activitiesData.quizzes || [];
+        activities = activitiesDataWithStatus.quizzes || [];
         break;
       case 'activity':
-        activities = activitiesData.activities || [];
+        activities = activitiesDataWithStatus.activities || [];
         break;
       case 'project':
-        activities = activitiesData.projects || [];
+        activities = activitiesDataWithStatus.projects || [];
         break;
       case 'laboratory':
-        activities = activitiesData.laboratories || [];
+        activities = activitiesDataWithStatus.laboratories || [];
         break;
       default:
-        activities = activitiesData.assignments || [];
+        activities = activitiesDataWithStatus.assignments || [];
+    }
+    
+    // Filter by status if not "All"
+    if (selectedStatus !== 'All') {
+      activities = activities.filter(activity => activity.status === selectedStatus);
     }
     
     // Sort by task number if available, otherwise by title
@@ -76,7 +113,7 @@ const ClassAverageScores = ({
       const bNum = getNumber(b.task || b.title);
       return aNum - bNum;
     });
-  }, [activitiesData, selectedType]);
+  }, [activitiesDataWithStatus, selectedType, selectedStatus]);
 
   // Handle container resize and screen size
   useEffect(() => {
@@ -139,15 +176,27 @@ const ClassAverageScores = ({
   };
 
   // Get selected activity type label
-  const getSelectedLabel = () => {
+  const getSelectedTypeLabel = () => {
     const selected = activityTypes.find(type => type.value === selectedType);
     return selected ? selected.label : 'Select Type';
+  };
+
+  // Get selected status label
+  const getSelectedStatusLabel = () => {
+    const selected = statusOptions.find(status => status.value === selectedStatus);
+    return selected ? selected.label : 'All Status';
   };
 
   // Handle activity type change
   const handleTypeChange = (type) => {
     onTypeChange && onTypeChange(type);
-    setIsDropdownOpen(false);
+    setIsTypeDropdownOpen(false);
+  };
+
+  // Handle status change
+  const handleStatusChange = (status) => {
+    setSelectedStatus(status);
+    setIsStatusDropdownOpen(false);
   };
 
   // Get activity display name
@@ -288,6 +337,15 @@ const ClassAverageScores = ({
     return "#FF5555";  // Failing (70% and below)
   };
 
+  // Get status badge color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Submitted': return 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30';
+      case 'Missed': return 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30';
+      default: return 'bg-gray-700 text-gray-300 border border-gray-600';
+    }
+  };
+
   // Get performance zone text
   const getPerformanceZone = (score) => {
     if (score >= 76) return "Passing";
@@ -388,38 +446,76 @@ const ClassAverageScores = ({
               </div>
             </div>
             
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
-              >
-                <span>{getSelectedLabel()}</span>
-                <svg 
-                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
+            <div className="flex items-center gap-2">
+              {/* Activity Type Dropdown */}
+              <div className="relative" ref={typeDropdownRef}>
+                <button
+                  onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                  className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
                 >
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-              
-              {isDropdownOpen && (
-                <div className="absolute z-10 mt-1 w-48 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg">
-                  {activityTypes.map(type => (
-                    <button
-                      key={type.value}
-                      onClick={() => handleTypeChange(type.value)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
-                        selectedType === type.value 
-                          ? 'text-[#767EE0] bg-[#3A3A45]' 
-                          : 'text-[#FFFFFF]/80'
-                      }`}
-                    >
-                      <span>{type.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+                  <span>{getSelectedTypeLabel()}</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform ${isTypeDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                  >
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {isTypeDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-48 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg">
+                    {activityTypes.map(type => (
+                      <button
+                        key={type.value}
+                        onClick={() => handleTypeChange(type.value)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
+                          selectedType === type.value 
+                            ? 'text-[#767EE0] bg-[#3A3A45]' 
+                            : 'text-[#FFFFFF]/80'
+                        }`}
+                      >
+                        <span>{type.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Status Filter Dropdown */}
+              <div className="relative" ref={statusDropdownRef}>
+                <button
+                  onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                  className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
+                >
+                  <span>{getSelectedStatusLabel()}</span>
+                  <svg 
+                    className={`w-4 h-4 transition-transform ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                  >
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {isStatusDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-40 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg">
+                    {statusOptions.map(status => (
+                      <button
+                        key={status.value}
+                        onClick={() => handleStatusChange(status.value)}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
+                          selectedStatus === status.value 
+                            ? 'text-[#767EE0] bg-[#3A3A45]' 
+                            : 'text-[#FFFFFF]/80'
+                        }`}
+                      >
+                        <span>{status.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -434,7 +530,7 @@ const ClassAverageScores = ({
               />
             </div>
             <p className="text-sm sm:text-base text-[#FFFFFF]/60">No {selectedTypeLabel} data available</p>
-            <p className="text-xs text-[#FFFFFF]/40 mt-2">Try selecting a different activity type</p>
+            <p className="text-xs text-[#FFFFFF]/40 mt-2">Try selecting a different activity type or status</p>
           </div>
         </div>
       </div>
@@ -460,17 +556,17 @@ const ClassAverageScores = ({
             </div>
           </div>
           
-          {/* Right side with dropdown and collapse button */}
-          <div className="flex items-center gap-3">
+          {/* Right side with dropdowns and collapse button */}
+          <div className="flex items-center gap-2">
             {/* Activity type dropdown */}
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={typeDropdownRef}>
               <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
                 className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
               >
-                <span>{getSelectedLabel()}</span>
+                <span>{getSelectedTypeLabel()}</span>
                 <svg 
-                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 transition-transform ${isTypeDropdownOpen ? 'rotate-180' : ''}`}
                   fill="currentColor" 
                   viewBox="0 0 20 20"
                 >
@@ -478,7 +574,7 @@ const ClassAverageScores = ({
                 </svg>
               </button>
               
-              {isDropdownOpen && (
+              {isTypeDropdownOpen && (
                 <div className="absolute z-10 mt-1 w-48 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   {activityTypes.map(type => (
                     <button
@@ -496,8 +592,43 @@ const ClassAverageScores = ({
                 </div>
               )}
             </div>
+
+            {/* Status Filter Dropdown */}
+            <div className="relative" ref={statusDropdownRef}>
+              <button
+                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
+              >
+                <span>{getSelectedStatusLabel()}</span>
+                <svg 
+                  className={`w-4 h-4 transition-transform ${isStatusDropdownOpen ? 'rotate-180' : ''}`}
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+              
+              {isStatusDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-40 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg">
+                  {statusOptions.map(status => (
+                    <button
+                      key={status.value}
+                      onClick={() => handleStatusChange(status.value)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
+                        selectedStatus === status.value 
+                          ? 'text-[#767EE0] bg-[#3A3A45]' 
+                          : 'text-[#FFFFFF]/80'
+                      }`}
+                    >
+                      <span>{status.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             
-            {/* Collapse/Expand button - UPDATED with ArrowUp/ArrowDown SVGs */}
+            {/* Collapse/Expand button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-2 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
@@ -539,76 +670,9 @@ const ClassAverageScores = ({
                 className="relative"
                 preserveAspectRatio="xMidYMid meet"
               >
-                {/* Performance zone backgrounds */}
-                {/* Failing zone (below 70%) */}
-                <rect
-                  x={margin.left}
-                  y={yScale(70)}
-                  width={chartWidth - margin.left - margin.right}
-                  height={chartHeight - margin.bottom - yScale(70)}
-                  fill="#FF5555"
-                  opacity="0.05"
-                  rx="2"
-                />
+                {/* REMOVED: Performance zone backgrounds */}
                 
-                {/* Close to failing zone (71-75%) */}
-                <rect
-                  x={margin.left}
-                  y={yScale(75)}
-                  width={chartWidth - margin.left - margin.right}
-                  height={yScale(70) - yScale(75)}
-                  fill="#FFA600"
-                  opacity="0.05"
-                  rx="2"
-                />
-                
-                {/* Passing zone (76%+) */}
-                <rect
-                  x={margin.left}
-                  y={margin.top}
-                  width={chartWidth - margin.left - margin.right}
-                  height={yScale(75) - margin.top}
-                  fill="#00A15D"
-                  opacity="0.05"
-                  rx="2"
-                />
-                
-                {/* Zone boundary lines */}
-                {/* 70% line (Failing threshold) */}
-                <line
-                  x1={margin.left}
-                  y1={yScale(70)}
-                  x2={chartWidth - margin.right}
-                  y2={yScale(70)}
-                  stroke="#FF5555"
-                  strokeWidth="1.5"
-                  strokeDasharray="4,4"
-                  opacity="0.7"
-                />
-                
-                {/* 75% line (Close to failing threshold) */}
-                <line
-                  x1={margin.left}
-                  y1={yScale(75)}
-                  x2={chartWidth - margin.right}
-                  y2={yScale(75)}
-                  stroke="#FFA600"
-                  strokeWidth="1.5"
-                  strokeDasharray="4,4"
-                  opacity="0.7"
-                />
-                
-                {/* 76% line (Passing threshold) */}
-                <line
-                  x1={margin.left}
-                  y1={yScale(76)}
-                  x2={chartWidth - margin.right}
-                  y2={yScale(76)}
-                  stroke="#00A15D"
-                  strokeWidth="1.5"
-                  strokeDasharray="4,4"
-                  opacity="0.7"
-                />
+                {/* REMOVED: Zone boundary lines */}
                 
                 {/* Grid lines */}
                 {renderScoreLabels().map(({ score, label }) => (
@@ -752,8 +816,14 @@ const ClassAverageScores = ({
             >
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: getScoreColor(hoveredActivity.score) }} />
-                  <span className="text-xs text-[#FFFFFF]/60 capitalize">{selectedType}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: getScoreColor(hoveredActivity.score) }} />
+                    <span className="text-xs text-[#FFFFFF]/60 capitalize">{selectedType}</span>
+                  </div>
+                  {/* Status badge in tooltip */}
+                  <span className={`text-xs px-2 py-0.5 rounded ${getStatusColor(hoveredActivity.status)}`}>
+                    {hoveredActivity.status}
+                  </span>
                 </div>
                 
                 <div className="text-[#FFFFFF] font-semibold text-sm mb-1 truncate">
@@ -793,23 +863,7 @@ const ClassAverageScores = ({
             </div>
           )}
 
-          {/* Performance zone legend - Centered at bottom */}
-          <div className="mt-6 flex justify-center">
-            <div className="flex flex-wrap justify-center gap-2 text-xs">
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
-                <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
-                <span className="text-[#FF5555] text-xs">Below 70% (Failing)</span>
-              </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
-                <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
-                <span className="text-[#FFA600] text-xs">71-75% (Close to Failing)</span>
-              </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
-                <div className="w-2 h-2 rounded-full bg-[#00A15D]"></div>
-                <span className="text-[#00A15D] text-xs">76%+ (Passing)</span>
-              </div>
-            </div>
-          </div>
+          {/* REMOVED: Performance zone legend */}
         </div>
       </div>
 

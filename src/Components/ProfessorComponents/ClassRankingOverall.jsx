@@ -483,17 +483,11 @@ const ClassRankingOverall = ({
                 {/* Left Column - Statistics */}
                 <div className="lg:w-1/2 p-4 border-r border-white/10 overflow-y-auto">
                   <div className="space-y-4">
-                    {/* Attendance Section */}
+                    {/* Attendance Section - REMOVED PERCENTAGE BADGE */}
                     <div className="bg-[#23232C] rounded-lg border border-white/5 p-4">
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="mb-3">
                         <h4 className="text-sm font-semibold text-[#FFFFFF]">Attendance</h4>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          studentDetails[selectedStudent.id].attendance.rate >= 90 ? 'bg-[#00A15D]/20 text-[#00A15D]' :
-                          studentDetails[selectedStudent.id].attendance.rate >= 80 ? 'bg-[#FFA600]/20 text-[#FFA600]' :
-                          'bg-[#A15353]/20 text-[#A15353]'
-                        }`}>
-                          {studentDetails[selectedStudent.id].attendance.rate}%
-                        </span>
+                        {/* Percentage badge removed from here */}
                       </div>
                       <div className="grid grid-cols-3 gap-3">
                         {[

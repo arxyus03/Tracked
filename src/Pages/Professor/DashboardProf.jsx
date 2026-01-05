@@ -34,6 +34,7 @@ export default function DashboardProf() {
   const [showAttendanceAlert, setShowAttendanceAlert] = useState(false);
   const [subjectsNeedingAttendance, setSubjectsNeedingAttendance] = useState([]);
   const [todayDate, setTodayDate] = useState("");
+  const [currentSubjectIndex, setCurrentSubjectIndex] = useState(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -165,14 +166,13 @@ export default function DashboardProf() {
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const currentDayName = dayNames[dayOfWeek];
       
-      // Show all subjects in the alert (removed the filter)
+      // Show all subjects in the alert
       setSubjectsNeedingAttendance(handledSubjects);
+      setCurrentSubjectIndex(0);
       
-      // Check if alert has been dismissed today
-      const alertDismissed = localStorage.getItem('attendanceAlertDismissed');
-      const todayDateKey = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-      
-      if (alertDismissed !== todayDateKey && handledSubjects.length > 0) {
+      // Always show alert if there are subjects
+      // Removed localStorage dismissal check
+      if (handledSubjects.length > 0) {
         setShowAttendanceAlert(true);
       }
     } catch (error) {
@@ -181,10 +181,17 @@ export default function DashboardProf() {
   };
 
   const dismissAlert = () => {
+    // Only hide temporarily, will show again on next check
     setShowAttendanceAlert(false);
-    const today = new Date();
-    const todayDateKey = today.toISOString().split('T')[0];
-    localStorage.setItem('attendanceAlertDismissed', todayDateKey);
+  };
+
+  const showNextSubject = () => {
+    if (subjectsNeedingAttendance.length > 1) {
+      // Cycle to the next subject
+      setCurrentSubjectIndex((prevIndex) => 
+        (prevIndex + 1) % subjectsNeedingAttendance.length
+      );
+    }
   };
 
   const getBorderColor = (percentage) => {
@@ -252,62 +259,72 @@ export default function DashboardProf() {
 
           <hr className="border-white/30 mb-4 border-1" />
 
-          {/* Attendance Alert Notification - Updated with green background with low opacity */}
+          {/* Compact Attendance Alert Notification - Always shows if there are subjects */}
           {showAttendanceAlert && subjectsNeedingAttendance.length > 0 && (
-            <div className="mb-4 bg-[#00A15D]/20 rounded-lg p-3 relative border border-[#00A15D]/50">
-              <button 
-                onClick={dismissAlert}
-                className="absolute top-1.5 right-1.5 text-white/60 hover:text-white transition-colors p-0.5"
-              >
-                <img src={CrossIcon} alt="Close" className="h-3 w-3" />
-              </button>
-              
-              <div className="flex items-start pr-4">
-                <div className="mr-2 mt-0.5">
-                  <img src={AlertIcon} alt="Alert" className="h-4 w-4" />
+            <div className="mb-3 bg-[#00A15D]/20 rounded-lg p-2 relative border border-[#00A15D]/50">
+              <div className="flex items-start">
+                <div className="mr-1.5 mt-0.5">
+                  <img src={AlertIcon} alt="Alert" className="h-3.5 w-3.5" />
                 </div>
                 
                 <div className="flex-1">
-                  <h3 className="font-bold text-white text-sm mb-0.5 flex items-center">
-                    <span>Attendance Reminder</span>
-                    <span className="ml-2 text-xs bg-[#00A15D] text-white px-1.5 py-0.5 rounded-full">
-                      Today
-                    </span>
-                  </h3>
-                  
-                  <p className="text-xs text-white/80 mb-1.5">
-                    Record attendance for today ({todayDate})
-                  </p>
-                  
-                  <div className="space-y-1.5 mt-2">
-                    {subjectsNeedingAttendance.map((subject, index) => (
-                      <div key={index} className="bg-[#23232C]/60 rounded p-1.5">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-white text-xs">
-                              {subject.subject}
-                            </p>
-                            <p className="text-xs text-white/60">
-                              Section: {subject.section} • {subject.subjectCode}
-                            </p>
-                          </div>
-                          <Link to={`/Attendance?code=${subject.subjectCode}`}>
-                            <button className="bg-[#00A15D] hover:bg-[#008F4F] text-white font-medium text-xs px-2 py-1 rounded transition-colors">
-                              Take Attendance
-                            </button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="mt-2 flex justify-end items-center">
-                    <Link to="/ClassManagement">
-                      <button className="text-xs bg-transparent hover:bg-[#00A15D]/30 text-white px-2 py-1 rounded border border-white/20 transition-colors">
-                        View All Classes
+                  {/* Header with date text on the right */}
+                  <div className="flex justify-between items-start mb-0.5">
+                    <div className="flex items-center">
+                      <h3 className="font-bold text-white text-xs mr-1.5">
+                        Attendance Reminder
+                      </h3>
+                      <span className="text-[9px] bg-[#00A15D] text-white px-1 py-0.5 rounded-full">
+                        Today
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <p className="text-[10px] text-white/80 mr-2 leading-tight">
+                        Record attendance for {todayDate}
+                      </p>
+                      <button 
+                        onClick={dismissAlert}
+                        className="text-white/60 hover:text-white transition-colors p-0.5"
+                      >
+                        <img src={CrossIcon} alt="Close" className="h-2.5 w-2.5" />
                       </button>
-                    </Link>
+                    </div>
                   </div>
+                  
+                  {/* Compact subject display */}
+                  <div className="bg-[#23232C]/60 rounded p-1 mb-1 mt-1.5">
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1 min-w-0 pr-1">
+                        <p className="font-medium text-white text-xs truncate leading-tight mb-0.5">
+                          {subjectsNeedingAttendance[currentSubjectIndex]?.subject}
+                        </p>
+                        <p className="text-[10px] text-white/60 truncate leading-tight">
+                          Sec: {subjectsNeedingAttendance[currentSubjectIndex]?.section} • {subjectsNeedingAttendance[currentSubjectIndex]?.subjectCode}
+                        </p>
+                      </div>
+                      <Link 
+                        to={`/Attendance?code=${subjectsNeedingAttendance[currentSubjectIndex]?.subjectCode}`}
+                        className="flex-shrink-0"
+                      >
+                        <button className="bg-[#00A15D] hover:bg-[#008F4F] text-white font-medium text-[10px] px-1.5 py-0.5 rounded transition-colors whitespace-nowrap">
+                          Record Attendance
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  {/* Show clickable count of remaining subjects if there are more */}
+                  {subjectsNeedingAttendance.length > 1 && (
+                    <div className="mb-0.5">
+                      <button 
+                        onClick={showNextSubject}
+                        className="text-[10px] text-white/60 hover:text-white/80 transition-colors underline"
+                      >
+                        + {subjectsNeedingAttendance.length - 1} more
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

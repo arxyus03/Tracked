@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import jsPDF from 'jspdf';
 
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
+import GradeTable from "../../Components/ProfessorComponents/GradeTable";
 
 // ========== IMPORT ASSETS ==========
 import SubjectDetailsIcon from '../../assets/SubjectDetails.svg';
@@ -14,12 +14,8 @@ import Classwork from "../../assets/Classwork.svg";
 import GradeIcon from '../../assets/Grade.svg';
 import AnalyticsIcon from '../../assets/Analytics.svg';
 import Attendance from "../../assets/Attendance.svg";
-import DownloadIcon from '../../assets/Download.svg';
 import Copy from '../../assets/Copy.svg';
-// ADD THIS NEW IMPORT
 import SubjectOverview from "../../assets/SubjectOverview.svg";
-
-
 
 export default function GradeTab() {
   const [isOpen, setIsOpen] = useState(true);
@@ -33,6 +29,7 @@ export default function GradeTab() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const [gradeData, setGradeData] = useState([]);
+  const [students, setStudents] = useState([]);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -62,6 +59,10 @@ export default function GradeTab() {
 
       if (result.success) {
         setClassInfo(result.class_info);
+        // ========== EXTRACT STUDENTS FROM RESPONSE ==========
+        if (result.class_info && result.class_info.students) {
+          setStudents(result.class_info.students);
+        }
         return result.class_info;
       } else {
         throw new Error(result.message || "Failed to fetch class info");
@@ -80,9 +81,9 @@ export default function GradeTab() {
         return;
       }
 
-      const response = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_grade_summary.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}`
-      );
+      const url = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_grade_summary.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}`;
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -185,7 +186,6 @@ export default function GradeTab() {
     if (classInfo?.subject_code) {
       navigator.clipboard.writeText(classInfo.subject_code)
         .then(() => {
-          // Show temporary feedback
           const originalText = document.querySelector('.copy-text');
           if (originalText) {
             originalText.textContent = 'Copied!';
@@ -200,12 +200,16 @@ export default function GradeTab() {
     }
   };
 
-  const downloadTableAsPDF = async () => {
+  // ========== DOWNLOAD PDF FUNCTION ==========
+  const handleDownload = async () => {
     if (isDownloading || gradeData.length === 0) return;
     
     setIsDownloading(true);
     
     try {
+      // Import jsPDF dynamically to avoid initial bundle size
+      const { default: jsPDF } = await import('jspdf');
+      
       const totalAssigned = gradeData.reduce((sum, item) => sum + item.assignedWorks, 0);
       const totalSubmissions = gradeData.reduce((sum, item) => sum + item.submissions, 0);
       const totalScores = gradeData.reduce((sum, item) => sum + item.totalScores, 0);
@@ -429,10 +433,6 @@ export default function GradeTab() {
     }
   };
 
-  const handleDownload = () => {
-    downloadTableAsPDF();
-  };
-
   // ========== RENDER ACTION BUTTON HELPER ==========
   const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
     <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
@@ -493,7 +493,7 @@ export default function GradeTab() {
         {/* ========== MAIN CONTENT ========== */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-6">
           
-          {/* ========== PAGE HEADER (Updated to match ClassworkTab) ========== */}
+          {/* ========== PAGE HEADER ========== */}
           <div className="mb-4">
             <div className="flex items-center mb-2">
               <img
@@ -510,7 +510,7 @@ export default function GradeTab() {
             </p>
           </div>
 
-          {/* ========== SUBJECT INFORMATION WITH COPY BUTTON (Updated to match ClassworkTab) ========== */}
+          {/* ========== SUBJECT INFORMATION WITH COPY BUTTON ========== */}
           <div className="flex flex-col gap-1 text-sm text-gray-400 mb-4">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
@@ -556,10 +556,10 @@ export default function GradeTab() {
 
           <hr className="border-gray-700 mb-4" />
 
-          {/* ========== ACTION BUTTONS (Updated to match ClassworkTab) ========== */}
+          {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
-              {/* NEW: Subject Overview Button */}
+              {/* Subject Overview Button */}
               {renderActionButton("/SubjectOverviewProfessor", SubjectOverview, "Subject Overview", false, "bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30")}
               
               {/* Announcement Button */}
@@ -578,7 +578,7 @@ export default function GradeTab() {
               {renderActionButton("/AnalyticsTab", AnalyticsIcon, "Analytics", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
             </div>
             
-            {/* ========== ICON BUTTONS (Updated to match ClassworkTab) ========== */}
+            {/* ========== ICON BUTTONS ========== */}
             <div className="flex items-center gap-2 justify-end sm:justify-start">
               {/* Class Management Button */}
               <Link to={`/StudentList?code=${subjectCode}`}>
@@ -598,137 +598,15 @@ export default function GradeTab() {
             </div>
           </div>
 
-          {/* ========== DOWNLOAD BUTTON ========== */}
-          <div className="mt-4 flex justify-end">
-            <button 
-              onClick={handleDownload}
-              disabled={isDownloading || gradeData.length === 0}
-              className={`flex items-center gap-2 px-3 py-2 bg-[#15151C] font-semibold text-sm rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer text-white ${
-                isDownloading || gradeData.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              title={gradeData.length === 0 ? "No data to download" : "Download Grade Report as PDF"}
-            >
-              {isDownloading ? (
-                <>
-                  <div className="h-4 w-4 border-2 border-[#00A15D] border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-white">Generating PDF...</span>
-                </>
-              ) : (
-                <>
-                  <img 
-                    src={DownloadIcon} 
-                    alt="Download" 
-                    className="h-4 w-4" 
-                  />
-                  <span className="text-white">Download PDF</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* ========== GRADE TABLE ========== */}
-          <div className="mt-4 bg-[#15151C] rounded-lg shadow-md border border-white/10 overflow-hidden">
-            <div className="overflow-x-auto">
-              <div className="sm:hidden text-xs text-white/50 py-1.5 text-center bg-[#23232C]">
-                ← Swipe to see all columns →
-              </div>
-              <div className="p-3">
-                <table className="table-auto w-full border-collapse text-left min-w-[800px]">
-                  <thead>
-                    <tr className="text-xs font-semibold bg-[#23232C] text-white">
-                      <th className="px-2 py-2 border-b border-white/10">Class Works</th>
-                      <th className="px-2 py-2 border-b border-white/10 text-center">Assigned Works</th>
-                      <th className="px-2 py-2 border-b border-white/10 text-center">Submissions</th>
-                      <th className="px-2 py-2 border-b border-white/10 text-center">Missed Submissions</th>
-                      <th className="px-2 py-2 border-b border-white/10 text-center">Total Scores</th>
-                      <th className="px-2 py-2 border-b border-white/10 text-center">Sum of Graded Works</th>
-                      <th className="px-2 py-2 border-b border-white/10 text-center">Percentage</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {gradeData.map((item, index) => (
-                      <tr
-                        key={item.activityType}
-                        className={`hover:bg-[#23232C] text-xs text-white ${
-                          index !== gradeData.length - 1 ? 'border-b border-white/10' : ''
-                        }`}
-                      >
-                        <td className="px-2 py-2 font-medium">
-                          {item.activityType}
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          {item.assignedWorks}
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          {item.submissions}
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          {item.missedSubmissions}
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          {item.totalScores}
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          {item.sumGradedWorks}
-                        </td>
-                        <td className="px-2 py-2 text-center">
-                          <span className={`px-1.5 py-0.5 rounded-full text-xs ${
-                            parseFloat(item.percentage) >= 70 
-                              ? 'bg-[#00A15D]/20 text-white' 
-                              : parseFloat(item.percentage) >= 50 
-                              ? 'bg-[#FFA600]/20 text-white' 
-                              : 'bg-[#A15353]/20 text-white'
-                          }`}>
-                            {item.percentage}
-                          </span>
-                        </td>
-                      </tr>
-                    ))} 
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* ========== SUMMARY SECTION ========== */}
-            <div className="p-3 border-t border-white/10 bg-[#23232C]">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="text-center">
-                  <div className="font-semibold text-white/70">Total Assigned</div>
-                  <div className="text-sm font-bold text-white">
-                    {gradeData.reduce((sum, item) => sum + item.assignedWorks, 0)}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="font-semibold text-white/70">Total Submissions</div>
-                  <div className="text-sm font-bold text-white">
-                    {gradeData.reduce((sum, item) => sum + item.submissions, 0)}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="font-semibold text-white/70">Overall Score</div>
-                  <div className="text-sm font-bold text-white">
-                    {gradeData.reduce((sum, item) => sum + item.sumGradedWorks, 0).toFixed(1)}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="font-semibold text-white/70">Overall Percentage</div>
-                  <div className="text-sm font-bold text-white">
-                    {((gradeData.reduce((sum, item) => sum + item.sumGradedWorks, 0) / 
-                       Math.max(gradeData.reduce((sum, item) => sum + item.totalScores, 0), 1)) * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-              {/* Class Information Display */}
-              <div className="mt-3 pt-3 border-t border-white/10 text-center">
-                <div className="text-xs text-white/60">
-                  Showing data for: <span className="font-semibold text-white">{classInfo?.subject} ({classInfo?.subject_code}) - Section {classInfo?.section}</span>
-                </div>
-                <div className="text-xs text-white/50 mt-0.5">
-                  Professor: <span className="text-white">{classInfo?.professor_name || `ID: ${classInfo?.professor_ID}`}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* ========== GRADE TABLE COMPONENT ========== */}
+          <GradeTable
+            classInfo={classInfo}
+            gradeData={gradeData}
+            students={students}
+            subjectCode={subjectCode}
+            isDownloading={isDownloading}
+            onDownload={handleDownload}
+          />
         </div>
       </div>
     </div>

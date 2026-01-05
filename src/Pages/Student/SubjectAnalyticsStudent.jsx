@@ -69,12 +69,49 @@ export default function SubjectAnalyticsStudent() {
     if (subjectCode && studentId) fetchActivitiesData();
   }, [subjectCode, studentId]);
 
-  // Generate performance trend data based on activities
+  // Fetch performance trend data
   useEffect(() => {
-    if (activitiesData && currentSubject) generatePerformanceTrend();
-  }, [activitiesData, currentSubject]);
+    if (subjectCode && studentId) fetchPerformanceTrend();
+  }, [subjectCode, studentId]);
 
-  const generatePerformanceTrend = () => {
+  const fetchPerformanceTrend = async () => {
+    if (!subjectCode || !studentId) return;
+    
+    try {
+      const response = await fetch(
+        `https://tracked.6minds.site/Student/AnalyticsStudentDB/get_weekly_performance.php?student_id=${studentId}&subject_code=${subjectCode}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.weeks) {
+          // Format the data for the chart
+          const formattedWeeks = data.weeks.map(week => ({
+            week: week.week,
+            score: week.score,
+            activities: week.activities,
+            submitted: week.submitted,
+            completion_rate: week.completion_rate,
+            average_score: week.average_score,
+            late: week.late
+          }));
+          
+          setPerformanceTrend(formattedWeeks);
+        } else {
+          // Fallback to dummy data if no real data
+          generateDummyPerformanceTrend();
+        }
+      } else {
+        generateDummyPerformanceTrend();
+      }
+    } catch (error) {
+      console.error('Error fetching performance trend:', error);
+      generateDummyPerformanceTrend();
+    }
+  };
+
+  // Dummy data fallback
+  const generateDummyPerformanceTrend = () => {
     const weeks = [
       { week: 1, score: 65, activities: 3 },
       { week: 2, score: 72, activities: 4 },
@@ -377,7 +414,11 @@ export default function SubjectAnalyticsStudent() {
           {/* Performance Trend Chart */}
           {!loading && currentSubject && (
             <div className="mb-6">
-              <PerformanceLineChart performanceTrend={performanceTrend} />
+              <PerformanceLineChart 
+                performanceTrend={performanceTrend} 
+                studentId={studentId}
+                subjectCode={subjectCode}
+              />
             </div>
           )}
 
@@ -388,6 +429,8 @@ export default function SubjectAnalyticsStudent() {
                 activitiesData={activitiesData}
                 selectedType={selectedActivityType}
                 onTypeChange={handleActivityTypeChange}
+                studentId={studentId}
+                subjectCode={subjectCode}
               />
             </div>
           )}

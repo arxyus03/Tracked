@@ -49,7 +49,7 @@ export default function DashboardStudent() {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
-  // Task completion states
+  // Task completion states - UPDATED TO USE REAL DATA
   const [tasksDone, setTasksDone] = useState(0);
   const [totalTasks, setTotalTasks] = useState(0);
   const [taskCompletionPercentage, setTaskCompletionPercentage] = useState(0);
@@ -64,7 +64,8 @@ export default function DashboardStudent() {
   const [modalActivities, setModalActivities] = useState([]);
   const [activityDetails, setActivityDetails] = useState({
     missed: [],
-    active: []
+    active: [],
+    submitted: []
   });
 
   // Overall performance state
@@ -93,7 +94,7 @@ export default function DashboardStudent() {
           if (userIdFromStorage) {
             setUserId(userIdFromStorage);
             
-            const response = await fetch(`https://tracked.6minds.site/Student/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`);
+            const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`);
             
             if (response.ok) {
               const data = await response.json();
@@ -122,7 +123,7 @@ export default function DashboardStudent() {
                 await fetchAttendanceData(userIdFromStorage);
                 await fetchAnalyticsData(userIdFromStorage);
                 await generateCalendarData(userIdFromStorage);
-                await fetchTaskCompletionData(userIdFromStorage);
+                await fetchTaskCompletionData(userIdFromStorage); // This will fetch real activity data
               }
             }
           }
@@ -136,10 +137,189 @@ export default function DashboardStudent() {
     fetchUserData();
   }, []);
 
+  // Month navigation functions
+  const goToPreviousMonth = () => {
+    let newMonth = currentMonth - 1;
+    let newYear = currentYear;
+    
+    if (newMonth < 0) {
+      newMonth = 11;
+      newYear = currentYear - 1;
+    }
+    
+    setCurrentMonth(newMonth);
+    setCurrentYear(newYear);
+    
+    if (userId) {
+      generateCalendarData(userId);
+    }
+  };
+
+  const goToNextMonth = () => {
+    let newMonth = currentMonth + 1;
+    let newYear = currentYear;
+    
+    if (newMonth > 11) {
+      newMonth = 0;
+      newYear = currentYear + 1;
+    }
+    
+    setCurrentMonth(newMonth);
+    setCurrentYear(newYear);
+    
+    if (userId) {
+      generateCalendarData(userId);
+    }
+  };
+
+  // NEW FUNCTION: Fetch real activity data
+  const fetchTaskCompletionData = async (studentId) => {
+    try {
+      // CHANGED: Updated file name from get_student_activities.php to student_activities.php
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/DashboardStudentDB/student_activities.php?student_id=${studentId}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Activity data:', data);
+        
+        if (data.success) {
+          // Set task counts
+          setTasksDone(data.submitted_activities || 0);
+          setTotalTasks(data.total_activities || 0);
+          
+          // Calculate completion percentage
+          const completionPercentage = data.total_activities > 0 
+            ? Math.round((data.submitted_activities / data.total_activities) * 100) 
+            : 0;
+          setTaskCompletionPercentage(completionPercentage);
+          
+          // Set activity alerts
+          setActivityAlerts({
+            missed: data.missed_activities || 0,
+            active: data.active_activities || 0
+          });
+          
+          // Set activity details for modal
+          setActivityDetails({
+            missed: data.activities_by_status?.missed || [],
+            active: data.activities_by_status?.active || [],
+            submitted: data.activities_by_status?.submitted || []
+          });
+          
+          // Update overall missed count for warnings
+          setOverallMissed(data.missed_activities || 0);
+        }
+      } else {
+        console.error('Failed to fetch activity data');
+        // Fallback to mock data if API fails
+        fetchMockActivityData();
+      }
+    } catch (error) {
+      console.error("Error fetching task completion data:", error);
+      // Fallback to mock data
+      fetchMockActivityData();
+    }
+  };
+
+  // Fallback mock data function
+  const fetchMockActivityData = () => {
+    setTasksDone(14);
+    setTotalTasks(20);
+    setTaskCompletionPercentage(70);
+    setActivityAlerts({
+      missed: 3,
+      active: 5
+    });
+    
+    // Keep the existing mock data for details
+    const mockMissedActivities = [
+      {
+        id: 1,
+        subject: "Mathematics",
+        subjectCode: "MATH101",
+        activity_type: "Assignment",
+        title: "Chapter 3 Exercises",
+        task_number: "1",
+        instructions: "Complete all problems on page 45-47. Show your work and submit as a PDF file.",
+        deadline: "2024-03-15T23:59:00",
+        status: "missed",
+        professor_ID: "202210602",
+        professorEmail: "math.professor@university.edu",
+        notes: "Late submissions not accepted",
+        points: 20,
+        submitted: false,
+        late: false
+      },
+      {
+        id: 2,
+        subject: "Science",
+        subjectCode: "SCI201",
+        activity_type: "Lab Report",
+        title: "Chemistry Lab Experiment 2",
+        task_number: "2",
+        instructions: "Write a detailed lab report following the scientific method. Include data tables, analysis, and conclusion.",
+        deadline: "2024-03-16T14:30:00",
+        status: "missed",
+        professor_ID: "202210602",
+        professorEmail: "science.professor@university.edu",
+        notes: "Must include safety precautions section",
+        points: 25,
+        submitted: false,
+        late: false
+      }
+    ];
+
+    const mockActiveActivities = [
+      {
+        id: 3,
+        subject: "Computer Science",
+        subjectCode: "CS301",
+        activity_type: "Project",
+        title: "Web Application Development",
+        task_number: "3",
+        instructions: "Develop a full-stack web application using React and Node.js. Include authentication and database integration.",
+        deadline: "2024-03-25T17:00:00",
+        status: "active",
+        professor_ID: "202210602",
+        professorEmail: "cs.professor@university.edu",
+        notes: "Group project - teams of 3",
+        points: 50,
+        submitted: false,
+        late: false
+      }
+    ];
+
+    const mockSubmittedActivities = [
+      {
+        id: 4,
+        subject: "History",
+        subjectCode: "HIST102",
+        activity_type: "Research Paper",
+        title: "World War II Causes",
+        task_number: "4",
+        instructions: "Research and analyze the primary causes of World War II. Minimum 2000 words with proper citations.",
+        deadline: "2024-03-10T23:59:00",
+        status: "submitted",
+        professor_ID: "202210602",
+        professorEmail: "history.professor@university.edu",
+        notes: "Chicago citation style required",
+        points: 40,
+        submitted: true,
+        late: false
+      }
+    ];
+
+    setActivityDetails({
+      missed: mockMissedActivities,
+      active: mockActiveActivities,
+      submitted: mockSubmittedActivities
+    });
+  };
+
   const fetchDashboardData = async (studentId) => {
     try {
       setLoading(true);
-      const response = await fetch(`https://tracked.6minds.site/Student/DashboardStudentDB/get_dashboard_data.php?student_id=${studentId}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/DashboardStudentDB/get_dashboard_data.php?student_id=${studentId}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -160,7 +340,7 @@ export default function DashboardStudent() {
 
   const fetchAttendanceData = async (studentId) => {
     try {
-      const response = await fetch(`https://tracked.6minds.site/Student/AttendanceStudentDB/get_attendance_student.php?student_id=${studentId}`);
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/AttendanceStudentDB/get_attendance_student.php?student_id=${studentId}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -221,14 +401,97 @@ export default function DashboardStudent() {
     }
   };
 
+  // UPDATED: New fetchSubjectGrades function using the performance calculation
+  const fetchSubjectGrades = async (studentId, subjectCode) => {
+    try {
+      console.log(`📊 Fetching performance for ${subjectCode}, student ${studentId}`);
+      
+      // Use the new performance calculation API
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectDetailsStudentDB/calculate_subject_performance.php?student_id=${studentId}&subject_code=${subjectCode}`);
+      
+      if (!response.ok) {
+        console.error(`❌ HTTP error for ${subjectCode}: ${response.status}`);
+        return {
+          percentage: 0,
+          academicPercentage: 0,
+          attendancePercentage: 0,
+          gradedActivities: 0,
+          totalActivities: 0,
+          hasGrades: false,
+          attendanceSummary: {
+            present_days: 0,
+            late_days: 0,
+            absent_days: 0,
+            total_days: 0
+          }
+        };
+      }
+      
+      const data = await response.json();
+      console.log(`📋 Performance data for ${subjectCode}:`, data);
+      
+      if (!data.success || !data.performance_data) {
+        console.log(`⚠️ No performance data for ${subjectCode}`);
+        return {
+          percentage: 0,
+          academicPercentage: 0,
+          attendancePercentage: 0,
+          gradedActivities: 0,
+          totalActivities: 0,
+          hasGrades: false,
+          attendanceSummary: {
+            present_days: 0,
+            late_days: 0,
+            absent_days: 0,
+            total_days: 0
+          }
+        };
+      }
+      
+      const perf = data.performance_data;
+      
+      return {
+        percentage: perf.final_percentage, // Use the weighted final percentage (75% academic + 25% attendance)
+        academicPercentage: perf.academic_percentage, // Academic-only percentage
+        attendancePercentage: perf.attendance_percentage, // Attendance-only percentage
+        gradedActivities: perf.graded_activities_count, // Number of graded activities
+        totalActivities: perf.total_activities, // Total number of activities
+        hasGrades: perf.graded_activities_count > 0, // Whether subject has any graded activities
+        attendanceSummary: perf.attendance_summary // Detailed attendance data
+      };
+      
+    } catch (error) {
+      console.error(`🔥 Error fetching performance for ${subjectCode}:`, error);
+      return {
+        percentage: 0,
+        academicPercentage: 0,
+        attendancePercentage: 0,
+        gradedActivities: 0,
+        totalActivities: 0,
+        hasGrades: false,
+        attendanceSummary: {
+          present_days: 0,
+          late_days: 0,
+          absent_days: 0,
+          total_days: 0
+        }
+      };
+    }
+  };
+
   const fetchAnalyticsData = async (studentId) => {
     try {
-      const classesResponse = await fetch(`https://tracked.6minds.site/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
+      console.log('🚀 Starting fetchAnalyticsData for student:', studentId);
+      
+      const classesResponse = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectsDB/get_student_classes.php?student_id=${studentId}`);
       
       if (classesResponse.ok) {
         const classesData = await classesResponse.json();
+        console.log('📚 Classes data:', classesData);
         
         if (classesData.success && classesData.classes) {
+          console.log(`🎯 Found ${classesData.classes.length} classes for student`);
+          
           let totalCompleted = 0;
           let totalActivities = 0;
           let totalMissed = 0;
@@ -236,7 +499,12 @@ export default function DashboardStudent() {
           const allRecentActivities = [];
 
           for (const subject of classesData.classes) {
-            const analyticsResponse = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?student_id=${studentId}&subject_code=${subject.subject_code}`);
+            console.log(`\n📖 Processing subject: ${subject.subject} (${subject.subject_code})`);
+            
+            const gradeData = await fetchSubjectGrades(studentId, subject.subject_code);
+            console.log(`   Grade data for ${subject.subject_code}:`, gradeData);
+            
+            const analyticsResponse = await fetch(`http://localhost/TrackEd/src/Pages/Student/SubjectDetailsStudentDB/get_activities_student.php?student_id=${studentId}&subject_code=${subject.subject_code}`);
             
             if (analyticsResponse.ok) {
               const analyticsData = await analyticsResponse.json();
@@ -252,13 +520,34 @@ export default function DashboardStudent() {
 
                 const completionRate = activities.length > 0 ? Math.round((completed / activities.length) * 100) : 0;
                 
+                let status = 'good';
+                let statusMessage = '';
+                
+                // Use the weighted final percentage for status determination
+                if (gradeData.hasGrades) {
+                  if (gradeData.percentage <= 70) {
+                    status = 'failing';
+                    statusMessage = 'Failing';
+                  } else if (gradeData.percentage >= 71 && gradeData.percentage <= 75) {
+                    status = 'warning';
+                    statusMessage = 'At Risk';
+                  }
+                }
+                
                 subjectPerformanceData.push({
                   subject: subject.subject,
                   subjectCode: subject.subject_code,
-                  completionRate,
-                  completed,
-                  total: activities.length,
-                  section: subject.section
+                  percentage: gradeData.percentage, // This is the weighted final percentage
+                  academicPercentage: gradeData.academicPercentage, // Academic-only percentage
+                  attendancePercentage: gradeData.attendancePercentage, // Attendance-only percentage
+                  gradedActivities: gradeData.gradedActivities, // Number of graded activities
+                  totalActivities: gradeData.totalActivities, // Total number of activities
+                  section: subject.section,
+                  status: status,
+                  statusMessage: statusMessage,
+                  hasGrades: gradeData.hasGrades,
+                  completionRate: completionRate,
+                  attendanceSummary: gradeData.attendanceSummary // Include attendance details
                 });
 
                 if (activities.length > 0) {
@@ -284,45 +573,90 @@ export default function DashboardStudent() {
             }
           }
 
+          subjectPerformanceData.sort((a, b) => {
+            const statusPriority = { 'failing': 0, 'warning': 1, 'good': 2 };
+            const statusDiff = statusPriority[a.status] - statusPriority[b.status];
+            
+            if (statusDiff !== 0) return statusDiff;
+            
+            return a.percentage - b.percentage;
+          });
+
           const sortedRecentActivities = allRecentActivities
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .slice(0, 3);
           
           setRecentActivities(sortedRecentActivities);
 
-          const overallCompletionRate = totalActivities > 0 ? Math.round((totalCompleted / totalActivities) * 100) : 0;
-          setPerformanceScore(overallCompletionRate);
-          setSubmissionRate(overallCompletionRate);
-          
-          // Calculate overall performance (average of all subject completion rates)
-          if (subjectPerformanceData.length > 0) {
-            const averageCompletionRate = Math.round(
-              subjectPerformanceData.reduce((sum, subject) => sum + subject.completionRate, 0) / 
-              subjectPerformanceData.length
-            );
-            setOverallPerformance(averageCompletionRate);
-          } else {
-            setOverallPerformance(0);
+          // ============== FIXED: OVERALL PERFORMANCE CALCULATION (ALL SUBJECTS) ==============
+          // Use ALL enrolled subjects, not just those with grades
+          const allEnrolledSubjects = subjectPerformanceData; // This contains all enrolled subjects
+          let overallPerformanceScore = 0;
+
+          if (allEnrolledSubjects.length > 0) {
+            let totalWeightedSum = 0;
+            
+            allEnrolledSubjects.forEach(subject => {
+              if (subject.hasGrades) {
+                // Subject has graded activities: use the final_percentage
+                const subjectPercentage = parseFloat(subject.percentage) || 0;
+                totalWeightedSum += subjectPercentage;
+              } else {
+                // Subject has NO graded activities: use attendance percentage as participation indicator
+                const attendancePercentage = parseFloat(subject.attendancePercentage) || 0;
+                totalWeightedSum += attendancePercentage;
+              }
+            });
+            
+            // Calculate average percentage across ALL subjects
+            overallPerformanceScore = Math.round(totalWeightedSum / allEnrolledSubjects.length);
+            
+            console.log('📈 Overall Performance Calculation (ALL Enrolled Subjects):');
+            console.log(`   Total enrolled subjects: ${allEnrolledSubjects.length}`);
+            console.log(`   Subjects with grades: ${allEnrolledSubjects.filter(s => s.hasGrades).length}`);
+            console.log(`   Total weighted sum: ${totalWeightedSum.toFixed(2)}%`);
+            console.log(`   Calculated average: ${overallPerformanceScore}%`);
           }
+          // ================================================================
+          
+          setOverallPerformance(overallPerformanceScore);
+          setPerformanceScore(overallPerformanceScore);
+          setSubmissionRate(allEnrolledSubjects.length > 0 ? overallPerformanceScore : 0);
 
           let riskLevelCalc = "LOW";
-          if (totalMissed > totalActivities * 0.3) {
-            riskLevelCalc = "HIGH";
-          } else if (totalMissed > totalActivities * 0.15) {
-            riskLevelCalc = "MEDIUM";
+          if (allEnrolledSubjects.length > 0) {
+            const failingSubjects = allEnrolledSubjects.filter(subject => subject.status === 'failing').length;
+            const warningSubjects = allEnrolledSubjects.filter(subject => subject.status === 'warning').length;
+            
+            if (failingSubjects > 0) {
+              riskLevelCalc = "HIGH";
+            } else if (warningSubjects > 0) {
+              riskLevelCalc = "MEDIUM";
+            }
           }
+          
           setRiskLevel(riskLevelCalc);
 
           setSubjectPerformance(subjectPerformanceData);
 
           const warningsList = [];
-          if (riskLevelCalc === "HIGH") {
-            warningsList.push({
-              type: "critical",
-              message: "High academic risk detected",
-              suggestion: "Focus on missed assignments"
-            });
-          }
+          
+          allEnrolledSubjects.forEach(subject => {
+            if (subject.status === 'failing') {
+              warningsList.push({
+                type: "critical",
+                message: `${subject.subject}: Failing (${subject.percentage}%)`,
+                suggestion: "Focus on improving this subject immediately"
+              });
+            } else if (subject.status === 'warning') {
+              warningsList.push({
+                type: "warning",
+                message: `${subject.subject}: At Risk (${subject.percentage}%)`,
+                suggestion: "Needs attention to avoid failing"
+              });
+            }
+          });
+
           if (overallMissed > 0) {
             warningsList.push({
               type: "warning", 
@@ -330,6 +664,7 @@ export default function DashboardStudent() {
               suggestion: "Check submissions"
             });
           }
+          
           if (overallDaysAbsent > 2) {
             warningsList.push({
               type: "warning",
@@ -337,181 +672,25 @@ export default function DashboardStudent() {
               suggestion: "Maintain attendance"
             });
           }
-          setWarnings(warningsList);
+          
+          setWarnings(warningsList.slice(0, 3));
         }
       }
     } catch (error) {
-      console.error("Error fetching analytics data:", error);
+      console.error("❌ Error in fetchAnalyticsData:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch task completion data
-  const fetchTaskCompletionData = async (studentId) => {
-    try {
-      const response = await fetch(`https://tracked.6minds.site/Student/DashboardStudentDB/get_task_completion.php?student_id=${studentId}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.success) {
-          setTasksDone(data.tasks_done || 0);
-          setTotalTasks(data.total_tasks || 0);
-          setTaskCompletionPercentage(data.completion_percentage || 0);
-          
-          // Set activity alerts (only missed and active now)
-          setActivityAlerts({
-            missed: data.missed_activities || 0,
-            active: data.active_activities || 0
-          });
-
-          // Fetch detailed activities for each type
-          await fetchDetailedActivities(studentId);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching task completion data:", error);
-      // Set fallback data
-      setTasksDone(14);
-      setTotalTasks(20);
-      setTaskCompletionPercentage(70);
-      setActivityAlerts({
-        missed: 3,
-        active: 5
-      });
-      // Fetch mock detailed activities
-      fetchMockDetailedActivities();
-    }
-  };
-
-  // Fetch detailed activities for each type
-  const fetchDetailedActivities = async (studentId) => {
-    try {
-      // This would be replaced with actual API calls
-      // For now, using mock data
-      fetchMockDetailedActivities();
-    } catch (error) {
-      console.error("Error fetching detailed activities:", error);
-      fetchMockDetailedActivities();
-    }
-  };
-
-  // Mock detailed activities
-  const fetchMockDetailedActivities = () => {
-    const mockMissedActivities = [
-      {
-        id: 1,
-        subject: "Mathematics",
-        subjectCode: "MATH101",
-        activity_type: "Assignment",
-        title: "Chapter 3 Exercises",
-        task_number: "1",
-        instructions: "Complete all problems on page 45-47. Show your work and submit as a PDF file.",
-        deadline: "2024-03-15T23:59:00",
-        status: "missed",
-        professorEmail: "math.professor@university.edu",
-        notes: "Late submissions not accepted",
-        points: 20,
-        submitted: 0,
-        late: 0,
-        professor_file_count: 2,
-        grade: null
-      },
-      {
-        id: 2,
-        subject: "Science",
-        subjectCode: "SCI201",
-        activity_type: "Lab Report",
-        title: "Chemistry Lab Experiment 2",
-        task_number: "2",
-        instructions: "Write a detailed lab report following the scientific method. Include data tables, analysis, and conclusion.",
-        deadline: "2024-03-16T14:30:00",
-        status: "missed",
-        professorEmail: "science.professor@university.edu",
-        notes: "Must include safety precautions section",
-        points: 25,
-        submitted: 0,
-        late: 0,
-        professor_file_count: 1,
-        grade: null
-      }
-    ];
-
-    const mockActiveActivities = [
-      {
-        id: 3,
-        subject: "Computer Science",
-        subjectCode: "CS301",
-        activity_type: "Project",
-        title: "Web Application Development",
-        task_number: "3",
-        instructions: "Develop a full-stack web application using React and Node.js. Include authentication and database integration.",
-        deadline: "2024-03-25T17:00:00",
-        status: "active",
-        professorEmail: "cs.professor@university.edu",
-        notes: "Group project - teams of 3",
-        points: 50,
-        submitted: 0,
-        late: 0,
-        professor_file_count: 3,
-        grade: null
-      },
-      {
-        id: 4,
-        subject: "History",
-        subjectCode: "HIST102",
-        activity_type: "Research Paper",
-        title: "World War II Causes",
-        task_number: "4",
-        instructions: "Research and analyze the primary causes of World War II. Minimum 2000 words with proper citations.",
-        deadline: "2024-03-28T23:59:00",
-        status: "active",
-        professorEmail: "history.professor@university.edu",
-        notes: "Chicago citation style required",
-        points: 40,
-        submitted: 0,
-        late: 0,
-        professor_file_count: 0,
-        grade: null
-      },
-      {
-        id: 5,
-        subject: "Physics",
-        subjectCode: "PHYS201",
-        activity_type: "Quiz",
-        title: "Quantum Mechanics Quiz",
-        task_number: "5",
-        instructions: "Complete the online quiz covering chapters 4-6. Multiple choice and short answer questions.",
-        deadline: "2024-03-20T10:30:00",
-        status: "active",
-        professorEmail: "physics.professor@university.edu",
-        notes: "Time limit: 45 minutes",
-        points: 15,
-        submitted: 0,
-        late: 0,
-        professor_file_count: 2,
-        grade: null
-      }
-    ];
-
-    setActivityDetails({
-      missed: mockMissedActivities,
-      active: mockActiveActivities
-    });
-  };
-
-  // Generate calendar data
   const generateCalendarData = async (studentId) => {
     try {
-      // Generate calendar days for current month
       const today = new Date();
       const currentMonthDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-      const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
       
       const daysArray = [];
 
-      // Add empty cells for days before the first day of month
       for (let i = 0; i < firstDayOfMonth; i++) {
         daysArray.push({
           dayNumber: null,
@@ -519,32 +698,36 @@ export default function DashboardStudent() {
         });
       }
 
-      // Get today's date in YYYY-MM-DD format for comparison
       const todayStr = today.toISOString().split('T')[0];
       
-      // Create days for the current month
       for (let day = 1; day <= currentMonthDays; day++) {
         const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dateObj = new Date(dateStr);
         
-        // Get day of week (0 = Sunday, 1 = Monday, etc.)
         const dayOfWeek = dateObj.getDay();
         
-        // Get activities for this day
-        const activitiesForDay = await fetchDayActivities(dateStr);
+        const attendanceData = await fetchDayAttendanceFromDB(studentId, dateStr);
         
-        // Determine attendance status based on activities
         let status = 'none';
-        if (activitiesForDay.length > 0) {
-          const hasPresent = activitiesForDay.some(a => a.attendance === 'present');
-          const hasLate = activitiesForDay.some(a => a.attendance === 'late');
-          const hasAbsent = activitiesForDay.some(a => a.attendance === 'absent');
+        
+        if (attendanceData.length > 0) {
+          const hasAbsent = attendanceData.some(a => a.status === 'absent');
+          const hasLate = attendanceData.some(a => a.status === 'late');
+          const allPresent = attendanceData.every(a => a.status === 'present');
           
-          if (hasAbsent) status = 'absent';
-          else if (hasLate) status = 'late';
-          else if (hasPresent) status = 'present';
+          if (hasAbsent) {
+            status = 'absent';
+          } else if (hasLate) {
+            status = 'late';
+          } else if (allPresent) {
+            status = 'present';
+          } else if (attendanceData.some(a => a.status === 'present')) {
+            status = 'present';
+          }
         }
 
+        const activitiesForDay = await fetchDayActivities(studentId, dateStr);
+        
         daysArray.push({
           date: dateStr,
           dayNumber: day,
@@ -553,11 +736,11 @@ export default function DashboardStudent() {
           activities: activitiesForDay,
           isToday: dateStr === todayStr,
           isFuture: dateObj > today,
-          isDay: true
+          isDay: true,
+          attendanceData: attendanceData
         });
       }
 
-      // Fill remaining cells to complete 6 weeks (42 cells)
       while (daysArray.length < 42) {
         daysArray.push({
           dayNumber: null,
@@ -571,43 +754,74 @@ export default function DashboardStudent() {
     }
   };
 
-  // Mock function to fetch day activities - frontend only
-  const fetchDayActivities = async (date) => {
-    // Mock data for demonstration - this would come from your API
-    const mockActivities = [
-      {
-        id: 1,
-        subject: "Mathematics",
-        activity_type: "Assignment",
-        title: "Chapter 3 Exercises",
-        posted_date: date,
-        time: "10:00 AM",
-        attendance: Math.random() > 0.5 ? 'present' : Math.random() > 0.5 ? 'late' : 'absent'
-      },
-      {
-        id: 2,
-        subject: "Science",
-        activity_type: "Quiz",
-        title: "Physics Quiz",
-        posted_date: date,
-        time: "2:00 PM",
-        attendance: Math.random() > 0.5 ? 'present' : Math.random() > 0.5 ? 'late' : 'absent'
+  const fetchDayAttendanceFromDB = async (studentId, date) => {
+    try {
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/DashboardStudentDB/get_daily_attendance.php?student_id=${studentId}&date=${date}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.success && data.attendance) {
+          return data.attendance.map(record => ({
+            subject_code: record.subject_code,
+            subject: record.subject,
+            status: record.status,
+            attendance_date: record.attendance_date,
+            professor_ID: record.professor_ID
+          }));
+        }
       }
-    ];
-
-    // Filter to return 0-3 random activities for the date
-    const randomCount = Math.floor(Math.random() * 4); // 0-3 activities
-    return mockActivities.slice(0, randomCount);
+      
+      return [];
+    } catch (error) {
+      console.error("Error fetching day attendance:", error);
+      return [];
+    }
   };
 
-  // Handle activity type click
+  const fetchDayActivities = async (studentId, date) => {
+    try {
+      const response = await fetch(`http://localhost/TrackEd/src/Pages/Student/DashboardStudentDB/get_daily_activities.php?student_id=${studentId}&date=${date}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.success && data.activities) {
+          return data.activities.map(activity => {
+            const status = activity.submitted ? 'submitted' : 
+                          (activity.deadline && new Date(activity.deadline) < new Date() ? 'missed' : 'active');
+            
+            return {
+              id: activity.id,
+              subject: activity.subject || activity.subject_code,
+              subjectCode: activity.subject_code,
+              activity_type: activity.activity_type,
+              title: activity.title,
+              task_number: activity.task_number,
+              posted_date: activity.created_at,
+              deadline: activity.deadline,
+              points: activity.points,
+              professor_file_count: activity.professor_file_count || 0,
+              submitted: activity.submitted,
+              status: status
+            };
+          });
+        }
+      }
+      
+      return [];
+    } catch (error) {
+      console.error("Error fetching day activities:", error);
+      return [];
+    }
+  };
+
   const handleActivityTypeClick = (type) => {
     setSelectedActivityType(type);
     setModalActivities(activityDetails[type] || []);
     setIsActivityModalOpen(true);
   };
 
-  // Handle navigation to subject's school works
   const handleViewSchoolWorks = (activity) => {
     setIsActivityModalOpen(false);
     navigate(`/SubjectSchoolWorksStudent?code=${activity.subjectCode}&activityId=${activity.id}`);
@@ -617,7 +831,16 @@ export default function DashboardStudent() {
     if (!day.isDay || day.isFuture) return;
     
     setSelectedDate(day);
-    setSelectedDayActivities(day.activities || []);
+    
+    const combinedActivities = day.activities.map(activity => {
+      const attendance = day.attendanceData?.find(a => a.subject_code === activity.subjectCode);
+      return {
+        ...activity,
+        attendance_status: attendance ? attendance.status.charAt(0).toUpperCase() + attendance.status.slice(1) : 'No Data'
+      };
+    });
+    
+    setSelectedDayActivities(combinedActivities);
     setIsCalendarOpen(true);
   };
 
@@ -643,9 +866,9 @@ export default function DashboardStudent() {
 
   const getAttendanceStatusColor = (status) => {
     switch (status) {
-      case 'present': return 'text-[#00A15D]';
-      case 'late': return 'text-[#FFA600]';
-      case 'absent': return 'text-[#A15353]';
+      case 'Present': return 'text-[#00A15D]';
+      case 'Late': return 'text-[#FFA600]';
+      case 'Absent': return 'text-[#A15353]';
       default: return 'text-white/60';
     }
   };
@@ -678,7 +901,8 @@ export default function DashboardStudent() {
       'Exam': 'bg-[#A15353]/20 text-[#A15353]',
       'Essay': 'bg-[#00A15D]/20 text-[#00A15D]',
       'Lab Report': 'bg-[#A15353]/20 text-[#A15353]',
-      'Research Paper': 'bg-[#FFA600]/20 text-[#FFA600]'
+      'Research Paper': 'bg-[#FFA600]/20 text-[#FFA600]',
+      'Discussion': 'bg-[#767EE0]/20 text-[#767EE0]'
     };
     return colors[type] || 'bg-[#767EE0]/20 text-[#767EE0]';
   };
@@ -702,7 +926,7 @@ export default function DashboardStudent() {
   };
 
   const getGradingStatus = (activity) => {
-    const isSubmitted = activity.submitted === 1 || activity.submitted === true || activity.submitted === '1';
+    const isSubmitted = activity.submitted === 1 || activity.submitted === true || activity.submitted === '1' || activity.submitted === true;
     const isGraded = activity.grade !== null && activity.grade !== undefined && activity.grade !== '';
     
     if (isGraded) {
@@ -729,13 +953,11 @@ export default function DashboardStudent() {
     return null;
   };
 
-  // Function to get month name
   const getMonthName = () => {
     const date = new Date(currentYear, currentMonth, 1);
     return date.toLocaleDateString('en-US', { month: 'short' });
   };
 
-  // Function to email professor
   const handleEmailProfessor = (professorEmail, activityTitle) => {
     const subject = encodeURIComponent(`Regarding: ${activityTitle}`);
     const body = encodeURIComponent(`Dear Professor,\n\nI would like to inquire about the activity "${activityTitle}". Could you please let me know what I can do to make up for this task?\n\nThank you,\n${userName}`);
@@ -763,7 +985,6 @@ export default function DashboardStudent() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
         <div className="p-3 sm:p-4 md:p-5 text-white">
-          {/* Header */}
           <div className="mb-3">
             <div className="flex items-center mb-1">
               <img src={Dashboard} alt="Dashboard" className="h-5 w-5 mr-2" />
@@ -776,9 +997,7 @@ export default function DashboardStudent() {
 
           <hr className="border-white/30 mb-4 border-1" />
 
-          {/* Overall Performance, Task Completion & Attendance Calendar */}
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 mb-6">
-            {/* Overall Performance - First (2 columns) */}
             <OverallPerformanceCard
               overallPerformance={overallPerformance}
               subjectPerformance={subjectPerformance}
@@ -787,14 +1006,12 @@ export default function DashboardStudent() {
               submissionRate={submissionRate}
             />
 
-            {/* Task Completion - Takes 3 columns on large screens */}
             <div className="lg:col-span-3 bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]">
               <div className="flex items-center mb-3">
                 <img src={Pie} alt="Task Completion" className="h-5 w-5 mr-2" />
                 <h2 className="font-bold text-sm text-white">Task Completion</h2>
               </div>
 
-              {/* Main Task Completion Stats */}
               <div className="text-center mb-4">
                 <div className="flex items-baseline justify-center mb-2">
                   <p className="text-3xl font-bold text-white">{tasksDone}</p>
@@ -811,9 +1028,7 @@ export default function DashboardStudent() {
                 <p className="text-xs text-white/80 mb-4">{taskCompletionPercentage}% Complete</p>
               </div>
 
-              {/* Activity Type Breakdown - Now 2 columns only */}
               <div className="grid grid-cols-2 gap-3">
-                {/* Missed Activities */}
                 <button 
                   onClick={() => handleActivityTypeClick('missed')}
                   className={`p-3 rounded-lg border-2 text-center transition-all ${getActivityStatusColor('missed')}`}
@@ -829,7 +1044,6 @@ export default function DashboardStudent() {
                   <p className="text-xs">Missed</p>
                 </button>
 
-                {/* Active Activities */}
                 <button 
                   onClick={() => handleActivityTypeClick('active')}
                   className={`p-3 rounded-lg border-2 text-center transition-all ${getActivityStatusColor('active')}`}
@@ -842,22 +1056,43 @@ export default function DashboardStudent() {
               </div>
             </div>
 
-            {/* Attendance Calendar - Takes 1 column on large screens (narrower) */}
             <div className="lg:col-span-1 bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]">
               <div className="flex flex-col h-full">
-                {/* Header - Simplified */}
                 <div className="mb-3">
-                  <div className="flex items-center mb-2">
-                    <div className="flex justify-center items-center h-6 w-6 rounded mr-1.5">
-                      <img src={CalendarIcon} alt="Calendar" className="h-4 w-4" />
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center">
+                      <div className="flex justify-center items-center h-6 w-6 rounded mr-1.5">
+                        <img src={CalendarIcon} alt="Calendar" className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h2 className="font-bold text-xs text-white">Attendance</h2>
+                        <p className="text-[10px] text-white/50">{getMonthName()} {currentYear}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="font-bold text-xs text-white">Attendance</h2>
-                      <p className="text-[10px] text-white/50">{getMonthName()} {currentYear}</p>
+                    
+                    {/* Month Navigation Buttons */}
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={goToPreviousMonth}
+                        className="text-white/70 hover:text-white p-1 rounded hover:bg-white/5 transition-colors"
+                        title="Previous month"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={goToNextMonth}
+                        className="text-white/70 hover:text-white p-1 rounded hover:bg-white/5 transition-colors"
+                        title="Next month"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                   
-                  {/* Attendance percentage - smaller */}
                   <div className="text-center mb-2">
                     <p className="text-[10px] text-white/80 mb-0.5">This Month</p>
                     <div className="flex items-baseline justify-center">
@@ -866,7 +1101,6 @@ export default function DashboardStudent() {
                     </div>
                   </div>
                   
-                  {/* Progress bar - smaller */}
                   <div className="mb-2">
                     <div className="w-full bg-[#767EE0]/20 rounded-full h-1">
                       <div 
@@ -877,7 +1111,6 @@ export default function DashboardStudent() {
                   </div>
                 </div>
 
-                {/* Compact Calendar Grid - Smaller */}
                 <div className="mb-1.5 flex-grow">
                   <div className="grid grid-cols-7 gap-0.5 mb-0.5">
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
@@ -933,7 +1166,6 @@ export default function DashboardStudent() {
             </div>
           </div>
 
-          {/* Day Activities Modal */}
           <CalendarDetails
             selectedDate={selectedDate}
             selectedDayActivities={selectedDayActivities}
@@ -943,9 +1175,15 @@ export default function DashboardStudent() {
             getStatusText={getStatusText}
             getAttendanceStatusColor={getAttendanceStatusColor}
             getActivityTypeColor={getActivityTypeColor}
+            // Add these props for month navigation:
+            currentMonth={currentMonth}
+            currentYear={currentYear}
+            setCurrentMonth={setCurrentMonth}
+            setCurrentYear={setCurrentYear}
+            generateCalendarData={generateCalendarData}
+            userId={userId}
           />
 
-          {/* Activity Details Modal Component */}
           <TaskCompletionDetails
             isOpen={isActivityModalOpen}
             onClose={() => setIsActivityModalOpen(false)}
@@ -958,14 +1196,12 @@ export default function DashboardStudent() {
             getActivityStatusLabel={getActivityStatusLabel}
             formatModalDate={formatModalDate}
             getGradingStatus={getGradingStatus}
+            userName={userName}
           />
 
-          {/* Subject & Activities */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
-            {/* Subject Performance - Using the new component */}
             <SubjectPerformance subjectPerformance={subjectPerformance} />
 
-            {/* Recent Activities */}
             <div className="bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]">
               <h3 className="text-sm font-semibold mb-3 flex items-center text-white">
                 <img src={RecentActivity} alt="Activity" className="h-4 w-4 mr-1" />
@@ -1005,7 +1241,6 @@ export default function DashboardStudent() {
             </div>
           </div>
 
-          {/* Student Info */}
           <div className="bg-[#15151C] rounded-lg shadow mt-3 p-3 text-xs border-2 border-[#15151C]">
             <div className="flex items-center">
               <img src={ID} alt="ID" className="h-4 w-4 mr-1" />
@@ -1031,28 +1266,6 @@ export default function DashboardStudent() {
               </div>
             </div>
           </div>
-
-          {/* Warnings */}
-          {warnings.length > 0 && (
-            warnings.map((warning, index) => (
-              <Link key={index} to={"/AnalyticsStudent"}>
-                <div className="bg-[#15151C] rounded-lg shadow mt-2 p-2 text-xs border-2 border-white/10 hover:border-[#00A15D] transition-colors">
-                  <div className="flex items-center gap-2">
-                    <p className={`font-bold ${
-                      warning.type === 'critical' ? 'text-[#A15353]' : 'text-[#FFA600]'
-                    }`}>
-                      {warning.type === 'critical' ? 'CRITICAL' : 'WARNING'}
-                    </p>
-                    <p className="flex-1 font-medium text-white">{warning.message}</p>
-                    <img src={Details} alt="Details" className="h-4 w-4"/>
-                  </div>
-                  {warning.suggestion && (
-                    <p className="text-white/60 mt-1">{warning.suggestion}</p>
-                  )}
-                </div>
-              </Link>
-            ))
-          )}
         </div>
       </div>
     </div>

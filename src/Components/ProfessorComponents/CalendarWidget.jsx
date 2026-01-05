@@ -12,7 +12,10 @@ const CalendarWidget = ({ professorId }) => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [monthlyAbsenceRate, setMonthlyAbsenceRate] = useState(0);
   const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedSection, setSelectedSection] = useState('');
   const [availableSubjects, setAvailableSubjects] = useState([]);
+  const [availableSections, setAvailableSections] = useState([]);
+  const [isSectionSelected, setIsSectionSelected] = useState(false);
 
   useEffect(() => {
     if (professorId) {
@@ -105,65 +108,117 @@ const CalendarWidget = ({ professorId }) => {
     }
   };
 
-  // Fetch dummy absences for a day
+  // Fetch dummy absences for a day with sections
   const fetchDayAbsences = async (date) => {
-    // Dummy data with subjects like ITEC111, ITEC101, DCIT16
+    // Updated dummy data with student ID numbers
     const dummyAbsences = [
+      // ITEC111 - Multiple sections
       {
-        id: 1,
+        id: "202210718",
         studentName: "Juan Dela Cruz",
-        section: "BSIT 3-1",
+        section: "BSIT 3-1A",
         subject: "ITEC111",
-        status: "absent", // absent or late
+        status: "absent",
       },
       {
-        id: 2,
+        id: "202215485",
         studentName: "Maria Santos",
-        section: "BSIT 3-2", 
-        subject: "ITEC101",
-        status: "late",
-      },
-      {
-        id: 3,
-        studentName: "Pedro Reyes",
-        section: "BSCS 2-1",
-        subject: "DCIT16",
-        status: "absent",
-      },
-      {
-        id: 4,
-        studentName: "Ana Gonzales",
-        section: "BSIT 3-1",
+        section: "BSIT 3-1B", 
         subject: "ITEC111",
         status: "late",
       },
       {
-        id: 5,
+        id: "202212345",
+        studentName: "Pedro Reyes",
+        section: "BSIT 3-1C",
+        subject: "ITEC111",
+        status: "absent",
+      },
+      {
+        id: "202214567",
+        studentName: "Ana Gonzales",
+        section: "BSIT 3-1D",
+        subject: "ITEC111",
+        status: "late",
+      },
+      {
+        id: "202218901",
+        studentName: "Mark Lee",
+        section: "BSIT 3-1A",
+        subject: "ITEC111",
+        status: "absent",
+      },
+      {
+        id: "202219876",
+        studentName: "Sarah Johnson",
+        section: "BSIT 3-1B",
+        subject: "ITEC111",
+        status: "late",
+      },
+      // ITEC101 - Multiple sections
+      {
+        id: "202220123",
         studentName: "Luis Torres",
-        section: "BSCS 2-1",
+        section: "BSCS 2-1A",
+        subject: "ITEC101",
+        status: "absent",
+      },
+      {
+        id: "202221234",
+        studentName: "Sofia Martinez",
+        section: "BSCS 2-1B",
+        subject: "ITEC101",
+        status: "late",
+      },
+      {
+        id: "202222345",
+        studentName: "Carlos Lim",
+        section: "BSCS 2-1C",
+        subject: "ITEC101",
+        status: "absent",
+      },
+      {
+        id: "202223456",
+        studentName: "Emily Chen",
+        section: "BSCS 2-1A",
+        subject: "ITEC101",
+        status: "late",
+      },
+      // DCIT16 - Multiple sections
+      {
+        id: "202224567",
+        studentName: "Megan Tan",
+        section: "BSIT 3-2A",
+        subject: "DCIT16",
+        status: "late",
+      },
+      {
+        id: "202225678",
+        studentName: "John Doe",
+        section: "BSIT 3-2B",
         subject: "DCIT16",
         status: "absent",
       },
       {
-        id: 6,
-        studentName: "Sofia Martinez",
-        section: "BSIT 3-2",
-        subject: "ITEC101",
+        id: "202226789",
+        studentName: "Jane Smith",
+        section: "BSIT 3-2C",
+        subject: "DCIT16",
         status: "late",
+      },
+      {
+        id: "202227890",
+        studentName: "Robert Johnson",
+        section: "BSIT 3-2D",
+        subject: "DCIT16",
+        status: "absent",
       }
     ];
 
-    // Return 0-6 random absences for the date
-    const randomCount = Math.floor(Math.random() * 7); // 0-6 absences/lates
-    const selectedAbsences = dummyAbsences.slice(0, randomCount);
-    
-    // Extract unique subjects for this day
-    const subjects = [];
-    selectedAbsences.forEach(absence => {
-      if (!subjects.includes(absence.subject)) {
-        subjects.push(absence.subject);
-      }
-    });
+    // Return 0-14 random absences for the date
+    const randomCount = Math.floor(Math.random() * 15); // 0-14 absences/lates
+    const shuffled = [...dummyAbsences].sort(() => 0.5 - Math.random());
+    const selectedAbsences = shuffled.slice(0, randomCount);
     
     return selectedAbsences;
   };
@@ -177,6 +232,12 @@ const CalendarWidget = ({ professorId }) => {
     setSelectedDate(day);
     setSelectedDayAbsences(absencesForDay);
     
+    // Reset all selections
+    setSelectedSubject('');
+    setSelectedSection('');
+    setIsSectionSelected(false);
+    setAvailableSections([]);
+    
     // Extract unique subjects from the day's absences
     const subjects = [];
     absencesForDay.forEach(absence => {
@@ -186,13 +247,33 @@ const CalendarWidget = ({ professorId }) => {
     });
     
     setAvailableSubjects(subjects);
-    // Set the first subject as selected if available
-    if (subjects.length > 0) {
-      setSelectedSubject(subjects[0]);
-    } else {
-      setSelectedSubject('');
-    }
     setIsCalendarOpen(true);
+  };
+
+  // Handle subject change
+  const handleSubjectChange = (subject) => {
+    setSelectedSubject(subject);
+    setSelectedSection('');
+    setIsSectionSelected(false);
+    
+    if (subject) {
+      // Get sections for the selected subject
+      const sections = [];
+      selectedDayAbsences.forEach(absence => {
+        if (absence.subject === subject && !sections.includes(absence.section)) {
+          sections.push(absence.section);
+        }
+      });
+      setAvailableSections(sections.sort());
+    } else {
+      setAvailableSections([]);
+    }
+  };
+
+  // Handle section click
+  const handleSectionClick = (section) => {
+    setSelectedSection(section);
+    setIsSectionSelected(true);
   };
 
   // Get status color for calendar day
@@ -232,12 +313,15 @@ const CalendarWidget = ({ professorId }) => {
     }
   };
 
-  // Filter absences by selected subject
+  // Filter absences by selected subject and section
   const getFilteredAbsences = () => {
-    if (!selectedSubject || selectedSubject === '') {
-      return selectedDayAbsences;
+    if (!selectedSubject || !selectedSection) {
+      return [];
     }
-    return selectedDayAbsences.filter(absence => absence.subject === selectedSubject);
+    
+    return selectedDayAbsences.filter(absence => 
+      absence.subject === selectedSubject && absence.section === selectedSection
+    );
   };
 
   // Get month name
@@ -273,7 +357,7 @@ const CalendarWidget = ({ professorId }) => {
     return date.toLocaleDateString('en-US', options);
   };
 
-  // Get counts by status for the selected subject
+  // Get counts by status for the selected subject and section
   const getStatusCounts = () => {
     const filtered = getFilteredAbsences();
     return {
@@ -283,10 +367,26 @@ const CalendarWidget = ({ professorId }) => {
     };
   };
 
+  // Get student count for each section
+  const getSectionStudentCount = (section) => {
+    if (!selectedSubject) return 0;
+    
+    return selectedDayAbsences.filter(absence => 
+      absence.subject === selectedSubject && absence.section === section
+    ).length;
+  };
+
+  // Extract section letter from full section name
+  const getSectionDisplayName = (section) => {
+    // Extract the last character (A, B, C, D) from section string
+    const sectionLetter = section.slice(-1);
+    return `Section ${sectionLetter}`;
+  };
+
   return (
     <>
-      {/* Attendance Calendar - Increased height even more to prevent text overflow */}
-      <div className='lg:col-span-1 bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C] h-64'>
+      {/* Attendance Calendar */}
+      <div className='lg:col-span-1 bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]'>
         <div className="flex flex-col h-full">
           {/* Header with month and navigation */}
           <div className="mb-3">
@@ -322,7 +422,7 @@ const CalendarWidget = ({ professorId }) => {
               </div>
             </div>
             
-            {/* Absence rate - smaller */}
+            {/* Absence rate */}
             <div className="text-center mb-2">
               <p className="text-[10px] text-white/80 mb-0.5">Absence Rate</p>
               <div className="flex items-baseline justify-center">
@@ -331,7 +431,7 @@ const CalendarWidget = ({ professorId }) => {
               </div>
             </div>
             
-            {/* Progress bar - smaller */}
+            {/* Progress bar */}
             <div className="mb-3">
               <div className="w-full bg-[#767EE0]/20 rounded-full h-1">
                 <div 
@@ -342,7 +442,7 @@ const CalendarWidget = ({ professorId }) => {
             </div>
           </div>
 
-          {/* Compact Calendar Grid - More space with increased height */}
+          {/* Compact Calendar Grid */}
           <div className="mb-3 flex-grow">
             <div className="grid grid-cols-7 gap-0.5 mb-1">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
@@ -379,7 +479,6 @@ const CalendarWidget = ({ professorId }) => {
               ))}
             </div>
           </div>
-
         </div>
       </div>
 
@@ -387,7 +486,7 @@ const CalendarWidget = ({ professorId }) => {
       {isCalendarOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3">
           <div className="bg-[#23232C] rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-hidden border-2 border-white/10">
-            {/* Modal header with subject filter */}
+            {/* Modal header */}
             <div className="p-3 border-b border-white/10">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
@@ -397,7 +496,7 @@ const CalendarWidget = ({ professorId }) => {
                       Attendance on {formatDateDisplay(selectedDate?.date)}
                     </h3>
                     <div className="flex items-center gap-1 text-[10px] text-white/60">
-                      <span>{getFilteredAbsences().length} student(s)</span>
+                      <span>{selectedDayAbsences.length} total student(s)</span>
                     </div>
                   </div>
                 </div>
@@ -412,25 +511,51 @@ const CalendarWidget = ({ professorId }) => {
               </div>
               
               {/* Subject Filter Dropdown */}
-              {availableSubjects.length > 0 && (
+              <div className="mb-3">
+                <label className="block text-xs text-white/70 mb-1.5">Select Subject:</label>
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => handleSubjectChange(e.target.value)}
+                  className="w-full bg-[#15151C] border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#767EE0] focus:border-transparent"
+                >
+                  <option value="" className="bg-[#15151C] text-white">
+                    -- Select a subject --
+                  </option>
+                  {availableSubjects.map((subject, index) => (
+                    <option key={index} value={subject} className="bg-[#15151C] text-white">
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Section Buttons - Only show when a subject is selected */}
+              {selectedSubject && availableSections.length > 0 && (
                 <div className="mb-3">
-                  <label className="block text-xs text-white/70 mb-1.5">View by Subject:</label>
-                  <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="w-full bg-[#15151C] border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#767EE0] focus:border-transparent"
-                  >
-                    {availableSubjects.map((subject, index) => (
-                      <option key={index} value={subject} className="bg-[#15151C] text-white">
-                        {subject}
-                      </option>
+                  <label className="block text-xs text-white/70 mb-1.5">Select Section:</label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableSections.map((section, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSectionClick(section)}
+                        className={`px-3 py-2 text-xs rounded transition-colors flex flex-col items-center ${
+                          selectedSection === section 
+                            ? 'bg-[#767EE0] text-white' 
+                            : 'bg-[#15151C] text-white/70 hover:bg-[#1E1E24]'
+                        }`}
+                      >
+                        <span>{getSectionDisplayName(section)}</span>
+                        <span className="text-[10px] opacity-80">
+                          {getSectionStudentCount(section)} student(s)
+                        </span>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
               )}
               
-              {/* Status Summary */}
-              {getFilteredAbsences().length > 0 && (
+              {/* Status Summary - Only show when a section is selected */}
+              {isSectionSelected && (
                 <div className="flex gap-4 text-[10px]">
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-[#A15353]"></div>
@@ -440,14 +565,38 @@ const CalendarWidget = ({ professorId }) => {
                     <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
                     <span className="text-white/60">Late: {getStatusCounts().late}</span>
                   </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-[#767EE0]"></div>
+                    <span className="text-white/60">Total: {getStatusCounts().total}</span>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Modal body - Student cards */}
+            {/* Modal body - Student cards (only show when section is selected) */}
             <div className="p-3 overflow-y-auto max-h-[60vh]">
-              {getFilteredAbsences().length > 0 ? (
+              {!selectedSubject ? (
+                <div className="text-center py-4">
+                  <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  <p className="text-sm text-white/60">Please select a subject to view sections</p>
+                </div>
+              ) : !isSectionSelected ? (
+                <div className="text-center py-4">
+                  <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 5.197a6 6 0 00-9-5.197M12 4.354a4 4 0 110 5.292" />
+                  </svg>
+                  <p className="text-sm text-white/60">Please select a section to view students</p>
+                  <p className="text-xs text-white/40 mt-1">
+                    {availableSections.length} section(s) available for {selectedSubject}
+                  </p>
+                </div>
+              ) : getFilteredAbsences().length > 0 ? (
                 <div className="space-y-2">
+                  <div className="text-xs text-white/60 mb-2">
+                    Showing students for <span className="text-[#767EE0]">{selectedSubject}</span> - <span className="text-[#767EE0]">{selectedSection}</span>
+                  </div>
                   {getFilteredAbsences().map((absence) => {
                     const statusBadge = getStudentStatusBadge(absence.status);
                     return (
@@ -458,7 +607,7 @@ const CalendarWidget = ({ professorId }) => {
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="text-xs font-semibold text-white">{absence.studentName}</p>
-                            <p className="text-[10px] text-white/50">{absence.section}</p>
+                            <p className="text-[10px] text-white/50 mt-0.5">ID: {absence.id}</p>
                           </div>
                           <div className={`px-2 py-0.5 rounded text-[9px] border ${statusBadge.bgColor} ${statusBadge.textColor} ${statusBadge.borderColor}`}>
                             {statusBadge.text}
@@ -473,10 +622,9 @@ const CalendarWidget = ({ professorId }) => {
                   <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-sm text-white/60">
-                    {selectedSubject 
-                      ? `No absences or lateness recorded for ${selectedSubject}` 
-                      : "No absences or lateness recorded for this day"}
+                  <p className="text-sm text-white/60">No absences or lateness recorded</p>
+                  <p className="text-xs text-white/40 mt-1">
+                    All students are present in {selectedSection} for {selectedSubject}
                   </p>
                 </div>
               )}

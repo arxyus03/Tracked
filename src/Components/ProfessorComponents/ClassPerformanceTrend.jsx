@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import LineGraphIcon from '../../assets/LineGraph.svg';
 import ArrowUp from '../../assets/ArrowUp.svg';
 import ArrowDown from '../../assets/ArrowDown.svg';
-import SectionPerformancePopup from '../../Components/ProfessorComponents/SectionPerformancePopup';
+import StudentPerformancePopup from './StudentPerformancePopup';
 
 // Simple trend arrow component
 const TrendArrow = ({ direction, color, size = 4 }) => {
@@ -32,56 +32,64 @@ const TrendArrow = ({ direction, color, size = 4 }) => {
   );
 };
 
-// MOCK DATA GENERATOR - This would typically come from your API
-const generateMockSections = () => {
-  const sections = [
-    { sectionId: 'section-a', sectionName: 'Section A' },
-    { sectionId: 'section-b', sectionName: 'Section B' },
-    { sectionId: 'section-c', sectionName: 'Section C' },
-    { sectionId: 'section-d', sectionName: 'Section D' },
-    { sectionId: 'section-e', sectionName: 'Section E' },
+// MOCK DATA GENERATOR - For student performance
+const generateMockStudents = () => {
+  const students = [
+    { studentId: 'stud-001', studentName: 'John Smith', studentNumber: '2023001' },
+    { studentId: 'stud-002', studentName: 'Maria Garcia', studentNumber: '2023002' },
+    { studentId: 'stud-003', studentName: 'David Chen', studentNumber: '2023003' },
+    { studentId: 'stud-004', studentName: 'Sarah Johnson', studentNumber: '2023004' },
+    { studentId: 'stud-005', studentName: 'Michael Brown', studentNumber: '2023005' },
   ];
 
   // Generate performance trends for 8 weeks
   const weeks = [1, 2, 3, 4, 5, 6, 7, 8];
   
-  return sections.map((section, index) => {
-    // Create different performance patterns for each section
+  return students.map((student, index) => {
+    // Create different performance patterns for each student
     let baseScore;
     let volatility;
+    let trendType;
     
-    switch(index) {
-      case 0: // Section A - High performer, upward trend
-        baseScore = 82;
-        volatility = 6;
+    switch(index % 5) {
+      case 0: // Consistently high performer
+        baseScore = 88;
+        volatility = 4;
+        trendType = 'high';
         break;
-      case 1: // Section B - Middle performer, stable
+      case 1: // Average performer, stable
         baseScore = 78;
-        volatility = 8;
+        volatility = 6;
+        trendType = 'stable';
         break;
-      case 2: // Section C - Low performer, downward trend
-        baseScore = 72;
-        volatility = 10;
-        break;
-      case 3: // Section D - High performer with volatility
-        baseScore = 85;
-        volatility = 12;
-        break;
-      case 4: // Section E - Improving performer
+      case 2: // Struggling student
         baseScore = 68;
+        volatility = 8;
+        trendType = 'low';
+        break;
+      case 3: // Improving student
+        baseScore = 72;
         volatility = 5;
+        trendType = 'improving';
+        break;
+      case 4: // Declining student
+        baseScore = 85;
+        volatility = 7;
+        trendType = 'declining';
         break;
       default:
         baseScore = 75;
         volatility = 8;
+        trendType = 'stable';
     }
 
     const performanceTrend = weeks.map(week => {
-      // Add some trend based on section index
+      // Add trend based on student type
       let trend = 0;
-      if (index === 0) trend = week * 0.8; // Upward trend
-      if (index === 2) trend = -week * 0.6; // Downward trend
-      if (index === 4) trend = week * 1.2; // Strong upward trend
+      if (trendType === 'improving') trend = week * 1.5; // Upward trend
+      if (trendType === 'declining') trend = -week * 1.0; // Downward trend
+      if (trendType === 'high') trend = week * 0.5; // Slight upward
+      if (trendType === 'low') trend = -week * 0.3; // Slight downward
       
       // Add some randomness
       const random = (Math.random() - 0.5) * volatility;
@@ -89,7 +97,7 @@ const generateMockSections = () => {
       let score = baseScore + trend + random;
       
       // Ensure score stays within bounds
-      score = Math.min(Math.max(score, 60), 98);
+      score = Math.min(Math.max(score, 50), 98);
       
       return {
         week,
@@ -98,38 +106,50 @@ const generateMockSections = () => {
     });
 
     return {
-      ...section,
-      performanceTrend
+      ...student,
+      performanceTrend,
+      attendance: Math.floor(Math.random() * 15) + 85, // 85-100% attendance
+      assignmentCompletion: Math.floor(Math.random() * 15) + 80, // 80-95% completion
+      performanceType: trendType
     };
   });
 };
 
-// Function to generate mock performance reasons (FOCUSED ON ACTIVITY, SUBMISSION, ATTENDANCE)
-const generatePerformanceReasons = (sectionName, week, currentScore, previousScore) => {
+// Function to generate mock performance reasons for students
+const generatePerformanceReasons = (studentName, week, currentScore, previousScore) => {
   const scoreChange = previousScore ? currentScore - previousScore : 0;
   const isImproving = scoreChange > 0;
 
   const reasons = [
     {
-      factor: "Activity Scores",
+      factor: "Assignment Scores",
       description: isImproving
-        ? "Average activity performance has improved significantly"
-        : "Activity performance shows a decline this week",
-      impact: isImproving ? "positive" : "negative"
+        ? "Assignment scores have improved significantly"
+        : "Assignment scores show a decline this week",
+      impact: isImproving ? "positive" : "negative",
+      details: isImproving 
+        ? "Higher accuracy in submitted work" 
+        : "Multiple errors in recent submissions"
     },
     {
-      factor: "Activity Submission",
+      factor: "Class Participation",
       description: isImproving
-        ? "Timely submission rate has increased"
-        : "Submission delays and incomplete work observed",
-      impact: isImproving ? "positive" : "negative"
+        ? "Active participation in class discussions"
+        : "Reduced participation observed",
+      impact: isImproving ? "positive" : "negative",
+      details: isImproving
+        ? "Frequently contributes to discussions"
+        : "Minimal engagement in classroom activities"
     },
     {
       factor: "Attendance",
       description: isImproving
-        ? "Improved class attendance and participation"
-        : "Lower attendance affecting overall performance",
-      impact: isImproving ? "positive" : "negative"
+        ? "Perfect attendance maintained"
+        : "Attendance issues affecting performance",
+      impact: isImproving ? "positive" : "negative",
+      details: isImproving
+        ? "Consistently present and punctual"
+        : "Missed important concepts due to absences"
     }
   ];
 
@@ -143,48 +163,62 @@ const getPerformanceZoneColor = (score) => {
   return '#00A15D'; // Passing green for 76% and above
 };
 
-const SectionComparisonTrend = ({ 
-  sections: propSections, 
-  currentSectionId,
+const ClassPerformanceTrend = ({ 
+  students: propStudents, 
+  currentStudentId,
   useMockData = false
 }) => {
   const [hoveredWeek, setHoveredWeek] = useState(null);
-  const [hoveredSection, setHoveredSection] = useState(null);
+  const [hoveredStudent, setHoveredStudent] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [visibleSections, setVisibleSections] = useState({});
+  const [visibleStudents, setVisibleStudents] = useState({});
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedDataPoint, setSelectedDataPoint] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const svgRef = useRef(null);
   const tooltipRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   // Use mock data if prop is empty or useMockData is true
-  const sections = useMemo(() => {
-    if (useMockData || !propSections || propSections.length === 0) {
-      return generateMockSections();
+  const students = useMemo(() => {
+    if (useMockData || !propStudents || propStudents.length === 0) {
+      return generateMockStudents();
     }
-    return propSections;
-  }, [propSections, useMockData]);
+    return propStudents;
+  }, [propStudents, useMockData]);
 
-  // Initialize visible sections (all visible by default)
+  // Initialize visible students (limit to 4 visible by default for clarity)
   useMemo(() => {
-    if (sections && sections.length > 0) {
+    if (students && students.length > 0) {
       const initialVisibility = {};
-      sections.forEach(section => {
-        initialVisibility[section.sectionId] = true;
+      students.forEach((student, index) => {
+        // Show first 4 students by default, or current student if specified
+        initialVisibility[student.studentId] = index < 4 || student.studentId === currentStudentId;
       });
-      setVisibleSections(initialVisibility);
+      setVisibleStudents(initialVisibility);
     }
-  }, [sections]);
+  }, [students, currentStudentId]);
 
-  // Default currentSectionId if not provided
-  const defaultCurrentSectionId = currentSectionId || (sections?.[0]?.sectionId);
-  const currentSection = sections?.find(s => s.sectionId === defaultCurrentSectionId) || sections?.[0];
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Default currentStudentId if not provided
+  const defaultCurrentStudentId = currentStudentId || (students?.[0]?.studentId);
+  const currentStudent = students?.find(s => s.studentId === defaultCurrentStudentId) || students?.[0];
   
-  // Color palette for sections
-  const sectionColors = useMemo(() => {
+  // Color palette for students
+  const studentColors = useMemo(() => {
     const colors = [
-      '#6366F1', // Primary purple (current section)
+      '#6366F1', // Primary purple (current student)
       '#10B981', // Green
       '#F59E0B', // Amber
       '#EF4444', // Red
@@ -197,74 +231,80 @@ const SectionComparisonTrend = ({
     const assignedColors = {};
     let colorIndex = 0;
     
-    // Assign colors to sections
-    sections?.forEach((section, index) => {
-      if (section.sectionId === defaultCurrentSectionId) {
-        assignedColors[section.sectionId] = colors[0]; // Primary color for current section
+    // Assign colors to students
+    students?.forEach((student, index) => {
+      if (student.studentId === defaultCurrentStudentId) {
+        assignedColors[student.studentId] = colors[0]; // Primary color for current student
       } else {
         colorIndex = (colorIndex % (colors.length - 1)) + 1; // Skip first color
-        assignedColors[section.sectionId] = colors[colorIndex];
+        assignedColors[student.studentId] = colors[colorIndex];
       }
     });
     
     return assignedColors;
-  }, [sections, defaultCurrentSectionId]);
+  }, [students, defaultCurrentStudentId]);
 
   // Calculate insights for comparison
   const comparisonInsights = useMemo(() => {
-    if (!sections || sections.length === 0) {
+    if (!students || students.length === 0) {
       return {
-        currentSectionRank: 0,
-        totalSections: 0,
-        currentSectionAvg: 0,
+        currentStudentRank: 0,
+        totalStudents: 0,
+        currentStudentAvg: 0,
         classAvg: 0,
-        topSection: null,
+        topStudent: null,
+        bottomStudent: null,
         trendVsClassAvg: 0,
         trendDirection: 'stable'
       };
     }
 
-    // Calculate class average across all sections
-    const allScores = sections.flatMap(section => 
-      section.performanceTrend.map(week => week.score)
+    // Calculate class average across all students
+    const allScores = students.flatMap(student => 
+      student.performanceTrend.map(week => week.score)
     );
     const classAvg = allScores.reduce((sum, score) => sum + score, 0) / allScores.length;
 
-    // Current section average
-    const currentSectionAvg = currentSection?.performanceTrend?.length > 0
-      ? currentSection.performanceTrend.reduce((sum, week) => sum + week.score, 0) / currentSection.performanceTrend.length
+    // Current student average
+    const currentStudentAvg = currentStudent?.performanceTrend?.length > 0
+      ? currentStudent.performanceTrend.reduce((sum, week) => sum + week.score, 0) / currentStudent.performanceTrend.length
       : 0;
 
-    // Sort sections by average performance
-    const sortedSections = [...sections].sort((a, b) => {
+    // Sort students by average performance
+    const sortedStudents = [...students].sort((a, b) => {
       const avgA = a.performanceTrend.reduce((sum, week) => sum + week.score, 0) / a.performanceTrend.length;
       const avgB = b.performanceTrend.reduce((sum, week) => sum + week.score, 0) / b.performanceTrend.length;
       return avgB - avgA;
     });
 
-    const currentSectionRank = sortedSections.findIndex(s => s.sectionId === defaultCurrentSectionId) + 1;
-    const topSection = sortedSections[0];
+    const currentStudentRank = sortedStudents.findIndex(s => s.studentId === defaultCurrentStudentId) + 1;
+    const topStudent = sortedStudents[0];
+    const bottomStudent = sortedStudents[sortedStudents.length - 1];
 
     // Trend vs class average
-    const trendVsClassAvg = currentSectionAvg - classAvg;
+    const trendVsClassAvg = currentStudentAvg - classAvg;
     const trendDirection = trendVsClassAvg > 2 ? 'up' : trendVsClassAvg < -2 ? 'down' : 'stable';
 
     return {
-      currentSectionRank,
-      totalSections: sections.length,
-      currentSectionAvg: Math.round(currentSectionAvg),
+      currentStudentRank,
+      totalStudents: students.length,
+      currentStudentAvg: Math.round(currentStudentAvg),
       classAvg: Math.round(classAvg),
-      topSection,
+      topStudent,
+      bottomStudent,
       trendVsClassAvg: Math.abs(trendVsClassAvg).toFixed(1),
       trendDirection,
-      sortedSections
+      sortedStudents
     };
-  }, [sections, defaultCurrentSectionId, currentSection]);
+  }, [students, defaultCurrentStudentId, currentStudent]);
 
-  // Get visible sections data
-  const visibleSectionsData = useMemo(() => {
-    return sections?.filter(section => visibleSections[section.sectionId]) || [];
-  }, [sections, visibleSections]);
+  // Get visible students data
+  const visibleStudentsData = useMemo(() => {
+    return students?.filter(student => visibleStudents[student.studentId]) || [];
+  }, [students, visibleStudents]);
+
+  // Calculate visible student count
+  const visibleCount = Object.values(visibleStudents).filter(Boolean).length;
 
   // Chart dimensions
   const chartHeight = 320;
@@ -274,13 +314,13 @@ const SectionComparisonTrend = ({
   
   const maxScore = 100;
   
-  // Get all weeks from all sections (assume same weeks for all sections)
-  const weeks = currentSection?.performanceTrend || [];
+  // Get all weeks from all students (assume same weeks for all students)
+  const weeks = currentStudent?.performanceTrend || [];
 
   // Handle mouse events
-  const handleMouseEnter = (week, sectionId, event) => {
+  const handleMouseEnter = (week, studentId, event) => {
     setHoveredWeek(week);
-    setHoveredSection(sectionId);
+    setHoveredStudent(studentId);
     
     const mouseX = event.clientX;
     const mouseY = event.clientY;
@@ -292,23 +332,23 @@ const SectionComparisonTrend = ({
   };
 
   // Handle node click
-  const handleNodeClick = (week, sectionId, event) => {
+  const handleNodeClick = (week, studentId, event) => {
     event.stopPropagation();
     
-    const section = sections.find(s => s.sectionId === sectionId);
-    if (!section) return;
+    const student = students.find(s => s.studentId === studentId);
+    if (!student) return;
     
-    const weekData = section.performanceTrend.find(w => w.week === week);
+    const weekData = student.performanceTrend.find(w => w.week === week);
     if (!weekData) return;
     
     // Get previous week's score for comparison
-    const previousWeek = section.performanceTrend.find(w => w.week === week - 1);
+    const previousWeek = student.performanceTrend.find(w => w.week === week - 1);
     const previousScore = previousWeek ? previousWeek.score : null;
     const performanceChange = previousScore ? weekData.score - previousScore : 0;
     
     // Generate performance reasons
     const reasons = generatePerformanceReasons(
-      section.sectionName,
+      student.studentName,
       week,
       weekData.score,
       previousScore
@@ -319,22 +359,25 @@ const SectionComparisonTrend = ({
                           weekData.score >= 71 && weekData.score <= 75 ? "Close to Failing" : 
                           "Passing";
     
-    setSelectedDataPoint({
-      sectionData: {
-        sectionName: section.sectionName,
-        sectionId: section.sectionId,
+    const dataPoint = {
+      studentData: {
+        studentName: student.studentName,
+        studentNumber: student.studentNumber,
         currentScore: weekData.score,
         previousScore,
         performanceChange,
-        performanceZone
+        performanceZone,
+        attendance: student.attendance || 0,
+        assignmentCompletion: student.assignmentCompletion || 0
       },
       weekData: {
         week,
         score: weekData.score,
         reasons
       }
-    });
+    };
     
+    setSelectedDataPoint(dataPoint);
     setIsPopupOpen(true);
   };
 
@@ -342,17 +385,17 @@ const SectionComparisonTrend = ({
   const xScale = (week) => (week - 1) * (innerWidth / (weeks.length - 1));
   const yScale = (score) => innerHeight - (score / maxScore) * innerHeight;
 
-  // Create smooth line path for a section
-  const createSmoothLinePath = (sectionData) => {
-    if (!sectionData || sectionData.length < 2) return '';
+  // Create smooth line path for a student
+  const createSmoothLinePath = (studentData) => {
+    if (!studentData || studentData.length < 2) return '';
     
-    let path = `M ${margin.left + xScale(sectionData[0].week)} ${margin.top + yScale(sectionData[0].score)}`;
+    let path = `M ${margin.left + xScale(studentData[0].week)} ${margin.top + yScale(studentData[0].score)}`;
     
-    for (let i = 1; i < sectionData.length; i++) {
-      const prevX = margin.left + xScale(sectionData[i-1].week);
-      const prevY = margin.top + yScale(sectionData[i-1].score);
-      const currX = margin.left + xScale(sectionData[i].week);
-      const currY = margin.top + yScale(sectionData[i].score);
+    for (let i = 1; i < studentData.length; i++) {
+      const prevX = margin.left + xScale(studentData[i-1].week);
+      const prevY = margin.top + yScale(studentData[i-1].score);
+      const currX = margin.left + xScale(studentData[i].week);
+      const currY = margin.top + yScale(studentData[i].score);
       
       const cp1x = prevX + (currX - prevX) * 0.25;
       const cp1y = prevY;
@@ -365,11 +408,11 @@ const SectionComparisonTrend = ({
     return path;
   };
 
-  // Toggle section visibility
-  const toggleSectionVisibility = (sectionId) => {
-    setVisibleSections(prev => ({
+  // Toggle student visibility
+  const toggleStudentVisibility = (studentId) => {
+    setVisibleStudents(prev => ({
       ...prev,
-      [sectionId]: !prev[sectionId]
+      [studentId]: !prev[studentId]
     }));
   };
 
@@ -392,7 +435,7 @@ const SectionComparisonTrend = ({
     setSelectedDataPoint(null);
   };
 
-  if (!sections || sections.length === 0) {
+  if (!students || students.length === 0) {
     return (
       <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
         <div className="p-4 border-b border-[#FFFFFF]/10">
@@ -405,7 +448,7 @@ const SectionComparisonTrend = ({
                   className="w-5 h-5"
                 />
               </div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Section Comparison Trend</h3>
+              <h3 className="font-bold text-lg text-[#FFFFFF]">Student Performance Trend</h3>
             </div>
             <div className="text-sm text-[#FFFFFF]/60">No data available</div>
           </div>
@@ -419,7 +462,7 @@ const SectionComparisonTrend = ({
                 className="w-8 h-8 opacity-40"
               />
             </div>
-            <p className="text-[#FFFFFF]/60">Loading section comparison data...</p>
+            <p className="text-[#FFFFFF]/60">Loading student performance data...</p>
           </div>
         </div>
       </div>
@@ -440,9 +483,9 @@ const SectionComparisonTrend = ({
               />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Section Comparison Trend</h3>
+              <h3 className="font-bold text-lg text-[#FFFFFF]">Student Performance Trend</h3>
               <p className="text-sm text-[#FFFFFF]/60">
-                {currentSection?.sectionName || "Current Section"} vs Other Sections
+                Individual student performance comparison
                 {useMockData && (
                   <span className="ml-2 text-[#FFA600] text-xs">(Demo Data)</span>
                 )}
@@ -452,12 +495,12 @@ const SectionComparisonTrend = ({
           
           {/* Right side with stats and collapse button */}
           <div className="flex items-center gap-3">
-            {/* Current section stats */}
+            {/* Current student stats */}
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <div className="text-xs text-[#FFFFFF]/60">Section Rank</div>
+                <div className="text-xs text-[#FFFFFF]/60">Student Rank</div>
                 <div className="font-bold text-base text-[#FFFFFF]">
-                  #{comparisonInsights.currentSectionRank} of {comparisonInsights.totalSections}
+                  #{comparisonInsights.currentStudentRank} of {comparisonInsights.totalStudents}
                 </div>
               </div>
               <div className={`p-1.5 rounded-lg ${comparisonInsights.trendDirection === 'up' ? 'bg-[#00A15D]/10' : comparisonInsights.trendDirection === 'down' ? 'bg-[#FF5555]/10' : 'bg-[#FFA600]/10'}`}>
@@ -471,7 +514,7 @@ const SectionComparisonTrend = ({
               </div>
             </div>
             
-            {/* Collapse/Expand button - UPDATED with ArrowUp/ArrowDown SVGs */}
+            {/* Collapse/Expand button */}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               className="p-1.5 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
@@ -502,32 +545,110 @@ const SectionComparisonTrend = ({
         isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100'
       }`}>
         <div className="p-4 pt-0">
-          {/* Section Legend with Toggle */}
-          <div className='mt-5'>
-            <div className="flex flex-wrap gap-2 mb-2">
-              <span className="text-xs text-[#FFFFFF]/60 mr-2">Toggle sections:</span>
-              {sections.map(section => (
+          {/* Student Selection Dropdown */}
+          <div className='mt-5 relative' ref={dropdownRef}>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs text-[#FFFFFF]/60">Select students to display:</span>
+              
+              {/* Custom Dropdown Toggle */}
+              <div className="relative">
                 <button
-                  key={section.sectionId}
-                  onClick={() => toggleSectionVisibility(section.sectionId)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-2 transition-all ${
-                    visibleSections[section.sectionId] 
-                      ? section.sectionId === defaultCurrentSectionId 
-                        ? 'bg-[#6366F1] text-white' 
-                        : 'bg-[#2A2A35] text-white'
-                      : 'bg-[#1A1A24] text-[#FFFFFF]/40 border border-[#FFFFFF]/10'
-                  }`}
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 bg-[#2A2A35] hover:bg-[#3A3A45] rounded-lg text-sm text-white transition-all duration-200 border border-[#FFFFFF]/10"
                 >
-                  <div 
-                    className={`w-2 h-2 rounded-full ${visibleSections[section.sectionId] ? '' : 'opacity-30'}`}
-                    style={{ backgroundColor: sectionColors[section.sectionId] }}
-                  />
-                  {section.sectionName}
-                  {section.sectionId === defaultCurrentSectionId && (
-                    <span className="text-xs bg-white/20 px-1 rounded">Current</span>
-                  )}
+                  <span className="flex items-center gap-1">
+                    <span className="text-xs font-medium">{visibleCount} selected</span>
+                    <div className="w-4 h-4 flex items-center justify-center">
+                      {dropdownOpen ? (
+                        <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </div>
+                  </span>
                 </button>
-              ))}
+                
+                {/* Dropdown Menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-[#23232C] border border-[#FFFFFF]/10 rounded-lg shadow-2xl z-50 overflow-hidden">
+                    {/* Dropdown Header */}
+                    <div className="p-3 border-b border-[#FFFFFF]/10 bg-[#1A1A24]">
+                      <span className="text-sm font-medium text-white">Select Students</span>
+                    </div>
+                    
+                    {/* Student List */}
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                      {students.map(student => {
+                        const isCurrent = student.studentId === defaultCurrentStudentId;
+                        const isVisible = visibleStudents[student.studentId];
+                        
+                        return (
+                          <div
+                            key={student.studentId}
+                            className={`flex items-center p-3 hover:bg-[#2A2A35] cursor-pointer transition-all ${
+                              isCurrent ? 'bg-[#6366F1]/5' : ''
+                            }`}
+                            onClick={() => toggleStudentVisibility(student.studentId)}
+                          >
+                            {/* Custom Checkbox */}
+                            <div className={`w-4 h-4 rounded flex items-center justify-center border mr-3 ${
+                              isVisible 
+                                ? 'bg-[#6366F1] border-[#6366F1]' 
+                                : 'bg-transparent border-[#FFFFFF]/30'
+                            }`}>
+                              {isVisible && (
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                            
+                            {/* Student Name */}
+                            <div className="text-sm text-white">
+                              {student.studentName}
+                              {isCurrent && (
+                                <span className="ml-2 text-xs text-[#6366F1] font-medium">(Current)</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Quick Selected Students Preview */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {students
+                .filter(student => visibleStudents[student.studentId])
+                .map(student => (
+                  <div
+                    key={student.studentId}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#2A2A35] rounded-lg border border-[#FFFFFF]/5"
+                  >
+                    <div 
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: studentColors[student.studentId] }}
+                    />
+                    <span className="text-xs text-white">
+                      {student.studentName.split(' ')[0]}
+                    </span>
+                    <button
+                      onClick={() => toggleStudentVisibility(student.studentId)}
+                      className="ml-1 text-[#FFFFFF]/40 hover:text-[#FF5555] transition-all"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
 
@@ -537,7 +658,7 @@ const SectionComparisonTrend = ({
             onMouseMove={handleMouseMove}
             onMouseLeave={() => {
               setHoveredWeek(null);
-              setHoveredSection(null);
+              setHoveredStudent(null);
             }}
           >
             <div style={{ width: innerWidth + margin.left + margin.right, minWidth: '100%' }}>
@@ -549,11 +670,11 @@ const SectionComparisonTrend = ({
                 className="relative"
               >
                 <defs>
-                  {/* Gradient definitions for each visible section */}
-                  {visibleSectionsData.map(section => (
-                    <linearGradient key={`gradient-${section.sectionId}`} id={`areaGradient-${section.sectionId}`} x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor={sectionColors[section.sectionId]} stopOpacity={section.sectionId === defaultCurrentSectionId ? "0.25" : "0.15"}/>
-                      <stop offset="100%" stopColor={sectionColors[section.sectionId]} stopOpacity="0"/>
+                  {/* Gradient definitions for each visible student */}
+                  {visibleStudentsData.map(student => (
+                    <linearGradient key={`gradient-${student.studentId}`} id={`areaGradient-${student.studentId}`} x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor={studentColors[student.studentId]} stopOpacity={student.studentId === defaultCurrentStudentId ? "0.25" : "0.15"}/>
+                      <stop offset="100%" stopColor={studentColors[student.studentId]} stopOpacity="0"/>
                     </linearGradient>
                   ))}
                 </defs>
@@ -622,18 +743,18 @@ const SectionComparisonTrend = ({
                   opacity={0.7}
                 />
 
-                {/* Draw lines for each visible section */}
-                {visibleSectionsData.map(section => {
-                  const linePath = createSmoothLinePath(section.performanceTrend);
-                  const isCurrent = section.sectionId === defaultCurrentSectionId;
+                {/* Draw lines for each visible student */}
+                {visibleStudentsData.map(student => {
+                  const linePath = createSmoothLinePath(student.performanceTrend);
+                  const isCurrent = student.studentId === defaultCurrentStudentId;
                   
                   return (
-                    <g key={`section-${section.sectionId}`}>
+                    <g key={`student-${student.studentId}`}>
                       {/* Area under curve */}
-                      {linePath && section.performanceTrend.length > 0 && (
+                      {linePath && student.performanceTrend.length > 0 && (
                         <path
-                          d={`${linePath} L ${margin.left + xScale(section.performanceTrend[section.performanceTrend.length-1].week)} ${margin.top + innerHeight} L ${margin.left + xScale(section.performanceTrend[0].week)} ${margin.top + innerHeight} Z`}
-                          fill={`url(#areaGradient-${section.sectionId})`}
+                          d={`${linePath} L ${margin.left + xScale(student.performanceTrend[student.performanceTrend.length-1].week)} ${margin.top + innerHeight} L ${margin.left + xScale(student.performanceTrend[0].week)} ${margin.top + innerHeight} Z`}
+                          fill={`url(#areaGradient-${student.studentId})`}
                           opacity={isCurrent ? 0.4 : 0.3}
                         />
                       )}
@@ -643,7 +764,7 @@ const SectionComparisonTrend = ({
                         <path
                           d={linePath}
                           fill="none"
-                          stroke={sectionColors[section.sectionId]}
+                          stroke={studentColors[student.studentId]}
                           strokeWidth={isCurrent ? "4" : "2"}
                           strokeLinecap="round"
                           opacity={isCurrent ? 1 : 0.8}
@@ -674,28 +795,28 @@ const SectionComparisonTrend = ({
                   return null;
                 })}
 
-                {/* Data points for each visible section */}
-                {visibleSectionsData.map(section => {
-                  const isCurrent = section.sectionId === defaultCurrentSectionId;
+                {/* Data points for each visible student */}
+                {visibleStudentsData.map(student => {
+                  const isCurrent = student.studentId === defaultCurrentStudentId;
                   
-                  return section.performanceTrend.map((week, index) => {
+                  return student.performanceTrend.map((week, index) => {
                     const x = margin.left + xScale(week.week);
                     const y = margin.top + yScale(week.score);
-                    const isHovered = hoveredWeek === week.week && hoveredSection === section.sectionId;
+                    const isHovered = hoveredWeek === week.week && hoveredStudent === student.studentId;
                     const performanceZoneColor = getPerformanceZoneColor(week.score);
                     
                     return (
-                      <g key={`point-${section.sectionId}-${week.week}`}>
+                      <g key={`point-${student.studentId}-${week.week}`}>
                         {/* Hover area */}
                         <circle
                           cx={x}
                           cy={y}
                           r={isCurrent ? 20 : 16}
                           fill="transparent"
-                          onMouseEnter={(e) => handleMouseEnter(week.week, section.sectionId, e)}
+                          onMouseEnter={(e) => handleMouseEnter(week.week, student.studentId, e)}
                           onMouseLeave={() => {
                             setHoveredWeek(null);
-                            setHoveredSection(null);
+                            setHoveredStudent(null);
                           }}
                           className="cursor-pointer"
                         />
@@ -705,15 +826,15 @@ const SectionComparisonTrend = ({
                           cx={x}
                           cy={y}
                           r={isHovered ? (isCurrent ? 8 : 6) : (isCurrent ? 6 : 4)}
-                          fill={sectionColors[section.sectionId]}
+                          fill={studentColors[student.studentId]}
                           stroke={performanceZoneColor}
                           strokeWidth="2"
-                          onMouseEnter={(e) => handleMouseEnter(week.week, section.sectionId, e)}
+                          onMouseEnter={(e) => handleMouseEnter(week.week, student.studentId, e)}
                           onMouseLeave={() => {
                             setHoveredWeek(null);
-                            setHoveredSection(null);
+                            setHoveredStudent(null);
                           }}
-                          onClick={(e) => handleNodeClick(week.week, section.sectionId, e)}
+                          onClick={(e) => handleNodeClick(week.week, student.studentId, e)}
                           className="cursor-pointer transition-all duration-150 hover:stroke-white hover:stroke-[3px]"
                         />
                       </g>
@@ -728,7 +849,7 @@ const SectionComparisonTrend = ({
           <div className="mt-6 flex flex-wrap gap-2 text-xs justify-center">
             <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
               <div className="w-2 h-2 rounded-full bg-[#6366F1]"></div>
-              <span className="text-[#FFFFFF] text-xs">Current Section</span>
+              <span className="text-[#FFFFFF] text-xs">Current Student</span>
             </div>
             <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
               <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
@@ -750,15 +871,15 @@ const SectionComparisonTrend = ({
       {isCollapsed && (
         <div className="p-4 border-t border-[#FFFFFF]/10">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            {/* Left side - Current section summary */}
+            {/* Left side - Current student summary */}
             <div className="flex items-start gap-6">
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Current Section</div>
+                <div className="text-xs text-[#FFFFFF]/60">Current Student</div>
                 <div className="font-bold text-base text-[#6366F1]">
-                  {currentSection?.sectionName || "Section A"}
+                  {currentStudent?.studentName?.split(' ')[0] || "Student"}
                 </div>
                 <div className="text-sm text-[#FFFFFF] mt-1">
-                  Avg: {comparisonInsights.currentSectionAvg}%
+                  Avg: {comparisonInsights.currentStudentAvg}%
                 </div>
               </div>
               
@@ -774,23 +895,44 @@ const SectionComparisonTrend = ({
               </div>
               
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Section Ranking</div>
+                <div className="text-xs text-[#FFFFFF]/60">Student Ranking</div>
                 <div className="font-bold text-base text-[#FFFFFF]">
-                  #{comparisonInsights.currentSectionRank} / {comparisonInsights.totalSections}
+                  #{comparisonInsights.currentStudentRank} / {comparisonInsights.totalStudents}
                 </div>
-                {comparisonInsights.topSection && (
+                {comparisonInsights.topStudent && (
                   <div className="text-sm text-[#FFFFFF]/60 mt-1">
-                    Top: {comparisonInsights.topSection.sectionName}
+                    Top: {comparisonInsights.topStudent.studentName.split(' ')[0]}
                   </div>
                 )}
               </div>
+            </div>
+            
+            {/* Right side - Student quick stats */}
+            <div className="flex items-center gap-6">
+              {currentStudent && (
+                <>
+                  <div className="text-left">
+                    <div className="text-xs text-[#FFFFFF]/60">Attendance</div>
+                    <div className="font-bold text-base text-[#00A15D]">
+                      {currentStudent.attendance || 0}%
+                    </div>
+                  </div>
+                  
+                  <div className="text-left">
+                    <div className="text-xs text-[#FFFFFF]/60">Assignments</div>
+                    <div className="font-bold text-base text-[#10B981]">
+                      {currentStudent.assignmentCompletion || 0}%
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {/* External Tooltip */}
-      {hoveredWeek && hoveredSection && !isCollapsed && (
+      {hoveredWeek && hoveredStudent && !isCollapsed && (
         <div 
           ref={tooltipRef}
           className="fixed bg-[#23232C] border border-[#FFFFFF]/20 rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150"
@@ -805,19 +947,19 @@ const SectionComparisonTrend = ({
             <div className="flex items-center justify-between gap-2">
               <span className="text-[#FFFFFF] text-sm font-semibold">Week {hoveredWeek}</span>
               <span className="text-xs text-[#FFFFFF]/60">
-                {sections.find(s => s.sectionId === hoveredSection)?.sectionName}
+                {students.find(s => s.studentId === hoveredStudent)?.studentName}
               </span>
             </div>
             
             <div className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: sectionColors[hoveredSection] }}
+                style={{ backgroundColor: studentColors[hoveredStudent] }}
               />
               <span className="text-lg font-bold text-white">
-                {sections.find(s => s.sectionId === hoveredSection)?.performanceTrend?.find(w => w.week === hoveredWeek)?.score || 0}%
+                {students.find(s => s.studentId === hoveredStudent)?.performanceTrend?.find(w => w.week === hoveredWeek)?.score || 0}%
               </span>
-              {hoveredSection === defaultCurrentSectionId && (
+              {hoveredStudent === defaultCurrentStudentId && (
                 <span className="text-xs text-white font-medium bg-[#6366F1] px-2 py-0.5 rounded">
                   Current
                 </span>
@@ -826,7 +968,7 @@ const SectionComparisonTrend = ({
             
             {/* Show performance zone in tooltip */}
             {(() => {
-              const score = sections.find(s => s.sectionId === hoveredSection)?.performanceTrend?.find(w => w.week === hoveredWeek)?.score || 0;
+              const score = students.find(s => s.studentId === hoveredStudent)?.performanceTrend?.find(w => w.week === hoveredWeek)?.score || 0;
               let zoneText = '';
               let zoneColor = '';
               
@@ -862,15 +1004,15 @@ const SectionComparisonTrend = ({
         </div>
       )}
 
-      {/* Performance Analysis Popup */}
-      <SectionPerformancePopup
+      {/* Student Performance Analysis Popup */}
+      <StudentPerformancePopup
         isOpen={isPopupOpen}
         onClose={handleClosePopup}
-        sectionData={selectedDataPoint?.sectionData}
+        studentData={selectedDataPoint?.studentData}
         weekData={selectedDataPoint?.weekData}
       />
     </div>
   );
 };
 
-export default SectionComparisonTrend;
+export default ClassPerformanceTrend;
