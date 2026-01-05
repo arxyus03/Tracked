@@ -43,6 +43,15 @@ if (empty($input['subject_code']) || empty($input['professor_ID']) || empty($inp
     exit;
 }
 
+// Validate that if individual assignment is selected, students are provided
+$assignTo = $input['assignTo'] ?? 'wholeClass';
+$selectedStudentIds = $input['selectedStudents'] ?? [];
+
+if ($assignTo === 'individual' && empty($selectedStudentIds)) {
+    echo json_encode(["success" => false, "message" => "No students selected for individual assignment"]);
+    exit;
+}
+
 // Function to ensure student exists in users table
 function ensureStudentExistsInUsersTable($pdo, $student) {
     try {
@@ -118,6 +127,26 @@ function getStudentsByIds($pdo, $studentIds, $subject_code) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// Function to get all students in class
+function getAllStudentsInClass($pdo, $subject_code) {
+    $stmt = $pdo->prepare("
+        SELECT 
+            tu.tracked_ID,
+            tu.tracked_email,
+            tu.tracked_firstname,
+            tu.tracked_lastname,
+            CONCAT(tu.tracked_firstname, ' ', tu.tracked_lastname) as user_Name
+        FROM tracked_users tu
+        INNER JOIN student_classes sc ON tu.tracked_ID = sc.student_ID
+        WHERE sc.subject_code = ? AND sc.archived = 0
+        AND tu.tracked_Role = 'Student' AND tu.tracked_Status = 'Active'
+        ORDER BY tu.tracked_lastname, tu.tracked_firstname
+    ");
+    
+    $stmt->execute([$subject_code]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 try {
     $pdo->beginTransaction();
 
@@ -158,26 +187,10 @@ try {
 
     // Determine which students to assign based on "assignTo" option
     $students = [];
-    $assignTo = $input['assignTo'] ?? 'wholeClass'; // Default to whole class
-    $selectedStudentIds = $input['selectedStudents'] ?? [];
-
+    
     if ($assignTo === 'wholeClass') {
         // Get all students in the class
-        $studentsStmt = $pdo->prepare("
-            SELECT 
-                tu.tracked_ID,
-                tu.tracked_email,
-                tu.tracked_firstname,
-                tu.tracked_lastname,
-                CONCAT(tu.tracked_firstname, ' ', tu.tracked_lastname) as user_Name
-            FROM tracked_users tu
-            INNER JOIN student_classes sc ON tu.tracked_ID = sc.student_ID
-            WHERE sc.subject_code = ? AND sc.archived = 0
-            AND tu.tracked_Role = 'Student' AND tu.tracked_Status = 'Active'
-        ");
-        $studentsStmt->execute([$input['subject_code']]);
-        $students = $studentsStmt->fetchAll(PDO::FETCH_ASSOC);
-        
+        $students = getAllStudentsInClass($pdo, $input['subject_code']);
     } elseif ($assignTo === 'individual' && !empty($selectedStudentIds)) {
         // Get only the selected students
         $students = getStudentsByIds($pdo, $selectedStudentIds, $input['subject_code']);
@@ -220,11 +233,14 @@ try {
         $emailTitle = "New " . ($input['activity_type'] ?? 'Activity') . " in " . $class['subject'] . " (" . $class['section'] . ")" . $assignmentType;
         
         $emailMessage = "A new " . ($input['activity_type'] ?? 'activity') . " has been " . 
-                       ($assignTo === 'individual' ? "assigned to you:\n\n" : "posted:\n\n") .
+                       ($assignTo === 'individual' ? "assigned to you:\n\n" : "posted for the whole class:\n\n") .
                        "Title: " . $input['title'] . "\n" .
+                       "Type: " . ($input['activity_type'] ?? 'Activity') . " #" . ($input['task_number'] ?? '1') . "\n" .
                        ($input['instruction'] ? "Instructions: " . $input['instruction'] . "\n" : "") .
                        ($input['points'] ? "Points: " . $input['points'] . "\n" : "") .
-                       ($deadline ? "Deadline: " . date('M j, Y g:i A', strtotime($deadline)) : "");
+                       ($deadline ? "Deadline: " . date('M j, Y g:i A', strtotime($deadline)) . "\n" : "") .
+                       ($input['link'] ? "Link: " . $input['link'] . "\n" : "") .
+                       "\nPlease check your TrackEd account for more details.";
         
         $emailResults = sendBatchStudentEmails($students, $emailSubject, $emailTitle, $emailMessage, 'deadline');
     } else {
@@ -264,7 +280,8 @@ try {
             "created_at" => $currentTimestamp,
             "students" => $studentsWithData,
             "assign_to" => $assignTo,
-            "assigned_students_count" => count($students)
+            "assigned_students_count" => count($students),
+            "assigned_students" => array_column($students, 'tracked_ID')
         ],
         "email_notifications" => $emailResults,
         "students_added" => $studentsAdded,
@@ -291,8 +308,9 @@ try {
             "title" => $input['title'] ?? 'none',
             "activity_type" => $input['activity_type'] ?? 'none',
             "task_number" => $input['task_number'] ?? 'none',
-            "assign_to" => $input['assignTo'] ?? 'none',
-            "selected_students_count" => isset($input['selectedStudents']) ? count($input['selectedStudents']) : 0
+            "assign_to" => $assignTo,
+            "selected_students_count" => count($selectedStudentIds),
+            "selected_students" => $selectedStudentIds
         ]
     ]);
 }

@@ -66,243 +66,247 @@ const getTimeAgo = (createdAt) => {
 };
 
 // New Minimal Small Activity Card Component
-const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) => {
-  const formatDate = (dateString) => {
-    if (!dateString || dateString === "No deadline") return "No deadline";
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  // Check if deadline is past deadline
-  const isDeadlinePassed = (deadline) => {
-    if (!deadline || deadline === "No deadline") return false;
-    
-    try {
-      const deadlineDate = new Date(deadline);
-      const now = new Date();
-      return deadlineDate < now;
-    } catch {
-      return false;
-    }
-  };
-
-  // Check if activity is fully graded
-  const isFullyGraded = (activity) => {
-    if (!activity.students || activity.students.length === 0) return false;
-    
-    return activity.students.every(student => {
-      const grade = student.grade;
-      return grade != null && 
-             grade !== '' && 
-             grade !== undefined && 
-             grade !== 0 && 
-             grade !== '0';
-    });
-  };
-
-  // Check if activity has any grades (excluding 0 grades)
-  const hasSomeGrades = (activity) => {
-    if (!activity.students || activity.students.length === 0) return false;
-    
-    return activity.students.some(student => {
-      const grade = student.grade;
-      return grade != null && 
-             grade !== '' && 
-             grade !== undefined && 
-             grade !== 0 && 
-             grade !== '0';
-    });
-  };
-
-  // Check if activity is active (not past deadline and not fully graded)
-  const isActivityActive = (activity) => {
-    return !isDeadlinePassed(activity.deadline) && !isFullyGraded(activity);
-  };
-
-  const submittedCount = activity.students ? activity.students.filter(s => s.submitted).length : 0;
-  const totalCount = activity.students ? activity.students.length : 0;
-
-  // Get activity type color - Minimal version
-  const getActivityTypeColor = (type) => {
-    const colors = {
-      'Assignment': 'bg-[#767EE0]/20 text-[#767EE0]',
-      'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
-      'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
-      'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
-      'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
-      'Exam': 'bg-[#FF5252]/20 text-[#FF5252]',
-      'Remedial': 'bg-[#3B82F6]/20 text-[#3B82F6]'
+  const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) => {
+    const formatDate = (dateString) => {
+      if (!dateString || dateString === "No deadline") return "No deadline";
+      
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch {
+        return dateString;
+      }
     };
-    return colors[type] || 'bg-gray-500/20 text-gray-400';
-  };
 
-  // Handle card click to open submissions
-  const handleCardClick = (e) => {
-    if (e.target.closest('button')) {
-      return;
-    }
-    onOpenSubmissions(activity);
-  };
+    // Check if deadline is past deadline
+    const isDeadlinePassed = (deadline) => {
+      if (!deadline || deadline === "No deadline") return false;
+      
+      try {
+        const deadlineDate = new Date(deadline);
+        const now = new Date();
+        return deadlineDate < now;
+      } catch {
+        return false;
+      }
+    };
 
-  // Get grading status for the top label
-  const getGradingStatus = () => {
-    if (isFullyGraded(activity)) {
-      return {
-        text: 'Graded',
-        color: 'bg-[#00A15D]/20 text-[#00A15D]'
+    // Check if activity is fully graded
+    const isFullyGraded = (activity) => {
+      if (!activity.students || activity.students.length === 0) return false;
+      
+      return activity.students.every(student => {
+        const grade = student.grade;
+        return grade != null && 
+              grade !== '' && 
+              grade !== undefined && 
+              grade !== 0 && 
+              grade !== '0';
+      });
+    };
+
+    // Check if activity has any grades (excluding 0 grades)
+    const hasSomeGrades = (activity) => {
+      if (!activity.students || activity.students.length === 0) return false;
+      
+      return activity.students.some(student => {
+        const grade = student.grade;
+        return grade != null && 
+              grade !== '' && 
+              grade !== undefined && 
+              grade !== 0 && 
+              grade !== '0';
+      });
+    };
+
+    // Check if activity is active (not past deadline and not fully graded)
+    const isActivityActive = (activity) => {
+      return !isDeadlinePassed(activity.deadline) && !isFullyGraded(activity);
+    };
+
+    // Get only students who have submitted
+    const submittedCount = activity.students ? 
+      activity.students.filter(s => s.submitted).length : 0;
+    
+    // Get total assigned students count
+    const totalCount = activity.students ? activity.students.length : 0;
+
+    // Get activity type color - Minimal version
+    const getActivityTypeColor = (type) => {
+      const colors = {
+        'Assignment': 'bg-[#767EE0]/20 text-[#767EE0]',
+        'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
+        'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
+        'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
+        'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
+        'Exam': 'bg-[#FF5252]/20 text-[#FF5252]',
+        'Remedial': 'bg-[#3B82F6]/20 text-[#3B82F6]'
       };
-    } else if (hasSomeGrades(activity)) {
-      return {
-        text: 'Partially Graded',
-        color: 'bg-[#FFA600]/20 text-[#FFA600]'
-      };
-    } else if (isDeadlinePassed(activity.deadline)) {
-      return {
-        text: 'Past Deadline',
-        color: 'bg-[#A15353]/20 text-[#A15353]'
-      };
-    }
-    return null;
-  };
+      return colors[type] || 'bg-gray-500/20 text-gray-400';
+    };
 
-  const gradingStatus = getGradingStatus();
+    // Handle card click to open submissions
+    const handleCardClick = (e) => {
+      if (e.target.closest('button')) {
+        return;
+      }
+      onOpenSubmissions(activity);
+    };
 
-  // Determine card background based on status
-  const getCardBackground = () => {
-    if (isFullyGraded(activity)) {
-      return 'bg-[#00A15D]/5 border-[#00A15D]/20';
-    } else if (isDeadlinePassed(activity.deadline)) {
-      return 'bg-[#A15353]/5 border-[#A15353]/20';
-    } else if (hasSomeGrades(activity)) {
-      return 'bg-[#FFA600]/5 border-[#FFA600]/20';
-    }
-    return 'bg-[#15151C] border-[#FFFFFF]/10';
-  };
+    // Get grading status for the top label
+    const getGradingStatus = () => {
+      if (isFullyGraded(activity)) {
+        return {
+          text: 'Graded',
+          color: 'bg-[#00A15D]/20 text-[#00A15D]'
+        };
+      } else if (hasSomeGrades(activity)) {
+        return {
+          text: 'Partially Graded',
+          color: 'bg-[#FFA600]/20 text-[#FFA600]'
+        };
+      } else if (isDeadlinePassed(activity.deadline)) {
+        return {
+          text: 'Past Deadline',
+          color: 'bg-[#A15353]/20 text-[#A15353]'
+        };
+      }
+      return null;
+    };
 
-  // Get relative time
-  const timeAgo = getTimeAgo(activity.created_at);
+    const gradingStatus = getGradingStatus();
 
-  return (
-    <div 
-      className={`rounded-lg border p-2.5 hover:shadow-sm transition-all cursor-pointer hover:border-[#00A15D]/30 ${getCardBackground()}`}
-      onClick={handleCardClick}
-    >
-      {/* Header with type+number and top right buttons */}
-      <div className="flex items-center justify-between mb-1.5">
-        <span className={`px-1.5 py-0.5 ${getActivityTypeColor(activity.activity_type)} text-xs font-medium rounded`}>
-          {activity.activity_type} #{activity.task_number}
-        </span>
-        
-        {/* Top Right Section: Labels first, then Action Buttons at the far right */}
-        <div className="flex items-center gap-2">
-          {/* Edited Label - Show if school_work_edited is 1 */}
-          {activity.school_work_edited === 1 && (
-            <span className="px-1 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
-              Edited
-            </span>
-          )}
+    // Determine card background based on status
+    const getCardBackground = () => {
+      if (isFullyGraded(activity)) {
+        return 'bg-[#00A15D]/5 border-[#00A15D]/20';
+      } else if (isDeadlinePassed(activity.deadline)) {
+        return 'bg-[#A15353]/5 border-[#A15353]/20';
+      } else if (hasSomeGrades(activity)) {
+        return 'bg-[#FFA600]/5 border-[#FFA600]/20';
+      }
+      return 'bg-[#15151C] border-[#FFFFFF]/10';
+    };
+
+    // Get relative time
+    const timeAgo = getTimeAgo(activity.created_at);
+
+    return (
+      <div 
+        className={`rounded-lg border p-2.5 hover:shadow-sm transition-all cursor-pointer hover:border-[#00A15D]/30 ${getCardBackground()}`}
+        onClick={handleCardClick}
+      >
+        {/* Header with type+number and top right buttons */}
+        <div className="flex items-center justify-between mb-1.5">
+          <span className={`px-1.5 py-0.5 ${getActivityTypeColor(activity.activity_type)} text-xs font-medium rounded`}>
+            {activity.activity_type} #{activity.task_number}
+          </span>
           
-          {/* Grading Status - First label */}
-          {gradingStatus && (
-            <span className={`px-1 py-0.5 text-xs font-medium rounded ${gradingStatus.color}`}>
-              {gradingStatus.text}
-            </span>
-          )}
-          
-          {/* Submission Stats - Second label */}
-          <div className="text-xs font-medium text-[#FFFFFF]/80">
-            {submittedCount}/{totalCount}
-          </div>
-          
-          {/* Action Buttons - Edit and Archive at the far right */}
-          <div className="flex items-center gap-0.5">
-            {/* Edit Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(activity);
-              }}
-              className="p-1 bg-[#15151C] hover:bg-[#23232C] rounded transition-colors cursor-pointer border border-[#FFFFFF]/10 hover:border-[#00A15D]/30"
-              title="Edit Activity"
-            >
-              <svg className="w-3.5 h-3.5 text-gray-400 hover:text-[#00A15D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-
-            {/* Archive Button - Only show for non-active activities */}
-            {!isActivityActive(activity) && (
+          {/* Top Right Section: Labels first, then Action Buttons at the far right */}
+          <div className="flex items-center gap-2">
+            {/* Edited Label - Show if school_work_edited is 1 */}
+            {activity.school_work_edited === 1 && (
+              <span className="px-1 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
+                Edited
+              </span>
+            )}
+            
+            {/* Grading Status - First label */}
+            {gradingStatus && (
+              <span className={`px-1 py-0.5 text-xs font-medium rounded ${gradingStatus.color}`}>
+                {gradingStatus.text}
+              </span>
+            )}
+            
+            {/* Submission Stats - Second label */}
+            <div className="text-xs font-medium text-[#FFFFFF]/80">
+              {submittedCount}/{totalCount}
+            </div>
+            
+            {/* Action Buttons - Edit and Archive at the far right */}
+            <div className="flex items-center gap-0.5">
+              {/* Edit Button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onArchive(activity);
+                  onEdit(activity);
                 }}
                 className="p-1 bg-[#15151C] hover:bg-[#23232C] rounded transition-colors cursor-pointer border border-[#FFFFFF]/10 hover:border-[#00A15D]/30"
-                title="Archive Activity"
+                title="Edit Activity"
               >
-                <img src={Archive} alt="Archive" className="w-3.5 h-3.5 opacity-80 hover:opacity-100" />
+                <svg className="w-3.5 h-3.5 text-gray-400 hover:text-[#00A15D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
               </button>
-            )}
+
+              {/* Archive Button - Only show for non-active activities */}
+              {!isActivityActive(activity) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onArchive(activity);
+                  }}
+                  className="p-1 bg-[#15151C] hover:bg-[#23232C] rounded transition-colors cursor-pointer border border-[#FFFFFF]/10 hover:border-[#00A15D]/30"
+                  title="Archive Activity"
+                >
+                  <img src={Archive} alt="Archive" className="w-3.5 h-3.5 opacity-80 hover:opacity-100" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-      
-      {/* Title - Smaller */}
-      <h3 className="font-medium text-[#FFFFFF] text-xs mb-2 truncate">
-        {activity.title}
-      </h3>
-      
-      {/* Minimal Info Row - Compact with Clock Icon */}
-      <div className="flex items-center justify-between mb-1">
-        {/* Deadline with Clock Icon */}
-        <div className="flex items-center gap-1">
-          {/* Clock Icon - Always red text when deadline is passed */}
-          <div className={`${isDeadlinePassed(activity.deadline) ? 'text-[#A15353]' : 'text-[#FFFFFF]/80'}`}>
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          
-          {/* Deadline Text - Red when deadline is passed */}
-          <span className={`text-xs font-medium ${
-            isDeadlinePassed(activity.deadline) 
-              ? 'text-[#A15353]' 
-              : 'text-[#FFFFFF]/80'
-          }`}>
-            {formatDate(activity.deadline)}
-          </span>
         </div>
         
-        {/* Points */}
-        <div className="flex items-center gap-1">
-          <span className="text-xs font-medium text-[#FFA600]">
-            {activity.points || 0} pts
-          </span>
+        {/* Title - Smaller */}
+        <h3 className="font-medium text-[#FFFFFF] text-xs mb-2 truncate">
+          {activity.title}
+        </h3>
+        
+        {/* Minimal Info Row - Compact with Clock Icon */}
+        <div className="flex items-center justify-between mb-1">
+          {/* Deadline with Clock Icon */}
+          <div className="flex items-center gap-1">
+            {/* Clock Icon - Always red text when deadline is passed */}
+            <div className={`${isDeadlinePassed(activity.deadline) ? 'text-[#A15353]' : 'text-[#FFFFFF]/80'}`}>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            
+            {/* Deadline Text - Red when deadline is passed */}
+            <span className={`text-xs font-medium ${
+              isDeadlinePassed(activity.deadline) 
+                ? 'text-[#A15353]' 
+                : 'text-[#FFFFFF]/80'
+            }`}>
+              {formatDate(activity.deadline)}
+            </span>
+          </div>
+          
+          {/* Points */}
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium text-[#FFA600]">
+              {activity.points || 0} pts
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Time Indicator - Added below the main info row */}
-      {timeAgo && (
-        <div className="flex items-center gap-1 mt-1">
-          <img src={TimeIcon} alt="Time" className="w-2.5 h-2.5 opacity-60" />
-          <span className="text-[10px] font-medium text-[#FFFFFF]/60">
-            {timeAgo} ago
-          </span>
-        </div>
-      )}
-    </div>
-  );
-};
+        {/* Time Indicator - Added below the main info row */}
+        {timeAgo && (
+          <div className="flex items-center gap-1 mt-1">
+            <img src={TimeIcon} alt="Time" className="w-2.5 h-2.5 opacity-60" />
+            <span className="text-[10px] font-medium text-[#FFFFFF]/60">
+              {timeAgo} ago
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
 export default function ClassworkTab() {
   const location = useLocation();
@@ -438,6 +442,7 @@ export default function ClassworkTab() {
         const result = await response.json();
         console.log('Fetched activities result:', result);
         if (result.success) {
+          // The activities now only contain assigned students
           setActivities(result.activities || []);
         } else {
           console.error('Error fetching activities:', result.message);
@@ -516,6 +521,7 @@ export default function ClassworkTab() {
   };
 
   // Handle create activity from modal
+
   const handleCreateActivity = async (activityData) => {
     // Validate required fields
     if (!activityData.activityType || !activityData.taskNumber || !activityData.title) {
@@ -557,6 +563,12 @@ export default function ClassworkTab() {
       }
     }
 
+    // Validate individual assignment has selected students
+    if (activityData.assignTo === "individual" && (!activityData.selectedStudents || activityData.selectedStudents.length === 0)) {
+      alert("Please select at least one student for individual assignment");
+      return;
+    }
+
     try {
       // Set creating state
       setCreatingActivity(true);
@@ -576,7 +588,9 @@ export default function ClassworkTab() {
         instruction: activityData.instruction,
         link: activityData.link,
         points: activityData.points || 0,
-        deadline: activityData.deadline
+        deadline: activityData.deadline,
+        assignTo: activityData.assignTo || 'wholeClass', // Ensure assignTo is sent
+        selectedStudents: activityData.selectedStudents || [] // Ensure selectedStudents is sent
       };
 
       console.log('Creating activity with data:', apiData);

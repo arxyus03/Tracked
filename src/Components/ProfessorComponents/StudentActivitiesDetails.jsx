@@ -15,7 +15,7 @@ const StudentActivitiesDetails = ({
   isOpen, 
   onClose, 
   subjectCode,
-  professorName // Add this prop
+  professorName
 }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [activityFilter, setActivityFilter] = useState("All");
@@ -26,6 +26,7 @@ const StudentActivitiesDetails = ({
   const [studentFiles, setStudentFiles] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [, setSelectedActivityDetails] = useState(null);
+  const [assignTo, setAssignTo] = useState("wholeClass");
 
   // Set first student as default when component opens
   useEffect(() => {
@@ -34,12 +35,39 @@ const StudentActivitiesDetails = ({
     }
   }, [isOpen, students]);
 
+  // Fetch activity details to get assignment type
+  useEffect(() => {
+    if (isOpen && activity?.id) {
+      fetchActivityAssignmentType();
+    }
+  }, [isOpen, activity]);
+
   // Fetch student activities when component opens or selected student changes
   useEffect(() => {
     if (isOpen && subjectCode && selectedStudent) {
       fetchStudentActivities();
     }
   }, [isOpen, subjectCode, selectedStudent]);
+
+  // Fetch activity assignment type
+  const fetchActivityAssignmentType = async () => {
+    if (!activity?.id) return;
+    
+    try {
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activity_details.php?activity_id=${activity.id}`
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.assign_to) {
+          setAssignTo(result.assign_to);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching activity assignment type:', error);
+    }
+  };
 
   // Helper function to calculate student status consistently
   const calculateStudentStatus = (student, activityItem) => {
@@ -59,12 +87,11 @@ const StudentActivitiesDetails = ({
     try {
       setLoadingActivities(true);
       
-      // Fetch all activities for this subject to get student performance data
+      // Fetch all activities for this subject
       const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
       
       if (response.ok) {
         const result = await response.json();
-        console.log('Fetched activities for student details:', result);
         
         if (result.success) {
           const activitiesData = result.activities || [];
@@ -72,7 +99,7 @@ const StudentActivitiesDetails = ({
           const professorFileMap = {};
           const studentFileMap = {};
           
-          // Initialize all students with empty activity array
+          // Initialize only the students passed to this component (those assigned to current activity)
           students.forEach(student => {
             studentActivityMap[student.user_ID] = [];
             studentFileMap[student.user_ID] = {};
@@ -86,9 +113,11 @@ const StudentActivitiesDetails = ({
             }
             
             if (activityItem.students) {
+              // Only process students who are in our current students list
               activityItem.students.forEach(student => {
-                if (studentActivityMap[student.user_ID]) {
-                  studentActivityMap[student.user_ID].push({
+                const studentId = student.user_ID || student.tracked_ID;
+                if (studentActivityMap[studentId]) {
+                  studentActivityMap[studentId].push({
                     id: activityItem.id,
                     title: activityItem.title,
                     dueDate: activityItem.deadline,
@@ -102,10 +131,10 @@ const StudentActivitiesDetails = ({
                   
                   // Store student files for this activity
                   if (student.student_files && student.student_files.length > 0) {
-                    if (!studentFileMap[student.user_ID]) {
-                      studentFileMap[student.user_ID] = {};
+                    if (!studentFileMap[studentId]) {
+                      studentFileMap[studentId] = {};
                     }
-                    studentFileMap[student.user_ID][activityItem.id] = student.student_files;
+                    studentFileMap[studentId][activityItem.id] = student.student_files;
                   }
                 }
               });
@@ -163,14 +192,11 @@ const StudentActivitiesDetails = ({
   const handleEmailStudent = (studentEmail, studentName) => {
     if (studentEmail) {
       const subject = `Regarding Student Performance`;
-      // Extract professor surname from full name
       const professorSurname = professorName ? professorName.split(' ').pop() : 'Professor';
       const body = `Dear ${studentName},\n\nI would like to discuss your academic performance and activities.\n\nBest regards,\nProf. ${professorSurname}`;
       
-      // Gmail compose URL
       const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(studentEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       
-      // Open Gmail in a new tab
       window.open(gmailUrl, '_blank', 'noopener,noreferrer');
     } else {
       alert('No email address found for this student.');
@@ -271,9 +297,18 @@ const StudentActivitiesDetails = ({
               <h2 className="text-base font-bold text-[#FFFFFF] truncate">
                 Student Activities - {activity?.title || 'All Activities'}
               </h2>
-              <p className="text-xs text-[#FFFFFF]/60 mt-0.5 truncate">
-                View student activities and performance across all assignments
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${
+                  assignTo === 'individual' 
+                    ? 'bg-[#FFA600]/20 text-[#FFA600]' 
+                    : 'bg-[#00A15D]/20 text-[#00A15D]'
+                }`}>
+                  {assignTo === 'individual' ? 'Individual Assignment' : 'Whole Class Assignment'}
+                </span>
+                <p className="text-xs text-[#FFFFFF]/60 truncate">
+                  View student activities and performance across all assignments
+                </p>
+              </div>
             </div>
             <button
               onClick={onClose}
@@ -288,9 +323,9 @@ const StudentActivitiesDetails = ({
             {/* Left Panel - Students List */}
             <div className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-gray-700 flex flex-col">
               <div className="p-2.5 border-b border-gray-700">
-                <h3 className="text-sm font-semibold text-[#FFFFFF]">Students</h3>
+                <h3 className="text-sm font-semibold text-[#FFFFFF]">Assigned Students</h3>
                 <p className="text-xs text-[#FFFFFF]/60 mt-0.5">
-                  {students.length} students in class
+                  {students.length} student{students.length !== 1 ? 's' : ''} assigned to this activity
                 </p>
               </div>
 

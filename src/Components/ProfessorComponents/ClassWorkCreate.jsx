@@ -175,6 +175,12 @@ const ClassWorkCreate = ({
       return;
     }
 
+    // If individual assignment is selected but no students are chosen
+    if (assignTo === "individual" && selectedStudents.length === 0) {
+      alert("Please select at least one student for individual assignment");
+      return;
+    }
+
     if (isTaskNumberDuplicate()) {
       const existingTaskNumbers = getExistingTaskNumbers();
       const message = `"${activityType} ${taskNumber}" already exists.\n\nExisting ${activityType}s: ${existingTaskNumbers.join(', ')}`;
@@ -256,20 +262,20 @@ const ClassWorkCreate = ({
                 />
               </button>
               {activityTypeDropdownOpen && (
-              <div className="absolute top-full mt-1 w-full bg-[#23232C] rounded border border-gray-700 z-10 max-h-60 overflow-y-auto">
-                {filteredActivityTypes.map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => {
-                      setActivityType(type);
-                      setActivityTypeDropdownOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
+                <div className="absolute top-full mt-1 w-full bg-[#23232C] rounded border border-gray-700 z-10 max-h-60 overflow-y-auto">
+                  {filteredActivityTypes.map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => {
+                        setActivityType(type);
+                        setActivityTypeDropdownOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -343,6 +349,7 @@ const ClassWorkCreate = ({
                     onClick={() => {
                       setAssignTo("wholeClass");
                       setAssignToDropdownOpen(false);
+                      setSelectedStudents([]);
                     }}
                     className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
                   >
@@ -361,11 +368,13 @@ const ClassWorkCreate = ({
               )}
             </div>
 
-            {/* Student Selection */}
+            {/* Student Selection - Only show when "Individual Students" is selected */}
             {assignTo === "individual" && (
               <div className="bg-[#23232C] border border-gray-700 rounded p-3">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-medium">Select Students</label>
+                  <label className="text-xs font-medium">
+                    Select Students <span className="text-[#A15353]">*</span>
+                  </label>
                   {!loadingStudents && realStudents.length > 0 && (
                     <button
                       onClick={handleSelectAllStudents}
@@ -379,9 +388,10 @@ const ClassWorkCreate = ({
                 {loadingStudents ? (
                   <div className="text-center py-3">
                     <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-[#00A15D] border-r-transparent"></div>
+                    <p className="text-xs text-gray-500 mt-2">Loading students...</p>
                   </div>
                 ) : realStudents.length === 0 ? (
-                  <p className="text-xs text-gray-500 text-center py-2">No students found</p>
+                  <p className="text-xs text-gray-500 text-center py-2">No students found in this class</p>
                 ) : (
                   <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
                     {realStudents.map((student) => (
@@ -407,6 +417,11 @@ const ClassWorkCreate = ({
                 {selectedStudents.length > 0 && (
                   <p className="text-xs text-gray-400 mt-2">
                     {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
+                  </p>
+                )}
+                {selectedStudents.length === 0 && assignTo === "individual" && (
+                  <p className="text-xs text-[#A15353] mt-2">
+                    ⚠️ Please select at least one student
                   </p>
                 )}
               </div>
@@ -454,17 +469,12 @@ const ClassWorkCreate = ({
           </div>
         </div>
 
-        {/* Debug: Show available activity types */}
-        <div className="mt-3 text-xs text-gray-500">
-          Available activity types: {filteredActivityTypes.join(', ')}
-        </div>
-
         {/* Create Button */}
         <button
           onClick={handleCreate}
-          disabled={creatingActivity || isDuplicate}
+          disabled={creatingActivity || isDuplicate || (assignTo === "individual" && selectedStudents.length === 0)}
           className={`w-full mt-4 font-medium py-2.5 rounded text-sm transition-colors ${
-            isDuplicate
+            isDuplicate || (assignTo === "individual" && selectedStudents.length === 0)
               ? 'bg-[#A15353] hover:bg-[#8a4545] text-white cursor-not-allowed'
               : creatingActivity
               ? 'bg-gray-600 cursor-not-allowed text-white'
@@ -478,6 +488,8 @@ const ClassWorkCreate = ({
             </div>
           ) : isDuplicate ? (
             'Task Number Already Exists'
+          ) : assignTo === "individual" && selectedStudents.length === 0 ? (
+            'Select Students First'
           ) : (
             'Create Activity'
           )}

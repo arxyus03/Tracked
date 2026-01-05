@@ -40,7 +40,7 @@ try {
         exit;
     }
     
-    // Get enrolled students
+    // Get all enrolled students in the class (for reference only)
     $studentsStmt = $pdo->prepare("
         SELECT 
             t.tracked_ID as user_ID, 
@@ -53,7 +53,7 @@ try {
         ORDER BY t.tracked_lastname, t.tracked_firstname
     ");
     $studentsStmt->execute([$subject_code]);
-    $students = $studentsStmt->fetchAll(PDO::FETCH_ASSOC);
+    $allStudents = $studentsStmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Get activities - only non-archived
     $stmt = $pdo->prepare("
@@ -79,42 +79,46 @@ try {
     $stmt->execute([$subject_code]);
     $activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // For each activity, get or create student grade entries
+    // For each activity, get ONLY students who are assigned to this activity
     foreach ($activities as &$activity) {
-        $activityStudents = [];
+        $assignedStudents = [];
         
-        foreach ($students as $student) {
-            // Check if grade entry exists
-            $gradeStmt = $pdo->prepare("
-                SELECT * FROM activity_grades 
-                WHERE activity_ID = ? AND student_ID = ?
-            ");
-            $gradeStmt->execute([$activity['id'], $student['user_ID']]);
-            $gradeData = $gradeStmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($gradeData) {
-                // Use existing grade data
-                $activityStudents[] = [
-                    'user_ID' => $student['user_ID'],
-                    'user_Name' => $student['user_Name'],
-                    'user_Email' => $student['user_Email'],
-                    'grade' => $gradeData['grade'],
-                    'submitted' => (bool)$gradeData['submitted'],
-                    'late' => (bool)$gradeData['late'],
-                    'submitted_at' => $gradeData['submitted_at']
-                ];
-            } else {
-                // No grade entry exists yet
-                $activityStudents[] = [
-                    'user_ID' => $student['user_ID'],
-                    'user_Name' => $student['user_Name'],
-                    'user_Email' => $student['user_Email'],
-                    'grade' => null,
-                    'submitted' => false,
-                    'late' => false,
-                    'submitted_at' => null
-                ];
-            }
+        // Get students who are assigned to this activity (from activity_grades table)
+        $assignedStmt = $pdo->prepare("
+            SELECT 
+                ag.student_ID as user_ID,
+                CONCAT(t.tracked_firstname, ' ', t.tracked_lastname) as user_Name,
+                t.tracked_Email as user_Email,
+                ag.grade,
+                ag.submitted,
+                ag.late,
+                ag.submitted_at,
+                ag.uploaded_file_url,
+                ag.uploaded_file_name
+            FROM activity_grades ag
+            INNER JOIN tracked_users t ON ag.student_ID = t.tracked_ID
+            WHERE ag.activity_ID = ?
+            AND t.tracked_Role = 'Student' 
+            AND t.tracked_Status = 'Active'
+            ORDER BY t.tracked_lastname, t.tracked_firstname
+        ");
+        $assignedStmt->execute([$activity['id']]);
+        $assignedStudents = $assignedStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Transform the data to match expected format
+        $activityStudents = [];
+        foreach ($assignedStudents as $student) {
+            $activityStudents[] = [
+                'user_ID' => $student['user_ID'],
+                'user_Name' => $student['user_Name'],
+                'user_Email' => $student['user_Email'],
+                'grade' => $student['grade'],
+                'submitted' => (bool)$student['submitted'],
+                'late' => (bool)$student['late'],
+                'submitted_at' => $student['submitted_at'],
+                'uploaded_file_url' => $student['uploaded_file_url'],
+                'uploaded_file_name' => $student['uploaded_file_name']
+            ];
         }
         
         $activity['students'] = $activityStudents;
@@ -123,10 +127,10 @@ try {
     echo json_encode([
         "success" => true,
         "activities" => $activities,
-        "students" => $students, // This is required for analytics
+        "all_students" => $allStudents, // This is now separate from activity students
         "class_info" => $class,
         "debug" => [
-            "total_students" => count($students),
+            "total_students_in_class" => count($allStudents),
             "total_activities" => count($activities),
             "subject_code" => $subject_code
         ]

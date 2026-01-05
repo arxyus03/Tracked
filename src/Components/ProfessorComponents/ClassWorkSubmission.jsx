@@ -14,7 +14,7 @@ import AudioIcon from "../../assets/Audio.svg";
 import ArchiveIcon from "../../assets/Archive.svg";
 import DownloadIcon from "../../assets/Download(Light).svg";
 import TrackEd from "../../assets/TrackEd.svg";
-import TimeIcon from "../../assets/Clock.svg"; // Added time icon for posted time
+import TimeIcon from "../../assets/Clock.svg";
 
 import StudentActivitiesDetails from './StudentActivitiesDetails';
 
@@ -37,13 +37,15 @@ const ClassWorkSubmission = ({
   const [viewingPhoto, setViewingPhoto] = useState(null);
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [assignTo, setAssignTo] = useState("wholeClass");
   
   // File Upload States
   const [uploadedFilesList, setUploadedFilesList] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [fileRefreshKey, setFileRefreshKey] = useState(0); // New key to force refresh
   
   const scrollContainerRef = useRef(null);
-  const filterButtonRef = useRef(null); // New ref for filter button
+  const filterButtonRef = useRef(null);
   const BACKEND_URL = 'https://tracked.6minds.site/Professor/SubjectDetailsDB';
 
   // Circular Progress Bar Component
@@ -59,7 +61,6 @@ const ClassWorkSubmission = ({
           height={size} 
           className="transform -rotate-90"
         >
-          {/* Background circle */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -67,7 +68,6 @@ const ClassWorkSubmission = ({
             strokeWidth={strokeWidth}
             className="fill-none stroke-gray-700"
           />
-          {/* Progress circle */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -84,7 +84,6 @@ const ClassWorkSubmission = ({
           />
         </svg>
         
-        {/* Percentage text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span 
             className="text-2xl font-bold"
@@ -102,18 +101,15 @@ const ClassWorkSubmission = ({
 
   // ========== DATE FORMATTING FUNCTIONS ==========
   
-  // Format deadline date in UTC (as originally intended)
   const formatDeadline = (dateString) => {
     if (!dateString || dateString === "No deadline") return "No deadline";
     try {
       const date = new Date(dateString);
       
-      // Check if date is valid
       if (isNaN(date.getTime())) {
         return dateString;
       }
       
-      // Format: Month Day, Year at HH:MM AM/PM (UTC)
       const options = {
         year: 'numeric',
         month: 'long',
@@ -121,7 +117,7 @@ const ClassWorkSubmission = ({
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'UTC' // Deadline in UTC as per original requirement
+        timeZone: 'UTC'
       };
       
       const formattedDate = date.toLocaleDateString('en-US', options);
@@ -132,18 +128,15 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Format created date in Philippine Time (UTC+8)
   const formatCreatedDate = (dateString) => {
     if (!dateString) return "";
     try {
       const date = new Date(dateString);
       
-      // Check if date is valid
       if (isNaN(date.getTime())) {
         return "";
       }
       
-      // Format: Month Day, Year at HH:MM AM/PM (Philippine Time)
       const options = {
         year: 'numeric',
         month: 'long',
@@ -151,7 +144,7 @@ const ClassWorkSubmission = ({
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'Asia/Manila' // Philippine Time (UTC+8)
+        timeZone: 'Asia/Manila'
       };
       
       const formattedDate = date.toLocaleDateString('en-US', options);
@@ -162,7 +155,6 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Get deadline color for styling
   const getDeadlineColor = (deadline) => {
     if (!deadline || deadline === "No deadline") return 'text-[#767EE0]';
     const deadlineDate = new Date(deadline);
@@ -183,7 +175,6 @@ const ClassWorkSubmission = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Clean up dynamically created file inputs
   useEffect(() => {
     return () => {
       const fileInputs = document.querySelectorAll('input[type="file"].dynamic-file-input');
@@ -195,7 +186,6 @@ const ClassWorkSubmission = ({
     };
   }, []);
 
-  // Close filter dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterButtonRef.current && !filterButtonRef.current.contains(event.target)) {
@@ -209,74 +199,156 @@ const ClassWorkSubmission = ({
     };
   }, []);
 
-  // Fetch saved grades from database
-  const fetchSavedGrades = async () => {
+  // Fetch activity details including assignment type and assigned students
+  const fetchActivityDetails = async () => {
     if (!activity?.id) return;
     
     try {
       const response = await fetch(
-        `${BACKEND_URL}/get_activity_grades.php?activity_id=${activity.id}`
+        `${BACKEND_URL}/get_activity_details.php?activity_id=${activity.id}`
       );
       
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const result = await response.json();
       
-      if (result.success && result.grades && Array.isArray(result.grades)) {
-        const gradeMap = {};
-        result.grades.forEach(grade => {
-          // Remove .00 from saved grades
-          let gradeValue = grade.grade;
-          if (gradeValue !== null) {
-            // Convert to string and remove .00
-            const gradeStr = gradeValue.toString();
-            if (gradeStr.includes('.')) {
-              // Check if it's .00, .0, etc.
-              const [whole, decimal] = gradeStr.split('.');
-              if (decimal === '00' || decimal === '0' || decimal === '') {
-                gradeValue = whole; // Remove decimal part
-              } else {
-                // Keep decimal part but remove trailing zeros
-                gradeValue = parseFloat(gradeStr).toString();
+      if (result.success) {
+        if (result.assign_to) {
+          setAssignTo(result.assign_to);
+        }
+        
+        const assignedStudents = result.students || [];
+        
+        // Fetch saved grades for assigned students
+        const gradesResponse = await fetch(
+          `${BACKEND_URL}/get_activity_grades.php?activity_id=${activity.id}`
+        );
+        
+        if (gradesResponse.ok) {
+          const gradesResult = await gradesResponse.json();
+          
+          if (gradesResult.success && gradesResult.grades) {
+            const gradeMap = {};
+            gradesResult.grades.forEach(grade => {
+              let gradeValue = grade.grade;
+              if (gradeValue !== null) {
+                const gradeStr = gradeValue.toString();
+                if (gradeStr.includes('.')) {
+                  const [whole, decimal] = gradeStr.split('.');
+                  if (decimal === '00' || decimal === '0' || decimal === '') {
+                    gradeValue = whole;
+                  } else {
+                    gradeValue = parseFloat(gradeStr).toString();
+                  }
+                }
               }
+              
+              gradeMap[grade.student_ID] = {
+                grade: gradeValue !== null ? gradeValue.toString() : '',
+                submitted: grade.submitted === 1,
+                late: grade.late === 1,
+                submitted_at: grade.submitted_at,
+                uploaded_file_url: grade.uploaded_file_url,
+                uploaded_file_name: grade.uploaded_file_name
+              };
+            });
+            
+            const updatedStudents = assignedStudents.map(student => {
+              const savedGrade = gradeMap[student.user_ID || student.tracked_ID];
+              
+              if (savedGrade) {
+                return {
+                  ...student,
+                  user_ID: student.user_ID || student.tracked_ID,
+                  user_Name: student.user_Name || `${student.tracked_firstname} ${student.tracked_lastname}`,
+                  user_Email: student.user_Email || student.tracked_email,
+                  grade: savedGrade.grade,
+                  submitted: savedGrade.submitted,
+                  late: savedGrade.late,
+                  submitted_at: savedGrade.submitted_at,
+                  uploaded_file_url: savedGrade.uploaded_file_url,
+                  uploaded_file_name: savedGrade.uploaded_file_name
+                };
+              } else {
+                return {
+                  ...student,
+                  user_ID: student.user_ID || student.tracked_ID,
+                  user_Name: student.user_Name || `${student.tracked_firstname} ${student.tracked_lastname}`,
+                  user_Email: student.user_Email || student.tracked_email,
+                  grade: null,
+                  submitted: false,
+                  late: false,
+                  submitted_at: null,
+                  uploaded_file_url: null,
+                  uploaded_file_name: null
+                };
+              }
+            });
+            
+            setLocalStudents(updatedStudents);
+            
+            // Select first student if available
+            if (updatedStudents.length > 0 && !selectedStudent) {
+              const firstStudent = updatedStudents[0];
+              setSelectedStudent({ 
+                id: firstStudent.user_ID, 
+                name: firstStudent.user_Name 
+              });
+              // Fetch files for the first student
+              fetchUploadedFiles(firstStudent.user_ID);
+            }
+          } else {
+            const updatedStudents = assignedStudents.map(student => ({
+              ...student,
+              user_ID: student.user_ID || student.tracked_ID,
+              user_Name: student.user_Name || `${student.tracked_firstname} ${student.tracked_lastname}`,
+              user_Email: student.user_Email || student.tracked_email,
+              grade: null,
+              submitted: false,
+              late: false,
+              submitted_at: null,
+              uploaded_file_url: null,
+              uploaded_file_name: null
+            }));
+            
+            setLocalStudents(updatedStudents);
+            
+            if (updatedStudents.length > 0 && !selectedStudent) {
+              const firstStudent = updatedStudents[0];
+              setSelectedStudent({ 
+                id: firstStudent.user_ID, 
+                name: firstStudent.user_Name 
+              });
+              fetchUploadedFiles(firstStudent.user_ID);
             }
           }
-          
-          gradeMap[grade.student_ID] = {
-            grade: gradeValue !== null ? gradeValue.toString() : '',
-            submitted: grade.submitted === 1,
-            late: grade.late === 1,
-            submitted_at: grade.submitted_at,
-            uploaded_file_url: grade.uploaded_file_url,
-            uploaded_file_name: grade.uploaded_file_name
-          };
-        });
-        
-        const updatedStudents = activity.students.map(student => {
-          const savedGrade = gradeMap[student.user_ID];
-          
-          if (savedGrade) {
-            return {
-              ...student,
-              grade: savedGrade.grade,
-              submitted: savedGrade.submitted,
-              late: savedGrade.late,
-              submitted_file: savedGrade.uploaded_file_url || student.submitted_file,
-              uploaded_file_url: savedGrade.uploaded_file_url,
-              uploaded_file_name: savedGrade.uploaded_file_name
-            };
-          } else {
-            return student;
-          }
-        });
-        
-        setLocalStudents(updatedStudents);
+        }
       } else {
-        setLocalStudents([...activity.students]);
+        const assignedStudents = activity.students || [];
+        setLocalStudents(assignedStudents);
+        
+        if (assignedStudents.length > 0 && !selectedStudent) {
+          const firstStudent = assignedStudents[0];
+          setSelectedStudent({ 
+            id: firstStudent.user_ID, 
+            name: firstStudent.user_Name 
+          });
+          fetchUploadedFiles(firstStudent.user_ID);
+        }
       }
     } catch (error) {
-      console.error('Error fetching saved grades:', error);
-      setLocalStudents([...activity.students]);
+      console.error('Error fetching activity details:', error);
+      const assignedStudents = activity.students || [];
+      setLocalStudents(assignedStudents);
+      
+      if (assignedStudents.length > 0 && !selectedStudent) {
+        const firstStudent = assignedStudents[0];
+        setSelectedStudent({ 
+          id: firstStudent.user_ID, 
+          name: firstStudent.user_Name 
+        });
+        fetchUploadedFiles(firstStudent.user_ID);
+      }
     }
   };
 
@@ -285,7 +357,6 @@ const ClassWorkSubmission = ({
     const name = fileName || '';
     const type = fileType || '';
     
-    // Check by file extension first
     if (name.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) || 
         type.startsWith('image/')) {
       return ImageIcon;
@@ -304,7 +375,6 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Check if file is an image
   const isImageFile = (file) => {
     if (!file) return false;
     
@@ -323,7 +393,6 @@ const ClassWorkSubmission = ({
     return false;
   };
 
-  // Format file size
   const formatFileSize = (bytes) => {
     if (bytes === 0 || bytes === undefined || bytes === null) return '0 Bytes';
     const k = 1024;
@@ -395,11 +464,26 @@ const ClassWorkSubmission = ({
           };
         });
 
+        // Update the local student's file info in the database when saving grades
+        if (uploadedBy === 'professor') {
+          // Update the student's uploaded_file_url in local state
+          setLocalStudents(prev => prev.map(student =>
+            student.user_ID === studentId
+              ? {
+                  ...student,
+                  uploaded_file_url: newFile.url,
+                  uploaded_file_name: newFile.name
+                }
+              : student
+          ));
+        }
+
         alert('File uploaded successfully!');
         
+        // Refresh files and trigger re-render
         setTimeout(() => {
           fetchUploadedFiles(studentId);
-          fetchAllUploadedFiles();
+          setFileRefreshKey(prev => prev + 1);
           setRefreshTrigger(prev => prev + 1);
         }, 500);
 
@@ -458,6 +542,20 @@ const ClassWorkSubmission = ({
           ...prev,
           [studentId]: filesMap
         }));
+        
+        // Update student's file info in local state
+        if (filesMap.professor.length > 0) {
+          const latestProfessorFile = filesMap.professor[0];
+          setLocalStudents(prev => prev.map(student =>
+            student.user_ID === studentId
+              ? {
+                  ...student,
+                  uploaded_file_url: latestProfessorFile.url,
+                  uploaded_file_name: latestProfessorFile.name
+                }
+              : student
+          ));
+        }
       } else {
         setUploadedFilesList(prev => ({
           ...prev,
@@ -478,58 +576,6 @@ const ClassWorkSubmission = ({
           all: []
         }
       }));
-    }
-  };
-
-  // Fetch all uploaded files for this activity
-  const fetchAllUploadedFiles = async () => {
-    try {
-      const response = await fetch(
-        `${BACKEND_URL}/get-uploaded-files.php?activity_id=${activity.id}`
-      );
-      
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      
-      const result = await response.json();
-      
-      if (result.success && result.files) {
-        const filesMap = {};
-        result.files.forEach(file => {
-          const studentId = file.student_id;
-          if (!filesMap[studentId]) {
-            filesMap[studentId] = {
-              professor: [],
-              student: [],
-              all: []
-            };
-          }
-          
-          const fileObj = {
-            id: file.id,
-            name: file.original_name || file.file_name,
-            fileName: file.file_name,
-            url: file.file_url || file.url,
-            size: file.file_size,
-            type: file.file_type,
-            uploaded_at: file.uploaded_at,
-            uploadedBy: file.uploaded_by || 'professor'
-          };
-          
-          filesMap[studentId].all.push(fileObj);
-          if (file.uploaded_by === 'professor') {
-            filesMap[studentId].professor.push(fileObj);
-          } else if (file.uploaded_by === 'student') {
-            filesMap[studentId].student.push(fileObj);
-          }
-        });
-        
-        setUploadedFilesList(filesMap);
-      } else {
-        setUploadedFilesList({});
-      }
-    } catch (error) {
-      console.error('Error loading uploaded files:', error);
-      setUploadedFilesList({});
     }
   };
 
@@ -577,11 +623,22 @@ const ClassWorkSubmission = ({
           return prev;
         });
         
+        // Clear student's file info if professor file was deleted
+        setLocalStudents(prev => prev.map(student =>
+          student.user_ID === studentId
+            ? {
+                ...student,
+                uploaded_file_url: null,
+                uploaded_file_name: null
+              }
+            : student
+        ));
+        
         alert('File deleted successfully');
         
         setTimeout(() => {
           fetchUploadedFiles(studentId);
-          fetchAllUploadedFiles();
+          setFileRefreshKey(prev => prev + 1);
           setRefreshTrigger(prev => prev + 1);
         }, 300);
       } else {
@@ -594,20 +651,10 @@ const ClassWorkSubmission = ({
   };
 
   useEffect(() => {
-    if (activity && activity.students) {
-      fetchSavedGrades();
-      fetchAllUploadedFiles();
-      
-      // Automatically select first student when modal opens
-      if (activity.students.length > 0) {
-        const firstStudent = activity.students[0];
-        setSelectedStudent({ 
-          id: firstStudent.user_ID, 
-          name: firstStudent.user_Name 
-        });
-      }
+    if (activity && activity.id) {
+      fetchActivityDetails();
     }
-  }, [activity, refreshTrigger]);
+  }, [activity, refreshTrigger, fileRefreshKey]);
 
   useEffect(() => {
     if (isMobile && selectedStudent && scrollContainerRef.current) {
@@ -640,7 +687,6 @@ const ClassWorkSubmission = ({
   const handleProfessorFileUpload = async (studentId) => {
     const input = document.createElement('input');
     input.type = 'file';
-    // Accept all file types
     input.accept = '*/*';
     input.multiple = false;
     input.className = 'dynamic-file-input';
@@ -653,7 +699,6 @@ const ClassWorkSubmission = ({
         return;
       }
 
-      // Check file size (50MB limit)
       if (file.size > 50 * 1024 * 1024) {
         alert('File size must be less than 50MB');
         if (input.parentNode) input.parentNode.removeChild(input);
@@ -710,10 +755,8 @@ const ClassWorkSubmission = ({
   const handleGradeChange = (studentId, value) => {
     const maxPoints = activity.points || 100;
     
-    // Remove non-numeric characters except decimal point initially
     let numericValue = value.replace(/[^0-9.]/g, '');
     
-    // Remove leading zeros if followed by a number
     if (numericValue.length > 1 && numericValue[0] === '0' && numericValue[1] !== '.') {
       numericValue = numericValue.substring(1);
     }
@@ -725,20 +768,16 @@ const ClassWorkSubmission = ({
       return;
     }
     
-    // Check if it's a decimal number
     if (numericValue.includes('.')) {
-      // Remove decimal and everything after it since we only want whole numbers
       numericValue = numericValue.split('.')[0];
     }
     
     let intValue = parseInt(numericValue, 10);
     if (isNaN(intValue)) intValue = 0;
     
-    // Ensure it's within bounds
     if (intValue > maxPoints) intValue = maxPoints;
     if (intValue < 0) intValue = 0;
     
-    // Set the grade as string without decimals
     setLocalStudents(prev => prev.map(student =>
       student.user_ID === studentId ? { ...student, grade: intValue.toString() } : student
     ));
@@ -754,7 +793,6 @@ const ClassWorkSubmission = ({
       return;
     }
     
-    // Remove any decimal points and non-numeric characters
     let cleanValue = value.toString().replace(/[^0-9]/g, '');
     
     if (cleanValue === '') {
@@ -768,7 +806,7 @@ const ClassWorkSubmission = ({
     if (isNaN(numericValue)) numericValue = 0;
     if (numericValue < 0) numericValue = 0;
     if (numericValue > maxPoints) numericValue = maxPoints;
-    numericValue = Math.floor(numericValue); // Ensure it's a whole number
+    numericValue = Math.floor(numericValue);
     
     setLocalStudents(prev => prev.map(student =>
       student.user_ID === studentId ? { ...student, grade: numericValue.toString() } : student
@@ -783,7 +821,6 @@ const ClassWorkSubmission = ({
     
     return (
       <div className="w-full flex flex-col items-center mb-4">
-        {/* Circular Progress Bar */}
         <div className="mb-4">
           <CircularProgressBar 
             percentage={percentage} 
@@ -793,7 +830,6 @@ const ClassWorkSubmission = ({
           />
         </div>
         
-        {/* Grade Display */}
         <div className="text-center mb-3">
           <div className="text-3xl font-bold text-white mb-1">
             {grade}/{totalPoints}
@@ -803,9 +839,7 @@ const ClassWorkSubmission = ({
           </div>
         </div>
         
-        {/* Detailed Progress Breakdown */}
         <div className="w-full max-w-xs space-y-2">
-          {/* Performance Level */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400">Performance Level</span>
             <span 
@@ -820,7 +854,6 @@ const ClassWorkSubmission = ({
             </span>
           </div>
           
-          {/* Progress Details */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400">Progress</span>
             <div className="flex items-center gap-2">
@@ -854,10 +887,14 @@ const ClassWorkSubmission = ({
             user_ID: student.user_ID,
             grade: student.grade || null,
             submitted: student.submitted || shouldMarkAsSubmitted,
-            late: false
+            late: false,
+            uploaded_file_url: student.uploaded_file_url || null, // Include file URL
+            uploaded_file_name: student.uploaded_file_name || null // Include file name
           };
         })
       };
+
+      console.log('Saving data with files:', saveData);
 
       const response = await fetch(`${BACKEND_URL}/update_activity_grades.php`, {
         method: 'POST',
@@ -883,7 +920,12 @@ const ClassWorkSubmission = ({
         
         setLocalStudents(updatedStudents);
         if (onSave) onSave(updatedStudents);
-        fetchSavedGrades();
+        
+        // Refresh all data
+        fetchActivityDetails();
+        if (selectedStudent?.id) {
+          fetchUploadedFiles(selectedStudent.id);
+        }
         
         setShowSuccessModal(true);
         setTimeout(() => setShowSuccessModal(false), 2000);
@@ -1165,7 +1207,6 @@ const ClassWorkSubmission = ({
                 <span className="text-[#767EE0] font-bold text-sm">
                   {activity.activity_type} #{activity.task_number}
                 </span>
-                {/* Added Edited label next to title */}
                 {activity.school_work_edited === 1 && (
                   <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
                     Edited
@@ -1174,9 +1215,20 @@ const ClassWorkSubmission = ({
                 <h2 className="text-sm font-bold text-white truncate">Student Submissions - {activity.title}</h2>
               </div>
               
-              {/* Deadline and Created Date in header */}
-              <div className="space-y-1">
-                {/* Deadline */}
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${
+                  assignTo === 'individual' 
+                    ? 'bg-[#FFA600]/20 text-[#FFA600]' 
+                    : 'bg-[#00A15D]/20 text-[#00A15D]'
+                }`}>
+                  {assignTo === 'individual' ? 'Individual Assignment' : 'Whole Class Assignment'}
+                </span>
+                <span className="text-xs text-gray-400">
+                  ({localStudents.length} student{localStudents.length !== 1 ? 's' : ''})
+                </span>
+              </div>
+              
+              <div className="space-y-1 mt-1">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     <img src={ClockIcon} alt="Deadline" className="w-3 h-3 text-[#A15353]" />
@@ -1187,7 +1239,6 @@ const ClassWorkSubmission = ({
                   </span>
                 </div>
                 
-                {/* Posted Date */}
                 {activity.created_at && (
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
@@ -1339,7 +1390,6 @@ const ClassWorkSubmission = ({
                               ? 'border-[#00A15D] focus:border-[#00874E]' 
                               : 'border-[#A15353] focus:border-[#8a3d3d]';
 
-                            // Format the grade display - remove .00
                             let displayGrade = student.grade || '';
                             if (displayGrade && displayGrade.includes('.')) {
                               const [whole, decimal] = displayGrade.split('.');
@@ -1350,7 +1400,10 @@ const ClassWorkSubmission = ({
 
                             return (
                               <tr key={studentId} className={`hover:bg-[#2D2D3A] cursor-pointer ${isSelected ? 'bg-[#767EE0]/10' : ''}`}
-                                onClick={() => setSelectedStudent({ id: studentId, name: student.user_Name })}>
+                                onClick={() => {
+                                  setSelectedStudent({ id: studentId, name: student.user_Name });
+                                  fetchUploadedFiles(studentId);
+                                }}>
                                 <td className="px-3 py-2 w-[40%]">
                                   <div className="text-xs font-medium text-white break-words">{student.user_Name}</div>
                                   <div className="text-xs text-gray-400 break-words">{student.user_Email || 'No email'}</div>
