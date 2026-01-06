@@ -11,9 +11,18 @@ import PdfIcon from "../../assets/PDF.svg";
 import VideoIcon from "../../assets/Video.svg";
 import AudioIcon from "../../assets/Audio.svg"; 
 import ArchiveIcon from "../../assets/Archive.svg"; 
-import ClockIcon from "../../assets/Clock.svg";
+import CrossIcon from "../../assets/Cross.svg";
 
-const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherEmail, teacherName, subjectName }) => {
+const StudentActivityDetails = ({ 
+  activity, 
+  isOpen, 
+  onClose, 
+  studentId, 
+  teacherEmail, 
+  teacherName, 
+  subjectName,
+  onActivitySubmitted // New prop for activity submission callback
+}) => {
   const [professorFiles, setProfessorFiles] = useState([]);
   const [studentFiles, setStudentFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -31,6 +40,11 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
   const [imageError, setImageError] = useState(false);
   const [, setPendingFileError] = useState(false);
   const [professorFileErrors, setProfessorFileErrors] = useState({});
+
+  // Email modal states (similar to StudentPerformanceSummary)
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
 
   const BACKEND_URL = 'https://tracked.6minds.site/Student/SubjectDetailsStudentDB';
 
@@ -143,29 +157,201 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
     return colors[type] || 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80';
   };
 
-  // Function to email professor about missed activity
-  const handleEmailProfessor = () => {
+  // Function to generate email message for missed activity
+  const generateMissedActivityEmail = () => {
+    const currentActivity = activityDetails || activity;
+    const studentName = localStorage.getItem('user_name') || 'Student';
+    
+    const subject = `Missed Activity: ${currentActivity.title} - ${subjectName || 'Subject'}`;
+    
+    let message = `Dear ${teacherName || 'Professor'},\n\n`;
+    message += `I am writing regarding the missed activity in ${subjectName || 'your class'}:\n\n`;
+    message += `ACTIVITY DETAILS:\n`;
+    message += `- Activity: ${currentActivity.title}\n`;
+    message += `- Type: ${currentActivity.activity_type} #${currentActivity.task_number}\n`;
+    message += `- Student ID: ${studentId}\n`;
+    if (studentName) message += `- Student Name: ${studentName}\n`;
+    if (subjectName) message += `- Subject: ${subjectName}\n`;
+    if (currentActivity.deadline && currentActivity.deadline !== "No deadline") {
+      message += `- Deadline: ${formatDate(currentActivity.deadline)}\n`;
+    }
+    message += `\n`;
+    message += `I missed the deadline for this activity. Could you please advise if there is any way I can still submit this work or if there are alternative arrangements available?\n\n`;
+    message += `Thank you for your understanding.\n\n`;
+    message += `Sincerely,\n${studentName}\nStudent ID: ${studentId}`;
+    
+    return { subject, message };
+  };
+
+  // Function to generate email message for general activity question
+  const generateActivityQuestionEmail = () => {
+    const currentActivity = activityDetails || activity;
+    const studentName = localStorage.getItem('user_name') || 'Student';
+    const studentEmail = localStorage.getItem('user_email') || '';
+    
+    // Calculate percentage if grade exists
+    const percentage = currentActivity.grade && currentActivity.points ? 
+      Math.round((parseFloat(currentActivity.grade) / parseFloat(currentActivity.points)) * 100) : null;
+    
+    const subject = `Question about ${currentActivity.activity_type} ${currentActivity.task_number} - ${subjectName || 'Subject'}`;
+    
+    let message = `Dear ${teacherName || 'Professor'},\n\n`;
+    message += `I have a question regarding the following activity:\n\n`;
+    message += `STUDENT INFORMATION:\n`;
+    message += `- Student ID: ${studentId}\n`;
+    message += `- Student Name: ${studentName}\n`;
+    if (studentEmail) message += `- Student Email: ${studentEmail}\n`;
+    if (subjectName) message += `- Subject: ${subjectName}\n`;
+    message += `\n`;
+    message += `ACTIVITY DETAILS:\n`;
+    message += `- Activity Type: ${currentActivity.activity_type}\n`;
+    message += `- Task Number: ${currentActivity.task_number}\n`;
+    message += `- Title: ${currentActivity.title}\n`;
+    message += `- Deadline: ${currentActivity.deadline ? formatDate(currentActivity.deadline) : 'No deadline'}\n`;
+    message += `- Status: ${isActivitySubmitted() ? 'Submitted' : isActivityMissed() ? 'Missed' : 'Not Submitted'}\n`;
+    if (currentActivity.grade && currentActivity.points) {
+      message += `- Score: ${currentActivity.grade}/${currentActivity.points}\n`;
+    }
+    if (percentage !== null) {
+      message += `- Percentage: ${percentage}%\n`;
+    }
+    message += `\n`;
+    message += `MY QUESTION:\n`;
+    message += `[Please state your specific question about this activity here]\n\n`;
+    message += `Thank you for your time and assistance.\n\n`;
+    message += `Sincerely,\n${studentName}\nStudent ID: ${studentId}`;
+    if (studentEmail) message += `\nEmail: ${studentEmail}`;
+    
+    return { subject, message };
+  };
+
+  // Handle email professor button click
+  const handleEmailProfessorClick = (type = 'missed') => {
     if (!teacherEmail) {
-      alert("Teacher email not available. Please contact your teacher directly.");
+      alert("Professor email not available. Please contact your professor directly.");
       return;
     }
 
-    const currentActivity = activityDetails || activity;
-    const subject = encodeURIComponent(`Missed Activity: ${currentActivity.title} - ${subjectName || 'Subject'}`);
-    
-    let body = `Dear ${teacherName || 'Professor'},\n\n`;
-    body += `I am writing regarding the missed activity in ${subjectName || 'your class'}:\n\n`;
-    body += `Activity: ${currentActivity.title}\n`;
-    body += `Type: ${currentActivity.activity_type} #${currentActivity.task_number}\n`;
-    if (currentActivity.deadline && currentActivity.deadline !== "No deadline") {
-      body += `Deadline: ${formatDate(currentActivity.deadline)}\n`;
+    if (type === 'missed') {
+      const { subject, message } = generateMissedActivityEmail();
+      setEmailSubject(subject);
+      setEmailMessage(message);
+    } else {
+      const { subject, message } = generateActivityQuestionEmail();
+      setEmailSubject(subject);
+      setEmailMessage(message);
     }
-    body += `\n`;
-    body += `I missed the deadline for this activity. Could you please advise if there is any way I can still submit this work or if there are alternative arrangements available?\n\n`;
-    body += `Thank you,\n${localStorage.getItem('user_name') || 'Student'}`;
     
-    const mailtoLink = `mailto:${teacherEmail}?subject=${subject}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoLink, '_blank');
+    setShowEmailModal(true);
+  };
+
+  // Send email using Gmail (similar to StudentPerformanceSummary)
+  const handleSendEmail = () => {
+    if (!teacherEmail) {
+      alert("Professor email not available. Please contact your professor directly.");
+      return;
+    }
+
+    // Encode subject and body for mailto link
+    const encodedSubject = encodeURIComponent(emailSubject);
+    const encodedBody = encodeURIComponent(emailMessage);
+    
+    // Create Gmail compose URL
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(teacherEmail)}&su=${encodedSubject}&body=${encodedBody}`;
+    
+    // Open Gmail in new tab
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    
+    // Close modal
+    setShowEmailModal(false);
+  };
+
+  // Email Modal Component
+  const EmailModal = () => {
+    return (
+      <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-[100] p-4">
+        <div className="bg-[#15151C] rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-[#FFFFFF]/10">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-[#FFFFFF]/10">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Email Professor</h3>
+              <p className="text-sm text-[#FFFFFF]/60 mt-0.5">
+                {teacherName || 'Professor'} • {teacherEmail || ''}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowEmailModal(false)}
+              className="p-1.5 hover:bg-[#23232C] rounded transition-colors cursor-pointer"
+            >
+              <img src={CrossIcon} alt="Close" className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Email Content */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-4">
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#23232C] border border-[#FFFFFF]/20 rounded text-white text-sm focus:outline-none focus:border-[#767EE0]"
+                  placeholder="Email subject"
+                />
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Message</label>
+                <textarea
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  rows={12}
+                  className="w-full px-3 py-2 bg-[#23232C] border border-[#FFFFFF]/20 rounded text-white text-sm focus:outline-none focus:border-[#767EE0] resize-none"
+                  placeholder="Write your message here..."
+                />
+              </div>
+
+              {/* Email Preview Info */}
+              <div className="bg-[#23232C]/50 rounded-lg p-3 border border-[#FFFFFF]/10">
+                <h4 className="text-sm font-medium text-white mb-2">Email Preview</h4>
+                <div className="space-y-2 text-xs text-[#FFFFFF]/70">
+                  <p><strong className="text-white">To:</strong> {teacherEmail || 'Not available'}</p>
+                  <p><strong className="text-white">From:</strong> {localStorage.getItem('user_email') || localStorage.getItem('user_name') || 'Student'}</p>
+                  <p><strong className="text-white">Subject:</strong> {emailSubject || 'No subject'}</p>
+                  <div className="mt-2 p-2 bg-[#15151C] rounded border border-[#FFFFFF]/5">
+                    <p className="text-xs text-[#FFFFFF]/60 whitespace-pre-wrap">{emailMessage.substring(0, 150)}...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 p-4 border-t border-[#FFFFFF]/10 bg-[#23232C]/30">
+            <button
+              onClick={() => setShowEmailModal(false)}
+              className="px-4 py-2 text-sm font-medium text-[#FFFFFF]/70 bg-[#2D2D3A] border border-[#FFFFFF]/20 rounded hover:bg-[#374151] transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSendEmail}
+              disabled={!emailSubject.trim() || !emailMessage.trim()}
+              className={`px-4 py-2 text-sm font-medium text-white rounded transition-colors cursor-pointer ${
+                !emailSubject.trim() || !emailMessage.trim()
+                  ? 'bg-gray-600 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-[#767EE0] to-[#5a62c4] hover:opacity-90'
+              }`}
+            >
+              Send via Gmail
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   useEffect(() => {
@@ -231,7 +417,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'UTC' // Deadline in UTC as per original requirement
+        timeZone: 'UTC'
       };
       
       const formattedDate = date.toLocaleDateString('en-US', options);
@@ -261,7 +447,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
-        timeZone: 'Asia/Manila' // Philippine Time (UTC+8)
+        timeZone: 'Asia/Manila'
       };
       
       const formattedDate = date.toLocaleDateString('en-US', options);
@@ -356,7 +542,6 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
     
     const input = document.createElement('input');
     input.type = 'file';
-    // Accept all file types
     input.accept = '*/*';
     
     input.onchange = (e) => {
@@ -395,7 +580,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
       // If student already has a file, delete it first
       if (studentFiles.length > 0) {
         for (const file of studentFiles) {
-          await deleteFile(file.id, false); // Don't confirm
+          await deleteFile(file.id, false);
         }
       }
 
@@ -519,6 +704,11 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
       if (result.success) {
         alert('Submitted!');
         fetchActivityDetails();
+        
+        // Notify parent component about activity submission
+        if (onActivitySubmitted) {
+          onActivitySubmitted(activity.id);
+        }
       } else {
         alert('Submission failed');
       }
@@ -724,7 +914,7 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
                       </div>
                     </div>
                     <button
-                      onClick={handleEmailProfessor}
+                      onClick={() => handleEmailProfessorClick('missed')}
                       className="flex items-center justify-center gap-2 w-full mt-3 px-4 py-2 bg-gradient-to-r from-[#FFA600] to-[#FF8C00] text-white text-sm font-medium rounded cursor-pointer hover:opacity-90 transition-all duration-200 shadow"
                     >
                       <img src={EmailIcon} alt="Email" className="w-4 h-4" />
@@ -1177,11 +1367,11 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
 
           {/* Footer */}
           <div className="flex justify-end gap-2 p-3 border-t border-gray-800">
-            {/* Add email button for missed activities in footer too */}
-            {missed && !submitted && teacherEmail && (
+            {/* Add email professor button */}
+            {teacherEmail && (
               <button
-                onClick={handleEmailProfessor}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFA600] to-[#FF8C00] text-white text-sm font-medium rounded-lg cursor-pointer hover:opacity-90 transition-all duration-200 shadow"
+                onClick={() => handleEmailProfessorClick('question')}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#767EE0] to-[#5a62c4] text-white text-sm font-medium rounded-lg cursor-pointer hover:opacity-90 transition-all duration-200 shadow"
               >
                 <img src={EmailIcon} alt="Email" className="w-4 h-4" />
                 <span>Email Professor</span>
@@ -1205,6 +1395,9 @@ const StudentActivityDetails = ({ activity, isOpen, onClose, studentId, teacherE
           </div>
         </div>
       </div>
+
+      {/* Email Modal */}
+      {showEmailModal && <EmailModal />}
 
       {/* Image Viewer Modal (only for images) */}
       {selectedImage && (

@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-// Database configuration - YOUR CREDENTIALS ARE ALREADY HERE
+// Database configuration
 $host = 'localhost';
 $dbname = 'u713320770_tracked';
 $username = 'u713320770_trackedDB';
@@ -70,8 +70,8 @@ try {
     $classStmt->execute([$subject_code]);
     $class = $classStmt->fetch(PDO::FETCH_ASSOC);
 
-    // Get activities for this subject with UTC formatted timestamps, grade, and professor files info
-    // UPDATED: Added school_work_edited field to the SELECT query
+    // **CRITICAL FIX: Get activities based on assignment type**
+    // We need to check if the activity is assigned to the whole class OR specifically to this student
     $stmt = $pdo->prepare("
         SELECT 
             a.id,
@@ -82,7 +82,8 @@ try {
             a.instruction,
             a.link,
             a.points,
-            a.school_work_edited,  -- ADDED THIS LINE
+            a.school_work_edited,
+            a.assign_to,  -- NEW: Get the assignment type
             DATE_FORMAT(a.deadline, '%Y-%m-%dT%H:%i:%sZ') as deadline,
             DATE_FORMAT(a.created_at, '%Y-%m-%dT%H:%i:%sZ') as created_at,
             DATE_FORMAT(a.updated_at, '%Y-%m-%dT%H:%i:%sZ') as updated_at,
@@ -106,10 +107,20 @@ try {
             ) as professor_file_count
         FROM activities a 
         LEFT JOIN activity_grades ag ON a.id = ag.activity_ID AND ag.student_ID = ?
-        WHERE a.subject_code = ? AND (a.archived = 0 OR a.archived IS NULL)
+        LEFT JOIN activity_assigned_students aas ON a.id = aas.activity_id AND aas.student_id = ?
+        WHERE a.subject_code = ? 
+        AND (a.archived = 0 OR a.archived IS NULL)
+        -- CRITICAL: Filter activities based on assignment type
+        AND (
+            -- Activity assigned to whole class (show to all students)
+            a.assign_to = 'wholeClass'
+            OR 
+            -- Activity assigned to individual students (only show to selected students)
+            (a.assign_to = 'individual' AND aas.student_id IS NOT NULL)
+        )
         ORDER BY a.created_at DESC
     ");
-    $stmt->execute([$student_id, $student_id, $subject_code]);
+    $stmt->execute([$student_id, $student_id, $student_id, $subject_code]);
     $activities = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $emailNotifications = [];

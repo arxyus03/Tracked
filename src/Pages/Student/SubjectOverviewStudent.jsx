@@ -34,7 +34,7 @@ const MissedIcon = () => (
   </svg>
 );
 
-const PendingIcon = () => (
+const AssignedIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
   </svg>
@@ -85,20 +85,20 @@ export default function SubjectOverviewStudent() {
     low: [],
     failed: [],
     missed: [],
-    pending: [],
+    assigned: [], // Changed from pending to assigned
     counts: {
       total: 0,
       passed: 0,
       low: 0,
       failed: 0,
       missed: 0,
-      pending: 0
+      assigned: 0 // Changed from pending to assigned
     }
   });
 
   const [performanceData, setPerformanceData] = useState({
-    percentage: 0, // This is the WEIGHTED TOTAL (75% academic + 25% attendance)
-    academic_percentage: 0, // This is academic only
+    percentage: 0,
+    academic_percentage: 0,
     attendance_percentage: 0,
     activitiesNeeded: [],
     lowGradeActivities: [],
@@ -113,13 +113,16 @@ export default function SubjectOverviewStudent() {
     }
   });
 
+  // Add loading state for performance data
+  const [performanceDataLoading, setPerformanceDataLoading] = useState(true);
+
   const [expandedSections, setExpandedSections] = useState({
     all: false,
     passed: false,
     low: false,
     failed: false,
     missed: false,
-    pending: false
+    assigned: false // Changed from pending to assigned
   });
 
   const [currentPage, setCurrentPage] = useState({
@@ -128,8 +131,16 @@ export default function SubjectOverviewStudent() {
     low: 1,
     failed: 1,
     missed: 1,
-    pending: 1
+    assigned: 1 // Changed from pending to assigned
   });
+
+  // Email modal state (similar to StudentPerformanceSummary.jsx)
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailType, setEmailType] = useState('specific_activity');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [, setSelectedActivityForEmail] = useState(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const itemsPerPage = 10;
 
@@ -189,6 +200,7 @@ export default function SubjectOverviewStudent() {
     if (!subjectCode || !studentId) return;
     
     try {
+      setPerformanceDataLoading(true);
       const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_performance_data.php?student_id=${studentId}&subject_code=${subjectCode}`);
       
       if (response.ok) {
@@ -196,7 +208,7 @@ export default function SubjectOverviewStudent() {
         if (data.success) {
           console.log('Performance Data:', data); // Debug log
           setPerformanceData({
-            percentage: parseFloat(data.percentage) || 0, // WEIGHTED TOTAL
+            percentage: parseFloat(data.percentage) || 0,
             academic_percentage: parseFloat(data.academic_percentage) || 0,
             attendance_percentage: parseFloat(data.attendance_percentage) || 0,
             activitiesNeeded: data.activities_needed || [],
@@ -215,6 +227,8 @@ export default function SubjectOverviewStudent() {
       }
     } catch (error) {
       console.error('Error fetching performance data:', error);
+    } finally {
+      setPerformanceDataLoading(false);
     }
   };
 
@@ -345,7 +359,24 @@ export default function SubjectOverviewStudent() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setActivitiesBreakdown(data.breakdown);
+          // Update field names from pending to assigned
+          const breakdown = data.breakdown;
+          setActivitiesBreakdown({
+            all: breakdown.all || [],
+            passed: breakdown.passed || [],
+            low: breakdown.low || [],
+            failed: breakdown.failed || [],
+            missed: breakdown.missed || [],
+            assigned: breakdown.pending || [], // Map pending to assigned
+            counts: {
+              total: breakdown.counts?.total || 0,
+              passed: breakdown.counts?.passed || 0,
+              low: breakdown.counts?.low || 0,
+              failed: breakdown.counts?.failed || 0,
+              missed: breakdown.counts?.missed || 0,
+              assigned: breakdown.counts?.pending || 0 // Map pending to assigned
+            }
+          });
         } else {
           // Set empty breakdown
           setActivitiesBreakdown({
@@ -354,14 +385,14 @@ export default function SubjectOverviewStudent() {
             low: [],
             failed: [],
             missed: [],
-            pending: [],
+            assigned: [],
             counts: {
               total: 0,
               passed: 0,
               low: 0,
               failed: 0,
               missed: 0,
-              pending: 0
+              assigned: 0
             }
           });
         }
@@ -374,14 +405,14 @@ export default function SubjectOverviewStudent() {
         low: [],
         failed: [],
         missed: [],
-        pending: [],
+        assigned: [],
         counts: {
           total: 0,
           passed: 0,
           low: 0,
           failed: 0,
           missed: 0,
-          pending: 0
+          assigned: 0
         }
       });
     } finally {
@@ -404,18 +435,21 @@ export default function SubjectOverviewStudent() {
             teacherName: data.teacher_name || "",
             teacherId: data.teacher_id || ""
           }));
+          return true;
         }
       }
+      return false;
     } catch (error) {
       console.error('Error fetching teacher info:', error);
+      return false;
     }
   };
 
-  // Calculate performance summary based on breakdown - FIXED to use performanceData.percentage
+  // Calculate performance summary based on breakdown
   const performanceSummary = useMemo(() => {
     if (!currentSubject || !activitiesBreakdown.all.length) {
       return {
-        percentage: performanceData.percentage || 0, // Use WEIGHTED TOTAL
+        percentage: performanceData.percentage || 0,
         message: "Calculating your performance...",
         status: "loading",
         needsImprovement: false,
@@ -426,19 +460,17 @@ export default function SubjectOverviewStudent() {
         lowCount: 0,
         failedCount: 0,
         missedCount: 0,
-        pendingCount: 0,
-        // Add suggestions data for dropdown
+        assignedCount: 0, // Changed from pendingCount
         suggestionsData: {
           missed: [],
           failed: [],
           low: [],
-          pending: [],
+          assigned: [], // Changed from pending
           absences: []
         }
       };
     }
 
-    // Use the WEIGHTED TOTAL percentage from performanceData
     const percentage = performanceData.percentage || 0;
     const equivalentAbsences = Math.floor(subjectAttendance.late / 3);
     const totalEffectiveAbsences = subjectAttendance.absent + equivalentAbsences;
@@ -454,7 +486,7 @@ export default function SubjectOverviewStudent() {
       missed: activitiesBreakdown.missed,
       failed: activitiesBreakdown.failed,
       low: activitiesBreakdown.low,
-      pending: activitiesBreakdown.pending,
+      assigned: activitiesBreakdown.assigned, // Changed from pending
       absences: totalEffectiveAbsences > 0 ? [{
         type: 'absences',
         count: totalEffectiveAbsences,
@@ -463,7 +495,6 @@ export default function SubjectOverviewStudent() {
       }] : []
     };
 
-    // IMPORTANT: Using the WEIGHTED TOTAL percentage (75% academic + 25% attendance)
     if (percentage >= 75) {
       message = "You're above the minimum passing grade! Keep up the good work! 🎉";
       status = "excellent";
@@ -517,11 +548,11 @@ export default function SubjectOverviewStudent() {
         });
       }
 
-      if (activitiesBreakdown.counts.pending > 0) {
+      if (activitiesBreakdown.counts.assigned > 0) {
         suggestions.push({
-          text: `Submit ${activitiesBreakdown.counts.pending} pending activities`,
-          type: 'pending',
-          count: activitiesBreakdown.counts.pending
+          text: `Submit ${activitiesBreakdown.counts.assigned} assigned activities`, // Updated text
+          type: 'assigned', // Changed from pending
+          count: activitiesBreakdown.counts.assigned
         });
       }
 
@@ -541,7 +572,7 @@ export default function SubjectOverviewStudent() {
     }
 
     return {
-      percentage, // This is the WEIGHTED TOTAL
+      percentage,
       message,
       status,
       needsImprovement,
@@ -552,94 +583,279 @@ export default function SubjectOverviewStudent() {
       lowCount: activitiesBreakdown.counts.low,
       failedCount: activitiesBreakdown.counts.failed,
       missedCount: activitiesBreakdown.counts.missed,
-      pendingCount: activitiesBreakdown.counts.pending,
+      assignedCount: activitiesBreakdown.counts.assigned, // Changed from pendingCount
       suggestionsData
     };
   }, [currentSubject, activitiesBreakdown, performanceData.percentage, subjectAttendance]);
 
-  // Email functions - WORKING WITH YOUR DATABASE
-  const handleAskForExtraWork = () => {
-    const { teacherEmail, teacherName } = performanceData;
-    const { percentage, missedCount, pendingCount, lowCount, totalEffectiveAbsences } = performanceSummary;
-    
-    if (!teacherEmail) {
-      alert("Teacher email not available. Please contact your teacher directly.");
-      return;
+  // Email functions - Updated to match StudentPerformanceSummary.jsx
+  const handleEmailTeacherAboutActivity = (activity) => {
+    // Check if teacher email is available
+    if (!performanceData?.teacherEmail) {
+      // Try to get teacher info first
+      fetchTeacherInfo().then(() => {
+        // After fetching, check again
+        if (!performanceData?.teacherEmail) {
+          alert("Professor email not available. Please contact your professor directly.");
+          return;
+        } else {
+          // Continue with email setup after fetching
+          setupEmailModal(activity);
+        }
+      }).catch(() => {
+        alert("Professor email not available. Please contact your professor directly.");
+      });
+    } else {
+      // Teacher email is already available
+      setupEmailModal(activity);
     }
-
-    const subject = encodeURIComponent(`Request for Extra Work - ${currentSubject?.subject || 'Subject'} (${subjectCode})`);
-    
-    let body = `Dear ${teacherName || 'Professor'},\n\n`;
-    body += `I am writing to request additional work to improve my performance in ${currentSubject?.subject || 'this subject'} (${subjectCode}).\n\n`;
-    body += `STUDENT INFORMATION:\n`;
-    body += `- Student ID: ${studentId}\n`;
-    body += `- Student Name: ${studentName}\n`;
-    if (studentEmail) body += `- Student Email: ${studentEmail}\n`;
-    body += `- Subject: ${currentSubject?.subject || ''}\n`;
-    body += `- Section: ${currentSubject?.section || ''}\n`;
-    body += `- Subject Code: ${subjectCode}\n\n`;
-    body += `CURRENT PERFORMANCE:\n`;
-    body += `- Current Grade Percentage: ${percentage}% (75% academic + 25% attendance)\n`;
-    body += `- Academic Performance Only: ${performanceData.academic_percentage?.toFixed(2) || 0}%\n`;
-    body += `- Attendance Performance: ${performanceData.attendance_percentage?.toFixed(2) || 0}%\n`;
-    if (missedCount > 0) body += `- Missed Activities: ${missedCount}\n`;
-    if (pendingCount > 0) body += `- Pending Activities: ${pendingCount}\n`;
-    if (lowCount > 0) body += `- Activities with 75-79%: ${lowCount}\n`;
-    if (totalEffectiveAbsences > 0) body += `- Effective Absences: ${totalEffectiveAbsences}\n\n`;
-    body += `REQUEST:\n`;
-    body += `I would appreciate any additional assignments, remedial work, or guidance you can provide to help me improve my performance in this subject.\n\n`;
-    body += `Thank you for your consideration.\n\n`;
-    body += `Sincerely,\n${studentName}\nStudent ID: ${studentId}`;
-    if (studentEmail) body += `\nEmail: ${studentEmail}`;
-    
-    const mailtoLink = `mailto:${teacherEmail}?subject=${subject}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoLink, '_blank');
   };
 
-  const handleEmailTeacherAboutActivity = (activity) => {
-    const { teacherEmail, teacherName } = performanceData;
+  const setupEmailModal = (activity) => {
+    setSelectedActivityForEmail(activity);
+    setEmailType('specific_activity');
     
-    if (!teacherEmail) {
-      alert("Teacher email not available. Please contact your teacher directly.");
-      return;
-    }
+    // Generate email message similar to StudentPerformanceSummary.jsx
+    const teacherName = performanceData?.teacherName || 'Professor';
+    const percentage = activity.grade !== null && activity.points > 0 ? 
+      Math.round((activity.grade / activity.points) * 100) : null;
+    
+    const subject = `Question about ${activity.activity_type} ${activity.task_number} - ${currentSubject?.subject || 'Subject'}`;
+    
+    // Format student name similar to StudentPerformanceSummary.jsx
+    const formatStudentName = (fullName) => {
+      if (!fullName) return 'Student';
+      
+      const nameParts = fullName.trim().split(' ');
+      const cleanNameParts = nameParts.filter(part => part.trim() !== '');
+      
+      if (cleanNameParts.length === 0) return fullName;
+      if (cleanNameParts.length === 1) return cleanNameParts[0];
+      
+      const surname = cleanNameParts[cleanNameParts.length - 1];
+      const firstName = cleanNameParts[0];
+      const middleParts = cleanNameParts.slice(1, -1);
+      
+      let middleInitials = '';
+      if (middleParts.length > 0) {
+        middleInitials = middleParts.map(part => {
+          const cleanPart = part.replace(/[^\w]/g, '');
+          return cleanPart.charAt(0) + '.';
+        }).join(' ');
+      }
+      
+      let result = `${surname}, ${firstName}`;
+      if (middleInitials) {
+        result += ` ${middleInitials}`;
+      }
+      
+      return result.trim();
+    };
+    
+    const finalFormattedName = formatStudentName(studentName);
+    
+    let message = `Dear ${teacherName},
 
-    const percentage = activity.grade !== null ? Math.round((activity.grade / activity.points) * 100) : null;
-    const subject = encodeURIComponent(`Question about ${activity.activity_type} ${activity.task_number} - ${currentSubject?.subject || 'Subject'} (${subjectCode})`);
-    
-    let body = `Dear ${teacherName || 'Professor'},\n\n`;
-    body += `I have a question regarding the following activity:\n\n`;
-    body += `STUDENT INFORMATION:\n`;
-    body += `- Student ID: ${studentId}\n`;
-    body += `- Student Name: ${studentName}\n`;
-    if (studentEmail) body += `- Student Email: ${studentEmail}\n`;
-    body += `- Subject: ${currentSubject?.subject || ''}\n`;
-    body += `- Section: ${currentSubject?.section || ''}\n`;
-    body += `- Subject Code: ${subjectCode}\n\n`;
-    body += `ACTIVITY DETAILS:\n`;
-    body += `- Activity Type: ${activity.activity_type}\n`;
-    body += `- Task Number: ${activity.task_number}\n`;
-    body += `- Title: ${activity.title}\n`;
-    body += `- Deadline: ${activity.deadline ? new Date(activity.deadline).toLocaleDateString('en-US', {
+I have a question regarding the following activity:
+
+STUDENT INFORMATION:
+- Student ID: ${studentId}
+- Student Name: ${finalFormattedName}
+${studentEmail ? `- Student Email: ${studentEmail}\n` : ''}- Subject: ${currentSubject?.subject || ''}
+- Section: ${currentSubject?.section || ''}
+- Subject Code: ${subjectCode}
+
+ACTIVITY DETAILS:
+- Activity Type: ${activity.activity_type}
+- Task Number: ${activity.task_number}
+- Title: ${activity.title}
+- Deadline: ${activity.deadline ? new Date(activity.deadline).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
-    }) : 'No deadline'}\n`;
-    body += `- Status: ${activity.status}\n`;
-    body += `- Score: ${activity.grade !== null ? `${activity.grade}/${activity.points}` : 'Not graded yet'}\n`;
-    if (percentage !== null) body += `- Percentage: ${percentage}%\n\n`;
-    body += `MY QUESTION:\n\n`;
-    body += `[Please state your question here]\n\n`;
-    body += `Thank you for your time and assistance.\n\n`;
-    body += `Sincerely,\n${studentName}\nStudent ID: ${studentId}`;
-    if (studentEmail) body += `\nEmail: ${studentEmail}`;
+    }) : 'No deadline'}
+- Status: ${activity.status}
+- Score: ${activity.grade !== null ? `${activity.grade}/${activity.points}` : 'Not graded yet'}
+${percentage !== null ? `- Percentage: ${percentage}%\n` : ''}
+
+MY QUESTION:
+[Please state your specific question about this activity here]
+
+Thank you for your time and assistance.
+
+Sincerely,
+${finalFormattedName}
+Student ID: ${studentId}
+${studentEmail ? `Email: ${studentEmail}` : ''}`;
     
-    const mailtoLink = `mailto:${teacherEmail}?subject=${subject}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoLink, '_blank');
+    setEmailSubject(subject);
+    setEmailMessage(message);
+    setShowEmailModal(true);
+  };
+
+  // Email modal functions (similar to StudentPerformanceSummary.jsx)
+  const handleSendEmail = () => {
+    const teacherEmail = performanceData?.teacherEmail;
+    
+    if (!teacherEmail) {
+      // Try to fetch teacher info one more time
+      fetchTeacherInfo().then(() => {
+        if (!performanceData?.teacherEmail) {
+          alert("Professor email not available. Please contact your professor directly.");
+          return;
+        } else {
+          sendEmailWithTeacherInfo();
+        }
+      }).catch(() => {
+        alert("Professor email not available. Please contact your professor directly.");
+      });
+      return;
+    }
+
+    sendEmailWithTeacherInfo();
+  };
+
+  const sendEmailWithTeacherInfo = () => {
+    const teacherEmail = performanceData?.teacherEmail;
+    
+    if (!teacherEmail) {
+      alert("Professor email not available. Please contact your professor directly.");
+      return;
+    }
+
+    const encodedSubject = encodeURIComponent(emailSubject);
+    const encodedBody = encodeURIComponent(emailMessage);
+    
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(teacherEmail)}&su=${encodedSubject}&body=${encodedBody}`;
+    
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    
+    setShowEmailModal(false);
   };
 
   const handleViewActivityDetails = (activity) => {
     window.location.href = `/SubjectSchoolWorksStudent?code=${subjectCode}&activity=${activity.id}`;
+  };
+
+  // Email Modal Component
+  const EmailModal = () => {
+    const getButtonLabel = () => {
+      switch(emailType) {
+        case 'specific_activity': return 'Ask About Activity';
+        default: return 'Send Email';
+      }
+    };
+
+    const handleSendEmailClick = () => {
+      setIsCheckingEmail(true);
+      // Use a small timeout to ensure state updates
+      setTimeout(() => {
+        handleSendEmail();
+        setIsCheckingEmail(false);
+      }, 100);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-4">
+        <div className="bg-[#15151C] rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-[#FFFFFF]/10">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-[#FFFFFF]/10">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Email Professor</h3>
+              <p className="text-sm text-[#FFFFFF]/60 mt-0.5">
+                {performanceData?.teacherName || 'Professor'} • {performanceData?.teacherEmail || 'Fetching email...'}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowEmailModal(false)}
+              className="p-1.5 hover:bg-[#23232C] rounded transition-colors cursor-pointer"
+              disabled={isCheckingEmail}
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Email Content */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-4">
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#23232C] border border-[#FFFFFF]/20 rounded text-white text-sm focus:outline-none focus:border-[#767EE0]"
+                  placeholder="Email subject"
+                  disabled={isCheckingEmail}
+                />
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-1">Message</label>
+                <textarea
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  rows={12}
+                  className="w-full px-3 py-2 bg-[#23232C] border border-[#FFFFFF]/20 rounded text-white text-sm focus:outline-none focus:border-[#767EE0] resize-none"
+                  placeholder="Write your message here..."
+                  disabled={isCheckingEmail}
+                />
+              </div>
+
+              {/* Email Preview Info */}
+              <div className="bg-[#23232C]/50 rounded-lg p-3 border border-[#FFFFFF]/10">
+                <h4 className="text-sm font-medium text-white mb-2">Email Preview</h4>
+                <div className="space-y-2 text-xs text-[#FFFFFF]/70">
+                  <p><strong className="text-white">To:</strong> {performanceData?.teacherEmail || 'Fetching email...'}</p>
+                  <p><strong className="text-white">Subject:</strong> {emailSubject || 'No subject'}</p>
+                  <div className="mt-2 p-2 bg-[#15151C] rounded border border-[#FFFFFF]/5">
+                    <p className="text-xs text-[#FFFFFF]/60 whitespace-pre-wrap">{emailMessage.substring(0, 150)}...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 p-4 border-t border-[#FFFFFF]/10 bg-[#23232C]/30">
+            <button
+              onClick={() => setShowEmailModal(false)}
+              disabled={isCheckingEmail}
+              className={`px-4 py-2 text-sm font-medium text-[#FFFFFF]/70 bg-[#2D2D3A] border border-[#FFFFFF]/20 rounded transition-colors cursor-pointer ${
+                isCheckingEmail ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#374151]'
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSendEmailClick}
+              disabled={!emailSubject.trim() || !emailMessage.trim() || isCheckingEmail}
+              className={`px-4 py-2 text-sm font-medium text-white rounded transition-colors cursor-pointer flex items-center justify-center gap-2 ${
+                !emailSubject.trim() || !emailMessage.trim() || isCheckingEmail
+                  ? 'bg-gray-600 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-[#767EE0] to-[#5a62c4] hover:opacity-90'
+              }`}
+            >
+              {isCheckingEmail ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Checking email...</span>
+                </>
+              ) : (
+                <span>{getButtonLabel()} via Gmail</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Render categorized activity table
@@ -658,7 +874,7 @@ export default function SubjectOverviewStudent() {
       if (activity.status === 'low') return 'bg-[#FFA600]/20 text-[#FFA600]';
       if (activity.status === 'failed') return 'bg-[#A15353]/20 text-[#A15353]';
       if (activity.status === 'missed') return 'bg-[#A15353]/20 text-[#A15353]';
-      return 'bg-[#767EE0]/20 text-[#767EE0]';
+      return 'bg-[#767EE0]/20 text-[#767EE0]'; // For assigned
     };
 
     return (
@@ -702,7 +918,7 @@ export default function SubjectOverviewStudent() {
                     {type === 'low' && '75-79% score'}
                     {type === 'failed' && '<75% score'}
                     {type === 'missed' && 'Missed deadline'}
-                    {type === 'pending' && 'Awaiting submission/grade'}
+                    {type === 'assigned' && 'Awaiting submission/grade'} {/* Updated text */}
                   </span>
                 </div>
               </div>
@@ -939,7 +1155,7 @@ export default function SubjectOverviewStudent() {
                   {counts.failed + counts.missed} Failed/Missed
                 </span>
                 <span className="px-2 py-1 text-xs rounded bg-[#767EE0]/20 text-[#767EE0]">
-                  {counts.pending} Pending
+                  {counts.assigned} Assigned {/* Updated text */}
                 </span>
               </div>
               <button className="text-[#FFFFFF] hover:text-[#FFFFFF]/80 transition-colors">
@@ -962,7 +1178,7 @@ export default function SubjectOverviewStudent() {
                 {counts.failed + counts.missed} Failed/Missed
               </span>
               <span className="px-2 py-1 text-xs rounded bg-[#767EE0]/20 text-[#767EE0]">
-                {counts.pending} Pending
+                {counts.assigned} Assigned {/* Updated text */}
               </span>
             </div>
           </div>
@@ -992,7 +1208,7 @@ export default function SubjectOverviewStudent() {
                         case 'low': return 'Low (75-79%)';
                         case 'failed': return 'Failed (<75%)';
                         case 'missed': return 'Missed';
-                        case 'pending': return 'Pending';
+                        case 'pending': return 'Assigned'; // Updated text
                         default: return 'Unknown';
                       }
                     };
@@ -1003,7 +1219,7 @@ export default function SubjectOverviewStudent() {
                         case 'low': return 'text-[#FFA600]';
                         case 'failed': return 'text-[#A15353]';
                         case 'missed': return 'text-[#A15353]';
-                        case 'pending': return 'text-[#767EE0]';
+                        case 'pending': return 'text-[#767EE0]'; // For assigned
                         default: return 'text-[#FFFFFF]';
                       }
                     };
@@ -1017,7 +1233,7 @@ export default function SubjectOverviewStudent() {
                               activity.status === 'low' ? 'bg-[#FFA600]/20 text-[#FFA600]' :
                               activity.status === 'failed' ? 'bg-[#A15353]/20 text-[#A15353]' :
                               activity.status === 'missed' ? 'bg-[#A15353]/20 text-[#A15353]' :
-                              'bg-[#767EE0]/20 text-[#767EE0]'
+                              'bg-[#767EE0]/20 text-[#767EE0]' // For assigned
                             }`}>
                               {activity.activity_type} #{activity.task_number}
                             </span>
@@ -1284,10 +1500,17 @@ export default function SubjectOverviewStudent() {
                 performanceSummary={performanceSummary}
                 performanceData={performanceData}
                 currentSubject={currentSubject}
-                handleAskForExtraWork={handleAskForExtraWork}
+                handleAskForExtraWork={() => {}} // This is handled by StudentPerformanceSummary itself
                 subjectAttendance={subjectAttendance}
                 studentId={studentId}
                 studentName={studentName}
+                studentEmail={studentEmail}
+                performanceDataLoading={performanceDataLoading}
+                onActivitySubmitted={() => {
+                  // Refresh activities data when an activity is submitted
+                  fetchActivitiesBreakdown();
+                  fetchPerformanceData();
+                }}
               />
 
               <div className="mt-6">
@@ -1302,7 +1525,7 @@ export default function SubjectOverviewStudent() {
                     <span className="text-[#FFFFFF]/30">|</span>
                     <span className="text-[#A15353]">Failed/Missed: {activitiesBreakdown.counts.failed + activitiesBreakdown.counts.missed}</span>
                     <span className="text-[#FFFFFF]/30">|</span>
-                    <span className="text-[#767EE0]">Pending: {activitiesBreakdown.counts.pending}</span>
+                    <span className="text-[#767EE0]">Assigned: {activitiesBreakdown.counts.assigned}</span> {/* Updated text */}
                   </div>
                 </div>
                 
@@ -1311,12 +1534,15 @@ export default function SubjectOverviewStudent() {
                 {renderActivityTable("Low Grade Activities (75-79%)", activitiesBreakdown.low, 'low', <LowGradeIcon />, '#FFA600')}
                 {renderActivityTable("Failed Activities (<75%)", activitiesBreakdown.failed, 'failed', <FailedIcon />, '#A15353')}
                 {renderActivityTable("Missed Activities", activitiesBreakdown.missed, 'missed', <MissedIcon />, '#A15353')}
-                {renderActivityTable("Pending Activities", activitiesBreakdown.pending, 'pending', <PendingIcon />, '#767EE0')}
+                {renderActivityTable("Assigned Activities", activitiesBreakdown.assigned, 'assigned', <AssignedIcon />, '#767EE0')} {/* Updated text */}
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Email Modal */}
+      {showEmailModal && <EmailModal />}
       
       <style>{`
         @keyframes slideDown {

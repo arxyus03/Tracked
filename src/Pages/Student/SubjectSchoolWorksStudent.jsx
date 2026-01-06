@@ -355,17 +355,32 @@ export default function SubjectSchoolWorksStudent() {
   };
 
   const fetchActivities = async () => {
-    if (!studentId) return;
+    if (!studentId || !subjectCode) return;
     
     try {
-      // FIXED: Changed from student_code to subject_code
+      // FIXED: This endpoint needs to be updated to only return activities assigned to this specific student
+      // The endpoint should filter by both subject_code AND student_id
       const response = await fetch(`https://tracked.6minds.site/Student/SubjectDetailsStudentDB/get_activities_student.php?subject_code=${subjectCode}&student_id=${studentId}`);
+      
       if (response.ok) {
         const result = await response.json();
-        if (result.success) setActivities(result.activities);
+        console.log('Fetched student activities:', result);
+        
+        if (result.success) {
+          // The backend should only return activities assigned to this student
+          // Activities assigned to "whole class" should be included for all students
+          // Activities assigned to "individual" should only be included for selected students
+          setActivities(result.activities || []);
+        } else {
+          console.error('Error fetching activities:', result.message);
+          setActivities([]);
+        }
+      } else {
+        throw new Error('Failed to fetch activities');
       }
     } catch (error) {
       console.error('Error fetching activities:', error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }
@@ -683,7 +698,7 @@ export default function SubjectSchoolWorksStudent() {
             {renderActivitySection("Missed Activities", groupedActivities.missed, "bg-[#A15353]")}
             
             {filteredActivities.length === 0 && renderEmptyState()}
-          </div>fz
+          </div>
         </div>
       </div>
 

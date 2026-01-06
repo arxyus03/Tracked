@@ -147,6 +147,30 @@ function getAllStudentsInClass($pdo, $subject_code) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// NEW: Function to add students to activity_assigned_students table
+function addStudentsToAssignedTable($pdo, $activityId, $studentIds) {
+    if (empty($studentIds)) {
+        return 0;
+    }
+    
+    $inserted = 0;
+    $stmt = $pdo->prepare("INSERT INTO activity_assigned_students (activity_id, student_id) VALUES (?, ?)");
+    
+    foreach ($studentIds as $studentId) {
+        try {
+            $stmt->execute([$activityId, $studentId]);
+            $inserted++;
+        } catch (Exception $e) {
+            // Ignore duplicate entries (if student is already assigned)
+            if (strpos($e->getMessage(), 'Duplicate entry') === false) {
+                error_log("Error assigning student {$studentId} to activity {$activityId}: " . $e->getMessage());
+            }
+        }
+    }
+    
+    return $inserted;
+}
+
 try {
     $pdo->beginTransaction();
 
@@ -168,8 +192,12 @@ try {
     // Get current timestamp for created_at in UTC
     $currentTimestamp = date('Y-m-d H:i:s');
 
-    // Insert activity with explicit created_at timestamp
-    $stmt = $pdo->prepare("INSERT INTO activities (subject_code, professor_ID, activity_type, task_number, title, instruction, link, points, deadline, archived, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)");
+    // ✅ CRITICAL FIX: Insert activity with assign_to field
+    $stmt = $pdo->prepare("
+        INSERT INTO activities 
+        (subject_code, professor_ID, activity_type, task_number, title, instruction, link, points, deadline, assign_to, archived, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+    ");
     $stmt->execute([
         $input['subject_code'],
         $input['professor_ID'],
@@ -180,10 +208,17 @@ try {
         $input['link'] ?? '',
         $input['points'] ?? 0,
         $deadline,
+        $assignTo, // ✅ Store the assignment type
         $currentTimestamp
     ]);
 
     $activity_ID = $pdo->lastInsertId();
+
+    // ✅ CRITICAL FIX: Handle individual assignments - add selected students to activity_assigned_students table
+    if ($assignTo === 'individual' && !empty($selectedStudentIds)) {
+        $assignedCount = addStudentsToAssignedTable($pdo, $activity_ID, $selectedStudentIds);
+        error_log("Added {$assignedCount} students to activity_assigned_students for activity {$activity_ID}");
+    }
 
     // Determine which students to assign based on "assignTo" option
     $students = [];
@@ -276,10 +311,10 @@ try {
             "link" => $input['link'],
             "points" => $input['points'],
             "deadline" => $input['deadline'],
+            "assign_to" => $assignTo, // ✅ Include assign_to in response
             "archived" => 0,
             "created_at" => $currentTimestamp,
             "students" => $studentsWithData,
-            "assign_to" => $assignTo,
             "assigned_students_count" => count($students),
             "assigned_students" => array_column($students, 'tracked_ID')
         ],
