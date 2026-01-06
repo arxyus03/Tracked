@@ -25,8 +25,7 @@ const StudentActivitiesDetails = ({
   const [professorFiles, setProfessorFiles] = useState({});
   const [studentFiles, setStudentFiles] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
-  const [, setSelectedActivityDetails] = useState(null);
-  const [assignTo, setAssignTo] = useState("wholeClass");
+  const [, setAssignTo] = useState("wholeClass");
 
   // Set first student as default when component opens
   useEffect(() => {
@@ -159,32 +158,12 @@ const StudentActivitiesDetails = ({
     }
   };
 
-  // Fetch activity details including files
-  const fetchActivityDetails = async (activityId, studentId) => {
-    if (!activityId || !studentId) return;
-    
-    try {
-      const response = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activity_details_professor.php?activity_id=${activityId}&student_id=${studentId}`
-      );
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setSelectedActivityDetails(result);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching activity details:', error);
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'Submitted': return 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30';
       case 'Late': return 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30';
       case 'Missed': return 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30';
-      case 'Assigned': return 'bg-gray-700 text-gray-300 border border-gray-600';
+      case 'Assigned': return 'bg-[#767EE0]/15 text-[#767EE0] border border-[#767EE0]/30';
       default: return 'bg-gray-700 text-gray-300 border border-gray-600';
     }
   };
@@ -247,13 +226,6 @@ const StudentActivitiesDetails = ({
     };
   };
 
-  // Handle viewing files for a specific activity
-  const handleViewActivityFiles = (activityItem) => {
-    if (selectedStudent) {
-      fetchActivityDetails(activityItem.id, selectedStudent.user_ID);
-    }
-  };
-
   // Handle viewing image
   const handleViewImage = (file) => {
     const fileUrl = file.file_url || file.url;
@@ -297,18 +269,6 @@ const StudentActivitiesDetails = ({
               <h2 className="text-base font-bold text-[#FFFFFF] truncate">
                 Student Activities - {activity?.title || 'All Activities'}
               </h2>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${
-                  assignTo === 'individual' 
-                    ? 'bg-[#FFA600]/20 text-[#FFA600]' 
-                    : 'bg-[#00A15D]/20 text-[#00A15D]'
-                }`}>
-                  {assignTo === 'individual' ? 'Individual Assignment' : 'Whole Class Assignment'}
-                </span>
-                <p className="text-xs text-[#FFFFFF]/60 truncate">
-                  View student activities and performance across all assignments
-                </p>
-              </div>
             </div>
             <button
               onClick={onClose}
@@ -402,13 +362,13 @@ const StudentActivitiesDetails = ({
                           <span className="bg-[#00A15D]/20 text-[#00A15D] px-1.5 py-0.5 rounded text-xs">
                             Submitted: {studentStats.submittedActivities}
                           </span>
+                          <span className="bg-[#767EE0]/15 text-[#767EE0] px-1.5 py-0.5 rounded text-xs">
+                            Assigned: {studentStats.assignedActivities}
+                          </span>
                           <span className="bg-[#A15353]/20 text-[#A15353] px-1.5 py-0.5 rounded text-xs">
                             Missed: {studentStats.missedActivities}
                           </span>
-                          <span className="bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded text-xs">
-                            Assigned: {studentStats.assignedActivities}
-                          </span>
-                          <span className="bg-[#767EE0]/20 text-[#767EE0] px-1.5 py-0.5 rounded text-xs">
+                          <span className="bg-[#FFA600]/20 text-[#FFA600] px-1.5 py-0.5 rounded text-xs">
                             Total: {studentStats.totalActivities}
                           </span>
                         </div>
@@ -431,7 +391,7 @@ const StudentActivitiesDetails = ({
 
                         {filterDropdownOpen && (
                           <div className="absolute top-full mt-1 right-0 xs:left-0 bg-[#15151C] rounded-md shadow-lg border border-gray-700 z-10 overflow-hidden min-w-[110px]">
-                            {["All", "Submitted", "Missed", "Assigned"].map((option) => (
+                            {["All", "Submitted", "Assigned", "Missed"].map((option) => (
                               <button
                                 key={option}
                                 className={`block w-full text-left px-2.5 py-1.5 text-xs hover:bg-gray-800 cursor-pointer transition-colors text-[#FFFFFF] ${

@@ -37,7 +37,7 @@ const ClassWorkSubmission = ({
   const [viewingPhoto, setViewingPhoto] = useState(null);
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [assignTo, setAssignTo] = useState("wholeClass");
+  const [, setAssignTo] = useState("wholeClass");
   
   // File Upload States
   const [uploadedFilesList, setUploadedFilesList] = useState({});
@@ -722,7 +722,7 @@ const ClassWorkSubmission = ({
     input.click();
   };
 
-  const filterOptions = ["All", "Assigned", "Submitted", "Missed", "Graded", "Not Graded"];
+  const filterOptions = ["All", "Submitted", "Assigned", "Missed", "Graded", "Not Graded"];
 
   const calculateStudentStatus = (student, activity) => {
     const currentTime = new Date();
@@ -734,8 +734,8 @@ const ClassWorkSubmission = ({
   };
 
   const statusCounts = {
-    assigned: localStudents.filter(student => calculateStudentStatus(student, activity) === 'Assigned').length,
     submitted: localStudents.filter(student => calculateStudentStatus(student, activity) === 'Submitted').length,
+    assigned: localStudents.filter(student => calculateStudentStatus(student, activity) === 'Assigned').length,
     missed: localStudents.filter(student => calculateStudentStatus(student, activity) === 'Missed').length
   };
 
@@ -743,8 +743,8 @@ const ClassWorkSubmission = ({
     const status = calculateStudentStatus(student, activity);
     
     switch (filter) {
-      case "Assigned": return status === 'Assigned';
       case "Submitted": return status === 'Submitted';
+      case "Assigned": return status === 'Assigned';
       case "Missed": return status === 'Missed';
       case "Graded": return student.grade != null && student.grade !== '';
       case "Not Graded": return status === 'Submitted' && (student.grade == null || student.grade === '');
@@ -1215,19 +1215,6 @@ const ClassWorkSubmission = ({
                 <h2 className="text-sm font-bold text-white truncate">Student Submissions - {activity.title}</h2>
               </div>
               
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${
-                  assignTo === 'individual' 
-                    ? 'bg-[#FFA600]/20 text-[#FFA600]' 
-                    : 'bg-[#00A15D]/20 text-[#00A15D]'
-                }`}>
-                  {assignTo === 'individual' ? 'Individual Assignment' : 'Whole Class Assignment'}
-                </span>
-                <span className="text-xs text-gray-400">
-                  ({localStudents.length} student{localStudents.length !== 1 ? 's' : ''})
-                </span>
-              </div>
-              
               <div className="space-y-1 mt-1">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
@@ -1314,17 +1301,17 @@ const ClassWorkSubmission = ({
                   {/* Status Rectangles */}
                   <div className="px-3 pb-3">
                     <div className="flex gap-2">
-                      <button onClick={() => handleStatusClick("Assigned")} className={`flex-1 border rounded p-2 text-center transition-all duration-200 cursor-pointer ${
-                          filter === "Assigned" ? "bg-[#FFA600]/20 border-[#FFA600] shadow-md" : "bg-[#FFA600]/10 border-[#FFA600]/30 hover:bg-[#FFA600]/15"
-                        }`}>
-                        <div className="text-base font-bold text-[#FFA600]">{statusCounts.assigned}</div>
-                        <div className="text-xs text-[#FFA600]">Assigned</div>
-                      </button>
                       <button onClick={() => handleStatusClick("Submitted")} className={`flex-1 border rounded p-2 text-center transition-all duration-200 cursor-pointer ${
                           filter === "Submitted" ? "bg-[#00A15D]/20 border-[#00A15D] shadow-md" : "bg-[#00A15D]/10 border-[#00A15D]/30 hover:bg-[#00A15D]/15"
                         }`}>
                         <div className="text-base font-bold text-[#00A15D]">{statusCounts.submitted}</div>
                         <div className="text-xs text-[#00A15D]">Submitted</div>
+                      </button>
+                      <button onClick={() => handleStatusClick("Assigned")} className={`flex-1 border rounded p-2 text-center transition-all duration-200 cursor-pointer ${
+                          filter === "Assigned" ? "bg-[#767EE0]/20 border-[#767EE0] shadow-md" : "bg-[#767EE0]/15 border-[#767EE0]/30 hover:bg-[#767EE0]/20"
+                        }`}>
+                        <div className="text-base font-bold text-[#767EE0]">{statusCounts.assigned}</div>
+                        <div className="text-xs text-[#767EE0]">Assigned</div>
                       </button>
                       <button onClick={() => handleStatusClick("Missed")} className={`flex-1 border rounded p-2 text-center transition-all duration-200 cursor-pointer ${
                           filter === "Missed" ? "bg-[#A15353]/20 border-[#A15353] shadow-md" : "bg-[#A15353]/10 border-[#A15353]/30 hover:bg-[#A15353]/15"
@@ -1412,7 +1399,7 @@ const ClassWorkSubmission = ({
                                   <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${
                                     status === 'Submitted' ? 'bg-[#00A15D]/20 text-[#00A15D]' :
                                     status === 'Missed' ? 'bg-[#A15353]/20 text-[#A15353]' :
-                                    'bg-[#FFA600]/20 text-[#FFA600]'
+                                    'bg-[#767EE0]/15 text-[#767EE0]'
                                   }`}>
                                     {status}
                                   </span>

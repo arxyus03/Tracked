@@ -166,17 +166,62 @@ export default function DashboardProf() {
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const currentDayName = dayNames[dayOfWeek];
       
-      // Show all subjects in the alert
-      setSubjectsNeedingAttendance(handledSubjects);
+      // Get today's date in YYYY-MM-DD format
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const todayFormatted = `${year}-${month}-${day}`;
+      
+      // Check attendance for each subject
+      const subjectsToShowInAlert = [];
+      
+      for (const subject of handledSubjects) {
+        try {
+          const response = await fetch(
+            "https://tracked.6minds.site/Professor/AttendanceDB/check_today_attendance.php",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                subject_code: subject.subjectCode,
+                professor_ID: userId,
+                attendance_date: todayFormatted
+              }),
+            }
+          );
+          
+          if (response.ok) {
+            const result = await response.json();
+            
+            // Only show in alert if attendance is NOT recorded for today
+            if (result.success && !result.attendance_exists) {
+              subjectsToShowInAlert.push(subject);
+            }
+          }
+        } catch (error) {
+          console.error(`Error checking attendance for ${subject.subjectCode}:`, error);
+          // If error occurs, still show the subject as needing attendance
+          subjectsToShowInAlert.push(subject);
+        }
+      }
+      
+      setSubjectsNeedingAttendance(subjectsToShowInAlert);
       setCurrentSubjectIndex(0);
       
-      // Always show alert if there are subjects
-      // Removed localStorage dismissal check
-      if (handledSubjects.length > 0) {
+      // Show alert only if there are subjects needing attendance
+      if (subjectsToShowInAlert.length > 0) {
         setShowAttendanceAlert(true);
+      } else {
+        setShowAttendanceAlert(false);
       }
     } catch (error) {
       console.error("Error checking attendance alert:", error);
+      // If there's an error, show all subjects in alert
+      setSubjectsNeedingAttendance(handledSubjects);
+      setCurrentSubjectIndex(0);
+      if (handledSubjects.length > 0) {
+        setShowAttendanceAlert(true);
+      }
     }
   };
 
@@ -259,7 +304,7 @@ export default function DashboardProf() {
 
           <hr className="border-white/30 mb-4 border-1" />
 
-          {/* Compact Attendance Alert Notification - Always shows if there are subjects */}
+          {/* Compact Attendance Alert Notification - Shows only for subjects needing attendance */}
           {showAttendanceAlert && subjectsNeedingAttendance.length > 0 && (
             <div className="mb-3 bg-[#00A15D]/20 rounded-lg p-2 relative border border-[#00A15D]/50">
               <div className="flex items-start">
@@ -306,6 +351,10 @@ export default function DashboardProf() {
                       <Link 
                         to={`/Attendance?code=${subjectsNeedingAttendance[currentSubjectIndex]?.subjectCode}`}
                         className="flex-shrink-0"
+                        onClick={() => {
+                          // Refresh attendance check when user clicks to record attendance
+                          setTimeout(() => checkAttendanceAlert(), 1000);
+                        }}
                       >
                         <button className="bg-[#00A15D] hover:bg-[#008F4F] text-white font-medium text-[10px] px-1.5 py-0.5 rounded transition-colors whitespace-nowrap">
                           Record Attendance
@@ -326,6 +375,24 @@ export default function DashboardProf() {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* No attendance reminder message when all attendance is recorded */}
+          {!showAttendanceAlert && handledSubjects.length > 0 && (
+            <div className="mb-3 bg-[#23232C] rounded-lg p-2 border border-[#00A15D]/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="mr-2 h-2 w-2 rounded-full bg-[#00A15D]"></div>
+                  <p className="text-xs text-white/70">All attendance for today has been recorded.</p>
+                </div>
+                <button 
+                  onClick={checkAttendanceAlert}
+                  className="text-xs text-[#00A15D] hover:text-[#008F4F] transition-colors underline"
+                >
+                  Refresh
+                </button>
               </div>
             </div>
           )}
