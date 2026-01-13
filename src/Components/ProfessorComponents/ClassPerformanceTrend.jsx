@@ -32,119 +32,26 @@ const TrendArrow = ({ direction, color, size = 4 }) => {
   );
 };
 
-// MOCK DATA GENERATOR - For student performance
-const generateMockStudents = () => {
-  const students = [
-    { studentId: 'stud-001', studentName: 'John Smith', studentNumber: '2023001' },
-    { studentId: 'stud-002', studentName: 'Maria Garcia', studentNumber: '2023002' },
-    { studentId: 'stud-003', studentName: 'David Chen', studentNumber: '2023003' },
-    { studentId: 'stud-004', studentName: 'Sarah Johnson', studentNumber: '2023004' },
-    { studentId: 'stud-005', studentName: 'Michael Brown', studentNumber: '2023005' },
-  ];
-
-  // Generate performance trends for 8 weeks
-  const weeks = [1, 2, 3, 4, 5, 6, 7, 8];
-  
-  return students.map((student, index) => {
-    // Create different performance patterns for each student
-    let baseScore;
-    let volatility;
-    let trendType;
-    
-    switch(index % 5) {
-      case 0: // Consistently high performer
-        baseScore = 88;
-        volatility = 4;
-        trendType = 'high';
-        break;
-      case 1: // Average performer, stable
-        baseScore = 78;
-        volatility = 6;
-        trendType = 'stable';
-        break;
-      case 2: // Struggling student
-        baseScore = 68;
-        volatility = 8;
-        trendType = 'low';
-        break;
-      case 3: // Improving student
-        baseScore = 72;
-        volatility = 5;
-        trendType = 'improving';
-        break;
-      case 4: // Declining student
-        baseScore = 85;
-        volatility = 7;
-        trendType = 'declining';
-        break;
-      default:
-        baseScore = 75;
-        volatility = 8;
-        trendType = 'stable';
-    }
-
-    const performanceTrend = weeks.map(week => {
-      // Add trend based on student type
-      let trend = 0;
-      if (trendType === 'improving') trend = week * 1.5; // Upward trend
-      if (trendType === 'declining') trend = -week * 1.0; // Downward trend
-      if (trendType === 'high') trend = week * 0.5; // Slight upward
-      if (trendType === 'low') trend = -week * 0.3; // Slight downward
-      
-      // Add some randomness
-      const random = (Math.random() - 0.5) * volatility;
-      
-      let score = baseScore + trend + random;
-      
-      // Ensure score stays within bounds
-      score = Math.min(Math.max(score, 50), 98);
-      
-      return {
-        week,
-        score: Math.round(score)
-      };
-    });
-
-    return {
-      ...student,
-      performanceTrend,
-      attendance: Math.floor(Math.random() * 15) + 85, // 85-100% attendance
-      assignmentCompletion: Math.floor(Math.random() * 15) + 80, // 80-95% completion
-      performanceType: trendType
-    };
-  });
-};
-
-// Function to generate mock performance reasons for students
+// Function to generate performance reasons for students (removed class participation)
 const generatePerformanceReasons = (studentName, week, currentScore, previousScore) => {
   const scoreChange = previousScore ? currentScore - previousScore : 0;
   const isImproving = scoreChange > 0;
 
   const reasons = [
     {
-      factor: "Assignment Scores",
+      factor: "Activity Scores",
       description: isImproving
-        ? "Assignment scores have improved significantly"
-        : "Assignment scores show a decline this week",
+        ? "Activity scores have improved significantly"
+        : "Activity scores show a decline this week",
       impact: isImproving ? "positive" : "negative",
       details: isImproving 
         ? "Higher accuracy in submitted work" 
         : "Multiple errors in recent submissions"
     },
     {
-      factor: "Class Participation",
-      description: isImproving
-        ? "Active participation in class discussions"
-        : "Reduced participation observed",
-      impact: isImproving ? "positive" : "negative",
-      details: isImproving
-        ? "Frequently contributes to discussions"
-        : "Minimal engagement in classroom activities"
-    },
-    {
       factor: "Attendance",
       description: isImproving
-        ? "Perfect attendance maintained"
+        ? "Good attendance maintained"
         : "Attendance issues affecting performance",
       impact: isImproving ? "positive" : "negative",
       details: isImproving
@@ -163,9 +70,19 @@ const getPerformanceZoneColor = (score) => {
   return '#00A15D'; // Passing green for 76% and above
 };
 
+// Activity type options
+const activityTypes = [
+  { value: 'all', label: 'All Activities', color: '#6366F1' },
+  { value: 'assignment', label: 'Assignments', color: '#10B981' },
+  { value: 'quiz', label: 'Quizzes', color: '#F59E0B' },
+  { value: 'activity', label: 'Activities', color: '#EF4444' },
+  { value: 'project', label: 'Projects', color: '#8B5CF6' },
+  { value: 'laboratory', label: 'Laboratory', color: '#EC4899' }
+];
+
 const ClassPerformanceTrend = ({ 
   students: propStudents, 
-  currentStudentId,
+  subjectCode,
   useMockData = false
 }) => {
   const [hoveredWeek, setHoveredWeek] = useState(null);
@@ -175,50 +92,91 @@ const ClassPerformanceTrend = ({
   const [visibleStudents, setVisibleStudents] = useState({});
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedDataPoint, setSelectedDataPoint] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
+  const [activityDropdownOpen, setActivityDropdownOpen] = useState(false);
+  const [selectedActivityType, setSelectedActivityType] = useState('all');
+  const [performanceData, setPerformanceData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const svgRef = useRef(null);
   const tooltipRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const studentDropdownRef = useRef(null);
+  const activityDropdownRef = useRef(null);
 
-  // Use mock data if prop is empty or useMockData is true
-  const students = useMemo(() => {
-    if (useMockData || !propStudents || propStudents.length === 0) {
-      return generateMockStudents();
-    }
-    return propStudents;
-  }, [propStudents, useMockData]);
+  // Fetch performance data for selected students and activity type
+  useEffect(() => {
+    if (!subjectCode || propStudents.length === 0) return;
 
-  // Initialize visible students (limit to 4 visible by default for clarity)
-  useMemo(() => {
-    if (students && students.length > 0) {
+    const fetchPerformanceData = async () => {
+      setLoading(true);
+      try {
+        // Get student IDs that are currently visible
+        const visibleStudentIds = Object.entries(visibleStudents)
+          .filter(([id, isVisible]) => isVisible)
+          .map(([id]) => id);
+
+        // If no students selected, use first 4 students
+        const studentIdsToFetch = visibleStudentIds.length > 0 
+          ? visibleStudentIds 
+          : propStudents.slice(0, 4).map(s => s.studentId);
+
+        const response = await fetch(
+          `https://tracked.6minds.site/Professor/SubjectAnalyticsProfDB/fetch_student_performance.php?code=${subjectCode}&student_ids=${studentIdsToFetch.join(',')}&activity_type=${selectedActivityType}`
+        );
+        const data = await response.json();
+        
+        if (data.success) {
+          setPerformanceData(data.students);
+        }
+      } catch (error) {
+        console.error('Error fetching performance data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPerformanceData();
+  }, [subjectCode, propStudents, visibleStudents, selectedActivityType]);
+
+  // Initialize visible students with first 4 students
+  useEffect(() => {
+    if (propStudents && propStudents.length > 0) {
       const initialVisibility = {};
-      students.forEach((student, index) => {
-        // Show first 4 students by default, or current student if specified
-        initialVisibility[student.studentId] = index < 4 || student.studentId === currentStudentId;
+      propStudents.forEach((student, index) => {
+        // Show first 4 students by default
+        initialVisibility[student.studentId] = index < 4;
       });
       setVisibleStudents(initialVisibility);
     }
-  }, [students, currentStudentId]);
+  }, [propStudents]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setDropdownOpen(false);
+      if (studentDropdownRef.current && !studentDropdownRef.current.contains(event.target)) {
+        setStudentDropdownOpen(false);
+      }
+      if (activityDropdownRef.current && !activityDropdownRef.current.contains(event.target)) {
+        setActivityDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Default currentStudentId if not provided
-  const defaultCurrentStudentId = currentStudentId || (students?.[0]?.studentId);
-  const currentStudent = students?.find(s => s.studentId === defaultCurrentStudentId) || students?.[0];
-  
+  // Get current student data (first visible student)
+  const currentStudent = useMemo(() => {
+    if (performanceData.length === 0) return null;
+    const visibleStudentIds = Object.entries(visibleStudents)
+      .filter(([id, isVisible]) => isVisible)
+      .map(([id]) => id);
+    
+    return performanceData.find(s => s.studentId === visibleStudentIds[0]) || performanceData[0];
+  }, [performanceData, visibleStudents]);
+
   // Color palette for students
   const studentColors = useMemo(() => {
     const colors = [
-      '#6366F1', // Primary purple (current student)
+      '#6366F1', // Primary purple (first visible student)
       '#10B981', // Green
       '#F59E0B', // Amber
       '#EF4444', // Red
@@ -231,22 +189,24 @@ const ClassPerformanceTrend = ({
     const assignedColors = {};
     let colorIndex = 0;
     
-    // Assign colors to students
-    students?.forEach((student, index) => {
-      if (student.studentId === defaultCurrentStudentId) {
-        assignedColors[student.studentId] = colors[0]; // Primary color for current student
-      } else {
-        colorIndex = (colorIndex % (colors.length - 1)) + 1; // Skip first color
-        assignedColors[student.studentId] = colors[colorIndex];
+    // Assign colors to visible students
+    performanceData.forEach((student, index) => {
+      if (visibleStudents[student.studentId]) {
+        if (index === 0) {
+          assignedColors[student.studentId] = colors[0]; // Primary color for first student
+        } else {
+          colorIndex = (colorIndex % (colors.length - 1)) + 1; // Skip first color
+          assignedColors[student.studentId] = colors[colorIndex];
+        }
       }
     });
     
     return assignedColors;
-  }, [students, defaultCurrentStudentId]);
+  }, [performanceData, visibleStudents]);
 
   // Calculate insights for comparison
   const comparisonInsights = useMemo(() => {
-    if (!students || students.length === 0) {
+    if (performanceData.length === 0 || !currentStudent) {
       return {
         currentStudentRank: 0,
         totalStudents: 0,
@@ -259,11 +219,13 @@ const ClassPerformanceTrend = ({
       };
     }
 
-    // Calculate class average across all students
-    const allScores = students.flatMap(student => 
+    // Calculate class average across all students in the class
+    const allScores = performanceData.flatMap(student => 
       student.performanceTrend.map(week => week.score)
     );
-    const classAvg = allScores.reduce((sum, score) => sum + score, 0) / allScores.length;
+    const classAvg = allScores.length > 0 
+      ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length 
+      : 0;
 
     // Current student average
     const currentStudentAvg = currentStudent?.performanceTrend?.length > 0
@@ -271,13 +233,17 @@ const ClassPerformanceTrend = ({
       : 0;
 
     // Sort students by average performance
-    const sortedStudents = [...students].sort((a, b) => {
-      const avgA = a.performanceTrend.reduce((sum, week) => sum + week.score, 0) / a.performanceTrend.length;
-      const avgB = b.performanceTrend.reduce((sum, week) => sum + week.score, 0) / b.performanceTrend.length;
+    const sortedStudents = [...performanceData].sort((a, b) => {
+      const avgA = a.performanceTrend.length > 0 
+        ? a.performanceTrend.reduce((sum, week) => sum + week.score, 0) / a.performanceTrend.length 
+        : 0;
+      const avgB = b.performanceTrend.length > 0 
+        ? b.performanceTrend.reduce((sum, week) => sum + week.score, 0) / b.performanceTrend.length 
+        : 0;
       return avgB - avgA;
     });
 
-    const currentStudentRank = sortedStudents.findIndex(s => s.studentId === defaultCurrentStudentId) + 1;
+    const currentStudentRank = sortedStudents.findIndex(s => s.studentId === currentStudent.studentId) + 1;
     const topStudent = sortedStudents[0];
     const bottomStudent = sortedStudents[sortedStudents.length - 1];
 
@@ -287,24 +253,36 @@ const ClassPerformanceTrend = ({
 
     return {
       currentStudentRank,
-      totalStudents: students.length,
-      currentStudentAvg: Math.round(currentStudentAvg),
-      classAvg: Math.round(classAvg),
+      totalStudents: performanceData.length,
+      currentStudentAvg: parseFloat(currentStudentAvg.toFixed(2)), // 2 decimal points
+      classAvg: parseFloat(classAvg.toFixed(2)), // 2 decimal points
       topStudent,
       bottomStudent,
-      trendVsClassAvg: Math.abs(trendVsClassAvg).toFixed(1),
+      trendVsClassAvg: Math.abs(trendVsClassAvg).toFixed(2), // 2 decimal points
       trendDirection,
       sortedStudents
     };
-  }, [students, defaultCurrentStudentId, currentStudent]);
+  }, [performanceData, currentStudent]);
 
   // Get visible students data
   const visibleStudentsData = useMemo(() => {
-    return students?.filter(student => visibleStudents[student.studentId]) || [];
-  }, [students, visibleStudents]);
+    return performanceData.filter(student => visibleStudents[student.studentId]) || [];
+  }, [performanceData, visibleStudents]);
 
   // Calculate visible student count
   const visibleCount = Object.values(visibleStudents).filter(Boolean).length;
+
+  // Get all weeks from all students
+  const weeks = useMemo(() => {
+    if (visibleStudentsData.length === 0) return [];
+    
+    // Find the student with the most weeks
+    const studentWithMostWeeks = visibleStudentsData.reduce((prev, current) => 
+      current.performanceTrend.length > prev.performanceTrend.length ? current : prev
+    );
+    
+    return studentWithMostWeeks.performanceTrend || [];
+  }, [visibleStudentsData]);
 
   // Chart dimensions
   const chartHeight = 320;
@@ -314,8 +292,9 @@ const ClassPerformanceTrend = ({
   
   const maxScore = 100;
   
-  // Get all weeks from all students (assume same weeks for all students)
-  const weeks = currentStudent?.performanceTrend || [];
+  // Calculate positions
+  const xScale = (week) => (week - 1) * (innerWidth / Math.max(weeks.length - 1, 1));
+  const yScale = (score) => innerHeight - (score / maxScore) * innerHeight;
 
   // Handle mouse events
   const handleMouseEnter = (week, studentId, event) => {
@@ -335,7 +314,7 @@ const ClassPerformanceTrend = ({
   const handleNodeClick = (week, studentId, event) => {
     event.stopPropagation();
     
-    const student = students.find(s => s.studentId === studentId);
+    const student = performanceData.find(s => s.studentId === studentId);
     if (!student) return;
     
     const weekData = student.performanceTrend.find(w => w.week === week);
@@ -363,16 +342,16 @@ const ClassPerformanceTrend = ({
       studentData: {
         studentName: student.studentName,
         studentNumber: student.studentNumber,
-        currentScore: weekData.score,
-        previousScore,
-        performanceChange,
+        currentScore: parseFloat(weekData.score.toFixed(2)), // 2 decimal points
+        previousScore: previousScore ? parseFloat(previousScore.toFixed(2)) : null,
+        performanceChange: parseFloat(performanceChange.toFixed(2)), // 2 decimal points
         performanceZone,
         attendance: student.attendance || 0,
         assignmentCompletion: student.assignmentCompletion || 0
       },
       weekData: {
         week,
-        score: weekData.score,
+        score: parseFloat(weekData.score.toFixed(2)), // 2 decimal points
         reasons
       }
     };
@@ -380,10 +359,6 @@ const ClassPerformanceTrend = ({
     setSelectedDataPoint(dataPoint);
     setIsPopupOpen(true);
   };
-
-  // Calculate positions
-  const xScale = (week) => (week - 1) * (innerWidth / (weeks.length - 1));
-  const yScale = (score) => innerHeight - (score / maxScore) * innerHeight;
 
   // Create smooth line path for a student
   const createSmoothLinePath = (studentData) => {
@@ -416,6 +391,30 @@ const ClassPerformanceTrend = ({
     }));
   };
 
+  // Select/deselect all students
+  const toggleAllStudents = () => {
+    const allVisible = Object.values(visibleStudents).every(Boolean);
+    const newVisibility = {};
+    
+    propStudents.forEach(student => {
+      newVisibility[student.studentId] = !allVisible;
+    });
+    
+    setVisibleStudents(newVisibility);
+  };
+
+  // Handle activity type change
+  const handleActivityTypeChange = (type) => {
+    setSelectedActivityType(type);
+    setActivityDropdownOpen(false);
+  };
+
+  // Get selected activity type label
+  const getSelectedActivityLabel = () => {
+    const selected = activityTypes.find(type => type.value === selectedActivityType);
+    return selected ? selected.label : 'All Activities';
+  };
+
   // Handle mouse move for tooltip positioning
   const handleMouseMove = (event) => {
     if (!hoveredWeek) return;
@@ -435,7 +434,35 @@ const ClassPerformanceTrend = ({
     setSelectedDataPoint(null);
   };
 
-  if (!students || students.length === 0) {
+  if (loading) {
+    return (
+      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
+        <div className="p-4 border-b border-[#FFFFFF]/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center">
+                <img 
+                  src={LineGraphIcon} 
+                  alt="Analytics" 
+                  className="w-5 h-5"
+                />
+              </div>
+              <h3 className="font-bold text-lg text-[#FFFFFF]">Student Performance Trend</h3>
+            </div>
+            <div className="text-sm text-[#FFFFFF]/60">Loading...</div>
+          </div>
+        </div>
+        <div className="h-48 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1] mx-auto mb-3"></div>
+            <p className="text-[#FFFFFF]/60">Loading performance data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (performanceData.length === 0 && !useMockData) {
     return (
       <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
         <div className="p-4 border-b border-[#FFFFFF]/10">
@@ -462,7 +489,8 @@ const ClassPerformanceTrend = ({
                 className="w-8 h-8 opacity-40"
               />
             </div>
-            <p className="text-[#FFFFFF]/60">Loading student performance data...</p>
+            <p className="text-[#FFFFFF]/60">No performance data available for this subject</p>
+            <p className="text-sm text-[#FFFFFF]/40 mt-2">Check if activities and attendance have been recorded</p>
           </div>
         </div>
       </div>
@@ -486,8 +514,13 @@ const ClassPerformanceTrend = ({
               <h3 className="font-bold text-lg text-[#FFFFFF]">Student Performance Trend</h3>
               <p className="text-sm text-[#FFFFFF]/60">
                 Individual student performance comparison
-                {useMockData && (
-                  <span className="ml-2 text-[#FFA600] text-xs">(Demo Data)</span>
+                {selectedActivityType !== 'all' && (
+                  <span className="ml-2 text-[#FFA600] text-xs">
+                    ({getSelectedActivityLabel()})
+                  </span>
+                )}
+                {useMockData && performanceData.length === 0 && (
+                  <span className="ml-2 text-[#FFA600] text-xs">(Sample Data)</span>
                 )}
               </p>
             </div>
@@ -496,23 +529,25 @@ const ClassPerformanceTrend = ({
           {/* Right side with stats and collapse button */}
           <div className="flex items-center gap-3">
             {/* Current student stats */}
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-xs text-[#FFFFFF]/60">Student Rank</div>
-                <div className="font-bold text-base text-[#FFFFFF]">
-                  #{comparisonInsights.currentStudentRank} of {comparisonInsights.totalStudents}
+            {currentStudent && (
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <div className="text-xs text-[#FFFFFF]/60">Student Rank</div>
+                  <div className="font-bold text-base text-[#FFFFFF]">
+                    #{comparisonInsights.currentStudentRank} of {comparisonInsights.totalStudents}
+                  </div>
+                </div>
+                <div className={`p-1.5 rounded-lg ${comparisonInsights.trendDirection === 'up' ? 'bg-[#00A15D]/10' : comparisonInsights.trendDirection === 'down' ? 'bg-[#FF5555]/10' : 'bg-[#FFA600]/10'}`}>
+                  <div className={`w-3 h-3 flex items-center justify-center ${comparisonInsights.trendDirection === 'up' ? 'text-[#00A15D]' : comparisonInsights.trendDirection === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
+                    <TrendArrow 
+                      direction={comparisonInsights.trendDirection} 
+                      color={comparisonInsights.trendDirection === 'up' ? '#00A15D' : comparisonInsights.trendDirection === 'down' ? '#FF5555' : '#FFA600'}
+                      size={3}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className={`p-1.5 rounded-lg ${comparisonInsights.trendDirection === 'up' ? 'bg-[#00A15D]/10' : comparisonInsights.trendDirection === 'down' ? 'bg-[#FF5555]/10' : 'bg-[#FFA600]/10'}`}>
-                <div className={`w-3 h-3 flex items-center justify-center ${comparisonInsights.trendDirection === 'up' ? 'text-[#00A15D]' : comparisonInsights.trendDirection === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
-                  <TrendArrow 
-                    direction={comparisonInsights.trendDirection} 
-                    color={comparisonInsights.trendDirection === 'up' ? '#00A15D' : comparisonInsights.trendDirection === 'down' ? '#FF5555' : '#FFA600'}
-                    size={3}
-                  />
-                </div>
-              </div>
-            </div>
+            )}
             
             {/* Collapse/Expand button */}
             <button
@@ -545,21 +580,85 @@ const ClassPerformanceTrend = ({
         isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100'
       }`}>
         <div className="p-4 pt-0">
-          {/* Student Selection Dropdown */}
-          <div className='mt-5 relative' ref={dropdownRef}>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs text-[#FFFFFF]/60">Select students to display:</span>
-              
-              {/* Custom Dropdown Toggle */}
-              <div className="relative">
+          {/* Filters Row */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            {/* Activity Type Filter */}
+            <div className="relative" ref={activityDropdownRef}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#FFFFFF]/60">Filter by:</span>
                 <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-2 bg-[#2A2A35] hover:bg-[#3A3A45] rounded-lg text-sm text-white transition-all duration-200 border border-[#FFFFFF]/10"
+                  onClick={() => setActivityDropdownOpen(!activityDropdownOpen)}
+                  className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] hover:bg-[#3A3A45] rounded-lg text-sm text-white transition-all duration-200 border border-[#FFFFFF]/10 min-w-[180px]"
+                >
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-2 h-2 rounded-full"
+                      style={{ 
+                        backgroundColor: activityTypes.find(t => t.value === selectedActivityType)?.color || '#6366F1' 
+                      }}
+                    />
+                    <span>{getSelectedActivityLabel()}</span>
+                  </div>
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    {activityDropdownOpen ? (
+                      <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </div>
+                </button>
+                
+                {/* Activity Type Dropdown Menu */}
+                {activityDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-56 bg-[#23232C] border border-[#FFFFFF]/10 rounded-lg shadow-2xl z-50 overflow-hidden">
+                    <div className="p-3 border-b border-[#FFFFFF]/10 bg-[#1A1A24]">
+                      <span className="text-sm font-medium text-white">Select Activity Type</span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                      {activityTypes.map(type => (
+                        <button
+                          key={type.value}
+                          onClick={() => handleActivityTypeChange(type.value)}
+                          className={`w-full flex items-center gap-3 p-3 hover:bg-[#2A2A35] transition-all ${
+                            selectedActivityType === type.value ? 'bg-[#2A2A35]' : ''
+                          }`}
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: type.color }}
+                          />
+                          <span className="text-sm text-white">
+                            {type.label}
+                          </span>
+                          {selectedActivityType === type.value && (
+                            <svg className="w-4 h-4 ml-auto text-[#6366F1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Student Selection Dropdown */}
+            <div className="relative" ref={studentDropdownRef}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#FFFFFF]/60">Students:</span>
+                <button
+                  onClick={() => setStudentDropdownOpen(!studentDropdownOpen)}
+                  className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] hover:bg-[#3A3A45] rounded-lg text-sm text-white transition-all duration-200 border border-[#FFFFFF]/10 min-w-[180px]"
                 >
                   <span className="flex items-center gap-1">
                     <span className="text-xs font-medium">{visibleCount} selected</span>
                     <div className="w-4 h-4 flex items-center justify-center">
-                      {dropdownOpen ? (
+                      {studentDropdownOpen ? (
                         <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
                         </svg>
@@ -572,35 +671,46 @@ const ClassPerformanceTrend = ({
                   </span>
                 </button>
                 
-                {/* Dropdown Menu */}
-                {dropdownOpen && (
+                {/* Student Dropdown Menu */}
+                {studentDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-[#23232C] border border-[#FFFFFF]/10 rounded-lg shadow-2xl z-50 overflow-hidden">
-                    {/* Dropdown Header */}
                     <div className="p-3 border-b border-[#FFFFFF]/10 bg-[#1A1A24]">
-                      <span className="text-sm font-medium text-white">Select Students</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-white">Select Students</span>
+                        <button
+                          onClick={toggleAllStudents}
+                          className="text-xs text-[#6366F1] hover:text-[#767EE0] transition-colors"
+                        >
+                          {Object.values(visibleStudents).every(Boolean) ? 'Deselect All' : 'Select All'}
+                        </button>
+                      </div>
                     </div>
                     
-                    {/* Student List */}
                     <div className="max-h-48 overflow-y-auto custom-scrollbar">
-                      {students.map(student => {
-                        const isCurrent = student.studentId === defaultCurrentStudentId;
+                      {propStudents.map(student => {
                         const isVisible = visibleStudents[student.studentId];
+                        const studentData = performanceData.find(s => s.studentId === student.studentId);
+                        const hasPerformanceData = studentData && studentData.performanceTrend.length > 0;
                         
                         return (
                           <div
                             key={student.studentId}
                             className={`flex items-center p-3 hover:bg-[#2A2A35] cursor-pointer transition-all ${
-                              isCurrent ? 'bg-[#6366F1]/5' : ''
+                              !hasPerformanceData ? 'opacity-50' : ''
                             }`}
-                            onClick={() => toggleStudentVisibility(student.studentId)}
+                            onClick={() => {
+                              if (hasPerformanceData) {
+                                toggleStudentVisibility(student.studentId);
+                              }
+                            }}
                           >
                             {/* Custom Checkbox */}
                             <div className={`w-4 h-4 rounded flex items-center justify-center border mr-3 ${
-                              isVisible 
+                              isVisible && hasPerformanceData
                                 ? 'bg-[#6366F1] border-[#6366F1]' 
                                 : 'bg-transparent border-[#FFFFFF]/30'
-                            }`}>
-                              {isVisible && (
+                            } ${!hasPerformanceData ? 'cursor-not-allowed' : ''}`}>
+                              {isVisible && hasPerformanceData && (
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                                 </svg>
@@ -608,12 +718,22 @@ const ClassPerformanceTrend = ({
                             </div>
                             
                             {/* Student Name */}
-                            <div className="text-sm text-white">
+                            <div className="text-sm text-white flex-1">
                               {student.studentName}
-                              {isCurrent && (
-                                <span className="ml-2 text-xs text-[#6366F1] font-medium">(Current)</span>
+                              {!hasPerformanceData && (
+                                <span className="ml-2 text-xs text-[#FFA600]">(No data)</span>
                               )}
                             </div>
+                            
+                            {/* Student Score if available */}
+                            {studentData && studentData.performanceTrend.length > 0 && (
+                              <div className="text-xs text-[#FFFFFF]/60 ml-2">
+                                {(
+                                  studentData.performanceTrend.reduce((sum, week) => sum + week.score, 0) / 
+                                  studentData.performanceTrend.length
+                                ).toFixed(2)}%
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -622,23 +742,35 @@ const ClassPerformanceTrend = ({
                 )}
               </div>
             </div>
-            
-            {/* Quick Selected Students Preview */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {students
-                .filter(student => visibleStudents[student.studentId])
-                .map(student => (
+          </div>
+
+          {/* Quick Selected Students Preview */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {propStudents
+              .filter(student => visibleStudents[student.studentId])
+              .map(student => {
+                const studentData = performanceData.find(s => s.studentId === student.studentId);
+                
+                return (
                   <div
                     key={student.studentId}
                     className="flex items-center gap-2 px-3 py-1.5 bg-[#2A2A35] rounded-lg border border-[#FFFFFF]/5"
                   >
                     <div 
                       className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: studentColors[student.studentId] }}
+                      style={{ backgroundColor: studentColors[student.studentId] || '#6366F1' }}
                     />
                     <span className="text-xs text-white">
                       {student.studentName.split(' ')[0]}
                     </span>
+                    {studentData && (
+                      <span className="text-xs text-[#00A15D] ml-1">
+                        {(
+                          studentData.performanceTrend.reduce((sum, week) => sum + week.score, 0) / 
+                          Math.max(studentData.performanceTrend.length, 1)
+                        ).toFixed(2)}%
+                      </span>
+                    )}
                     <button
                       onClick={() => toggleStudentVisibility(student.studentId)}
                       className="ml-1 text-[#FFFFFF]/40 hover:text-[#FF5555] transition-all"
@@ -648,208 +780,228 @@ const ClassPerformanceTrend = ({
                       </svg>
                     </button>
                   </div>
-                ))}
-            </div>
+                );
+              })}
           </div>
 
           {/* Chart container */}
-          <div 
-            className="relative pt-4" 
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => {
-              setHoveredWeek(null);
-              setHoveredStudent(null);
-            }}
-          >
-            <div style={{ width: innerWidth + margin.left + margin.right, minWidth: '100%' }}>
-              <svg 
-                ref={svgRef}
-                width="100%" 
-                height={chartHeight} 
-                viewBox={`0 0 ${innerWidth + margin.left + margin.right} ${chartHeight}`}
-                className="relative"
-              >
-                <defs>
-                  {/* Gradient definitions for each visible student */}
-                  {visibleStudentsData.map(student => (
-                    <linearGradient key={`gradient-${student.studentId}`} id={`areaGradient-${student.studentId}`} x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor={studentColors[student.studentId]} stopOpacity={student.studentId === defaultCurrentStudentId ? "0.25" : "0.15"}/>
-                      <stop offset="100%" stopColor={studentColors[student.studentId]} stopOpacity="0"/>
-                    </linearGradient>
-                  ))}
-                </defs>
+          {visibleStudentsData.length > 0 ? (
+            <div 
+              className="relative pt-4" 
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => {
+                setHoveredWeek(null);
+                setHoveredStudent(null);
+              }}
+            >
+              <div style={{ width: innerWidth + margin.left + margin.right, minWidth: '100%' }}>
+                <svg 
+                  ref={svgRef}
+                  width="100%" 
+                  height={chartHeight} 
+                  viewBox={`0 0 ${innerWidth + margin.left + margin.right} ${chartHeight}`}
+                  className="relative"
+                >
+                  <defs>
+                    {/* Gradient definitions for each visible student */}
+                    {visibleStudentsData.map(student => (
+                      <linearGradient key={`gradient-${student.studentId}`} id={`areaGradient-${student.studentId}`} x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor={studentColors[student.studentId] || '#6366F1'} stopOpacity="0.25"/>
+                        <stop offset="100%" stopColor={studentColors[student.studentId] || '#6366F1'} stopOpacity="0"/>
+                      </linearGradient>
+                    ))}
+                  </defs>
 
-                {/* Grid lines */}
-                {[0, 25, 50, 70, 75, 100].map((score) => (
-                  <g key={`grid-${score}`}>
-                    <line
-                      x1={margin.left}
-                      y1={margin.top + yScale(score)}
-                      x2={innerWidth + margin.left}
-                      y2={margin.top + yScale(score)}
-                      stroke="#2A2A35"
-                      strokeWidth={1}
-                      strokeDasharray={score === 70 || score === 75 || score === 100 ? "5,5" : "2,2"}
-                      opacity={0.5}
-                    />
-                    <text
-                      x={margin.left - 10}
-                      y={margin.top + yScale(score)}
-                      textAnchor="end"
-                      dominantBaseline="middle"
-                      fill="#FFFFFF"
-                      fontSize="10"
-                      fontWeight={score === 70 || score === 75 ? "bold" : "normal"}
-                      opacity={0.7}
-                    >
-                      {score}%
-                    </text>
-                  </g>
-                ))}
-
-                {/* Red line at 70% - Failing threshold */}
-                <line
-                  x1={margin.left}
-                  y1={margin.top + yScale(70)}
-                  x2={innerWidth + margin.left}
-                  y2={margin.top + yScale(70)}
-                  stroke="#FF5555"
-                  strokeWidth="1.5"
-                  strokeDasharray="5,5"
-                  opacity={0.7}
-                />
-
-                {/* Orange line at 75% - Close to failing threshold */}
-                <line
-                  x1={margin.left}
-                  y1={margin.top + yScale(75)}
-                  x2={innerWidth + margin.left}
-                  y2={margin.top + yScale(75)}
-                  stroke="#FFA600"
-                  strokeWidth="1.5"
-                  strokeDasharray="5,5"
-                  opacity={0.7}
-                />
-
-                {/* Green line at 76% - Passing threshold */}
-                <line
-                  x1={margin.left}
-                  y1={margin.top + yScale(76)}
-                  x2={innerWidth + margin.left}
-                  y2={margin.top + yScale(76)}
-                  stroke="#00A15D"
-                  strokeWidth="1.5"
-                  strokeDasharray="5,5"
-                  opacity={0.7}
-                />
-
-                {/* Draw lines for each visible student */}
-                {visibleStudentsData.map(student => {
-                  const linePath = createSmoothLinePath(student.performanceTrend);
-                  const isCurrent = student.studentId === defaultCurrentStudentId;
-                  
-                  return (
-                    <g key={`student-${student.studentId}`}>
-                      {/* Area under curve */}
-                      {linePath && student.performanceTrend.length > 0 && (
-                        <path
-                          d={`${linePath} L ${margin.left + xScale(student.performanceTrend[student.performanceTrend.length-1].week)} ${margin.top + innerHeight} L ${margin.left + xScale(student.performanceTrend[0].week)} ${margin.top + innerHeight} Z`}
-                          fill={`url(#areaGradient-${student.studentId})`}
-                          opacity={isCurrent ? 0.4 : 0.3}
-                        />
-                      )}
-
-                      {/* Performance line */}
-                      {linePath && (
-                        <path
-                          d={linePath}
-                          fill="none"
-                          stroke={studentColors[student.studentId]}
-                          strokeWidth={isCurrent ? "4" : "2"}
-                          strokeLinecap="round"
-                          opacity={isCurrent ? 1 : 0.8}
-                          strokeDasharray={isCurrent ? "none" : "4,4"}
-                        />
-                      )}
-                    </g>
-                  );
-                })}
-
-                {/* X-axis labels */}
-                {weeks.map((week, index) => {
-                  if (index % 2 === 0) {
-                    return (
+                  {/* Grid lines */}
+                  {[0, 25, 50, 70, 75, 100].map((score) => (
+                    <g key={`grid-${score}`}>
+                      <line
+                        x1={margin.left}
+                        y1={margin.top + yScale(score)}
+                        x2={innerWidth + margin.left}
+                        y2={margin.top + yScale(score)}
+                        stroke="#2A2A35"
+                        strokeWidth={1}
+                        strokeDasharray={score === 70 || score === 75 || score === 100 ? "5,5" : "2,2"}
+                        opacity={0.5}
+                      />
                       <text
-                        key={`label-${week.week}`}
-                        x={margin.left + xScale(week.week)}
-                        y={chartHeight - 10}
-                        textAnchor="middle"
+                        x={margin.left - 10}
+                        y={margin.top + yScale(score)}
+                        textAnchor="end"
+                        dominantBaseline="middle"
                         fill="#FFFFFF"
                         fontSize="10"
+                        fontWeight={score === 70 || score === 75 ? "bold" : "normal"}
                         opacity={0.7}
                       >
-                        Week {week.week}
+                        {score}%
                       </text>
-                    );
-                  }
-                  return null;
-                })}
+                    </g>
+                  ))}
 
-                {/* Data points for each visible student */}
-                {visibleStudentsData.map(student => {
-                  const isCurrent = student.studentId === defaultCurrentStudentId;
-                  
-                  return student.performanceTrend.map((week, index) => {
-                    const x = margin.left + xScale(week.week);
-                    const y = margin.top + yScale(week.score);
-                    const isHovered = hoveredWeek === week.week && hoveredStudent === student.studentId;
-                    const performanceZoneColor = getPerformanceZoneColor(week.score);
+                  {/* Red line at 70% - Failing threshold */}
+                  <line
+                    x1={margin.left}
+                    y1={margin.top + yScale(70)}
+                    x2={innerWidth + margin.left}
+                    y2={margin.top + yScale(70)}
+                    stroke="#FF5555"
+                    strokeWidth="1.5"
+                    strokeDasharray="5,5"
+                    opacity={0.7}
+                  />
+
+                  {/* Orange line at 75% - Close to failing threshold */}
+                  <line
+                    x1={margin.left}
+                    y1={margin.top + yScale(75)}
+                    x2={innerWidth + margin.left}
+                    y2={margin.top + yScale(75)}
+                    stroke="#FFA600"
+                    strokeWidth="1.5"
+                    strokeDasharray="5,5"
+                    opacity={0.7}
+                  />
+
+                  {/* Green line at 76% - Passing threshold */}
+                  <line
+                    x1={margin.left}
+                    y1={margin.top + yScale(76)}
+                    x2={innerWidth + margin.left}
+                    y2={margin.top + yScale(76)}
+                    stroke="#00A15D"
+                    strokeWidth="1.5"
+                    strokeDasharray="5,5"
+                    opacity={0.7}
+                  />
+
+                  {/* Draw lines for each visible student */}
+                  {visibleStudentsData.map(student => {
+                    const linePath = createSmoothLinePath(student.performanceTrend);
+                    const isFirst = visibleStudentsData[0]?.studentId === student.studentId;
                     
                     return (
-                      <g key={`point-${student.studentId}-${week.week}`}>
-                        {/* Hover area */}
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r={isCurrent ? 20 : 16}
-                          fill="transparent"
-                          onMouseEnter={(e) => handleMouseEnter(week.week, student.studentId, e)}
-                          onMouseLeave={() => {
-                            setHoveredWeek(null);
-                            setHoveredStudent(null);
-                          }}
-                          className="cursor-pointer"
-                        />
-                        
-                        {/* Data point - Clickable */}
-                        <circle
-                          cx={x}
-                          cy={y}
-                          r={isHovered ? (isCurrent ? 8 : 6) : (isCurrent ? 6 : 4)}
-                          fill={studentColors[student.studentId]}
-                          stroke={performanceZoneColor}
-                          strokeWidth="2"
-                          onMouseEnter={(e) => handleMouseEnter(week.week, student.studentId, e)}
-                          onMouseLeave={() => {
-                            setHoveredWeek(null);
-                            setHoveredStudent(null);
-                          }}
-                          onClick={(e) => handleNodeClick(week.week, student.studentId, e)}
-                          className="cursor-pointer transition-all duration-150 hover:stroke-white hover:stroke-[3px]"
-                        />
+                      <g key={`student-${student.studentId}`}>
+                        {/* Area under curve */}
+                        {linePath && student.performanceTrend.length > 0 && (
+                          <path
+                            d={`${linePath} L ${margin.left + xScale(student.performanceTrend[student.performanceTrend.length-1].week)} ${margin.top + innerHeight} L ${margin.left + xScale(student.performanceTrend[0].week)} ${margin.top + innerHeight} Z`}
+                            fill={`url(#areaGradient-${student.studentId})`}
+                            opacity={0.3}
+                          />
+                        )}
+
+                        {/* Performance line */}
+                        {linePath && (
+                          <path
+                            d={linePath}
+                            fill="none"
+                            stroke={studentColors[student.studentId] || '#6366F1'}
+                            strokeWidth={isFirst ? "4" : "2"}
+                            strokeLinecap="round"
+                            opacity={0.8}
+                          />
+                        )}
                       </g>
                     );
-                  });
-                })}
-              </svg>
+                  })}
+
+                  {/* X-axis labels */}
+                  {weeks.map((week, index) => {
+                    if (index % 2 === 0) {
+                      return (
+                        <text
+                          key={`label-${week.week}`}
+                          x={margin.left + xScale(week.week)}
+                          y={chartHeight - 10}
+                          textAnchor="middle"
+                          fill="#FFFFFF"
+                          fontSize="10"
+                          opacity={0.7}
+                        >
+                          Week {week.week}
+                        </text>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  {/* Data points for each visible student */}
+                  {visibleStudentsData.map(student => {
+                    const isFirst = visibleStudentsData[0]?.studentId === student.studentId;
+                    
+                    return student.performanceTrend.map((week, index) => {
+                      const x = margin.left + xScale(week.week);
+                      const y = margin.top + yScale(week.score);
+                      const isHovered = hoveredWeek === week.week && hoveredStudent === student.studentId;
+                      const performanceZoneColor = getPerformanceZoneColor(week.score);
+                      
+                      return (
+                        <g key={`point-${student.studentId}-${week.week}`}>
+                          {/* Hover area */}
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r={isFirst ? 20 : 16}
+                            fill="transparent"
+                            onMouseEnter={(e) => handleMouseEnter(week.week, student.studentId, e)}
+                            onMouseLeave={() => {
+                              setHoveredWeek(null);
+                              setHoveredStudent(null);
+                            }}
+                            className="cursor-pointer"
+                          />
+                          
+                          {/* Data point - Clickable */}
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r={isHovered ? (isFirst ? 8 : 6) : (isFirst ? 6 : 4)}
+                            fill={studentColors[student.studentId] || '#6366F1'}
+                            stroke={performanceZoneColor}
+                            strokeWidth="2"
+                            onMouseEnter={(e) => handleMouseEnter(week.week, student.studentId, e)}
+                            onMouseLeave={() => {
+                              setHoveredWeek(null);
+                              setHoveredStudent(null);
+                            }}
+                            onClick={(e) => handleNodeClick(week.week, student.studentId, e)}
+                            className="cursor-pointer transition-all duration-150 hover:stroke-white hover:stroke-[3px]"
+                          />
+                        </g>
+                      );
+                    });
+                  })}
+                </svg>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="h-48 flex items-center justify-center">
+              <div className="text-center">
+                <div className="flex items-center justify-center mx-auto mb-3">
+                  <img 
+                    src={LineGraphIcon} 
+                    alt="Analytics" 
+                    className="w-8 h-8 opacity-40"
+                  />
+                </div>
+                <p className="text-[#FFFFFF]/60">No students selected or no performance data available</p>
+                <p className="text-sm text-[#FFFFFF]/40 mt-2">Select students from the dropdown above</p>
+              </div>
+            </div>
+          )}
 
           {/* Performance zones legend */}
           <div className="mt-6 flex flex-wrap gap-2 text-xs justify-center">
             <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
-              <div className="w-2 h-2 rounded-full bg-[#6366F1]"></div>
-              <span className="text-[#FFFFFF] text-xs">Current Student</span>
+              <div 
+                className="w-2 h-2 rounded-full"
+                style={{ 
+                  backgroundColor: activityTypes.find(t => t.value === selectedActivityType)?.color || '#6366F1' 
+                }}
+              />
+              <span className="text-[#FFFFFF] text-xs">{getSelectedActivityLabel()}</span>
             </div>
             <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
               <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
@@ -868,7 +1020,7 @@ const ClassPerformanceTrend = ({
       </div>
 
       {/* Collapsed State Summary */}
-      {isCollapsed && (
+      {isCollapsed && currentStudent && (
         <div className="p-4 border-t border-[#FFFFFF]/10">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             {/* Left side - Current student summary */}
@@ -879,14 +1031,14 @@ const ClassPerformanceTrend = ({
                   {currentStudent?.studentName?.split(' ')[0] || "Student"}
                 </div>
                 <div className="text-sm text-[#FFFFFF] mt-1">
-                  Avg: {comparisonInsights.currentStudentAvg}%
+                  Avg: {comparisonInsights.currentStudentAvg.toFixed(2)}%
                 </div>
               </div>
               
               <div className="text-left">
                 <div className="text-xs text-[#FFFFFF]/60">Class Average</div>
                 <div className="font-bold text-base text-[#FFFFFF]">
-                  {comparisonInsights.classAvg}%
+                  {comparisonInsights.classAvg.toFixed(2)}%
                 </div>
                 <div className={`text-sm ${comparisonInsights.trendDirection === 'up' ? 'text-[#00A15D]' : comparisonInsights.trendDirection === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
                   {comparisonInsights.trendDirection === 'up' ? '+' : comparisonInsights.trendDirection === 'down' ? '-' : ''}
@@ -905,11 +1057,23 @@ const ClassPerformanceTrend = ({
                   </div>
                 )}
               </div>
+
+              <div className="text-left">
+                <div className="text-xs text-[#FFFFFF]/60">Activity Type</div>
+                <div className="font-bold text-base text-white">
+                  {getSelectedActivityLabel()}
+                </div>
+                {selectedActivityType === 'all' ? (
+                  <div className="text-xs text-[#FFFFFF]/60 mt-1">(75% Academic + 25% Attendance)</div>
+                ) : (
+                  <div className="text-xs text-[#FFFFFF]/60 mt-1">(Academic Only)</div>
+                )}
+              </div>
             </div>
             
             {/* Right side - Student quick stats */}
             <div className="flex items-center gap-6">
-              {currentStudent && (
+              {currentStudent && selectedActivityType === 'all' && (
                 <>
                   <div className="text-left">
                     <div className="text-xs text-[#FFFFFF]/60">Attendance</div>
@@ -932,7 +1096,7 @@ const ClassPerformanceTrend = ({
       )}
 
       {/* External Tooltip */}
-      {hoveredWeek && hoveredStudent && !isCollapsed && (
+      {hoveredWeek && hoveredStudent && !isCollapsed && visibleStudentsData.length > 0 && (
         <div 
           ref={tooltipRef}
           className="fixed bg-[#23232C] border border-[#FFFFFF]/20 rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150"
@@ -947,28 +1111,23 @@ const ClassPerformanceTrend = ({
             <div className="flex items-center justify-between gap-2">
               <span className="text-[#FFFFFF] text-sm font-semibold">Week {hoveredWeek}</span>
               <span className="text-xs text-[#FFFFFF]/60">
-                {students.find(s => s.studentId === hoveredStudent)?.studentName}
+                {visibleStudentsData.find(s => s.studentId === hoveredStudent)?.studentName}
               </span>
             </div>
             
             <div className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: studentColors[hoveredStudent] }}
+                style={{ backgroundColor: studentColors[hoveredStudent] || '#6366F1' }}
               />
               <span className="text-lg font-bold text-white">
-                {students.find(s => s.studentId === hoveredStudent)?.performanceTrend?.find(w => w.week === hoveredWeek)?.score || 0}%
+                {visibleStudentsData.find(s => s.studentId === hoveredStudent)?.performanceTrend?.find(w => w.week === hoveredWeek)?.score?.toFixed(2) || '0.00'}%
               </span>
-              {hoveredStudent === defaultCurrentStudentId && (
-                <span className="text-xs text-white font-medium bg-[#6366F1] px-2 py-0.5 rounded">
-                  Current
-                </span>
-              )}
             </div>
             
             {/* Show performance zone in tooltip */}
             {(() => {
-              const score = students.find(s => s.studentId === hoveredStudent)?.performanceTrend?.find(w => w.week === hoveredWeek)?.score || 0;
+              const score = visibleStudentsData.find(s => s.studentId === hoveredStudent)?.performanceTrend?.find(w => w.week === hoveredWeek)?.score || 0;
               let zoneText = '';
               let zoneColor = '';
               
@@ -992,6 +1151,11 @@ const ClassPerformanceTrend = ({
                 </div>
               );
             })()}
+
+            <div className="text-xs text-[#FFFFFF]/60">
+              {getSelectedActivityLabel()}
+              {selectedActivityType === 'all' ? ' (Weighted)' : ' (Academic)'}
+            </div>
             
             <div className="text-xs text-[#FFFFFF]/40 mt-1">
               Click for detailed analysis
@@ -1010,6 +1174,7 @@ const ClassPerformanceTrend = ({
         onClose={handleClosePopup}
         studentData={selectedDataPoint?.studentData}
         weekData={selectedDataPoint?.weekData}
+        activityType={selectedActivityType}
       />
     </div>
   );

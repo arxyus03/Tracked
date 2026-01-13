@@ -21,62 +21,18 @@ const ClassRankingOverall = ({
   const [activityFilter, setActivityFilter] = useState('All');
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
 
-  // Generate dummy activities data
-  const generateDummyActivities = (studentId) => {
-    const activityTypes = ['Assignment', 'Quiz', 'Project', 'Discussion', 'Lab'];
-    const statuses = ['Submitted', 'Missed', 'Assigned'];
-    const titles = [
-      'Introduction to API',
-      'API Quiz',
-      'React Components Assignment',
-      'Final Project Proposal',
-      'Database Design Lab',
-      'Midterm Exam',
-      'Group Presentation',
-      'Research Paper'
-    ];
-    
-    const activities = [];
-    const totalActivities = Math.floor(Math.random() * 8) + 4; // 4-12 activities
-    
-    for (let i = 0; i < totalActivities; i++) {
-      const title = titles[Math.floor(Math.random() * titles.length)];
-      const type = activityTypes[Math.floor(Math.random() * activityTypes.length)];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() - Math.floor(Math.random() * 30)); // Past 30 days
-      
-      activities.push({
-        id: `${studentId}-activity-${i}`,
-        title,
-        dueDate: dueDate.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' }),
-        type,
-        grade: Math.random() > 0.7 ? `${Math.floor(Math.random() * 20) + 80}/100` : 'Not graded',
-        maxPoints: 100,
-        status,
-        submitted: status === 'Submitted',
-        late: status === 'Submitted' && Math.random() > 0.5
-      });
+  // Get professor ID from localStorage
+  const getProfessorId = () => {
+    try {
+      const userDataString = localStorage.getItem("user");
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        return userData.id;
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error);
     }
-    
-    return activities;
-  };
-
-  // Calculate activity statistics
-  const getActivityStatistics = (activities) => {
-    const total = activities.length;
-    const submitted = activities.filter(a => a.status === 'Submitted').length;
-    const missed = activities.filter(a => a.status === 'Missed').length;
-    const assigned = activities.filter(a => a.status === 'Assigned').length;
-    const submissionRate = total > 0 ? Math.round((submitted / total) * 100) : 0;
-    
-    return {
-      total,
-      submitted,
-      missed,
-      assigned,
-      submissionRate
-    };
+    return null;
   };
 
   // Get filtered activities
@@ -85,7 +41,7 @@ const ClassRankingOverall = ({
     
     switch (activityFilter) {
       case 'Submitted':
-        return activities.filter(activity => activity.status === 'Submitted');
+        return activities.filter(activity => activity.status === 'Submitted' || activity.status === 'Completed');
       case 'Missed':
         return activities.filter(activity => activity.status === 'Missed');
       case 'Assigned':
@@ -99,35 +55,37 @@ const ClassRankingOverall = ({
   // Get status color class
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Submitted': return 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30';
-      case 'Late': return 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30';
-      case 'Missed': return 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30';
-      case 'Assigned': return 'bg-gray-700 text-gray-300 border border-gray-600';
-      default: return 'bg-gray-700 text-gray-300 border border-gray-600';
+      case 'Submitted': 
+      case 'Completed': 
+        return 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30';
+      case 'Late': 
+        return 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30';
+      case 'Missed': 
+        return 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30';
+      case 'Assigned': 
+        return 'bg-gray-700 text-gray-300 border border-gray-600';
+      default: 
+        return 'bg-gray-700 text-gray-300 border border-gray-600';
     }
-  };
-
-  const getStudentStatus = (average) => {
-    if (average >= 90) return 'excellent';
-    if (average >= 75) return 'good';
-    if (average >= 60) return 'needs-improvement';
-    return 'at-risk';
   };
 
   const getSortedStudents = () => {
     const students = [...studentPerformance];
-    students.sort((a, b) => viewMode === 'lowest' ? a.average - b.average : b.average - b.average);
-    return students;
+    if (viewMode === 'lowest') {
+      return students.sort((a, b) => a.average - b.average);
+    } else {
+      return students.sort((a, b) => b.average - a.average);
+    }
   };
 
   const getSummaryStudents = () => {
     const students = [...studentPerformance];
-    students.sort((a, b) => a.average - b.average);
+    students.sort((a, b) => b.average - a.average);
     
     if (students.length === 0) return { lowest: [], highest: [] };
     
-    const lowest = students.slice(0, 3);
-    const highest = students.slice(-3).reverse();
+    const highest = students.slice(0, 3);
+    const lowest = students.slice(-3).reverse();
     
     return { lowest, highest };
   };
@@ -143,60 +101,21 @@ const ClassRankingOverall = ({
     try {
       const professorId = getProfessorId();
       const response = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_student_details.php?student_id=${studentId}&subject_code=${subjectCode}&professor_ID=${professorId}`
+        `https://tracked.6minds.site/Professor/SubjectOverviewProfDB/get_student_detailed_info.php?student_id=${studentId}&subject_code=${subjectCode}&professor_ID=${professorId}`
       );
 
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          // Add dummy activities to the student details
-          const detailsWithActivities = {
-            ...result.details,
-            activities: generateDummyActivities(studentId)
-          };
-          setStudentDetails(prev => ({ ...prev, [studentId]: detailsWithActivities }));
-        } else {
-          const detailsWithActivities = {
-            ...generateRandomStudentDetails(),
-            activities: generateDummyActivities(studentId)
-          };
-          setStudentDetails(prev => ({ ...prev, [studentId]: detailsWithActivities }));
+          setStudentDetails(prev => ({ ...prev, [studentId]: result.details }));
         }
       }
     } catch (error) {
       console.error('Error fetching student details:', error);
-      const detailsWithActivities = {
-        ...generateRandomStudentDetails(),
-        activities: generateDummyActivities(studentId)
-      };
-      setStudentDetails(prev => ({ ...prev, [studentId]: detailsWithActivities }));
     } finally {
       setLoadingDetails(false);
     }
   };
-
-  const getProfessorId = () => {
-    try {
-      const userDataString = localStorage.getItem("user");
-      if (userDataString) {
-        const userData = JSON.parse(userDataString);
-        return userData.id;
-      }
-    } catch (error) {
-      console.error("Error parsing user data:", error);
-    }
-    return null;
-  };
-
-  const generateRandomStudentDetails = () => ({
-    attendance: {
-      rate: Math.floor(Math.random() * (100 - 60) + 60),
-      absences: Math.floor(Math.random() * 8),
-      lates: Math.floor(Math.random() * 5),
-      totalClasses: 30,
-      present: Math.floor(Math.random() * (28 - 20) + 20)
-    }
-  });
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -214,7 +133,7 @@ const ClassRankingOverall = ({
     }
 
     const details = studentDetails[selectedStudent.id];
-    const activityStats = getActivityStatistics(details.activities);
+    const activityStats = details.activity_stats || {};
 
     if (details.attendance.absences > 3) {
       recommendations.push("Multiple absences detected. Consider scheduling a consultation.");
@@ -333,7 +252,7 @@ const ClassRankingOverall = ({
                         </div>
                         <span className="text-xs text-white truncate max-w-[100px]">{student.name}</span>
                       </div>
-                      <span className="text-xs font-bold text-[#00A15D]">{student.average}%</span>
+                      <span className="text-xs font-bold text-[#00A15D]">{student.average.toFixed(1)}%</span>
                     </div>
                   ))}
                 </div>
@@ -361,7 +280,7 @@ const ClassRankingOverall = ({
                         </div>
                         <span className="text-xs text-white truncate max-w-[100px]">{student.name}</span>
                       </div>
-                      <span className="text-xs font-bold text-[#A15353]">{student.average}%</span>
+                      <span className="text-xs font-bold text-[#A15353]">{student.average.toFixed(1)}%</span>
                     </div>
                   ))}
                 </div>
@@ -398,7 +317,7 @@ const ClassRankingOverall = ({
                             student.average >= 75 ? 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30' :
                             'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30'
                       }`}>
-                        {index + 1}
+                        {viewMode === 'lowest' ? index + 1 : studentPerformance.length - index}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
@@ -415,7 +334,7 @@ const ClassRankingOverall = ({
                             student.average >= 75 ? 'text-[#FFA600]' :
                             'text-[#A15353]'
                           }`}>
-                            {student.average}%
+                            {student.average.toFixed(1)}%
                           </p>
                         </div>
                       </div>
@@ -449,7 +368,7 @@ const ClassRankingOverall = ({
                   </div>
                   <div>
                     <h3 className="font-bold text-sm text-[#FFFFFF]">{selectedStudent.name}</h3>
-                    <p className="text-xs text-white/60">ic.{selectedStudent.name.toLowerCase().replace(/\s+/g, '.')}@cvsu.edu.ph</p>
+                    <p className="text-xs text-white/60">{selectedStudent.email}</p>
                   </div>
                 </div>
                 <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-[#767EE0]/20 transition-colors">
@@ -466,9 +385,9 @@ const ClassRankingOverall = ({
                     selectedStudent.average >= 75 ? 'text-[#FFA600]' :
                     'text-[#A15353]'
                   }`}>
-                    {selectedStudent.average}%
+                    {selectedStudent.average.toFixed(1)}%
                   </p>
-                  <p className="text-xs text-white/60 ml-2">Overall Average</p>
+                  <p className="text-xs text-white/60 ml-2">Overall Performance</p>
                 </div>
               </div>
             </div>
@@ -483,11 +402,13 @@ const ClassRankingOverall = ({
                 {/* Left Column - Statistics */}
                 <div className="lg:w-1/2 p-4 border-r border-white/10 overflow-y-auto">
                   <div className="space-y-4">
-                    {/* Attendance Section - REMOVED PERCENTAGE BADGE */}
+                    {/* Attendance Section */}
                     <div className="bg-[#23232C] rounded-lg border border-white/5 p-4">
                       <div className="mb-3">
                         <h4 className="text-sm font-semibold text-[#FFFFFF]">Attendance</h4>
-                        {/* Percentage badge removed from here */}
+                        <p className="text-xs text-white/60">
+                          Rate: {studentDetails[selectedStudent.id].attendance.rate}%
+                        </p>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
                         {[
@@ -509,14 +430,14 @@ const ClassRankingOverall = ({
                     <div className="bg-[#23232C] rounded-lg border border-white/5 p-4">
                       <h4 className="text-sm font-semibold text-[#FFFFFF] mb-3">Activity Summary</h4>
                       {(() => {
-                        const activityStats = getActivityStatistics(studentDetails[selectedStudent.id].activities);
+                        const activityStats = studentDetails[selectedStudent.id].activity_stats || {};
                         return (
                           <div className="grid grid-cols-4 gap-2">
                             {[
-                              { label: 'Total', value: activityStats.total, color: 'bg-gray-800 text-white' },
-                              { label: 'Submitted', value: activityStats.submitted, color: 'bg-[#00A15D]/20 text-[#00A15D]' },
-                              { label: 'Missed', value: activityStats.missed, color: 'bg-[#A15353]/20 text-[#A15353]' },
-                              { label: 'Assigned', value: activityStats.assigned, color: 'bg-[#FFA600]/20 text-[#FFA600]' }
+                              { label: 'Total', value: activityStats.total || 0, color: 'bg-gray-800 text-white' },
+                              { label: 'Submitted', value: activityStats.submitted || 0, color: 'bg-[#00A15D]/20 text-[#00A15D]' },
+                              { label: 'Missed', value: activityStats.missed || 0, color: 'bg-[#A15353]/20 text-[#A15353]' },
+                              { label: 'Assigned', value: activityStats.assigned || 0, color: 'bg-[#FFA600]/20 text-[#FFA600]' }
                             ].map((item, idx) => (
                               <div key={idx} className={`text-center p-2 rounded-lg ${item.color} border border-white/10`}>
                                 <p className="text-xs font-medium mb-0.5">{item.label}</p>
@@ -526,6 +447,40 @@ const ClassRankingOverall = ({
                           </div>
                         );
                       })()}
+                    </div>
+
+                    {/* Performance Breakdown */}
+                    <div className="bg-[#23232C] rounded-lg border border-white/5 p-4">
+                      <h4 className="text-sm font-semibold text-[#FFFFFF] mb-3">Performance Breakdown</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-white/70">Academic Performance</span>
+                            <span className="font-medium">{studentDetails[selectedStudent.id].academic_percentage}%</span>
+                          </div>
+                          <div className="w-full bg-gray-800 rounded-full h-2">
+                            <div 
+                              className="bg-[#767EE0] h-2 rounded-full" 
+                              style={{ width: `${studentDetails[selectedStudent.id].academic_percentage}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-white/60 mt-1">(75% weight)</p>
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-white/70">Attendance Performance</span>
+                            <span className="font-medium">{studentDetails[selectedStudent.id].attendance.rate}%</span>
+                          </div>
+                          <div className="w-full bg-gray-800 rounded-full h-2">
+                            <div 
+                              className="bg-[#00A15D] h-2 rounded-full" 
+                              style={{ width: `${studentDetails[selectedStudent.id].attendance.rate}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-white/60 mt-1">(25% weight)</p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* System Recommendation */}
@@ -606,7 +561,7 @@ const ClassRankingOverall = ({
                           {selectedStudent.name}'s Activities
                         </h3>
                         <p className="text-xs text-white/60 mt-0.5 truncate">
-                          ic.{selectedStudent.name.toLowerCase().replace(/\s+/g, '.')}@cvsu.edu.ph
+                          {selectedStudent.email}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -673,7 +628,7 @@ const ClassRankingOverall = ({
                                     {activity.title}
                                   </h4>
                                   <div className="flex flex-wrap items-center gap-1.5 mt-1 text-xs text-white/60">
-                                    <span>Due: {activity.dueDate}</span>
+                                    <span>Due: {formatDate(activity.dueDate)}</span>
                                     <span>•</span>
                                     <span>{activity.type}</span>
                                     <span>•</span>
@@ -731,6 +686,17 @@ const ClassRankingOverall = ({
       )}
     </>
   );
+};
+
+// Helper function to format date
+const formatDate = (dateString) => {
+  if (!dateString) return "No date";
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+  } catch {
+    return dateString;
+  }
 };
 
 export default ClassRankingOverall;

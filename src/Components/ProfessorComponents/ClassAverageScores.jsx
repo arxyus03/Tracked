@@ -6,7 +6,8 @@ import ArrowDown from '../../assets/ArrowDown.svg';
 const ClassAverageScores = ({ 
   activitiesData,
   selectedType = 'assignment',
-  onTypeChange 
+  onTypeChange,
+  subjectCode
 }) => {
   const [hoveredActivity, setHoveredActivity] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -17,6 +18,8 @@ const ClassAverageScores = ({
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [loading, setLoading] = useState(false);
+  const [currentActivities, setCurrentActivities] = useState([]);
   const svgRef = useRef(null);
   const containerRef = useRef(null);
   const typeDropdownRef = useRef(null);
@@ -55,65 +58,33 @@ const ClassAverageScores = ({
     };
   }, []);
 
-  // Add status to activities data if not present (for filtering)
-  const activitiesDataWithStatus = useMemo(() => {
-    const enhancedData = { ...activitiesData };
-    
-    // Add status to each activity type
-    Object.keys(enhancedData).forEach(type => {
-      if (Array.isArray(enhancedData[type])) {
-        enhancedData[type] = enhancedData[type].map((activity, index) => ({
-          ...activity,
-          // Randomly assign status for demo purposes
-          status: index % 3 === 0 ? 'Submitted' : 
-                  index % 3 === 1 ? 'Missed' : 'Submitted'
-        }));
-      }
-    });
-    
-    return enhancedData;
-  }, [activitiesData]);
+  // Fetch activities data from server
+  useEffect(() => {
+    const fetchActivities = async () => {
+      if (!subjectCode) return;
 
-  // Get activities for selected type and status
-  const getFilteredActivities = useMemo(() => {
-    let activities = [];
-    switch (selectedType) {
-      case 'assignment':
-        activities = activitiesDataWithStatus.assignments || [];
-        break;
-      case 'quiz':
-        activities = activitiesDataWithStatus.quizzes || [];
-        break;
-      case 'activity':
-        activities = activitiesDataWithStatus.activities || [];
-        break;
-      case 'project':
-        activities = activitiesDataWithStatus.projects || [];
-        break;
-      case 'laboratory':
-        activities = activitiesDataWithStatus.laboratories || [];
-        break;
-      default:
-        activities = activitiesDataWithStatus.assignments || [];
+      setLoading(true);
+      try {
+        const statusParam = selectedStatus !== 'All' ? `&status=${selectedStatus}` : '';
+        const response = await fetch(
+          `https://tracked.6minds.site/Professor/SubjectAnalyticsProfDB/fetch_class_averages.php?code=${subjectCode}&type=${selectedType}${statusParam}`
+        );
+        const data = await response.json();
+        
+        if (data.success) {
+          setCurrentActivities(data.activities);
+        }
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isExpanded) {
+      fetchActivities();
     }
-    
-    // Filter by status if not "All"
-    if (selectedStatus !== 'All') {
-      activities = activities.filter(activity => activity.status === selectedStatus);
-    }
-    
-    // Sort by task number if available, otherwise by title
-    return activities.sort((a, b) => {
-      const getNumber = (str) => {
-        const match = str?.match(/\d+/);
-        return match ? parseInt(match[0]) : 0;
-      };
-      
-      const aNum = getNumber(a.task || a.title);
-      const bNum = getNumber(b.task || b.title);
-      return aNum - bNum;
-    });
-  }, [activitiesDataWithStatus, selectedType, selectedStatus]);
+  }, [subjectCode, selectedType, selectedStatus, isExpanded]);
 
   // Handle container resize and screen size
   useEffect(() => {
@@ -143,14 +114,13 @@ const ClassAverageScores = ({
 
   // Calculate max score for scaling
   useEffect(() => {
-    const activities = getFilteredActivities;
-    if (activities.length === 0) {
+    if (currentActivities.length === 0) {
       setMaxScore(100);
       return;
     }
 
     let max = 100;
-    activities.forEach(activity => {
+    currentActivities.forEach(activity => {
       if (activity.score > max) max = activity.score;
     });
 
@@ -159,7 +129,7 @@ const ClassAverageScores = ({
     } else {
       setMaxScore(100);
     }
-  }, [getFilteredActivities]);
+  }, [currentActivities]);
 
   // Handle mouse events
   const handleMouseEnter = (activity, clientX, clientY) => {
@@ -203,7 +173,7 @@ const ClassAverageScores = ({
   const getActivityDisplayName = (activity) => {
     if (activity.task) return activity.task;
     if (activity.title) return activity.title;
-    return `Activity ${getFilteredActivities.indexOf(activity) + 1}`;
+    return `Activity ${currentActivities.indexOf(activity) + 1}`;
   };
 
   // Get activity short name for labels (responsive)
@@ -229,7 +199,7 @@ const ClassAverageScores = ({
 
   // Calculate chart layout (responsive)
   const calculateChartLayout = () => {
-    const activities = getFilteredActivities;
+    const activities = currentActivities;
     const chartHeight = isMobile ? 250 : 300;
     const margin = { 
       top: isMobile ? 20 : 30, 
@@ -330,7 +300,7 @@ const ClassAverageScores = ({
     };
   };
 
-  // Get color based on score (UPDATED to match new zones)
+  // Get color based on score
   const getScoreColor = (score) => {
     if (score >= 76) return "#00A15D";  // Passing (76%+)
     if (score >= 71) return "#FFA600";  // Close to failing (71-75%)
@@ -342,6 +312,7 @@ const ClassAverageScores = ({
     switch (status) {
       case 'Submitted': return 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30';
       case 'Missed': return 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30';
+      case 'Partially Submitted': return 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30';
       default: return 'bg-gray-700 text-gray-300 border border-gray-600';
     }
   };
@@ -380,7 +351,7 @@ const ClassAverageScores = ({
 
   // Calculate chart layout
   const chartLayout = calculateChartLayout();
-  const activities = getFilteredActivities;
+  const activities = currentActivities;
   const {
     chartWidth,
     chartHeight,
@@ -404,7 +375,7 @@ const ClassAverageScores = ({
     }
     
     const scores = activities.map(a => a.score || 0);
-    const average = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+    const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
     const highest = Math.max(...scores);
     const lowest = Math.min(...scores);
     
@@ -413,7 +384,7 @@ const ClassAverageScores = ({
       highest,
       lowest,
       total: activities.length,
-      completed: activities.length // All activities have been scored
+      completed: activities.filter(a => a.status === 'Submitted').length
     };
   };
 
@@ -425,7 +396,43 @@ const ClassAverageScores = ({
   const barScoreFontSize = isMobile ? "10" : "11";
   const activityLabelFontSize = isMobile ? "9" : "11";
 
-  if (activities.length === 0) {
+  if (loading) {
+    return (
+      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
+        <div className="p-5 border-b border-[#FFFFFF]/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center">
+                <img 
+                  src={AnalyticsIcon} 
+                  alt="Analytics" 
+                  className="w-5 h-5"
+                />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-[#FFFFFF]">Class Average Scores</h3>
+                <p className="text-sm text-[#FFFFFF]/60">View class average scores for different activities</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {/* Loading indicator */}
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#767EE0]"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="h-48 flex flex-col items-center justify-center gap-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#767EE0] mx-auto mb-3"></div>
+            <p className="text-sm sm:text-base text-[#FFFFFF]/60">Loading {getSelectedTypeLabel()} data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activities.length === 0 && isExpanded) {
     const selectedTypeLabel = activityTypes.find(t => t.value === selectedType)?.label || selectedType;
     
     return (
@@ -516,6 +523,29 @@ const ClassAverageScores = ({
                   </div>
                 )}
               </div>
+
+              {/* Collapse/Expand button */}
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="p-2 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
+                aria-label={isExpanded ? "Collapse chart" : "Expand chart"}
+              >
+                <div className="w-5 h-5 flex items-center justify-center">
+                  {isExpanded ? (
+                    <img 
+                      src={ArrowUp} 
+                      alt="Collapse" 
+                      className="w-4 h-4"
+                    />
+                  ) : (
+                    <img 
+                      src={ArrowDown} 
+                      alt="Expand" 
+                      className="w-4 h-4"
+                    />
+                  )}
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -530,7 +560,9 @@ const ClassAverageScores = ({
               />
             </div>
             <p className="text-sm sm:text-base text-[#FFFFFF]/60">No {selectedTypeLabel} data available</p>
-            <p className="text-xs text-[#FFFFFF]/40 mt-2">Try selecting a different activity type or status</p>
+            <p className="text-xs text-[#FFFFFF]/40 mt-2">
+              {selectedStatus !== 'All' ? `No ${selectedStatus.toLowerCase()} ${selectedTypeLabel.toLowerCase()}` : `No ${selectedTypeLabel.toLowerCase()} recorded yet`}
+            </p>
           </div>
         </div>
       </div>
@@ -670,10 +702,6 @@ const ClassAverageScores = ({
                 className="relative"
                 preserveAspectRatio="xMidYMid meet"
               >
-                {/* REMOVED: Performance zone backgrounds */}
-                
-                {/* REMOVED: Zone boundary lines */}
-                
                 {/* Grid lines */}
                 {renderScoreLabels().map(({ score, label }) => (
                   <g key={`grid-${score}`}>
@@ -779,7 +807,7 @@ const ClassAverageScores = ({
                           fontSize={barScoreFontSize}
                           fontWeight="bold"
                         >
-                          {score}%
+                          {score.toFixed(2)}%
                         </text>
                       )}
                       
@@ -845,14 +873,20 @@ const ClassAverageScores = ({
                       className="text-base sm:text-lg font-bold"
                       style={{ color: getScoreColor(hoveredActivity.score) }}
                     >
-                      {hoveredActivity.score || 0}%
+                      {hoveredActivity.score.toFixed(2)}%
+                    </div>
+                    <div className="text-xs text-[#FFFFFF]/60 mt-1">
+                      {hoveredActivity.submissions || 0}/{hoveredActivity.total_students || 0} students
                     </div>
                   </div>
                   
                   <div className="text-right">
                     <div className="text-xs text-[#FFFFFF]/60">Max Score</div>
                     <div className="text-base sm:text-lg font-bold text-[#FFFFFF]">
-                      100%
+                      {hoveredActivity.points || 100}%
+                    </div>
+                    <div className="text-xs text-[#FFFFFF]/60 mt-1">
+                      Points: {hoveredActivity.points || 100}
                     </div>
                   </div>
                 </div>
@@ -863,7 +897,21 @@ const ClassAverageScores = ({
             </div>
           )}
 
-          {/* REMOVED: Performance zone legend */}
+          {/* Performance zone legend */}
+          <div className="mt-6 flex flex-wrap gap-2 text-xs justify-center">
+            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
+              <span className="text-[#FF5555] text-xs">Below 70% (Failing)</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
+              <span className="text-[#FFA600] text-xs">71-75% (Close to Failing)</span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className="w-2 h-2 rounded-full bg-[#00A15D]"></div>
+              <span className="text-[#00A15D] text-xs">76%+ (Passing)</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -875,20 +923,24 @@ const ClassAverageScores = ({
             <div className="flex items-center gap-4">
               <div className="text-left">
                 <div className="text-xs text-[#FFFFFF]/60">Class Average</div>
-                <div className="font-bold text-base text-[#FFFFFF]">{summary.average}%</div>
+                <div className="font-bold text-base text-[#FFFFFF]">{summary.average.toFixed(2)}%</div>
               </div>
               
               <div className="text-left">
                 <div className="text-xs text-[#FFFFFF]/60">Highest Average</div>
-                <div className="font-bold text-base text-[#FFFFFF]">{summary.highest}%</div>
+                <div className="font-bold text-base text-[#FFFFFF]">{summary.highest.toFixed(2)}%</div>
               </div>
               
               <div className="text-left">
                 <div className="text-xs text-[#FFFFFF]/60">Lowest Average</div>
-                <div className="font-bold text-base text-[#FFFFFF]">{summary.lowest}%</div>
+                <div className="font-bold text-base text-[#FFFFFF]">{summary.lowest.toFixed(2)}%</div>
+              </div>
+
+              <div className="text-left">
+                <div className="text-xs text-[#FFFFFF]/60">Total {getSelectedTypeLabel()}</div>
+                <div className="font-bold text-base text-[#FFFFFF]">{summary.total}</div>
               </div>
             </div>
-            {/* Removed the right side with color dots and numbers */}
           </div>
         </div>
       )}

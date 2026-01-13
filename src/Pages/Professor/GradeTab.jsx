@@ -60,7 +60,19 @@ export default function GradeTab() {
       if (result.success) {
         setClassInfo(result.class_info);
         // ========== EXTRACT STUDENTS FROM RESPONSE ==========
-        if (result.class_info && result.class_info.students) {
+        if (result.students && Array.isArray(result.students)) {
+          // Format the students data to match what GradeTable expects
+          const formattedStudents = result.students.map(student => ({
+            student_id: student.tracked_ID,
+            first_name: student.tracked_firstname,
+            last_name: student.tracked_lastname,
+            middle_name: student.tracked_middlename,
+            email: student.tracked_email,
+            gender: student.tracked_gender,
+            year_section: student.tracked_yearandsec
+          }));
+          setStudents(formattedStudents);
+        } else if (result.class_info?.students) {
           setStudents(result.class_info.students);
         }
         return result.class_info;
@@ -74,6 +86,34 @@ export default function GradeTab() {
     }
   }, [subjectCode]);
 
+  const fetchStudentsList = useCallback(async (classInfo) => {
+    try {
+      if (!classInfo || !classInfo.section || !classInfo.professor_ID) {
+        console.log("Missing class info for students list");
+        return;
+      }
+
+      // Use the new endpoint for getting students with details
+      const url = `https://tracked.6minds.site/Professor/GradeProfDB/get_all_students_with_details.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.students) {
+        setStudents(result.students);
+      } else {
+        console.error("Failed to fetch students list:", result.message);
+      }
+    } catch (error) {
+      console.error("Error fetching students list:", error);
+    }
+  }, [subjectCode]);
+
   const fetchGradeSummary = useCallback(async (classInfo) => {
     try {
       if (!classInfo || !classInfo.section || !classInfo.professor_ID) {
@@ -81,7 +121,8 @@ export default function GradeTab() {
         return;
       }
 
-      const url = `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_grade_summary.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}`;
+      // Use the new endpoint for grade statistics
+      const url = `https://tracked.6minds.site/Professor/GradeProfDB/get_class_statistics.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}`;
 
       const response = await fetch(url);
 
@@ -95,10 +136,6 @@ export default function GradeTab() {
         setGradeData(result.data);
         if (result.class_info) {
           setClassInfo(prev => ({ ...prev, ...result.class_info }));
-        }
-        
-        if (result.debug) {
-          console.log("Debug info:", result.debug);
         }
       } else {
         console.error("Failed to fetch grade summary:", result.message);
@@ -155,7 +192,11 @@ export default function GradeTab() {
         const classData = await fetchClassInfo();
         
         if (isMounted && classData) {
-          await fetchGradeSummary(classData);
+          // Fetch students list and grade summary in parallel
+          await Promise.all([
+            fetchStudentsList(classData),
+            fetchGradeSummary(classData)
+          ]);
         }
         
         if (isMounted) {
@@ -179,7 +220,7 @@ export default function GradeTab() {
       controller.abort();
       clearTimeout(timeoutId);
     };
-  }, [subjectCode, fetchClassInfo, fetchGradeSummary]);
+  }, [subjectCode, fetchClassInfo, fetchStudentsList, fetchGradeSummary]);
 
   // Copy subject code to clipboard
   const copySubjectCode = () => {
@@ -200,8 +241,8 @@ export default function GradeTab() {
     }
   };
 
-  // ========== DOWNLOAD PDF FUNCTION ==========
-  const handleDownload = async () => {
+  // ========== ENHANCED PDF DOWNLOAD FUNCTION ==========
+  const handleDownload = async (selectedStudent, studentInfo) => {
     if (isDownloading || gradeData.length === 0) return;
     
     setIsDownloading(true);
@@ -210,10 +251,14 @@ export default function GradeTab() {
       // Import jsPDF dynamically to avoid initial bundle size
       const { default: jsPDF } = await import('jspdf');
       
-      const totalAssigned = gradeData.reduce((sum, item) => sum + item.assignedWorks, 0);
-      const totalSubmissions = gradeData.reduce((sum, item) => sum + item.submissions, 0);
-      const totalScores = gradeData.reduce((sum, item) => sum + item.totalScores, 0);
-      const sumGradedWorks = gradeData.reduce((sum, item) => sum + item.sumGradedWorks, 0);
+      // Determine if this is for all students or a specific student
+      const isForAllStudents = selectedStudent === 'all';
+      
+      // Calculate totals based on the current view
+      const totalAssigned = gradeData.reduce((sum, item) => sum + (parseInt(item.assignedWorks) || 0), 0);
+      const totalSubmissions = gradeData.reduce((sum, item) => sum + (parseInt(item.submissions) || 0), 0);
+      const totalScores = gradeData.reduce((sum, item) => sum + (parseInt(item.totalScores) || 0), 0);
+      const sumGradedWorks = gradeData.reduce((sum, item) => sum + (parseFloat(item.sumGradedWorks) || 0), 0);
       const overallPercentage = totalScores > 0 ? ((sumGradedWorks / totalScores) * 100).toFixed(1) : "0.0";
       
       const pdf = new jsPDF('landscape', 'pt', 'a4');
@@ -223,16 +268,23 @@ export default function GradeTab() {
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
       
+      // ========== HEADER SECTION ==========
       pdf.setFontSize(20);
       pdf.setTextColor(70, 87, 70);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('GRADE SUMMARY REPORT', pageWidth / 2, yPosition, { align: 'center' });
+      
+      if (isForAllStudents) {
+        pdf.text('CLASS GRADE SUMMARY REPORT', pageWidth / 2, yPosition, { align: 'center' });
+      } else {
+        pdf.text('STUDENT GRADE REPORT', pageWidth / 2, yPosition, { align: 'center' });
+      }
       yPosition += 30;
       
       pdf.setFontSize(11);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(0, 0, 0);
       
+      // Subject Information
       pdf.text(`Subject: ${classInfo?.subject || 'N/A'}`, margin, yPosition);
       pdf.text(`Code: ${classInfo?.subject_code || 'N/A'}`, margin + 200, yPosition);
       pdf.text(`Section: ${classInfo?.section || 'N/A'}`, pageWidth - margin - 250, yPosition);
@@ -240,12 +292,33 @@ export default function GradeTab() {
       yPosition += 18;
       
       pdf.text(`Professor: ${classInfo?.professor_name || classInfo?.professor_ID || 'N/A'}`, margin, yPosition);
-      yPosition += 30;
+      yPosition += 18;
+      
+      // Student Information (if individual student)
+      if (!isForAllStudents && studentInfo) {
+        pdf.text(`Student: ${studentInfo.last_name}, ${studentInfo.first_name}`, margin, yPosition);
+        pdf.text(`ID: ${studentInfo.student_id}`, margin + 250, yPosition);
+        if (studentInfo.year_section) {
+          pdf.text(`Year & Section: ${studentInfo.year_section}`, pageWidth - margin - 200, yPosition);
+        }
+        yPosition += 18;
+      }
+      
+      // Report Type
+      pdf.setFont('helvetica', 'italic');
+      if (isForAllStudents) {
+        pdf.text(`Report Type: Class Summary (All ${students.length || 0} Students)`, margin, yPosition);
+      } else {
+        pdf.text('Report Type: Individual Student Report', margin, yPosition);
+      }
+      pdf.setFont('helvetica', 'normal');
+      yPosition += 25;
       
       pdf.setDrawColor(70, 87, 70, 0.3);
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 20;
       
+      // ========== TABLE HEADER ==========
       const headers = [
         'Class Works',
         'Assigned Works',
@@ -286,6 +359,7 @@ export default function GradeTab() {
       
       yPosition += 25;
       
+      // ========== TABLE DATA ==========
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(0, 0, 0);
@@ -309,22 +383,22 @@ export default function GradeTab() {
         pdf.text(item.activityType, currentX + 5, yPosition + 14);
         currentX += colWidths[0];
         
-        pdf.text(item.assignedWorks.toString(), currentX + colWidths[1] / 2, yPosition + 14, { align: 'center' });
+        pdf.text((parseInt(item.assignedWorks) || 0).toString(), currentX + colWidths[1] / 2, yPosition + 14, { align: 'center' });
         currentX += colWidths[1];
         
-        pdf.text(item.submissions.toString(), currentX + colWidths[2] / 2, yPosition + 14, { align: 'center' });
+        pdf.text((parseInt(item.submissions) || 0).toString(), currentX + colWidths[2] / 2, yPosition + 14, { align: 'center' });
         currentX += colWidths[2];
         
-        pdf.text(item.missedSubmissions.toString(), currentX + colWidths[3] / 2, yPosition + 14, { align: 'center' });
+        pdf.text((parseInt(item.missedSubmissions) || 0).toString(), currentX + colWidths[3] / 2, yPosition + 14, { align: 'center' });
         currentX += colWidths[3];
         
-        pdf.text(item.totalScores.toString(), currentX + colWidths[4] / 2, yPosition + 14, { align: 'center' });
+        pdf.text((parseInt(item.totalScores) || 0).toString(), currentX + colWidths[4] / 2, yPosition + 14, { align: 'center' });
         currentX += colWidths[4];
         
-        pdf.text(item.sumGradedWorks.toString(), currentX + colWidths[5] / 2, yPosition + 14, { align: 'center' });
+        pdf.text((parseFloat(item.sumGradedWorks) || 0).toFixed(1), currentX + colWidths[5] / 2, yPosition + 14, { align: 'center' });
         currentX += colWidths[5];
         
-        const percentageValue = parseFloat(item.percentage);
+        const percentageValue = parseFloat(item.percentage) || 0;
         if (percentageValue >= 70) {
           pdf.setTextColor(34, 139, 34);
         } else if (percentageValue >= 50) {
@@ -347,6 +421,7 @@ export default function GradeTab() {
       
       yPosition += 25;
       
+      // ========== SUMMARY SECTION ==========
       pdf.setDrawColor(70, 87, 70, 0.3);
       pdf.line(margin, yPosition, pageWidth - margin, yPosition);
       yPosition += 20;
@@ -402,11 +477,18 @@ export default function GradeTab() {
       
       yPosition += 60;
       
+      // ========== FOOTER INFORMATION ==========
       pdf.setFontSize(11);
       pdf.setFont('helvetica', 'italic');
       pdf.setTextColor(100, 100, 100);
       
-      const classInfoLine = `Showing data for: ${classInfo?.subject || 'N/A'} (${classInfo?.subject_code || 'N/A'}) - Section ${classInfo?.section || 'N/A'}`;
+      let classInfoLine = '';
+      if (isForAllStudents) {
+        classInfoLine = `Class Summary for: ${classInfo?.subject || 'N/A'} (${classInfo?.subject_code || 'N/A'}) - Section ${classInfo?.section || 'N/A'} | Total Students: ${students.length || 0}`;
+      } else {
+        classInfoLine = `Individual Report for: ${studentInfo?.first_name || 'N/A'} ${studentInfo?.last_name || 'N/A'} (ID: ${studentInfo?.student_id || 'N/A'})`;
+      }
+      
       const professorLine = `Professor: ${classInfo?.professor_name || `ID: ${classInfo?.professor_ID || 'N/A'}`}`;
       
       pdf.text(classInfoLine, pageWidth / 2, yPosition, { align: 'center' });
@@ -415,14 +497,31 @@ export default function GradeTab() {
       
       yPosition += 20;
       pdf.setFontSize(9);
-      pdf.text(
-        `Generated on: ${new Date().toLocaleString()}`,
-        pageWidth / 2,
-        yPosition,
-        { align: 'center' }
-      );
       
-      const fileName = `Grade_Report_${classInfo?.subject_code || 'subject'}_${classInfo?.section || 'section'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      if (isForAllStudents) {
+        pdf.text(
+          `Class Grade Report generated on: ${new Date().toLocaleString()}`,
+          pageWidth / 2,
+          yPosition,
+          { align: 'center' }
+        );
+      } else {
+        pdf.text(
+          `Individual Student Report generated on: ${new Date().toLocaleString()}`,
+          pageWidth / 2,
+          yPosition,
+          { align: 'center' }
+        );
+      }
+      
+      // ========== SAVE PDF ==========
+      let fileName = '';
+      if (isForAllStudents) {
+        fileName = `Class_Grade_Report_${classInfo?.subject_code || 'subject'}_${classInfo?.section || 'section'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      } else {
+        fileName = `Student_Grade_Report_${studentInfo?.student_id || 'student'}_${classInfo?.subject_code || 'subject'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      }
+      
       pdf.save(fileName);
       
     } catch (error) {

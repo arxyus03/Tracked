@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
@@ -20,58 +20,99 @@ export default function AnalyticsTab() {
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get("code");
   const [selectedActivityType, setSelectedActivityType] = useState('assignment');
+  const [students, setStudents] = useState([]);
+  const [classInfo, setClassInfo] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [classAveragesData, setClassAveragesData] = useState({
+    assignments: [],
+    quizzes: [],
+    activities: [],
+    projects: [],
+    laboratories: []
+  });
 
-  // Dummy performance trend data (class averages)
-  const performanceTrendData = [
-    { week: 1, score: 65, activities: 3 },
-    { week: 2, score: 72, activities: 4 },
-    { week: 3, score: 68, activities: 5 },
-    { week: 4, score: 80, activities: 4 },
-    { week: 5, score: 85, activities: 3 },
-    { week: 6, score: 82, activities: 4 },
-    { week: 7, score: 88, activities: 5 },
-    { week: 8, score: 90, activities: 3 },
-  ];
+  // Fetch students and class info
+  useEffect(() => {
+    if (!subjectCode) return;
 
-  // Dummy class average scores data
-  const classAveragesData = {
-    assignments: [
-      { id: 1, task: "Assignment 1", score: 85, submitted: true, late: false, deadline: "2024-01-15" },
-      { id: 2, task: "Assignment 2", score: 78, submitted: true, late: true, deadline: "2024-01-22" },
-      { id: 3, task: "Assignment 3", score: 92, submitted: true, late: false, deadline: "2024-01-29" },
-      { id: 4, task: "Assignment 4", score: 88, submitted: true, late: false, deadline: "2024-02-05" },
-      { id: 5, task: "Assignment 5", score: 82, submitted: true, late: false, deadline: "2024-02-12" },
-      { id: 6, task: "Assignment 6", score: 90, submitted: true, late: false, deadline: "2024-02-19" },
-    ],
-    quizzes: [
-      { id: 1, task: "Quiz 1", score: 90, submitted: true, late: false, deadline: "2024-01-10" },
-      { id: 2, task: "Quiz 2", score: 85, submitted: true, late: false, deadline: "2024-01-17" },
-      { id: 3, task: "Quiz 3", score: 87, submitted: true, late: false, deadline: "2024-01-24" },
-      { id: 4, task: "Quiz 4", score: 91, submitted: true, late: false, deadline: "2024-01-31" },
-    ],
-    activities: [
-      { id: 1, task: "Activity 1", score: 95, submitted: true, late: false, deadline: "2024-01-12" },
-      { id: 2, task: "Activity 2", score: 89, submitted: true, late: false, deadline: "2024-01-19" },
-      { id: 3, task: "Activity 3", score: 93, submitted: true, late: false, deadline: "2024-01-26" },
-    ],
-    projects: [
-      { id: 1, task: "Project 1", score: 82, submitted: true, late: false, deadline: "2024-02-01" },
-      { id: 2, task: "Project 2", score: 88, submitted: true, late: false, deadline: "2024-02-15" },
-    ],
-    laboratories: [
-      { id: 1, task: "Lab 1", score: 91, submitted: true, late: false, deadline: "2024-01-08" },
-      { id: 2, task: "Lab 2", score: 86, submitted: true, late: false, deadline: "2024-01-15" },
-      { id: 3, task: "Lab 3", score: 93, submitted: true, late: false, deadline: "2024-01-22" },
-      { id: 4, task: "Lab 4", score: 89, submitted: true, late: false, deadline: "2024-01-29" },
-    ]
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch(
+          `https://tracked.6minds.site/Professor/SubjectAnalyticsProfDB/fetch_students.php?code=${subjectCode}`
+        );
+        const data = await response.json();
+        
+        if (data.success) {
+          setStudents(data.students);
+          setClassInfo(data.classInfo || {});
+        }
+      } catch (error) {
+        console.error('Error fetching students:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, [subjectCode]);
+
+  // Fetch class averages data
+  const fetchClassAverages = async (type) => {
+    if (!subjectCode) return;
+
+    try {
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/SubjectAnalyticsProfDB/fetch_class_averages.php?code=${subjectCode}&type=${type}`
+      );
+      const data = await response.json();
+      
+      if (data.success) {
+        setClassAveragesData(prev => ({
+          ...prev,
+          [type]: data.activities
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching class averages:', error);
+    }
   };
+
+  // Fetch initial class averages
+  useEffect(() => {
+    if (!subjectCode) return;
+
+    // Fetch all activity types
+    const activityTypes = ['assignment', 'quiz', 'activity', 'project', 'laboratory'];
+    activityTypes.forEach(type => {
+      fetchClassAverages(type);
+    });
+  }, [subjectCode]);
 
   const handleActivityTypeChange = (type) => {
     setSelectedActivityType(type);
+    // Refresh data for this type
+    fetchClassAverages(type);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0F]">
+        <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
+        <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
+          <Header setIsOpen={setIsOpen} isOpen={isOpen} />
+          <div className="p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center h-screen">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#767EE0] mx-auto mb-4"></div>
+              <p className="text-[#FFFFFF]">Loading analytics data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#0A0A0F]">
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -104,13 +145,13 @@ export default function AnalyticsTab() {
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
-              <span>N/A</span>
+              <span>{classInfo.subject || 'N/A'}</span>
             </div>
 
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 <span className="font-semibold">SECTION:</span>
-                <span>N/A</span>
+                <span>{classInfo.section || 'N/A'}</span>
               </div>
               <div className="flex justify-end">
                 <Link to="/ClassManagement">
@@ -217,17 +258,22 @@ export default function AnalyticsTab() {
             </div>
           </div>
 
-          {/* Class Performance Trend */}
+          {/* Class Performance Trend - Now with real data */}
           <div className="mb-6">
-            <ClassPerformanceTrend performanceTrend={performanceTrendData} />
+            <ClassPerformanceTrend 
+              students={students}
+              subjectCode={subjectCode}
+              useMockData={students.length === 0}
+            />
           </div>
 
-          {/* Class Average Scores */}
+          {/* Class Average Scores - Now with real data */}
           <div className="mb-6">
             <ClassAverageScores
               activitiesData={classAveragesData}
               selectedType={selectedActivityType}
               onTypeChange={handleActivityTypeChange}
+              subjectCode={subjectCode}
             />
           </div>
         </div>

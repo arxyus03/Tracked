@@ -97,37 +97,97 @@ export default function DashboardProf() {
         return;
       }
       
-      const response = await fetch(`https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
+      // First, get the class information
+      const classResponse = await fetch(`https://tracked.6minds.site/Professor/ClassManagementDB/get_classes.php?professor_ID=${professorId}`);
       
-      if (response.ok) {
-        const result = await response.json();
+      if (classResponse.ok) {
+        const classResult = await classResponse.json();
         
-        if (result.success && result.classes) {
-          const classes = result.classes;
+        if (classResult.success && classResult.classes) {
+          const classes = classResult.classes;
           
-          const subjectsWithStats = classes.map(classItem => {
-            const completionRate = Math.floor(Math.random() * 36) + 60;
-            const totalActivities = Math.floor(Math.random() * 15) + 5;
-            const completedActivities = Math.floor((completionRate / 100) * totalActivities);
+          // Get performance data for each class
+          const performanceResponse = await fetch(`https://tracked.6minds.site/Professor/DashboardProfDB/get_subject_performance.php?professor_ID=${professorId}`);
+          
+          if (performanceResponse.ok) {
+            const performanceResult = await performanceResponse.json();
             
-            return {
-              subject: classItem.subject,
-              subjectCode: classItem.subject_code,
-              completionRate: completionRate,
-              completed: completedActivities,
-              total: totalActivities,
-              section: classItem.section,
-              year_level: classItem.year_level,
-              subject_semester: classItem.subject_semester || "",
-              // Add additional class info for attendance checking
-              classSchedule: classItem.schedule || "No schedule",
-              classDays: classItem.days || "MWF"
-            };
-          });
-          
-          setHandledSubjects(subjectsWithStats);
-          setHandledSubjectsCount(subjectsWithStats.length);
-          setClassesCount(subjectsWithStats.length);
+            if (performanceResult.success && performanceResult.subjects) {
+              // Merge class data with performance data
+              const subjectsWithStats = classes.map(classItem => {
+                // Find matching performance data
+                const performanceData = performanceResult.subjects.find(
+                  subject => subject.subject_code === classItem.subject_code
+                );
+                
+                if (performanceData) {
+                  return {
+                    subject: classItem.subject,
+                    subjectCode: classItem.subject_code,
+                    completionRate: Math.round(performanceData.completion_rate), // Use calculated percentage
+                    completed: performanceData.completed_activities,
+                    total: performanceData.total_activities,
+                    section: classItem.section,
+                    year_level: classItem.year_level,
+                    subject_semester: classItem.subject_semester || "",
+                    classSchedule: classItem.schedule || "No schedule",
+                    classDays: classItem.days || "MWF",
+                    totalStudents: performanceData.total_students
+                  };
+                } else {
+                  // Fallback to random data if no performance data found
+                  const completionRate = Math.floor(Math.random() * 36) + 60;
+                  const totalActivities = Math.floor(Math.random() * 15) + 5;
+                  const completedActivities = Math.floor((completionRate / 100) * totalActivities);
+                  
+                  return {
+                    subject: classItem.subject,
+                    subjectCode: classItem.subject_code,
+                    completionRate: completionRate,
+                    completed: completedActivities,
+                    total: totalActivities,
+                    section: classItem.section,
+                    year_level: classItem.year_level,
+                    subject_semester: classItem.subject_semester || "",
+                    classSchedule: classItem.schedule || "No schedule",
+                    classDays: classItem.days || "MWF",
+                    totalStudents: 0
+                  };
+                }
+              });
+              
+              setHandledSubjects(subjectsWithStats);
+              setHandledSubjectsCount(subjectsWithStats.length);
+              setClassesCount(subjectsWithStats.length);
+            } else {
+              // Fallback if performance API fails
+              const fallbackSubjects = classes.map(classItem => {
+                const completionRate = Math.floor(Math.random() * 36) + 60;
+                const totalActivities = Math.floor(Math.random() * 15) + 5;
+                const completedActivities = Math.floor((completionRate / 100) * totalActivities);
+                
+                return {
+                  subject: classItem.subject,
+                  subjectCode: classItem.subject_code,
+                  completionRate: completionRate,
+                  completed: completedActivities,
+                  total: totalActivities,
+                  section: classItem.section,
+                  year_level: classItem.year_level,
+                  subject_semester: classItem.subject_semester || "",
+                  classSchedule: classItem.schedule || "No schedule",
+                  classDays: classItem.days || "MWF",
+                  totalStudents: 0
+                };
+              });
+              
+              setHandledSubjects(fallbackSubjects);
+              setHandledSubjectsCount(fallbackSubjects.length);
+              setClassesCount(fallbackSubjects.length);
+            }
+          } else {
+            throw new Error('Failed to fetch performance data');
+          }
         } else {
           setHandledSubjects([]);
           setHandledSubjectsCount(0);
@@ -240,28 +300,28 @@ export default function DashboardProf() {
   };
 
   const getBorderColor = (percentage) => {
-    if (percentage < 75) return 'border-[#A15353] border-2';
-    if (percentage >= 75 && percentage <= 85) return 'border-[#FFA600] border-2';
-    return 'border-transparent border-2';
+    if (percentage < 70) return 'border-[#A15353] border-2'; // Red for < 70%
+    if (percentage >= 71 && percentage <= 79) return 'border-[#FFA600] border-2'; // Yellow for 71-79%
+    return 'border-transparent border-2'; // Green for ≥ 80%
   };
 
   const getTextColor = (percentage) => {
-    if (percentage < 75) return 'text-[#A15353]';
-    if (percentage >= 75 && percentage <= 85) return 'text-[#FFA600]';
+    if (percentage < 70) return 'text-[#A15353]';
+    if (percentage >= 71 && percentage <= 79) return 'text-[#FFA600]';
     return 'text-white';
   };
 
   const sortedSubjects = [...handledSubjects].sort((a, b) => {
     const getPriority = (percentage) => {
-      if (percentage < 75) return 3;
-      if (percentage <= 85) return 2;
-      return 1;
+      if (percentage < 70) return 3; // Low priority (critical)
+      if (percentage <= 79) return 2; // Medium priority (warning)
+      return 1; // High priority (good)
     };
     return getPriority(b.completionRate) - getPriority(a.completionRate);
   });
 
-  const hasCriticalSubjects = handledSubjects.some(subject => subject.completionRate < 75);
-  const hasWarningSubjects = handledSubjects.some(subject => subject.completionRate >= 75 && subject.completionRate <= 85);
+  const hasCriticalSubjects = handledSubjects.some(subject => subject.completionRate < 70);
+  const hasWarningSubjects = handledSubjects.some(subject => subject.completionRate >= 71 && subject.completionRate <= 79);
 
   if (loading) {
     return (
@@ -431,20 +491,20 @@ export default function DashboardProf() {
                     {hasCriticalSubjects && (
                       <div className="flex items-center gap-1">
                         <div className="h-3 w-3 rounded border-2 border-[#A15353]"></div>
-                        <span>Low (&lt;75%)</span>
+                        <span>Low (&lt;70%)</span>
                       </div>
                     )}
                     
                     {hasWarningSubjects && (
                       <div className="flex items-center gap-1">
                         <div className="h-3 w-3 rounded border-2 border-[#FFA600]"></div>
-                        <span>Average (75-85%)</span>
+                        <span>Average (71-79%)</span>
                       </div>
                     )}
                     
                     <div className="flex items-center gap-1">
                       <div className="h-3 w-3 rounded border-2 border-transparent bg-[#23232C]"></div>
-                      <span>Good (&gt;85%)</span>
+                      <span>Good (≥80%)</span>
                     </div>
                   </div>
                 </div>

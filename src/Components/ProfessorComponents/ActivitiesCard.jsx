@@ -13,6 +13,20 @@ export default function ActivitiesCard({ subjectCode }) {
   const [activitiesExpanded, setActivitiesExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Get professor ID from localStorage
+  const getProfessorId = () => {
+    try {
+      const userDataString = localStorage.getItem("user");
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+        return userData.id;
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+    }
+    return null;
+  };
+
   // Fetch real activities from API
   useEffect(() => {
     const fetchActivities = async () => {
@@ -23,19 +37,15 @@ export default function ActivitiesCard({ subjectCode }) {
 
       try {
         setLoading(true);
-        const response = await fetch(`https://tracked.6minds.site/Professor/SubjectDetailsDB/get_activities.php?subject_code=${subjectCode}`);
+        const professorId = getProfessorId();
+        const response = await fetch(
+          `https://tracked.6minds.site/Professor/SubjectOverviewProfDB/get_subject_activities.php?subject_code=${subjectCode}&professor_ID=${professorId}`
+        );
         
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
-            // Sort activities by creation date (newest first)
-            const sortedActivities = (result.activities || [])
-              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-              .map(activity => ({
-                ...activity,
-                status: getActivityStatus(activity)
-              }));
-            setActivities(sortedActivities);
+            setActivities(result.activities || []);
           } else {
             console.error('Error fetching activities:', result.message);
             setActivities([]);
@@ -54,22 +64,6 @@ export default function ActivitiesCard({ subjectCode }) {
     fetchActivities();
   }, [subjectCode]);
 
-  // Determine activity status based on deadline and grading
-  const getActivityStatus = (activity) => {
-    if (!activity.students || activity.students.length === 0) {
-      return 'assigned';
-    }
-
-    // Check if any students have submitted
-    const anySubmitted = activity.students.some(student => student.submitted);
-
-    if (anySubmitted) {
-      return 'submitted'; // Changed from 'completed' to 'submitted'
-    }
-
-    return 'assigned';
-  };
-
   const getActivityTypeColor = (type) => {
     switch (type) {
       case 'Assignment': return { bg: '#767EE0/15', text: '#767EE0' };
@@ -85,8 +79,11 @@ export default function ActivitiesCard({ subjectCode }) {
 
   const getActivityStatusColor = (status) => {
     switch (status) {
-      case 'submitted': return { bg: '#00A15D/15', text: '#00A15D' }; // Changed from 'completed' to 'submitted'
-      case 'assigned': return { bg: '#767EE0/15', text: '#767EE0' };
+      case 'submitted': return { bg: '#00A15D/15', text: '#00A15D' }; // Green - all submitted after deadline
+      case 'completed': return { bg: '#3B82F6/15', text: '#3B82F6' }; // Blue - all submitted before deadline
+      case 'assigned': return { bg: '#767EE0/15', text: '#767EE0' }; // Purple - ongoing
+      case 'incomplete': return { bg: '#FFA600/15', text: '#FFA600' }; // Yellow - more than half submitted after deadline
+      case 'missed': return { bg: '#A15353/15', text: '#A15353' }; // Red - less than half submitted after deadline
       default: return { bg: '#15151C', text: '#FFFFFF' };
     }
   };
@@ -120,15 +117,31 @@ export default function ActivitiesCard({ subjectCode }) {
     }
   };
 
+  const getActivityStatusLabel = (status) => {
+    switch (status) {
+      case 'submitted': return 'Submitted';
+      case 'completed': return 'Completed';
+      case 'assigned': return 'Assigned';
+      case 'incomplete': return 'Incomplete';
+      case 'missed': return 'Missed';
+      default: return status;
+    }
+  };
+
   // Calculate statistics
   const getActivityStats = () => {
-    const submitted = activities.filter(a => a.status === 'submitted').length; // Changed from 'completed' to 'submitted'
+    const submitted = activities.filter(a => a.status === 'submitted').length;
+    const completed = activities.filter(a => a.status === 'completed').length;
     const assigned = activities.filter(a => a.status === 'assigned').length;
+    const incomplete = activities.filter(a => a.status === 'incomplete').length;
+    const missed = activities.filter(a => a.status === 'missed').length;
     
     return {
       total: activities.length,
-      submitted,
-      assigned
+      submitted: submitted + completed, // Combine submitted and completed
+      assigned,
+      incomplete,
+      missed
     };
   };
 
@@ -145,17 +158,6 @@ export default function ActivitiesCard({ subjectCode }) {
   };
 
   const typeDistribution = getTypeDistribution();
-
-  // Get submitted count for an activity
-  const getSubmittedCount = (activity) => {
-    if (!activity.students || activity.students.length === 0) return 0;
-    return activity.students.filter(student => student.submitted).length;
-  };
-
-  // Get total students count for an activity
-  const getTotalStudents = (activity) => {
-    return activity.students ? activity.students.length : 0;
-  };
 
   if (loading) {
     return (
@@ -339,25 +341,27 @@ export default function ActivitiesCard({ subjectCode }) {
         </div>
         
         {/* Activity Type Distribution */}
-        <div className="mt-3 pt-3 border-t border-gray-800">
-          <div className="text-xs text-gray-400 mb-2">Activity Types:</div>
-          <div className="flex flex-wrap gap-1">
-            {Object.entries(typeDistribution).map(([type, count]) => {
-              if (count === 0) return null;
-              const typeColor = getActivityTypeColor(type);
-              return (
-                <div 
-                  key={type}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-xs"
-                  style={{ backgroundColor: typeColor.bg, color: typeColor.text }}
-                >
-                  <span className="font-medium">{count}</span>
-                  <span>{getActivityTypeLabel(type)}</span>
-                </div>
-              );
-            })}
+        {Object.keys(typeDistribution).length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-800">
+            <div className="text-xs text-gray-400 mb-2">Activity Types:</div>
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(typeDistribution).map(([type, count]) => {
+                if (count === 0) return null;
+                const typeColor = getActivityTypeColor(type);
+                return (
+                  <div 
+                    key={type}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs"
+                    style={{ backgroundColor: typeColor.bg, color: typeColor.text }}
+                  >
+                    <span className="font-medium">{count}</span>
+                    <span>{getActivityTypeLabel(type)}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Activities Table (Visible only when expanded) */}
@@ -379,8 +383,6 @@ export default function ActivitiesCard({ subjectCode }) {
                 {filteredActivities.map((activity) => {
                   const typeColor = getActivityTypeColor(activity.activity_type);
                   const statusColor = getActivityStatusColor(activity.status);
-                  const submittedCount = getSubmittedCount(activity);
-                  const totalStudents = getTotalStudents(activity);
                   
                   return (
                     <tr key={activity.id} className="border-b border-gray-800 hover:bg-[#23232C]/50">
@@ -413,9 +415,9 @@ export default function ActivitiesCard({ subjectCode }) {
                       </td>
                       <td className="py-1.5 px-2 text-xs text-gray-400 whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          <span>{submittedCount}</span>
+                          <span>{activity.submitted_count || 0}</span>
                           <span className="text-gray-500">/</span>
-                          <span>{totalStudents}</span>
+                          <span>{activity.total_students || 0}</span>
                         </div>
                       </td>
                       <td className="py-1.5 px-2">
@@ -426,8 +428,7 @@ export default function ActivitiesCard({ subjectCode }) {
                             color: statusColor.text
                           }}
                         >
-                          {activity.status === 'assigned' ? 'Assigned' : 
-                           activity.status === 'submitted' ? 'Submitted' : activity.status} {/* Changed from 'completed' to 'submitted' */}
+                          {getActivityStatusLabel(activity.status)}
                         </span>
                       </td>
                     </tr>

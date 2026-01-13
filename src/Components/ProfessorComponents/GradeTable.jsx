@@ -11,10 +11,11 @@ const GradeTable = ({
   onDownload
 }) => {
   const [selectedStudent, setSelectedStudent] = useState('all');
-  const [filteredGradeData, setFilteredGradeData] = useState(gradeData);
+  const [filteredGradeData, setFilteredGradeData] = useState([]);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [studentGrades, setStudentGrades] = useState({});
   const [editableGrades, setEditableGrades] = useState({});
+  const [summaryData, setSummaryData] = useState(null);
   
   // Expand states for different sections
   const [outputsExpanded, setOutputsExpanded] = useState(true);
@@ -23,7 +24,7 @@ const GradeTable = ({
   const [finalExpanded, setFinalExpanded] = useState(true);
   const [attendanceExpanded, setAttendanceExpanded] = useState(true);
   
-  // Activity types - REMOVED class_participation
+  // Activity types
   const activityTypes = [
     { 
       id: 'assignment', 
@@ -55,7 +56,6 @@ const GradeTable = ({
       color: 'bg-[#FF6B6B]/20',
       group: 'outputs'
     },
-    // Attendance will be moved to bottom of exams section
   ];
 
   // Attendance type - separated for special handling
@@ -89,8 +89,21 @@ const GradeTable = ({
     }
   ];
 
-  // ========== INITIALIZE EDITABLE GRADES ==========
-  // Removed class participation editable initialization since we removed it
+  // Initialize filtered data with gradeData
+  useEffect(() => {
+    if (gradeData && gradeData.length > 0) {
+      const formattedData = gradeData.map(item => ({
+        ...item,
+        assignedWorks: parseInt(item.assignedWorks) || 0,
+        submissions: parseInt(item.submissions) || 0,
+        missedSubmissions: parseInt(item.missedSubmissions) || 0,
+        totalScores: parseInt(item.totalScores) || 0,
+        sumGradedWorks: parseFloat(item.sumGradedWorks) || 0,
+        percentage: item.percentage || "0%"
+      }));
+      setFilteredGradeData(formattedData);
+    }
+  }, [gradeData]);
 
   // ========== FETCH STUDENT-SPECIFIC GRADE DATA ==========
   useEffect(() => {
@@ -103,14 +116,17 @@ const GradeTable = ({
         for (const student of students) {
           try {
             const response = await fetch(
-              `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_student_grades.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}&student_id=${student.student_id}`
+              `https://tracked.6minds.site/Professor/GradeProfDB/get_student_grades.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${classInfo.professor_ID}&student_id=${student.student_id}`
             );
             
             if (response.ok) {
               const result = await response.json();
               if (result.success && result.data) {
                 const mergedData = mergeGradeData(result.data);
-                grades[student.student_id] = mergedData;
+                grades[student.student_id] = {
+                  data: mergedData,
+                  summary: result.summary || {}
+                };
               }
             }
           } catch (error) {
@@ -129,9 +145,13 @@ const GradeTable = ({
 
   // ========== MERGE GRADE DATA WITH ALL ACTIVITY TYPES ==========
   const mergeGradeData = (existingData) => {
+    if (!existingData || !Array.isArray(existingData)) {
+      existingData = [];
+    }
+    
     const merged = [...existingData];
     
-    // Add regular activity types
+    // Add regular activity types if missing
     activityTypes.forEach(type => {
       const exists = merged.some(item => item.activityType === type.label);
       if (!exists) {
@@ -140,10 +160,9 @@ const GradeTable = ({
           assignedWorks: 0,
           submissions: 0,
           missedSubmissions: 0,
-          totalScores: Math.floor(Math.random() * 50) + 50,
-          sumGradedWorks: Math.floor(Math.random() * 50) + 50,
-          percentage: `${Math.floor(Math.random() * 30) + 70}%`,
-          isEditable: false
+          totalScores: 0,
+          sumGradedWorks: 0,
+          percentage: "0%"
         });
       }
     });
@@ -153,56 +172,51 @@ const GradeTable = ({
     if (!attendanceExists) {
       merged.push({
         activityType: attendanceType.label,
-        assignedWorks: 1,
-        submissions: 1,
+        assignedWorks: 0,
+        submissions: 0,
         missedSubmissions: 0,
-        totalScores: 100,
-        sumGradedWorks: Math.floor(Math.random() * 30) + 70,
-        percentage: `${Math.floor(Math.random() * 30) + 70}%`,
+        totalScores: 0,
+        sumGradedWorks: 0,
+        percentage: "0%",
         isAttendance: true
       });
     }
     
-    // Add exam types and sub-exams
-    examTypes.forEach(exam => {
-      // Add main exam entry
-      const examExists = merged.some(item => item.activityType === exam.label);
-      if (!examExists) {
+    // Add exam types if missing
+    const examLabels = [
+      'Midterm Exam - Written Exam',
+      'Midterm Exam - Laboratory Exam',
+      'Final Exam - Written Exam',
+      'Final Exam - Laboratory Exam'
+    ];
+    
+    examLabels.forEach(label => {
+      const exists = merged.some(item => item.activityType === label);
+      if (!exists) {
         merged.push({
-          activityType: exam.label,
-          assignedWorks: 1,
-          submissions: 1,
+          activityType: label,
+          assignedWorks: 0,
+          submissions: 0,
           missedSubmissions: 0,
-          totalScores: 100,
+          totalScores: 0,
           sumGradedWorks: 0,
           percentage: "0%",
-          isExam: true,
-          examId: exam.id
+          isExam: true
         });
       }
-      
-      // Add sub-exam entries
-      exam.subExams.forEach(subExam => {
-        const subExamLabel = `${exam.label} - ${subExam.label}`;
-        const subExamExists = merged.some(item => item.activityType === subExamLabel);
-        if (!subExamExists) {
-          merged.push({
-            activityType: subExamLabel,
-            assignedWorks: 1,
-            submissions: 1,
-            missedSubmissions: 0,
-            totalScores: 50,
-            sumGradedWorks: 0,
-            percentage: "0%",
-            isSubExam: true,
-            parentExamId: exam.id,
-            examId: subExam.id
-          });
-        }
-      });
     });
     
-    return merged;
+    // Ensure all numeric values are properly formatted
+    return merged.map(item => ({
+      ...item,
+      assignedWorks: parseInt(item.assignedWorks) || 0,
+      submissions: parseInt(item.submissions) || 0,
+      missedSubmissions: parseInt(item.missedSubmissions) || 0,
+      totalScores: parseInt(item.totalScores) || 0,
+      sumGradedWorks: parseFloat(item.sumGradedWorks) || 0,
+      percentage: typeof item.percentage === 'string' ? item.percentage : 
+                 (item.percentage || 0).toString() + '%'
+    }));
   };
 
   // ========== HANDLE STUDENT SELECTION ==========
@@ -211,8 +225,18 @@ const GradeTable = ({
     setSelectedStudent(studentId);
     
     if (studentId === 'all') {
-      setFilteredGradeData(gradeData);
+      const formattedData = gradeData.map(item => ({
+        ...item,
+        assignedWorks: parseInt(item.assignedWorks) || 0,
+        submissions: parseInt(item.submissions) || 0,
+        missedSubmissions: parseInt(item.missedSubmissions) || 0,
+        totalScores: parseInt(item.totalScores) || 0,
+        sumGradedWorks: parseFloat(item.sumGradedWorks) || 0,
+        percentage: item.percentage || "0%"
+      }));
+      setFilteredGradeData(formattedData);
       setEditableGrades({});
+      setSummaryData(null);
       return;
     }
 
@@ -220,17 +244,17 @@ const GradeTable = ({
     
     setTimeout(() => {
       if (studentGrades[studentId]) {
-        const mergedData = mergeGradeData(studentGrades[studentId]);
+        const mergedData = mergeGradeData(studentGrades[studentId].data);
         setFilteredGradeData(mergedData);
+        setSummaryData(studentGrades[studentId].summary);
       } else {
         const defaultData = mergeGradeData([]);
         setFilteredGradeData(defaultData);
+        setSummaryData(null);
       }
       setIsLoadingStudents(false);
     }, 500);
   };
-
-  // ========== REMOVED: HANDLE CLASS PARTICIPATION INPUT CHANGE ==========
 
   // ========== GET SELECTED STUDENT INFO ==========
   const getSelectedStudentInfo = () => {
@@ -326,16 +350,22 @@ const GradeTable = ({
     if (activityType === attendanceType.label) return attendanceType.color;
     
     // Check exam types
-    const exam = examTypes.find(type => type.label === activityType);
-    if (exam) return exam.color;
-    
-    // Check sub-exams
-    for (const examType of examTypes) {
-      for (const subExam of examType.subExams) {
-        if (activityType.includes(subExam.label) && activityType.includes(examType.label)) {
-          return subExam.color;
-        }
+    if (activityType.includes('Midterm Exam')) {
+      if (activityType.includes('Written Exam')) {
+        return 'bg-[#96CEB4]/40';
+      } else if (activityType.includes('Laboratory Exam')) {
+        return 'bg-[#96CEB4]/60';
       }
+      return 'bg-[#96CEB4]/20';
+    }
+    
+    if (activityType.includes('Final Exam')) {
+      if (activityType.includes('Written Exam')) {
+        return 'bg-[#FFEAA7]/40';
+      } else if (activityType.includes('Laboratory Exam')) {
+        return 'bg-[#FFEAA7]/60';
+      }
+      return 'bg-[#FFEAA7]/20';
     }
     
     return 'bg-[#A15353]/20';
@@ -343,40 +373,35 @@ const GradeTable = ({
 
   // ========== GET OUTPUTS DATA ==========
   const getOutputsData = () => {
-    const displayData = selectedStudent === 'all' 
-      ? mergeGradeData(gradeData) 
-      : filteredGradeData;
-    
-    return displayData.filter(item => 
+    return filteredGradeData.filter(item => 
       ['Assignment', 'Quiz', 'Activity', 'Project', 'Laboratory'].includes(item.activityType)
     );
   };
 
   // ========== GET ATTENDANCE DATA ==========
   const getAttendanceData = () => {
-    const displayData = selectedStudent === 'all' 
-      ? mergeGradeData(gradeData) 
-      : filteredGradeData;
-    
-    return displayData.filter(item => item.activityType === attendanceType.label);
+    return filteredGradeData.filter(item => item.activityType === attendanceType.label);
   };
 
   // ========== GET EXAMS DATA ==========
   const getExamsData = () => {
-    const displayData = selectedStudent === 'all' 
-      ? mergeGradeData(gradeData) 
-      : filteredGradeData;
-    
-    return displayData.filter(item => item.isExam || item.isSubExam);
+    return filteredGradeData.filter(item => 
+      item.activityType.includes('Midterm Exam') || item.activityType.includes('Final Exam')
+    );
   };
 
   // ========== GET EXAM SUB EXAMS DATA ==========
   const getExamSubExamsData = (examId) => {
-    const displayData = selectedStudent === 'all' 
-      ? mergeGradeData(gradeData) 
-      : filteredGradeData;
-    
-    return displayData.filter(item => item.parentExamId === examId || item.examId === examId);
+    if (examId === 'midterm_exam') {
+      return filteredGradeData.filter(item => 
+        item.activityType.includes('Midterm Exam')
+      );
+    } else if (examId === 'final_exam') {
+      return filteredGradeData.filter(item => 
+        item.activityType.includes('Final Exam')
+      );
+    }
+    return [];
   };
 
   // ========== RENDER GROUP HEADER ==========
@@ -471,7 +496,14 @@ const GradeTable = ({
 
   // ========== RENDER ACTIVITY ROW ==========
   const renderActivityRow = (item, index) => {
-    // REMOVED: isEditable check for class participation since it's removed
+    // Ensure all values are properly parsed
+    const assignedWorks = parseInt(item.assignedWorks) || 0;
+    const submissions = parseInt(item.submissions) || 0;
+    const missedSubmissions = parseInt(item.missedSubmissions) || 0;
+    const totalScores = parseInt(item.totalScores) || 0;
+    const sumGradedWorks = parseFloat(item.sumGradedWorks) || 0;
+    const percentage = item.percentage || "0%";
+    
     return (
       <tr
         key={`${item.activityType}-${index}-${selectedStudent}`}
@@ -482,23 +514,23 @@ const GradeTable = ({
           {item.activityType}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.assignedWorks}
+          {assignedWorks}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.submissions}
+          {submissions}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.missedSubmissions}
+          {missedSubmissions}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.totalScores}
+          {totalScores}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.sumGradedWorks}
+          {sumGradedWorks.toFixed(1)}
         </td>
         <td className="px-2 py-2 text-center">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActivityTypeColor(item.activityType)}`}>
-            {item.percentage}
+            {percentage}
           </span>
         </td>
       </tr>
@@ -507,6 +539,14 @@ const GradeTable = ({
 
   // ========== RENDER SUB EXAM ROW ==========
   const renderSubExamRow = (item, index) => {
+    // Ensure all values are properly parsed
+    const assignedWorks = parseInt(item.assignedWorks) || 0;
+    const submissions = parseInt(item.submissions) || 0;
+    const missedSubmissions = parseInt(item.missedSubmissions) || 0;
+    const totalScores = parseInt(item.totalScores) || 0;
+    const sumGradedWorks = parseFloat(item.sumGradedWorks) || 0;
+    const percentage = item.percentage || "0%";
+    
     return (
       <tr
         key={`${item.activityType}-${index}-${selectedStudent}`}
@@ -517,44 +557,66 @@ const GradeTable = ({
           {item.activityType}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.assignedWorks}
+          {assignedWorks}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.submissions}
+          {submissions}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.missedSubmissions}
+          {missedSubmissions}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.totalScores}
+          {totalScores}
         </td>
         <td className="px-2 py-2 text-center">
-          {item.sumGradedWorks}
+          {sumGradedWorks.toFixed(1)}
         </td>
         <td className="px-2 py-2 text-center">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActivityTypeColor(item.activityType)}`}>
-            {item.percentage}
+            {percentage}
           </span>
         </td>
       </tr>
     );
   };
 
+  // ========== CALCULATE SUMMARY DATA ==========
+  const calculateSummary = () => {
+    if (selectedStudent === 'all' || !summaryData) {
+      // Calculate from filtered data
+      const totalAssigned = filteredGradeData.reduce((sum, item) => sum + (parseInt(item.assignedWorks) || 0), 0);
+      const totalSubmissions = filteredGradeData.reduce((sum, item) => sum + (parseInt(item.submissions) || 0), 0);
+      const totalScores = filteredGradeData.reduce((sum, item) => sum + (parseInt(item.totalScores) || 0), 0);
+      const sumGradedWorks = filteredGradeData.reduce((sum, item) => sum + (parseFloat(item.sumGradedWorks) || 0), 0);
+      const overallPercentage = totalScores > 0 
+        ? (sumGradedWorks / totalScores) * 100 
+        : 0;
+
+      return {
+        totalAssigned,
+        totalSubmissions,
+        totalScores,
+        sumGradedWorks,
+        overallPercentage
+      };
+    } else {
+      // Use student-specific summary
+      return {
+        totalAssigned: parseInt(summaryData.totalAssigned) || 0,
+        totalSubmissions: parseInt(summaryData.totalSubmissions) || 0,
+        totalScores: parseInt(summaryData.totalScores) || 0,
+        sumGradedWorks: parseFloat(summaryData.totalGradedWorks) || 0,
+        overallPercentage: parseFloat(summaryData.finalPercentage) || 0,
+        academicPercentage: parseFloat(summaryData.academicPercentage) || 0,
+        attendancePercentage: parseFloat(summaryData.attendancePercentage) || 0
+      };
+    }
+  };
+
+  const summary = calculateSummary();
+
   // ========== RENDER GRADE TABLE ==========
   const renderGradeTable = () => {
-    const displayData = selectedStudent === 'all' 
-      ? mergeGradeData(gradeData) 
-      : filteredGradeData;
-    
-    // Calculate overall totals
-    const totalAssigned = displayData.reduce((sum, item) => sum + (item.assignedWorks || 0), 0);
-    const totalSubmissions = displayData.reduce((sum, item) => sum + (item.submissions || 0), 0);
-    const totalScores = displayData.reduce((sum, item) => sum + (item.totalScores || 0), 0);
-    const sumGradedWorks = displayData.reduce((sum, item) => sum + (item.sumGradedWorks || 0), 0);
-    const overallPercentage = totalScores > 0 
-      ? ((sumGradedWorks / totalScores) * 100).toFixed(1) 
-      : 0;
-
     // Get data for different sections
     const outputsData = getOutputsData();
     const attendanceData = getAttendanceData();
@@ -626,31 +688,57 @@ const GradeTable = ({
             <div className="text-center">
               <div className="font-semibold text-white/70">Total Assigned</div>
               <div className="text-sm font-bold text-white">
-                {totalAssigned}
+                {summary.totalAssigned}
               </div>
             </div>
             <div className="text-center">
               <div className="font-semibold text-white/70">Total Submissions</div>
               <div className="text-sm font-bold text-white">
-                {totalSubmissions}
+                {summary.totalSubmissions}
               </div>
             </div>
             <div className="text-center">
               <div className="font-semibold text-white/70">Overall Score</div>
               <div className="text-sm font-bold text-white">
-                {sumGradedWorks.toFixed(1)}
+                {summary.sumGradedWorks.toFixed(1)}
               </div>
             </div>
             <div className="text-center">
               <div className="font-semibold text-white/70">Overall Percentage</div>
               <div className={`text-sm font-bold ${
-                overallPercentage >= 70 ? 'text-green-400' : 
-                overallPercentage >= 50 ? 'text-yellow-400' : 'text-red-400'
+                summary.overallPercentage >= 70 ? 'text-green-400' : 
+                summary.overallPercentage >= 50 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {overallPercentage}%
+                {summary.overallPercentage.toFixed(2)}%
               </div>
             </div>
           </div>
+          
+          {/* Weighted Percentage Breakdown (for individual students) */}
+          {selectedStudent !== 'all' && summary.academicPercentage !== undefined && (
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <div className="text-xs text-white/70 mb-1">Weighted Performance:</div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center">
+                  <div className="text-white/60">Academic</div>
+                  <div className="text-white font-semibold">{summary.academicPercentage?.toFixed(2)}%</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-white/60">Attendance</div>
+                  <div className="text-white font-semibold">{summary.attendancePercentage?.toFixed(2)}%</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-white/60">Final (75/25)</div>
+                  <div className={`font-semibold ${
+                    summary.overallPercentage >= 70 ? 'text-green-400' : 
+                    summary.overallPercentage >= 50 ? 'text-yellow-400' : 'text-red-400'
+                  }`}>
+                    {summary.overallPercentage.toFixed(2)}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Class Information Display */}
           <div className="mt-3 pt-3 border-t border-white/10 text-center">
@@ -690,8 +778,6 @@ const GradeTable = ({
         {renderStudentFilter()}
         {renderDownloadButton()}
       </div>
-      
-      {/* REMOVED: Instructions for editing since class participation is removed */}
       
       {/* ========== GRADE TABLE ========== */}
       {renderGradeTable()}

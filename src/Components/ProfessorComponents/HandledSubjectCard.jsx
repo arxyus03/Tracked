@@ -2,9 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const HandledSubjectCard = ({ subject, getBorderColor, getTextColor }) => {
-  const isCritical = subject.completionRate < 75;
-  const isWarning = subject.completionRate >= 75 && subject.completionRate <= 85;
-  const isGood = subject.completionRate > 85;
+  const isCritical = subject.completionRate < 70;
+  const isWarning = subject.completionRate >= 71 && subject.completionRate <= 79;
+  const isGood = subject.completionRate >= 80;
 
   return (
     <Link 
@@ -13,7 +13,7 @@ const HandledSubjectCard = ({ subject, getBorderColor, getTextColor }) => {
     >
       <div 
         className={`aspect-square rounded-lg p-2 flex flex-col items-center justify-center bg-[#23232C] hover:bg-[#2A2A35] transition-all cursor-pointer ${getBorderColor(subject.completionRate)}`}
-        title={`${subject.subject} - ${subject.completionRate}% completion (${subject.completed}/${subject.total} activities)`}
+        title={`${subject.subject} - ${subject.completionRate}% class performance (${subject.totalStudents || 0} students)`}
       >
         <p className="text-[10px] sm:text-xs text-center font-medium text-white/80 mb-1 truncate w-full">
           {subject.subject}
@@ -28,7 +28,7 @@ const HandledSubjectCard = ({ subject, getBorderColor, getTextColor }) => {
         </p>
         
         <p className="text-[8px] text-white/50 mt-1">
-          {subject.completed}/{subject.total} activities
+          {subject.total || 0} activities
         </p>
         
         <div className="mt-1 flex items-center gap-1">

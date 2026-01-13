@@ -16,14 +16,47 @@ const CalendarWidget = ({ professorId }) => {
   const [availableSubjects, setAvailableSubjects] = useState([]);
   const [availableSections, setAvailableSections] = useState([]);
   const [isSectionSelected, setIsSectionSelected] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [calendarData, setCalendarData] = useState({});
+  const [studentData, setStudentData] = useState([]);
+  const [allSubjects, setAllSubjects] = useState([]); // Store all subjects for dropdown
+  const [debugInfo, setDebugInfo] = useState('');
 
   useEffect(() => {
     if (professorId) {
       generateCalendarData();
+      fetchAvailableSubjects();
     }
   }, [professorId, currentMonth, currentYear]);
 
-  // Generate calendar data
+  // Fetch available subjects with all their sections
+  const fetchAvailableSubjects = async () => {
+    try {
+      console.log("Fetching subjects for professor:", professorId);
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/DashboardProfDB/get_calendar_attendance.php?professor_ID=${professorId}`
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Subjects API response:", result);
+        if (result.success && result.subjects) {
+          // Subjects are grouped by subject name with sections array
+          setAllSubjects(result.subjects);
+          setDebugInfo(`Loaded ${result.subjects.length} subjects`);
+        } else {
+          setDebugInfo(`Failed to load subjects: ${result.message || 'Unknown error'}`);
+        }
+      } else {
+        setDebugInfo(`Failed to fetch subjects: HTTP ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+      setDebugInfo(`Error fetching subjects: ${error.message}`);
+    }
+  };
+
+  // Generate calendar data - show all dates, color only days with absent/late
   const generateCalendarData = async () => {
     try {
       const today = new Date();
@@ -54,13 +87,15 @@ const CalendarWidget = ({ professorId }) => {
         // Get day of week (0 = Sunday, 1 = Monday, etc.)
         const dayOfWeek = dateObj.getDay();
         
-        // Get dummy absences for this day
-        const absencesForDay = await fetchDayAbsences(dateStr);
+        // Get absence data for this day (only absent/late)
+        const absenceData = await fetchDayAbsences(dateStr);
+        
+        console.log(`Date: ${dateStr}, Day of week: ${dayOfWeek}, Absence data count: ${absenceData.length}`);
         
         // Determine day status based on absences/lates
-        let dayStatus = 'present'; // default to present
-        const hasAbsences = absencesForDay.some(a => a.status === 'absent');
-        const hasLates = absencesForDay.some(a => a.status === 'late');
+        let dayStatus = 'normal'; // default to normal (no color)
+        const hasAbsences = absenceData.some(a => a.status === 'absent');
+        const hasLates = absenceData.some(a => a.status === 'late');
         
         if (hasAbsences) {
           dayStatus = 'absent'; // Red if any absences
@@ -81,10 +116,11 @@ const CalendarWidget = ({ professorId }) => {
           dayNumber: day,
           dayOfWeek,
           status: dayStatus,
-          absences: absencesForDay,
+          absences: absenceData,
           isToday: dateStr === todayStr,
           isFuture: dateObj > today,
-          isDay: true
+          isDay: true,
+          hasIssues: hasAbsences || hasLates
         });
       }
 
@@ -102,187 +138,246 @@ const CalendarWidget = ({ professorId }) => {
         });
       }
 
+      console.log(`Generated calendar with ${daysArray.length} cells`);
+      console.log(`First day position: ${firstDayOfMonth}`);
+      console.log(`Days in month: ${currentMonthDays}`);
+      
+      // Debug: Log the position of specific days
+      const jan6Index = daysArray.findIndex(day => day.date === '2026-01-06');
+      console.log(`January 6th position in array: ${jan6Index}`);
+      
+      // Debug grid layout
+      console.log('Calendar Grid Layout:');
+      for (let week = 0; week < 6; week++) {
+        let weekStr = 'Week ' + (week + 1) + ': ';
+        for (let day = 0; day < 7; day++) {
+          const index = week * 7 + day;
+          const dayData = daysArray[index];
+          if (dayData && dayData.isDay) {
+            weekStr += `${dayData.dayNumber}(${dayData.status.charAt(0)}) `;
+          } else {
+            weekStr += '--- ';
+          }
+        }
+        console.log(weekStr);
+      }
+      
       setCalendarDays(daysArray);
+      setDebugInfo(prev => `${prev} | Generated calendar for ${currentMonth+1}/${currentYear} - ${totalDaysWithAbsences}/${totalDays} days with issues`);
     } catch (error) {
       console.error("Error generating calendar data:", error);
+      setDebugInfo(`Error generating calendar: ${error.message}`);
     }
   };
 
-  // Fetch dummy absences for a day with sections
+  // Fetch attendance data for a specific day (only absent/late)
   const fetchDayAbsences = async (date) => {
-    // Updated dummy data with student ID numbers
-    const dummyAbsences = [
-      // ITEC111 - Multiple sections
-      {
-        id: "202210718",
-        studentName: "Juan Dela Cruz",
-        section: "BSIT 3-1A",
-        subject: "ITEC111",
-        status: "absent",
-      },
-      {
-        id: "202215485",
-        studentName: "Maria Santos",
-        section: "BSIT 3-1B", 
-        subject: "ITEC111",
-        status: "late",
-      },
-      {
-        id: "202212345",
-        studentName: "Pedro Reyes",
-        section: "BSIT 3-1C",
-        subject: "ITEC111",
-        status: "absent",
-      },
-      {
-        id: "202214567",
-        studentName: "Ana Gonzales",
-        section: "BSIT 3-1D",
-        subject: "ITEC111",
-        status: "late",
-      },
-      {
-        id: "202218901",
-        studentName: "Mark Lee",
-        section: "BSIT 3-1A",
-        subject: "ITEC111",
-        status: "absent",
-      },
-      {
-        id: "202219876",
-        studentName: "Sarah Johnson",
-        section: "BSIT 3-1B",
-        subject: "ITEC111",
-        status: "late",
-      },
-      // ITEC101 - Multiple sections
-      {
-        id: "202220123",
-        studentName: "Luis Torres",
-        section: "BSCS 2-1A",
-        subject: "ITEC101",
-        status: "absent",
-      },
-      {
-        id: "202221234",
-        studentName: "Sofia Martinez",
-        section: "BSCS 2-1B",
-        subject: "ITEC101",
-        status: "late",
-      },
-      {
-        id: "202222345",
-        studentName: "Carlos Lim",
-        section: "BSCS 2-1C",
-        subject: "ITEC101",
-        status: "absent",
-      },
-      {
-        id: "202223456",
-        studentName: "Emily Chen",
-        section: "BSCS 2-1A",
-        subject: "ITEC101",
-        status: "late",
-      },
-      // DCIT16 - Multiple sections
-      {
-        id: "202224567",
-        studentName: "Megan Tan",
-        section: "BSIT 3-2A",
-        subject: "DCIT16",
-        status: "late",
-      },
-      {
-        id: "202225678",
-        studentName: "John Doe",
-        section: "BSIT 3-2B",
-        subject: "DCIT16",
-        status: "absent",
-      },
-      {
-        id: "202226789",
-        studentName: "Jane Smith",
-        section: "BSIT 3-2C",
-        subject: "DCIT16",
-        status: "late",
-      },
-      {
-        id: "202227890",
-        studentName: "Robert Johnson",
-        section: "BSIT 3-2D",
-        subject: "DCIT16",
-        status: "absent",
+    try {
+      console.log("Fetching day absences for date:", date);
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/DashboardProfDB/get_calendar_attendance.php?professor_ID=${professorId}&date=${date}&get_attendance_only=1`
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Day absences API response for", date, ":", result);
+        if (result.success) {
+          return result.attendance || [];
+        } else {
+          console.error("API returned error:", result.message);
+          return [];
+        }
+      } else {
+        console.error("Failed to fetch day absences: HTTP", response.status);
+        return [];
       }
-    ];
-
-    // Return 0-14 random absences for the date
-    const randomCount = Math.floor(Math.random() * 15); // 0-14 absences/lates
-    const shuffled = [...dummyAbsences].sort(() => 0.5 - Math.random());
-    const selectedAbsences = shuffled.slice(0, randomCount);
-    
-    return selectedAbsences;
+    } catch (error) {
+      console.error("Error fetching day absences:", error);
+      return [];
+    }
   };
 
   // Handle day click
   const handleDayClick = async (day) => {
     if (!day.isDay || day.isFuture) return;
     
-    const absencesForDay = await fetchDayAbsences(day.date);
-    
-    setSelectedDate(day);
-    setSelectedDayAbsences(absencesForDay);
-    
-    // Reset all selections
-    setSelectedSubject('');
-    setSelectedSection('');
-    setIsSectionSelected(false);
-    setAvailableSections([]);
-    
-    // Extract unique subjects from the day's absences
-    const subjects = [];
-    absencesForDay.forEach(absence => {
-      if (!subjects.includes(absence.subject)) {
-        subjects.push(absence.subject);
+    console.log("Day clicked:", day.date, "Status:", day.status, "Absences:", day.absences);
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/DashboardProfDB/get_calendar_attendance.php?professor_ID=${professorId}&date=${day.date}&get_attendance_only=1`
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Day click API response:", result);
+        if (result.success) {
+          setSelectedDate(day);
+          setSelectedDayAbsences(result.attendance || []);
+          setMonthlyAbsenceRate(result.monthly_absence_rate || 0);
+          
+          // Group attendance by subject name for the dropdown (only subjects with issues on this day)
+          const subjectsWithIssues = {};
+          result.attendance?.forEach(attendance => {
+            const subjectName = attendance.subject;
+            
+            if (!subjectsWithIssues[subjectName]) {
+              subjectsWithIssues[subjectName] = {
+                subject_name: subjectName,
+                sections: {}
+              };
+            }
+            if (!subjectsWithIssues[subjectName].sections[attendance.section]) {
+              subjectsWithIssues[subjectName].sections[attendance.section] = {
+                section: attendance.section,
+                students: []
+              };
+            }
+            subjectsWithIssues[subjectName].sections[attendance.section].students.push(attendance);
+          });
+          
+          setCalendarData(subjectsWithIssues);
+          
+          // Use ALL subjects for dropdown, not just those with issues
+          setAvailableSubjects(allSubjects);
+          setIsCalendarOpen(true);
+          
+          setDebugInfo(prev => `${prev} | Clicked ${day.date}: ${result.attendance?.length || 0} absences found`);
+        } else {
+          console.error("API returned error:", result.message);
+          setDebugInfo(`API error: ${result.message}`);
+        }
       }
-    });
-    
-    setAvailableSubjects(subjects);
-    setIsCalendarOpen(true);
+    } catch (error) {
+      console.error("Error fetching attendance details:", error);
+      setDebugInfo(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+      // Reset selections
+      setSelectedSubject('');
+      setSelectedSection('');
+      setIsSectionSelected(false);
+      setAvailableSections([]);
+      setStudentData([]);
+    }
   };
 
-  // Handle subject change
-  const handleSubjectChange = (subject) => {
-    setSelectedSubject(subject);
+  // Handle subject change - show ALL sections for the selected subject name
+  const handleSubjectChange = async (subjectName) => {
+    console.log("Subject changed to:", subjectName);
+    setSelectedSubject(subjectName);
     setSelectedSection('');
     setIsSectionSelected(false);
+    setStudentData([]);
     
-    if (subject) {
-      // Get sections for the selected subject
-      const sections = [];
-      selectedDayAbsences.forEach(absence => {
-        if (absence.subject === subject && !sections.includes(absence.section)) {
-          sections.push(absence.section);
+    if (subjectName) {
+      // Find the selected subject from allSubjects
+      const selectedSubjectData = allSubjects.find(subject => subject.subject_name === subjectName);
+      
+      if (selectedSubjectData) {
+        // Show ALL sections for this subject name from the grouped data
+        setAvailableSections(selectedSubjectData.sections || []);
+        
+        // If we have attendance data for this day, prepare it
+        if (calendarData[subjectName]) {
+          console.log("Found existing data for subject:", subjectName);
+        } else {
+          console.log("No attendance data for subject today:", subjectName);
+          // No attendance data for this subject today - will show "no absent/late students"
+          setCalendarData(prev => ({
+            ...prev,
+            [subjectName]: {
+              subject_name: subjectName,
+              sections: {}
+            }
+          }));
         }
-      });
-      setAvailableSections(sections.sort());
+        
+        setDebugInfo(`Selected subject: ${subjectName} with ${selectedSubjectData.sections.length} sections`);
+      } else {
+        console.error("Subject not found in allSubjects:", subjectName);
+        setDebugInfo(`Subject not found: ${subjectName}`);
+      }
     } else {
       setAvailableSections([]);
     }
   };
 
   // Handle section click
-  const handleSectionClick = (section) => {
+  const handleSectionClick = async (section) => {
+    console.log("Section clicked:", section, "for subject:", selectedSubject);
     setSelectedSection(section);
     setIsSectionSelected(true);
+    
+    // Fetch attendance data for this specific subject name and section
+    setLoading(true);
+    try {
+      const url = new URL('https://tracked.6minds.site/Professor/DashboardProfDB/get_calendar_attendance.php');
+      url.searchParams.append('professor_ID', professorId);
+      url.searchParams.append('date', selectedDate?.date);
+      url.searchParams.append('subject_name', selectedSubject);
+      url.searchParams.append('section', section);
+      url.searchParams.append('get_attendance_only', '1');
+      
+      console.log("Fetching URL:", url.toString());
+      
+      const response = await fetch(url.toString());
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Section click API response:", result);
+        if (result.success) {
+          setStudentData(result.students || []);
+          setDebugInfo(`Loaded ${result.students?.length || 0} students for ${selectedSubject} - Section ${section}`);
+        } else {
+          console.error("API returned error:", result.message);
+          setStudentData([]);
+          setDebugInfo(`API error: ${result.message}`);
+        }
+      } else {
+        console.error("Failed to fetch section attendance: HTTP", response.status);
+        setStudentData([]);
+        setDebugInfo(`HTTP error: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error fetching section attendance:", error);
+      setStudentData([]);
+      setDebugInfo(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Get status color for calendar day
-  const getStatusColor = (status) => {
+  const getStatusColor = (status, isFuture) => {
+    if (isFuture) {
+      return 'bg-transparent border-white/10 text-white/30';
+    }
+    
     switch (status) {
-      case 'present': return 'bg-[#00A15D] border-[#00A15D]';
-      case 'absent': return 'bg-[#A15353] border-[#A15353]';
-      case 'late': return 'bg-[#FFA600] border-[#FFA600]';
-      default: return 'bg-transparent border-white/20';
+      case 'absent': 
+        return 'bg-[#A15353] border-[#A15353] text-white';
+      case 'late': 
+        return 'bg-[#FFA600] border-[#FFA600] text-white';
+      case 'normal': 
+      default:
+        return 'bg-transparent border-white/20 text-white/70 hover:bg-white/5';
+    }
+  };
+
+  // Get text color for day number
+  const getTextColor = (status, isFuture) => {
+    if (isFuture) {
+      return 'text-white/30';
+    }
+    
+    switch (status) {
+      case 'absent': 
+      case 'late': 
+        return 'text-white';
+      case 'normal': 
+      default:
+        return 'text-white/70';
     }
   };
 
@@ -308,20 +403,35 @@ const CalendarWidget = ({ professorId }) => {
           bgColor: 'bg-gray-500/20',
           textColor: 'text-gray-400',
           borderColor: 'border-gray-500',
-          text: 'Unknown'
+          text: 'Present'
         };
     }
   };
 
-  // Filter absences by selected subject and section
-  const getFilteredAbsences = () => {
-    if (!selectedSubject || !selectedSection) {
-      return [];
+  // Get counts by status for the selected subject and section
+  const getStatusCounts = () => {
+    if (studentData.length === 0) {
+      return { absent: 0, late: 0, total: 0 };
     }
     
-    return selectedDayAbsences.filter(absence => 
-      absence.subject === selectedSubject && absence.section === selectedSection
-    );
+    const absent = studentData.filter(s => s.status === 'absent').length;
+    const late = studentData.filter(s => s.status === 'late').length;
+    
+    return {
+      absent,
+      late,
+      total: studentData.length
+    };
+  };
+
+  // Get student count for each section
+  const getSectionStudentCount = (section) => {
+    if (!selectedSubject || !calendarData[selectedSubject]) {
+      return 0;
+    }
+    
+    const sectionData = calendarData[selectedSubject].sections[section];
+    return sectionData ? (sectionData.students ? sectionData.students.length : 0) : 0;
   };
 
   // Get month name
@@ -357,30 +467,20 @@ const CalendarWidget = ({ professorId }) => {
     return date.toLocaleDateString('en-US', options);
   };
 
-  // Get counts by status for the selected subject and section
-  const getStatusCounts = () => {
-    const filtered = getFilteredAbsences();
-    return {
-      absent: filtered.filter(a => a.status === 'absent').length,
-      late: filtered.filter(a => a.status === 'late').length,
-      total: filtered.length
-    };
+  // Format student name
+  const formatStudentName = (student) => {
+    return `${student.tracked_firstname} ${student.tracked_lastname}`;
   };
 
-  // Get student count for each section
-  const getSectionStudentCount = (section) => {
-    if (!selectedSubject) return 0;
-    
-    return selectedDayAbsences.filter(absence => 
-      absence.subject === selectedSubject && absence.section === section
-    ).length;
+  // Get subject display name with sections count
+  const getSubjectDisplayName = (subject) => {
+    return `${subject.subject_name} (${subject.sections.length} section${subject.sections.length !== 1 ? 's' : ''})`;
   };
 
-  // Extract section letter from full section name
-  const getSectionDisplayName = (section) => {
-    // Extract the last character (A, B, C, D) from section string
-    const sectionLetter = section.slice(-1);
-    return `Section ${sectionLetter}`;
+  // Refresh calendar data
+  const refreshCalendar = () => {
+    generateCalendarData();
+    fetchAvailableSubjects();
   };
 
   return (
@@ -390,36 +490,47 @@ const CalendarWidget = ({ professorId }) => {
         <div className="flex flex-col h-full">
           {/* Header with month and navigation */}
           <div className="mb-3">
-            <div className="flex items-center mb-2">
-              <div className="flex justify-center items-center h-6 w-6 rounded mr-1.5">
-                <img src={CalendarIcon} alt="Calendar" className="h-4 w-4" />
-              </div>
-              <div className="flex-1">
-                <h2 className="font-bold text-xs text-white mb-0.5">Attendance</h2>
-                <div className="flex items-center justify-between">
-                  <button 
-                    onClick={goToPreviousMonth}
-                    className="p-0.5 rounded hover:bg-white/10 transition-colors"
-                    aria-label="Previous month"
-                  >
-                    <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <div className="text-center flex-1 mx-0.5">
-                    <p className="text-[10px] text-white/50">{getMonthName()} {currentYear}</p>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <div className="flex justify-center items-center h-6 w-6 rounded mr-1.5">
+                  <img src={CalendarIcon} alt="Calendar" className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-xs text-white mb-0.5">Attendance</h2>
+                  <div className="flex items-center justify-between">
+                    <button 
+                      onClick={goToPreviousMonth}
+                      className="p-0.5 rounded hover:bg-white/10 transition-colors"
+                      aria-label="Previous month"
+                    >
+                      <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <div className="text-center flex-1 mx-0.5">
+                      <p className="text-[10px] text-white/50">{getMonthName()} {currentYear}</p>
+                    </div>
+                    <button 
+                      onClick={goToNextMonth}
+                      className="p-0.5 rounded hover:bg-white/10 transition-colors"
+                      aria-label="Next month"
+                    >
+                      <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
                   </div>
-                  <button 
-                    onClick={goToNextMonth}
-                    className="p-0.5 rounded hover:bg-white/10 transition-colors"
-                    aria-label="Next month"
-                  >
-                    <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
                 </div>
               </div>
+              <button 
+                onClick={refreshCalendar}
+                className="p-1 rounded hover:bg-white/10"
+                title="Refresh calendar"
+              >
+                <svg className="w-3 h-3 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             </div>
             
             {/* Absence rate */}
@@ -461,14 +572,17 @@ const CalendarWidget = ({ professorId }) => {
                       disabled={day.isFuture}
                       className={`
                         h-3 w-3 rounded-full border text-[7px] font-medium
-                        ${getStatusColor(day.status)}
+                        ${getStatusColor(day.status, day.isFuture)}
                         ${day.isToday ? 'ring-0.5 ring-white ring-offset-0.5 ring-offset-[#15151C]' : ''}
-                        ${day.isFuture ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110 transition-transform cursor-pointer'}
+                        ${day.isFuture ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform cursor-pointer'}
                         flex items-center justify-center
-                        ${day.status === 'present' ? 'text-white' : 'text-white'}
                       `}
+                      style={{
+                        borderColor: day.status === 'normal' && !day.isFuture ? 'rgba(255,255,255,0.2)' : undefined
+                      }}
+                      title={`${day.date} - ${day.status === 'absent' ? 'Absent' : day.status === 'late' ? 'Late' : 'No issues'}`}
                     >
-                      <span className="font-medium">
+                      <span className={`font-medium ${getTextColor(day.status, day.isFuture)}`}>
                         {day.dayNumber}
                       </span>
                     </button>
@@ -477,6 +591,29 @@ const CalendarWidget = ({ professorId }) => {
                   )}
                 </div>
               ))}
+            </div>
+            
+            {/* Legend */}
+            <div className="flex justify-center items-center gap-2 mt-3 text-[6px]">
+              <div className="flex items-center gap-0.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#A15353]"></div>
+                <span className="text-white/60">Absent</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-[#FFA600]"></div>
+                <span className="text-white/60">Late</span>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <div className="h-1.5 w-1.5 rounded-full border border-white/20 bg-transparent"></div>
+                <span className="text-white/60">No Issues</span>
+              </div>
+            </div>
+            
+            {/* Debug info (hidden in production) */}
+            <div className="mt-2 text-center">
+              <p className="text-[6px] text-white/30 truncate" title={debugInfo}>
+                {professorId ? `Prof ID: ${professorId}` : 'No professor ID'}
+              </p>
             </div>
           </div>
         </div>
@@ -496,7 +633,9 @@ const CalendarWidget = ({ professorId }) => {
                       Attendance on {formatDateDisplay(selectedDate?.date)}
                     </h3>
                     <div className="flex items-center gap-1 text-[10px] text-white/60">
-                      <span>{selectedDayAbsences.length} total student(s)</span>
+                      <span>{selectedDayAbsences.length} student(s) absent/late</span>
+                      <span>•</span>
+                      <span>Monthly Absence Rate: {monthlyAbsenceRate}%</span>
                     </div>
                   </div>
                 </div>
@@ -510,27 +649,36 @@ const CalendarWidget = ({ professorId }) => {
                 </button>
               </div>
               
+              {/* Loading indicator */}
+              {loading && (
+                <div className="text-center py-2">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#767EE0] mx-auto"></div>
+                  <p className="text-sm text-white/60">Loading attendance data...</p>
+                </div>
+              )}
+              
               {/* Subject Filter Dropdown */}
               <div className="mb-3">
                 <label className="block text-xs text-white/70 mb-1.5">Select Subject:</label>
                 <select
                   value={selectedSubject}
                   onChange={(e) => handleSubjectChange(e.target.value)}
-                  className="w-full bg-[#15151C] border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#767EE0] focus:border-transparent"
+                  disabled={loading}
+                  className="w-full bg-[#15151C] border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#767EE0] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="" className="bg-[#15151C] text-white">
                     -- Select a subject --
                   </option>
                   {availableSubjects.map((subject, index) => (
-                    <option key={index} value={subject} className="bg-[#15151C] text-white">
-                      {subject}
+                    <option key={index} value={subject.subject_name} className="bg-[#15151C] text-white">
+                      {getSubjectDisplayName(subject)}
                     </option>
                   ))}
                 </select>
               </div>
               
               {/* Section Buttons - Only show when a subject is selected */}
-              {selectedSubject && availableSections.length > 0 && (
+              {selectedSubject && availableSections.length > 0 && !loading && (
                 <div className="mb-3">
                   <label className="block text-xs text-white/70 mb-1.5">Select Section:</label>
                   <div className="flex flex-wrap gap-2">
@@ -538,15 +686,16 @@ const CalendarWidget = ({ professorId }) => {
                       <button
                         key={index}
                         onClick={() => handleSectionClick(section)}
+                        disabled={loading}
                         className={`px-3 py-2 text-xs rounded transition-colors flex flex-col items-center ${
                           selectedSection === section 
                             ? 'bg-[#767EE0] text-white' 
                             : 'bg-[#15151C] text-white/70 hover:bg-[#1E1E24]'
-                        }`}
+                        } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        <span>{getSectionDisplayName(section)}</span>
+                        <span>Section {section}</span>
                         <span className="text-[10px] opacity-80">
-                          {getSectionStudentCount(section)} student(s)
+                          {getSectionStudentCount(section)} student(s) absent/late
                         </span>
                       </button>
                     ))}
@@ -555,7 +704,7 @@ const CalendarWidget = ({ professorId }) => {
               )}
               
               {/* Status Summary - Only show when a section is selected */}
-              {isSectionSelected && (
+              {isSectionSelected && !loading && (
                 <div className="flex gap-4 text-[10px]">
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-[#A15353]"></div>
@@ -575,7 +724,12 @@ const CalendarWidget = ({ professorId }) => {
 
             {/* Modal body - Student cards (only show when section is selected) */}
             <div className="p-3 overflow-y-auto max-h-[60vh]">
-              {!selectedSubject ? (
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#767EE0] mx-auto mb-3"></div>
+                  <p className="text-sm text-white/60">Loading attendance data...</p>
+                </div>
+              ) : !selectedSubject ? (
                 <div className="text-center py-4">
                   <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -592,22 +746,23 @@ const CalendarWidget = ({ professorId }) => {
                     {availableSections.length} section(s) available for {selectedSubject}
                   </p>
                 </div>
-              ) : getFilteredAbsences().length > 0 ? (
+              ) : studentData.length > 0 ? (
                 <div className="space-y-2">
                   <div className="text-xs text-white/60 mb-2">
-                    Showing students for <span className="text-[#767EE0]">{selectedSubject}</span> - <span className="text-[#767EE0]">{selectedSection}</span>
+                    Showing absent/late students for <span className="text-[#767EE0]">{selectedSubject}</span> - <span className="text-[#767EE0]">Section {selectedSection}</span>
                   </div>
-                  {getFilteredAbsences().map((absence) => {
-                    const statusBadge = getStudentStatusBadge(absence.status);
+                  {studentData.map((student) => {
+                    const statusBadge = getStudentStatusBadge(student.status);
                     return (
                       <div 
-                        key={absence.id} 
+                        key={`${student.id}-${student.student_ID}`} 
                         className="bg-[#15151C] rounded border border-white/5 p-2 hover:border-white/10 transition-colors"
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="text-xs font-semibold text-white">{absence.studentName}</p>
-                            <p className="text-[10px] text-white/50 mt-0.5">ID: {absence.id}</p>
+                            <p className="text-xs font-semibold text-white">{formatStudentName(student)}</p>
+                            <p className="text-[10px] text-white/50 mt-0.5">ID: {student.student_ID}</p>
+                            <p className="text-[10px] text-white/40 mt-0.5">Class: {student.tracked_yearandsec}</p>
                           </div>
                           <div className={`px-2 py-0.5 rounded text-[9px] border ${statusBadge.bgColor} ${statusBadge.textColor} ${statusBadge.borderColor}`}>
                             {statusBadge.text}
@@ -622,9 +777,9 @@ const CalendarWidget = ({ professorId }) => {
                   <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-sm text-white/60">No absences or lateness recorded</p>
+                  <p className="text-sm text-white/60">No absent or late students</p>
                   <p className="text-xs text-white/40 mt-1">
-                    All students are present in {selectedSection} for {selectedSubject}
+                    All students are present in Section {selectedSection} for {selectedSubject}
                   </p>
                 </div>
               )}

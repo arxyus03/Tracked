@@ -84,18 +84,30 @@ export default function SubjectAnalyticsStudent() {
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.weeks) {
-          // Format the data for the chart
-          const formattedWeeks = data.weeks.map(week => ({
-            week: week.week,
-            score: week.score,
-            activities: week.activities,
-            submitted: week.submitted,
-            completion_rate: week.completion_rate,
-            average_score: week.average_score,
-            late: week.late
-          }));
-          
+        if (data.success && data.weeks && Array.isArray(data.weeks)) {
+          // Format the data for the chart with proper validation
+          const formattedWeeks = data.weeks.map(week => {
+            // Ensure all required values are numbers, not NaN
+            const weekNumber = Number(week.week) || 0;
+            const score = Number(week.score) || 0;
+            const activities = Number(week.activities) || 0;
+            const submitted = Number(week.submitted) || 0;
+            const completionRate = Number(week.completion_rate) || 0;
+            const averageScore = Number(week.average_score) || 0;
+            const late = Number(week.late) || 0;
+            
+            // Return validated data with fallbacks
+            return {
+              week: weekNumber,
+              score: Math.max(0, score), // Ensure non-negative
+              activities: Math.max(0, activities),
+              submitted: Math.max(0, submitted),
+              completion_rate: Math.max(0, Math.min(100, completionRate)), // Clamp 0-100
+              average_score: Math.max(0, Math.min(100, averageScore)), // Clamp 0-100
+              late: Math.max(0, late)
+            };
+          }).filter(week => week.week > 0); // Filter out invalid weeks
+            
           setPerformanceTrend(formattedWeeks);
         } else {
           // Fallback to dummy data if no real data
@@ -113,18 +125,18 @@ export default function SubjectAnalyticsStudent() {
   // Dummy data fallback
   const generateDummyPerformanceTrend = () => {
     const weeks = [
-      { week: 1, score: 65, activities: 3 },
-      { week: 2, score: 72, activities: 4 },
-      { week: 3, score: 68, activities: 3 },
-      { week: 4, score: 75, activities: 5 },
-      { week: 5, score: 78, activities: 4 },
-      { week: 6, score: 82, activities: 5 },
-      { week: 7, score: 85, activities: 6 },
-      { week: 8, score: 88, activities: 4 },
-      { week: 9, score: 90, activities: 5 },
-      { week: 10, score: 92, activities: 6 },
-      { week: 11, score: 88, activities: 4 },
-      { week: 12, score: 91, activities: 5 },
+      { week: 1, score: 65, activities: 3, submitted: 3, completion_rate: 100, average_score: 65, late: 0 },
+      { week: 2, score: 72, activities: 4, submitted: 4, completion_rate: 100, average_score: 72, late: 0 },
+      { week: 3, score: 68, activities: 3, submitted: 3, completion_rate: 100, average_score: 68, late: 1 },
+      { week: 4, score: 75, activities: 5, submitted: 5, completion_rate: 100, average_score: 75, late: 0 },
+      { week: 5, score: 78, activities: 4, submitted: 4, completion_rate: 100, average_score: 78, late: 0 },
+      { week: 6, score: 82, activities: 5, submitted: 5, completion_rate: 100, average_score: 82, late: 0 },
+      { week: 7, score: 85, activities: 6, submitted: 6, completion_rate: 100, average_score: 85, late: 0 },
+      { week: 8, score: 88, activities: 4, submitted: 4, completion_rate: 100, average_score: 88, late: 1 },
+      { week: 9, score: 90, activities: 5, submitted: 5, completion_rate: 100, average_score: 90, late: 0 },
+      { week: 10, score: 92, activities: 6, submitted: 6, completion_rate: 100, average_score: 92, late: 0 },
+      { week: 11, score: 88, activities: 4, submitted: 4, completion_rate: 100, average_score: 88, late: 0 },
+      { week: 12, score: 91, activities: 5, submitted: 5, completion_rate: 100, average_score: 91, late: 0 },
     ];
     setPerformanceTrend(weeks);
   };
@@ -412,7 +424,7 @@ export default function SubjectAnalyticsStudent() {
           )}
 
           {/* Performance Trend Chart */}
-          {!loading && currentSubject && (
+          {!loading && currentSubject && performanceTrend.length > 0 && (
             <div className="mb-6">
               <PerformanceLineChart 
                 performanceTrend={performanceTrend} 

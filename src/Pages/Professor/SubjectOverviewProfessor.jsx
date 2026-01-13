@@ -55,51 +55,42 @@ export default function SubjectOverviewProfessor() {
   const fetchClassData = async () => {
     setLoading(true);
     try {
-      const classResponse = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_students_by_section.php?subject_code=${subjectCode}`
+      const professorId = getProfessorId();
+      
+      // Fetch all data at once
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/SubjectOverviewProfDB/get_class_overview_data.php?subject_code=${subjectCode}&professor_ID=${professorId}`
       );
       
-      if (classResponse.ok) {
-        const classResult = await classResponse.json();
-        if (classResult.success) {
-          setClassInfo(classResult.class_info);
-          await Promise.all([
-            fetchClassStatistics(classResult.class_info),
-            fetchAllStudentsWithDetails(classResult.class_info)
-          ]);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setClassInfo(result.class_info);
+          setClassStats(result.class_stats);
+          
+          // Transform student performances for the ranking component
+          const studentsWithStatus = result.student_performances.map(student => ({
+            id: student.student_ID,
+            name: student.name,
+            average: student.final_performance,
+            status: getStudentStatus(student.final_performance),
+            email: student.email,
+            academic_percentage: student.academic_percentage,
+            attendance_percentage: student.attendance_percentage
+          }));
+          
+          setStudentPerformance(studentsWithStatus);
         }
       }
     } catch (error) {
       console.error('Error fetching class data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchClassStatistics = async (classInfo) => {
-    try {
-      const professorId = getProfessorId();
-      const response = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_class_statistics.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${professorId}`
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setClassStats(result.stats);
-        } else {
-          setClassStats({
-            overallAverage: 85.5,
-            attendanceRate: 92.3,
-            totalStudents: 35,
-            atRiskStudents: 5,
-            passedStudents: 28,
-            failingStudents: 2
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching class statistics:', error);
+      // Fallback to dummy data for development
+      setClassInfo({
+        subject_code: subjectCode,
+        subject: 'Sample Subject',
+        section: 'A',
+        year_level: '4th Year'
+      });
       setClassStats({
         overallAverage: 85.5,
         attendanceRate: 92.3,
@@ -108,32 +99,9 @@ export default function SubjectOverviewProfessor() {
         passedStudents: 28,
         failingStudents: 2
       });
-    }
-  };
-
-  const fetchAllStudentsWithDetails = async (classInfo) => {
-    try {
-      const professorId = getProfessorId();
-      const response = await fetch(
-        `https://tracked.6minds.site/Professor/SubjectDetailsDB/get_all_students_with_details.php?subject_code=${subjectCode}&section=${classInfo.section}&professor_ID=${professorId}`
-      );
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          const studentsWithStatus = result.students.map(student => ({
-            ...student,
-            status: getStudentStatus(student.average)
-          }));
-          setStudentPerformance(studentsWithStatus);
-        } else {
-          const dummyStudents = generateDummyStudents();
-          setStudentPerformance(dummyStudents);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching all students:', error);
-      setStudentPerformance(generateDummyStudents().slice(0, 6));
+      setStudentPerformance(generateDummyStudents());
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -149,7 +117,9 @@ export default function SubjectOverviewProfessor() {
       name,
       average: Math.floor(Math.random() * (100 - 50) + 50),
       status: getStudentStatus(Math.floor(Math.random() * (100 - 50) + 50)),
-      email: `${name.toLowerCase().replace(/\s+/g, '.')}@university.edu`
+      email: `${name.toLowerCase().replace(/\s+/g, '.')}@university.edu`,
+      academic_percentage: Math.floor(Math.random() * (100 - 50) + 50),
+      attendance_percentage: Math.floor(Math.random() * (100 - 70) + 70)
     }));
   };
 
@@ -190,11 +160,12 @@ export default function SubjectOverviewProfessor() {
   };
 
   const getClassStatus = () => {
-    const { overallAverage, attendanceRate, atRiskStudents } = classStats;
+    // Use the calculated overall average from the database
+    const overallAverage = classStats.overallAverage;
     
-    if (overallAverage >= 85 && attendanceRate >= 90 && atRiskStudents <= 2) {
+    if (overallAverage >= 80) {
       return { status: "Excellent", color: "#00A15D", bgColor: "#00A15D/20" };
-    } else if (overallAverage >= 75 && attendanceRate >= 80 && atRiskStudents <= 5) {
+    } else if (overallAverage >= 70) {
       return { status: "Good", color: "#FFA600", bgColor: "#FFA600/20" };
     } else {
       return { status: "Needs Attention", color: "#A15353", bgColor: "#A15353/20" };
@@ -326,7 +297,7 @@ export default function SubjectOverviewProfessor() {
           </div>
 
           {/* Use the ActivitiesCard component */}
-          <ActivitiesCard classStats={classStats} subjectCode={subjectCode} />
+          <ActivitiesCard subjectCode={subjectCode} />
 
           {/* Use the ClassRankingOverall component */}
           <ClassRankingOverall

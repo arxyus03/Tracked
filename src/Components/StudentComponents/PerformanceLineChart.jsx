@@ -11,53 +11,87 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
   const svgRef = useRef(null);
   const tooltipRef = useRef(null);
 
-  // Calculate trend insights
+  // Validate and format performanceTrend data to prevent NaN errors
+  const validatedPerformanceTrend = useMemo(() => {
+    if (!performanceTrend || !Array.isArray(performanceTrend)) {
+      return [];
+    }
+    
+    // Filter out invalid data and ensure all values are numbers
+    return performanceTrend
+      .filter(week => week && typeof week === 'object')
+      .map(week => ({
+        week: Number(week.week) || 0,
+        score: Number(week.score) || 0,
+        activities: Number(week.activities) || 0,
+        submitted: Number(week.submitted) || 0,
+        completion_rate: Number(week.completion_rate) || 0,
+        average_score: Number(week.average_score) || 0,
+        late: Number(week.late) || 0
+      }))
+      .filter(week => week.week > 0) // Remove weeks with invalid week numbers
+      .sort((a, b) => a.week - b.week); // Sort by week number
+  }, [performanceTrend]);
+
+  // Use validated data
+  const weeks = validatedPerformanceTrend;
+
+  // Calculate trend insights with safety checks
   const trendInsights = useMemo(() => {
-    if (performanceTrend.length === 0) {
+    if (weeks.length === 0) {
       return {
         currentWeekScore: 0,
         previousWeekScore: 0,
         trend: 'stable',
         trendPercentage: 0,
         highestWeek: null,
-        lowestWeek: null
+        lowestWeek: null,
+        currentWeekNumber: 0
       };
     }
 
-    const currentWeek = performanceTrend[performanceTrend.length - 1];
-    const previousWeek = performanceTrend[performanceTrend.length - 2] || currentWeek;
+    const currentWeek = weeks[weeks.length - 1];
+    const previousWeek = weeks[weeks.length - 2] || currentWeek;
     
-    const trendPercentage = previousWeek.score > 0 
-      ? ((currentWeek.score - previousWeek.score) / previousWeek.score * 100).toFixed(1)
-      : 0;
+    // Calculate trend percentage with validation
+    let trendPercentage = 0;
+    if (previousWeek.score > 0) {
+      const calculatedPercentage = ((currentWeek.score - previousWeek.score) / previousWeek.score * 100);
+      trendPercentage = isNaN(calculatedPercentage) ? 0 : Number(calculatedPercentage.toFixed(1));
+    }
     
-    const highestWeek = performanceTrend.reduce((max, week) => 
-      week.score > max.score ? week : max
-    );
+    // Find highest and lowest weeks safely
+    const highestWeek = weeks.reduce((max, week) => {
+      if (!max || week.score > max.score) return week;
+      return max;
+    }, weeks[0]);
     
-    const lowestWeek = performanceTrend.reduce((min, week) => 
-      week.score < min.score ? week : min
-    );
+    const lowestWeek = weeks.reduce((min, week) => {
+      if (!min || week.score < min.score) return week;
+      return min;
+    }, weeks[0]);
 
     return {
       currentWeekScore: currentWeek.score,
       previousWeekScore: previousWeek.score,
-      trend: currentWeek.score > previousWeek.score ? 'up' : currentWeek.score < previousWeek.score ? 'down' : 'stable',
+      trend: currentWeek.score > previousWeek.score ? 'up' : 
+             currentWeek.score < previousWeek.score ? 'down' : 'stable',
       trendPercentage: Math.abs(trendPercentage),
       highestWeek,
       lowestWeek,
       currentWeekNumber: currentWeek.week
     };
-  }, [performanceTrend]);
+  }, [weeks]);
 
-  // Chart dimensions
+  // Chart dimensions - add validation for innerWidth calculation
   const chartHeight = 280;
   const margin = { top: 25, right: 30, bottom: 40, left: 40 };
-  const innerWidth = 1200;
+  
+  // Ensure innerWidth calculation doesn't divide by zero
+  const innerWidth = weeks.length > 1 ? Math.max(1200, weeks.length * 80) : 1200;
   const innerHeight = chartHeight - margin.top - margin.bottom;
   
   const maxScore = 100;
-  const weeks = performanceTrend;
 
   // Handle mouse events for hover
   const handleMouseEnter = (week, event) => {
@@ -79,23 +113,40 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
       // Calculate change from previous week
       const weekIndex = weeks.findIndex(w => w.week === week);
       const previousWeekData = weeks[weekIndex - 1];
-      const performanceChange = previousWeekData 
-        ? ((weekData.score - previousWeekData.score) / previousWeekData.score * 100).toFixed(1)
-        : 0;
+      
+      let performanceChange = 0;
+      if (previousWeekData && previousWeekData.score > 0) {
+        const calculatedChange = ((weekData.score - previousWeekData.score) / previousWeekData.score * 100);
+        performanceChange = isNaN(calculatedChange) ? 0 : Number(calculatedChange.toFixed(1));
+      }
       
       setSelectedWeekData({
         ...weekData,
-        performanceChange: parseFloat(performanceChange)
+        performanceChange
       });
       setIsPopupOpen(true);
     }
   };
 
-  // Calculate positions
-  const xScale = (week) => (week - 1) * (innerWidth / (weeks.length - 1));
-  const yScale = (score) => innerHeight - (score / maxScore) * innerHeight;
+  // Calculate positions with validation
+  const xScale = (week) => {
+    if (weeks.length <= 1) return 0;
+    const weekNumber = Number(week) || 1;
+    const minWeek = weeks[0].week;
+    const maxWeek = weeks[weeks.length - 1].week;
+    const weekRange = maxWeek - minWeek;
+    
+    if (weekRange === 0) return 0;
+    
+    return ((weekNumber - minWeek) / weekRange) * innerWidth;
+  };
 
-  // Create smooth line path
+  const yScale = (score) => {
+    const validatedScore = Math.max(0, Math.min(100, Number(score) || 0));
+    return innerHeight - (validatedScore / maxScore) * innerHeight;
+  };
+
+  // Create smooth line path with validation
   const createSmoothLinePath = () => {
     if (weeks.length < 2) return '';
     
@@ -106,6 +157,11 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
       const prevY = margin.top + yScale(weeks[i-1].score);
       const currX = margin.left + xScale(weeks[i].week);
       const currY = margin.top + yScale(weeks[i].score);
+      
+      // Validate coordinates are numbers
+      if (isNaN(prevX) || isNaN(prevY) || isNaN(currX) || isNaN(currY)) {
+        continue;
+      }
       
       const cp1x = prevX + (currX - prevX) * 0.25;
       const cp1y = prevY;
@@ -126,27 +182,21 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
   const TrendArrow = ({ direction, color, size = 4 }) => {
     if (direction === 'up') {
       return (
-        <div className={`w-${size} h-${size}`} style={{ color }}>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 4l-8 8h6v8h4v-8h6z"/>
-          </svg>
-        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-${size} h-${size}`} style={{ color }}>
+          <path d="M12 4l-8 8h6v8h4v-8h6z"/>
+        </svg>
       );
     } else if (direction === 'down') {
       return (
-        <div className={`w-${size} h-${size}`} style={{ color }}>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 20l8-8h-6V4h-4v8H4z"/>
-          </svg>
-        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-${size} h-${size}`} style={{ color }}>
+          <path d="M12 20l8-8h-6V4h-4v8H4z"/>
+        </svg>
       );
     }
     return (
-      <div className={`w-${size} h-${size}`} style={{ color }}>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/>
-        </svg>
-      </div>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-${size} h-${size}`} style={{ color }}>
+        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/>
+      </svg>
     );
   };
 
@@ -202,7 +252,7 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                 className="w-8 h-8 opacity-40"
               />
             </div>
-            <p className="text-[#FFFFFF]/60">Loading performance data...</p>
+            <p className="text-[#FFFFFF]/60">No performance data available for this subject</p>
           </div>
         </div>
       </div>
@@ -302,32 +352,37 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                   </defs>
 
                   {/* Grid lines */}
-                  {[0, 25, 50, 75, 85, 100].map((score) => (
-                    <g key={`grid-${score}`}>
-                      <line
-                        x1={margin.left}
-                        y1={margin.top + yScale(score)}
-                        x2={innerWidth + margin.left}
-                        y2={margin.top + yScale(score)}
-                        stroke="#2A2A35"
-                        strokeWidth={1}
-                        strokeDasharray={score === 75 || score === 85 ? "5,5" : "2,2"}
-                        opacity={0.5}
-                      />
-                      <text
-                        x={margin.left - 10}
-                        y={margin.top + yScale(score)}
-                        textAnchor="end"
-                        dominantBaseline="middle"
-                        fill="#FFFFFF"
-                        fontSize="10"
-                        fontWeight={score === 75 || score === 85 ? "bold" : "normal"}
-                        opacity={0.7}
-                      >
-                        {score}%
-                      </text>
-                    </g>
-                  ))}
+                  {[0, 25, 50, 75, 85, 100].map((score) => {
+                    const y = margin.top + yScale(score);
+                    if (isNaN(y)) return null;
+                    
+                    return (
+                      <g key={`grid-${score}`}>
+                        <line
+                          x1={margin.left}
+                          y1={y}
+                          x2={innerWidth + margin.left}
+                          y2={y}
+                          stroke="#2A2A35"
+                          strokeWidth={1}
+                          strokeDasharray={score === 75 || score === 85 ? "5,5" : "2,2"}
+                          opacity={0.5}
+                        />
+                        <text
+                          x={margin.left - 10}
+                          y={y}
+                          textAnchor="end"
+                          dominantBaseline="middle"
+                          fill="#FFFFFF"
+                          fontSize="10"
+                          fontWeight={score === 75 || score === 85 ? "bold" : "normal"}
+                          opacity={0.7}
+                        >
+                          {score}%
+                        </text>
+                      </g>
+                    );
+                  })}
 
                   {/* Orange line at 75% */}
                   <line
@@ -375,10 +430,13 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                   {/* X-axis labels */}
                   {weeks.map((week, index) => {
                     if (index % 2 === 0) {
+                      const x = margin.left + xScale(week.week);
+                      if (isNaN(x)) return null;
+                      
                       return (
                         <text
                           key={`label-${week.week}`}
-                          x={margin.left + xScale(week.week)}
+                          x={x}
                           y={chartHeight - 10}
                           textAnchor="middle"
                           fill="#FFFFFF"
@@ -396,6 +454,10 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                   {weeks.map((week) => {
                     const x = margin.left + xScale(week.week);
                     const y = margin.top + yScale(week.score);
+                    
+                    // Skip if coordinates are invalid
+                    if (isNaN(x) || isNaN(y)) return null;
+                    
                     const isHovered = hoveredWeek === week.week;
                     const isCurrent = isCurrentWeek(week.week);
                     const scoreColor = week.score >= 85 ? "#00A15D" : 

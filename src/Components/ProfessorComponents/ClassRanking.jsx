@@ -11,380 +11,84 @@ const ClassRanking = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activityFilter, setActivityFilter] = useState('All');
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
+  const [subjects, setSubjects] = useState([]);
+  const [performers, setPerformers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [professorId, setProfessorId] = useState('');
+  const [averagePerformance, setAveragePerformance] = useState(0);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [activitiesData, setActivitiesData] = useState({});
 
-  // Dummy data for lowest performers with detailed breakdown
-  const lowestPerformers = [
-    {
-      id: 1,
-      name: "Juan Dela Cruz",
-      email: "juan.delacruz@university.edu",
-      subject: "Web Development",
-      section: "BSIT 3-1",
-      average: 68,
-      briefReason: "Multiple performance issues",
-      details: {
-        attendance: {
-          rate: 65,
-          absences: 8,
-          lates: 4,
-          totalClasses: 30,
-          present: 20
-        },
-        grades: {
-          quizzes: 62,
-          assignments: 70,
-          projects: 75
-        },
-        activities: {
-          submitted: 12,
-          total: 18,
-          missed: 6
-        }
-      }
-    },
-    {
-      id: 2,
-      name: "Maria Santos",
-      email: "maria.santos@university.edu",
-      subject: "Database Management",
-      section: "BSIT 3-2",
-      average: 72,
-      briefReason: "Struggles with SQL queries",
-      details: {
-        attendance: {
-          rate: 80,
-          absences: 4,
-          lates: 2,
-          totalClasses: 30,
-          present: 24
-        },
-        grades: {
-          quizzes: 68,
-          assignments: 75,
-          projects: 78
-        },
-        activities: {
-          submitted: 14,
-          total: 18,
-          missed: 4
-        }
-      }
-    },
-    {
-      id: 3,
-      name: "Pedro Reyes",
-      email: "pedro.reyes@university.edu",
-      subject: "Data Structures",
-      section: "BSCS 2-1",
-      average: 65,
-      briefReason: "Algorithm understanding issues",
-      details: {
-        attendance: {
-          rate: 70,
-          absences: 6,
-          lates: 3,
-          totalClasses: 30,
-          present: 21
-        },
-        grades: {
-          quizzes: 60,
-          assignments: 65,
-          projects: 70
-        },
-        activities: {
-          submitted: 10,
-          total: 18,
-          missed: 8
-        }
-      }
-    },
-    {
-      id: 4,
-      name: "Ana Gonzales",
-      email: "ana.gonzales@university.edu",
-      subject: "Web Development",
-      section: "BSIT 3-1",
-      average: 70,
-      briefReason: "Inconsistent submissions",
-      details: {
-        attendance: {
-          rate: 85,
-          absences: 3,
-          lates: 1,
-          totalClasses: 30,
-          present: 26
-        },
-        grades: {
-          quizzes: 75,
-          assignments: 72,
-          projects: 68
-        },
-        activities: {
-          submitted: 13,
-          total: 18,
-          missed: 5
-        }
-      }
-    },
-    {
-      id: 5,
-      name: "Luis Torres",
-      email: "luis.torres@university.edu",
-      subject: "Data Structures",
-      section: "BSCS 2-1",
-      average: 75,
-      briefReason: "Poor quiz performance",
-      details: {
-        attendance: {
-          rate: 90,
-          absences: 2,
-          lates: 0,
-          totalClasses: 30,
-          present: 28
-        },
-        grades: {
-          quizzes: 65,
-          assignments: 80,
-          projects: 82
-        },
-        activities: {
-          submitted: 16,
-          total: 18,
-          missed: 2
-        }
-      }
-    },
-    {
-      id: 6,
-      name: "Sofia Reyes",
-      email: "sofia.reyes@university.edu",
-      subject: "Database Management",
-      section: "BSIT 3-2",
-      average: 69,
-      briefReason: "Missing lab exercises",
-      details: {
-        attendance: {
-          rate: 75,
-          absences: 5,
-          lates: 2,
-          totalClasses: 30,
-          present: 23
-        },
-        grades: {
-          quizzes: 70,
-          assignments: 68,
-          projects: 72
-        },
-        activities: {
-          submitted: 11,
-          total: 18,
-          missed: 7
-        }
-      }
-    }
-  ];
-
-  // Dummy data for highest performers with detailed breakdown
-  const highestPerformers = [
-    {
-      id: 1,
-      name: "Miguel Tan",
-      email: "miguel.tan@university.edu",
-      subject: "Web Development",
-      section: "BSIT 3-1",
-      average: 98,
-      briefReason: "Excellent all-around performance",
-      details: {
-        attendance: {
-          rate: 100,
-          absences: 0,
-          lates: 0,
-          totalClasses: 30,
-          present: 30
-        },
-        grades: {
-          quizzes: 100,
-          assignments: 97,
-          projects: 100
-        },
-        activities: {
-          submitted: 18,
-          total: 18,
-          missed: 0
-        }
-      }
-    },
-    {
-      id: 2,
-      name: "Anna Lim",
-      email: "anna.lim@university.edu",
-      subject: "Database Management",
-      section: "BSIT 3-2",
-      average: 96,
-      briefReason: "Strong project work",
-      details: {
-        attendance: {
-          rate: 95,
-          absences: 1,
-          lates: 0,
-          totalClasses: 30,
-          present: 29
-        },
-        grades: {
-          quizzes: 95,
-          assignments: 96,
-          projects: 98
-        },
-        activities: {
-          submitted: 18,
-          total: 18,
-          missed: 0
-        }
-      }
-    },
-    {
-      id: 3,
-      name: "Carlos Garcia",
-      email: "carlos.garcia@university.edu",
-      subject: "Data Structures",
-      section: "BSCS 2-1",
-      average: 97,
-      briefReason: "Consistent high scores",
-      details: {
-        attendance: {
-          rate: 100,
-          absences: 0,
-          lates: 0,
-          totalClasses: 30,
-          present: 30
-        },
-        grades: {
-          quizzes: 98,
-          assignments: 96,
-          projects: 99
-        },
-        activities: {
-          submitted: 18,
-          total: 18,
-          missed: 0
-        }
-      }
-    },
-    {
-      id: 4,
-      name: "Isabel Cruz",
-      email: "isabel.cruz@university.edu",
-      subject: "Web Development",
-      section: "BSIT 3-1",
-      average: 95,
-      briefReason: "Creative implementations",
-      details: {
-        attendance: {
-          rate: 95,
-          absences: 1,
-          lates: 0,
-          totalClasses: 30,
-          present: 29
-        },
-        grades: {
-          quizzes: 94,
-          assignments: 96,
-          projects: 97
-        },
-        activities: {
-          submitted: 17,
-          total: 18,
-          missed: 1
-        }
-      }
-    },
-    {
-      id: 5,
-      name: "James Wong",
-      email: "james.wong@university.edu",
-      subject: "Database Management",
-      section: "BSIT 3-2",
-      average: 94,
-      briefReason: "Theoretical mastery",
-      details: {
-        attendance: {
-          rate: 90,
-          absences: 2,
-          lates: 0,
-          totalClasses: 30,
-          present: 28
-        },
-        grades: {
-          quizzes: 96,
-          assignments: 92,
-          projects: 95
-        },
-        activities: {
-          submitted: 17,
-          total: 18,
-          missed: 1
-        }
-      }
-    },
-    {
-      id: 6,
-      name: "Elena Mendoza",
-      email: "elena.mendoza@university.edu",
-      subject: "Data Structures",
-      section: "BSCS 2-1",
-      average: 96,
-      briefReason: "Problem-solving excellence",
-      details: {
-        attendance: {
-          rate: 100,
-          absences: 0,
-          lates: 0,
-          totalClasses: 30,
-          present: 30
-        },
-        grades: {
-          quizzes: 97,
-          assignments: 95,
-          projects: 98
-        },
-        activities: {
-          submitted: 18,
-          total: 18,
-          missed: 0
-        }
-      }
-    }
-  ];
-
-  // Get unique subjects from both lists
-  const allSubjects = [...lowestPerformers, ...highestPerformers];
-  const uniqueSubjects = [...new Set(allSubjects.map(student => student.subject))];
-
-  // Initialize selectedSubject with the first available subject
   useEffect(() => {
-    if (uniqueSubjects.length > 0 && !selectedSubject) {
-      setSelectedSubject(uniqueSubjects[0]);
+    // Get professor ID from localStorage
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setProfessorId(user.id);
     }
-  }, [uniqueSubjects, selectedSubject]);
+  }, []);
 
-  // Filter performers based on selected subject
-  const getFilteredPerformers = () => {
-    const performers = viewMode === 'lowest' ? lowestPerformers : highestPerformers;
-    
-    if (!selectedSubject) {
-      return [];
+  useEffect(() => {
+    if (professorId) {
+      fetchSubjects();
     }
-    
-    return performers.filter(student => student.subject === selectedSubject);
+  }, [professorId]);
+
+  useEffect(() => {
+    if (professorId && selectedSubject) {
+      fetchRankingData();
+    }
+  }, [professorId, selectedSubject, viewMode]);
+
+  const fetchSubjects = async () => {
+    try {
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/DashboardProfDB/get_class_ranking.php?professor_ID=${professorId}`
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.subjects) {
+          setSubjects(result.subjects);
+          if (result.subjects.length > 0 && !selectedSubject) {
+            setSelectedSubject(result.subjects[0].subject_code);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredPerformers = getFilteredPerformers();
-  
-  // Calculate average for current filtered performers
-  const calculateAverage = () => {
-    if (filteredPerformers.length === 0) return 0;
-    const sum = filteredPerformers.reduce((acc, student) => acc + student.average, 0);
-    return Math.round(sum / filteredPerformers.length);
+  const fetchRankingData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `https://tracked.6minds.site/Professor/DashboardProfDB/get_class_ranking.php?professor_ID=${professorId}&subject_code=${selectedSubject}&type=${viewMode}&limit=3&get_subjects_only=1`
+      );
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setPerformers(result.students || []);
+          setAveragePerformance(result.average_performance || 0);
+          setTotalStudents(result.total_students || 0);
+          
+          // Generate activities for each student
+          const activities = {};
+          result.students?.forEach(student => {
+            activities[student.id] = generateDummyActivities(student.id);
+          });
+          setActivitiesData(activities);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching ranking data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Generate dummy activities for a student
@@ -457,10 +161,9 @@ const ClassRanking = () => {
   };
 
   const handleStudentClick = (student) => {
-    // Add generated activities to student object
     const studentWithActivities = {
       ...student,
-      activities: generateDummyActivities(student.id)
+      activities: activitiesData[student.id] || []
     };
     setSelectedStudent(studentWithActivities);
     setIsModalOpen(true);
@@ -509,7 +212,7 @@ const ClassRanking = () => {
     }
 
     // Activity submission issues
-    const activityStats = getActivityStatistics(student.activities);
+    const activityStats = getActivityStatistics(activitiesData[student.id] || []);
     if (activityStats.missed > 3) {
       recommendations.push("Several activities missed. May benefit from remedial activities or extended deadlines.");
       actions.remedial = true;
@@ -556,6 +259,35 @@ const ClassRanking = () => {
   const handleMaterialsClick = (student) => {
     alert(`Review materials sent to ${student.name} for ${student.subject}`);
   };
+
+  const getCurrentSubjectName = () => {
+    const subject = subjects.find(s => s.subject_code === selectedSubject);
+    return subject ? subject.subject : 'Select Subject';
+  };
+
+  const getCurrentSection = () => {
+    const subject = subjects.find(s => s.subject_code === selectedSubject);
+    return subject ? subject.section : '';
+  };
+
+  if (loading && !selectedSubject) {
+    return (
+      <div className="bg-[#15151C] rounded-lg shadow-lg p-3 mb-4 border border-white/10 overflow-hidden">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center">
+            <div className="flex justify-center items-center h-5 w-5 rounded-lg mr-2 bg-[#0F0F15]">
+              <img src={RankingIcon} alt="Ranking" className="h-3.5 w-3.5" />
+            </div>
+            <h2 className="font-bold text-sm text-[#FFFFFF]">Class Ranking</h2>
+          </div>
+        </div>
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#767EE0] mx-auto"></div>
+          <p className="text-sm text-white/60 mt-2">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -608,17 +340,17 @@ const ClassRanking = () => {
               backgroundSize: '1.5em 1.5em'
             }}
           >
-            {uniqueSubjects.map(subject => (
+            {subjects.map(subject => (
               <option 
-                key={subject} 
-                value={subject} 
+                key={subject.subject_code} 
+                value={subject.subject_code} 
                 className="bg-[#15151C] text-[#FFFFFF] hover:bg-[#767EE0] hover:text-white"
                 style={{
-                  backgroundColor: subject === selectedSubject ? '#767EE0' : '#15151C',
-                  color: subject === selectedSubject ? '#FFFFFF' : '#FFFFFF'
+                  backgroundColor: subject.subject_code === selectedSubject ? '#767EE0' : '#15151C',
+                  color: subject.subject_code === selectedSubject ? '#FFFFFF' : '#FFFFFF'
                 }}
               >
-                {subject}
+                {subject.subject} ({subject.section})
               </option>
             ))}
           </select>
@@ -626,7 +358,11 @@ const ClassRanking = () => {
 
         {/* Students List - Compact */}
         <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5 overflow-x-hidden">
-          {filteredPerformers.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#767EE0] mx-auto"></div>
+            </div>
+          ) : performers.length === 0 ? (
             <div className="text-center py-4 bg-[#0F0F15] rounded-lg border border-white/5">
               <div className="text-[#767EE0]/40 mb-2">
                 <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -636,7 +372,7 @@ const ClassRanking = () => {
               <p className="text-xs text-white/50">No students found</p>
             </div>
           ) : (
-            filteredPerformers.map((student, index) => (
+            performers.map((student, index) => (
               <button
                 key={student.id}
                 onClick={() => handleStudentClick(student)}
@@ -662,6 +398,9 @@ const ClassRanking = () => {
                           {student.average}%
                         </p>
                       </div>
+                      <p className="text-[10px] text-white/60 truncate mt-0.5">
+                        {student.email}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -671,10 +410,18 @@ const ClassRanking = () => {
         </div>
 
         {/* Footer Stats */}
-        <div className="flex justify-center items-center text-[10px] text-white/60 mt-3 pt-2 border-t border-white/10">
+        <div className="flex justify-between items-center text-[10px] text-white/60 mt-3 pt-2 border-t border-white/10">
           <span className="text-[#FFFFFF]/70">
-            <span className="font-medium text-[#FFFFFF]">{selectedSubject || 'Select Subject'}</span>
+            <span className="font-medium text-[#FFFFFF]">{getCurrentSubjectName()}</span>
+            {getCurrentSection() && (
+              <span className="ml-1 text-white/60">({getCurrentSection()})</span>
+            )}
           </span>
+          <div className="flex items-center gap-2">
+            <span className="text-white/50">Avg: <span className="font-medium text-white">{averagePerformance}%</span></span>
+            <span className="text-white/30">|</span>
+            <span className="text-white/50">Total: <span className="font-medium text-white">{totalStudents}</span></span>
+          </div>
         </div>
       </div>
 
@@ -691,7 +438,7 @@ const ClassRanking = () => {
                       ? 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30'
                       : 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30'
                   }`}>
-                    {filteredPerformers.findIndex(s => s.id === selectedStudent.id) + 1}
+                    {performers.findIndex(s => s.id === selectedStudent.id) + 1}
                   </div>
                   <div>
                     <h3 className="font-bold text-sm text-[#FFFFFF]">{selectedStudent.name}</h3>
@@ -928,7 +675,7 @@ const ClassRanking = () => {
                                 {option}
                               </button>
                             ))}
-                          </div>
+                        </div>
                         )}
                       </div>
 
