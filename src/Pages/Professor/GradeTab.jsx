@@ -16,6 +16,7 @@ import AnalyticsIcon from '../../assets/Analytics.svg';
 import Attendance from "../../assets/Attendance.svg";
 import Copy from '../../assets/Copy.svg';
 import SubjectOverview from "../../assets/SubjectOverview.svg";
+import TrackEdLogo from '../../assets/New-FullBlack-TrackEdLogo.png'; // Add this line
 
 export default function GradeTab() {
   const [isOpen, setIsOpen] = useState(true);
@@ -268,7 +269,26 @@ export default function GradeTab() {
       const pageWidth = pdf.internal.pageSize.width;
       const pageHeight = pdf.internal.pageSize.height;
       
-      // ========== HEADER SECTION ==========
+      // ========== HEADER SECTION WITH LOGO ==========
+      // Try to add the logo
+      try {
+        // Add logo to PDF - adjust width and height here
+        // Current size: width=120, height=40
+        // To change size, modify these numbers:
+        // - Width (120): horizontal size in points
+        // - Height (40): vertical size in points
+        const logoWidth = 120;  // Change this to adjust width
+        const logoHeight = 40;  // Change this to adjust height
+        
+        pdf.addImage(TrackEdLogo, 'PNG', margin, yPosition, logoWidth, logoHeight);
+        yPosition += 50; // Extra space for logo (adjust this too if needed)
+      } catch (logoError) {
+        console.warn('Could not add logo to PDF:', logoError);
+        // Continue without logo if there's an error
+        yPosition += 30;
+      }
+      
+      // Title
       pdf.setFontSize(20);
       pdf.setTextColor(70, 87, 70);
       pdf.setFont('helvetica', 'bold');
