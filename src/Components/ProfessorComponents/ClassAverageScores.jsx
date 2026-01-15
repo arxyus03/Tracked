@@ -1,13 +1,13 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import AnalyticsIcon from '../../assets/Analytics.svg';
 import ArrowUp from '../../assets/ArrowUp.svg';
 import ArrowDown from '../../assets/ArrowDown.svg';
 
 const ClassAverageScores = ({ 
-  activitiesData,
   selectedType = 'assignment',
   onTypeChange,
-  subjectCode
+  subjectCode,
+  isDarkMode = false // Added theme prop
 }) => {
   const [hoveredActivity, setHoveredActivity] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -40,6 +40,55 @@ const ClassAverageScores = ({
     { value: 'Submitted', label: 'Submitted' },
     { value: 'Missed', label: 'Missed' }
   ];
+
+  // Theme-based styles
+  const getCardBackground = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/60" : "text-gray-600";
+  };
+
+  const getInputBackground = () => {
+    return isDarkMode ? "bg-[#2A2A35]" : "bg-gray-100";
+  };
+
+  const getInputBorder = () => {
+    return isDarkMode ? "border-[#3A3A45]" : "border-gray-300";
+  };
+
+  const getInputHover = () => {
+    return isDarkMode ? "hover:bg-[#3A3A45]" : "hover:bg-gray-200";
+  };
+
+  const getDropdownBackground = () => {
+    return isDarkMode ? "bg-[#2A2A35]" : "bg-white";
+  };
+
+  const getDropdownBorder = () => {
+    return isDarkMode ? "border-[#3A3A45]" : "border-gray-200";
+  };
+
+  const getDropdownHover = () => {
+    return isDarkMode ? "hover:bg-[#3A3A45]" : "hover:bg-gray-100";
+  };
+
+  const getTooltipBackground = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-white";
+  };
+
+  const getTooltipBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/20" : "border-gray-200";
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -310,10 +359,10 @@ const ClassAverageScores = ({
   // Get status badge color
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Submitted': return 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30';
-      case 'Missed': return 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30';
-      case 'Partially Submitted': return 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30';
-      default: return 'bg-gray-700 text-gray-300 border border-gray-600';
+      case 'Submitted': return isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30' : 'bg-[#00A15D]/10 text-[#00A15D] border border-[#00A15D]/20';
+      case 'Missed': return isDarkMode ? 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30' : 'bg-[#A15353]/10 text-[#A15353] border border-[#A15353]/20';
+      case 'Partially Submitted': return isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30' : 'bg-[#FFA600]/10 text-[#FFA600] border border-[#FFA600]/20';
+      default: return isDarkMode ? 'bg-gray-700 text-gray-300 border border-gray-600' : 'bg-gray-200 text-gray-600 border border-gray-300';
     }
   };
 
@@ -392,14 +441,13 @@ const ClassAverageScores = ({
 
   // Responsive font sizes
   const scoreLabelFontSize = isMobile ? "9" : "10";
-  const barLabelFontSize = isMobile ? "10" : "11";
   const barScoreFontSize = isMobile ? "10" : "11";
   const activityLabelFontSize = isMobile ? "9" : "11";
 
   if (loading) {
     return (
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
-        <div className="p-5 border-b border-[#FFFFFF]/10">
+      <div className={`${getCardBackground()} rounded-xl border ${getCardBorder()}`}>
+        <div className={`p-5 border-b ${getCardBorder()}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center">
@@ -407,11 +455,12 @@ const ClassAverageScores = ({
                   src={AnalyticsIcon} 
                   alt="Analytics" 
                   className="w-5 h-5"
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
               </div>
               <div>
-                <h3 className="font-bold text-lg text-[#FFFFFF]">Class Average Scores</h3>
-                <p className="text-sm text-[#FFFFFF]/60">View class average scores for different activities</p>
+                <h3 className={`font-bold text-lg ${getTextColor()}`}>Class Average Scores</h3>
+                <p className={`text-sm ${getSecondaryTextColor()}`}>View class average scores for different activities</p>
               </div>
             </div>
             
@@ -425,7 +474,7 @@ const ClassAverageScores = ({
         <div className="h-48 flex flex-col items-center justify-center gap-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#767EE0] mx-auto mb-3"></div>
-            <p className="text-sm sm:text-base text-[#FFFFFF]/60">Loading {getSelectedTypeLabel()} data...</p>
+            <p className={`text-sm sm:text-base ${getSecondaryTextColor()}`}>Loading {getSelectedTypeLabel()} data...</p>
           </div>
         </div>
       </div>
@@ -436,8 +485,8 @@ const ClassAverageScores = ({
     const selectedTypeLabel = activityTypes.find(t => t.value === selectedType)?.label || selectedType;
     
     return (
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
-        <div className="p-5 border-b border-[#FFFFFF]/10">
+      <div className={`${getCardBackground()} rounded-xl border ${getCardBorder()}`}>
+        <div className={`p-5 border-b ${getCardBorder()}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center">
@@ -445,11 +494,12 @@ const ClassAverageScores = ({
                   src={AnalyticsIcon} 
                   alt="Analytics" 
                   className="w-5 h-5"
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
               </div>
               <div>
-                <h3 className="font-bold text-lg text-[#FFFFFF]">Class Average Scores</h3>
-                <p className="text-sm text-[#FFFFFF]/60">View class average scores for different activities</p>
+                <h3 className={`font-bold text-lg ${getTextColor()}`}>Class Average Scores</h3>
+                <p className={`text-sm ${getSecondaryTextColor()}`}>View class average scores for different activities</p>
               </div>
             </div>
             
@@ -458,7 +508,7 @@ const ClassAverageScores = ({
               <div className="relative" ref={typeDropdownRef}>
                 <button
                   onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                  className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
+                  className={`flex items-center justify-between gap-2 px-3 py-2 ${getInputBackground()} border ${getInputBorder()} rounded-lg text-sm ${getTextColor()} ${getInputHover()} transition-all duration-200`}
                 >
                   <span>{getSelectedTypeLabel()}</span>
                   <svg 
@@ -471,15 +521,15 @@ const ClassAverageScores = ({
                 </button>
                 
                 {isTypeDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-48 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg">
+                  <div className={`absolute z-10 mt-1 w-48 ${getDropdownBackground()} border ${getDropdownBorder()} rounded-lg shadow-lg max-h-60 overflow-y-auto`}>
                     {activityTypes.map(type => (
                       <button
                         key={type.value}
                         onClick={() => handleTypeChange(type.value)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left ${getDropdownHover()} transition-colors ${
                           selectedType === type.value 
-                            ? 'text-[#767EE0] bg-[#3A3A45]' 
-                            : 'text-[#FFFFFF]/80'
+                            ? 'text-[#767EE0] bg-gray-100 dark:bg-[#3A3A45]' 
+                            : `${getTextColor()}/80`
                         }`}
                       >
                         <span>{type.label}</span>
@@ -493,7 +543,7 @@ const ClassAverageScores = ({
               <div className="relative" ref={statusDropdownRef}>
                 <button
                   onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                  className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
+                  className={`flex items-center justify-between gap-2 px-3 py-2 ${getInputBackground()} border ${getInputBorder()} rounded-lg text-sm ${getTextColor()} ${getInputHover()} transition-all duration-200`}
                 >
                   <span>{getSelectedStatusLabel()}</span>
                   <svg 
@@ -506,15 +556,15 @@ const ClassAverageScores = ({
                 </button>
                 
                 {isStatusDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-40 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg">
+                  <div className={`absolute z-10 mt-1 w-40 ${getDropdownBackground()} border ${getDropdownBorder()} rounded-lg shadow-lg`}>
                     {statusOptions.map(status => (
                       <button
                         key={status.value}
                         onClick={() => handleStatusChange(status.value)}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left ${getDropdownHover()} transition-colors ${
                           selectedStatus === status.value 
-                            ? 'text-[#767EE0] bg-[#3A3A45]' 
-                            : 'text-[#FFFFFF]/80'
+                            ? 'text-[#767EE0] bg-gray-100 dark:bg-[#3A3A45]' 
+                            : `${getTextColor()}/80`
                         }`}
                       >
                         <span>{status.label}</span>
@@ -527,7 +577,7 @@ const ClassAverageScores = ({
               {/* Collapse/Expand button */}
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="p-2 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
+                className={`p-2 rounded-lg ${getInputBackground()} ${getInputHover()} transition-all duration-200 cursor-pointer`}
                 aria-label={isExpanded ? "Collapse chart" : "Expand chart"}
               >
                 <div className="w-5 h-5 flex items-center justify-center">
@@ -536,12 +586,14 @@ const ClassAverageScores = ({
                       src={ArrowUp} 
                       alt="Collapse" 
                       className="w-4 h-4"
+                      style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                     />
                   ) : (
                     <img 
                       src={ArrowDown} 
                       alt="Expand" 
                       className="w-4 h-4"
+                      style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                     />
                   )}
                 </div>
@@ -557,10 +609,11 @@ const ClassAverageScores = ({
                 src={AnalyticsIcon} 
                 alt="Analytics" 
                 className="w-10 h-10 sm:w-12 sm:h-12 mx-auto opacity-40"
+                style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
               />
             </div>
-            <p className="text-sm sm:text-base text-[#FFFFFF]/60">No {selectedTypeLabel} data available</p>
-            <p className="text-xs text-[#FFFFFF]/40 mt-2">
+            <p className={`text-sm sm:text-base ${getSecondaryTextColor()}`}>No {selectedTypeLabel} data available</p>
+            <p className={`text-xs ${getSecondaryTextColor()} mt-2`}>
               {selectedStatus !== 'All' ? `No ${selectedStatus.toLowerCase()} ${selectedTypeLabel.toLowerCase()}` : `No ${selectedTypeLabel.toLowerCase()} recorded yet`}
             </p>
           </div>
@@ -570,9 +623,9 @@ const ClassAverageScores = ({
   }
 
   return (
-    <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10 relative">
+    <div className={`${getCardBackground()} rounded-xl border ${getCardBorder()} relative`}>
       {/* Header - Always visible */}
-      <div className="p-4 border-b border-[#FFFFFF]/10">
+      <div className={`p-4 border-b ${getCardBorder()}`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between">
           <div className="flex items-center gap-3 mb-3 md:mb-0">
             <div className="flex items-center justify-center">
@@ -580,11 +633,12 @@ const ClassAverageScores = ({
                 src={AnalyticsIcon} 
                 alt="Analytics" 
                 className="w-5 h-5"
+                style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
               />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Class Average Scores</h3>
-              <p className="text-sm text-[#FFFFFF]/60">View class average scores for different activities</p>
+              <h3 className={`font-bold text-lg ${getTextColor()}`}>Class Average Scores</h3>
+              <p className={`text-sm ${getSecondaryTextColor()}`}>View class average scores for different activities</p>
             </div>
           </div>
           
@@ -594,7 +648,7 @@ const ClassAverageScores = ({
             <div className="relative" ref={typeDropdownRef}>
               <button
                 onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
+                className={`flex items-center justify-between gap-2 px-3 py-2 ${getInputBackground()} border ${getInputBorder()} rounded-lg text-sm ${getTextColor()} ${getInputHover()} transition-all duration-200`}
               >
                 <span>{getSelectedTypeLabel()}</span>
                 <svg 
@@ -607,15 +661,15 @@ const ClassAverageScores = ({
               </button>
               
               {isTypeDropdownOpen && (
-                <div className="absolute z-10 mt-1 w-48 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                <div className={`absolute z-10 mt-1 w-48 ${getDropdownBackground()} border ${getDropdownBorder()} rounded-lg shadow-lg max-h-60 overflow-y-auto`}>
                   {activityTypes.map(type => (
                     <button
                       key={type.value}
                       onClick={() => handleTypeChange(type.value)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left ${getDropdownHover()} transition-colors ${
                         selectedType === type.value 
-                          ? 'text-[#767EE0] bg-[#3A3A45]' 
-                          : 'text-[#FFFFFF]/80'
+                          ? 'text-[#767EE0] bg-gray-100 dark:bg-[#3A3A45]' 
+                          : `${getTextColor()}/80`
                       }`}
                     >
                       <span>{type.label}</span>
@@ -629,7 +683,7 @@ const ClassAverageScores = ({
             <div className="relative" ref={statusDropdownRef}>
               <button
                 onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
+                className={`flex items-center justify-between gap-2 px-3 py-2 ${getInputBackground()} border ${getInputBorder()} rounded-lg text-sm ${getTextColor()} ${getInputHover()} transition-all duration-200`}
               >
                 <span>{getSelectedStatusLabel()}</span>
                 <svg 
@@ -642,15 +696,15 @@ const ClassAverageScores = ({
               </button>
               
               {isStatusDropdownOpen && (
-                <div className="absolute z-10 mt-1 w-40 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg">
+                <div className={`absolute z-10 mt-1 w-40 ${getDropdownBackground()} border ${getDropdownBorder()} rounded-lg shadow-lg`}>
                   {statusOptions.map(status => (
                     <button
                       key={status.value}
                       onClick={() => handleStatusChange(status.value)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left ${getDropdownHover()} transition-colors ${
                         selectedStatus === status.value 
-                          ? 'text-[#767EE0] bg-[#3A3A45]' 
-                          : 'text-[#FFFFFF]/80'
+                          ? 'text-[#767EE0] bg-gray-100 dark:bg-[#3A3A45]' 
+                          : `${getTextColor()}/80`
                       }`}
                     >
                       <span>{status.label}</span>
@@ -663,7 +717,7 @@ const ClassAverageScores = ({
             {/* Collapse/Expand button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
+              className={`p-2 rounded-lg ${getInputBackground()} ${getInputHover()} transition-all duration-200 cursor-pointer`}
               aria-label={isExpanded ? "Collapse chart" : "Expand chart"}
             >
               <div className="w-5 h-5 flex items-center justify-center">
@@ -672,12 +726,14 @@ const ClassAverageScores = ({
                     src={ArrowUp} 
                     alt="Collapse" 
                     className="w-4 h-4"
+                    style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                   />
                 ) : (
                   <img 
                     src={ArrowDown} 
                     alt="Expand" 
                     className="w-4 h-4"
+                    style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                   />
                 )}
               </div>
@@ -710,7 +766,7 @@ const ClassAverageScores = ({
                       y1={yScale(score)}
                       x2={chartWidth - margin.right}
                       y2={yScale(score)}
-                      stroke="#2A2A35"
+                      stroke={isDarkMode ? "#2A2A35" : "#e5e7eb"}
                       strokeWidth={1}
                       strokeDasharray={isMobile ? "1,1" : "2,2"}
                       opacity={0.5}
@@ -720,7 +776,7 @@ const ClassAverageScores = ({
                       y={yScale(score)}
                       textAnchor="end"
                       dominantBaseline="middle"
-                      fill="#FFFFFF"
+                      fill={isDarkMode ? "#FFFFFF" : "#374151"}
                       fontSize={scoreLabelFontSize}
                       opacity={0.7}
                     >
@@ -735,7 +791,7 @@ const ClassAverageScores = ({
                   y1={chartHeight - margin.bottom}
                   x2={chartWidth - margin.right}
                   y2={chartHeight - margin.bottom}
-                  stroke="#2A2A35"
+                  stroke={isDarkMode ? "#2A2A35" : "#e5e7eb"}
                   strokeWidth={2}
                 />
 
@@ -745,7 +801,7 @@ const ClassAverageScores = ({
                   y1={margin.top}
                   x2={margin.left}
                   y2={chartHeight - margin.bottom}
-                  stroke="#2A2A35"
+                  stroke={isDarkMode ? "#2A2A35" : "#e5e7eb"}
                   strokeWidth={2}
                 />
 
@@ -778,8 +834,8 @@ const ClassAverageScores = ({
                         y={y + 2}
                         width={barWidth}
                         height={barHeight}
-                        fill="#000000"
-                        opacity="0.2"
+                        fill={isDarkMode ? "#000000" : "#6b7280"}
+                        opacity={isDarkMode ? "0.2" : "0.1"}
                         rx={isMobile ? "1" : "2"}
                       />
                       
@@ -803,7 +859,7 @@ const ClassAverageScores = ({
                           x={x + barWidth / 2}
                           y={y - (isMobile ? 5 : 10)}
                           textAnchor="middle"
-                          fill="#FFFFFF"
+                          fill={isDarkMode ? "#FFFFFF" : "#374151"}
                           fontSize={barScoreFontSize}
                           fontWeight="bold"
                         >
@@ -816,7 +872,7 @@ const ClassAverageScores = ({
                         x={x + barWidth / 2}
                         y={chartHeight - margin.bottom + (isMobile ? 15 : 20)}
                         textAnchor="middle"
-                        fill="#FFFFFF"
+                        fill={isDarkMode ? "#FFFFFF" : "#374151"}
                         fontSize={activityLabelFontSize}
                         opacity={0.9}
                         className="select-none"
@@ -833,7 +889,7 @@ const ClassAverageScores = ({
           {/* Tooltip */}
           {hoveredActivity && (
             <div 
-              className="absolute bg-[#23232C] border border-[#FFFFFF]/20 rounded-lg p-3 shadow-2xl z-10 pointer-events-none transition-all duration-150"
+              className={`absolute ${getTooltipBackground()} border ${getTooltipBorder()} rounded-lg p-3 shadow-2xl z-10 pointer-events-none transition-all duration-150`}
               style={{
                 left: `clamp(20px, ${tooltipPosition.x + 20}px, calc(100% - 200px))`,
                 top: `${tooltipPosition.y - 100}px`,
@@ -846,7 +902,7 @@ const ClassAverageScores = ({
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: getScoreColor(hoveredActivity.score) }} />
-                    <span className="text-xs text-[#FFFFFF]/60 capitalize">{selectedType}</span>
+                    <span className={`text-xs ${getSecondaryTextColor()} capitalize`}>{selectedType}</span>
                   </div>
                   {/* Status badge in tooltip */}
                   <span className={`text-xs px-2 py-0.5 rounded ${getStatusColor(hoveredActivity.status)}`}>
@@ -854,13 +910,13 @@ const ClassAverageScores = ({
                   </span>
                 </div>
                 
-                <div className="text-[#FFFFFF] font-semibold text-sm mb-1 truncate">
+                <div className={`${getTextColor()} font-semibold text-sm mb-1 truncate`}>
                   {getActivityDisplayName(hoveredActivity)}
                 </div>
                 
                 {/* Performance zone */}
                 <div className="mb-2">
-                  <div className="text-xs text-[#FFFFFF]/60">Performance</div>
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Performance</div>
                   <div className="text-sm font-medium" style={{ color: getScoreColor(hoveredActivity.score) }}>
                     {getPerformanceZone(hoveredActivity.score)}
                   </div>
@@ -868,46 +924,46 @@ const ClassAverageScores = ({
                 
                 <div className="flex items-center justify-between gap-3 sm:gap-4">
                   <div className="text-left">
-                    <div className="text-xs text-[#FFFFFF]/60">Class Average</div>
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Class Average</div>
                     <div 
                       className="text-base sm:text-lg font-bold"
                       style={{ color: getScoreColor(hoveredActivity.score) }}
                     >
                       {hoveredActivity.score.toFixed(2)}%
                     </div>
-                    <div className="text-xs text-[#FFFFFF]/60 mt-1">
+                    <div className={`text-xs ${getSecondaryTextColor()} mt-1`}>
                       {hoveredActivity.submissions || 0}/{hoveredActivity.total_students || 0} students
                     </div>
                   </div>
                   
                   <div className="text-right">
-                    <div className="text-xs text-[#FFFFFF]/60">Max Score</div>
-                    <div className="text-base sm:text-lg font-bold text-[#FFFFFF]">
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Max Score</div>
+                    <div className={`text-base sm:text-lg font-bold ${getTextColor()}`}>
                       {hoveredActivity.points || 100}%
                     </div>
-                    <div className="text-xs text-[#FFFFFF]/60 mt-1">
+                    <div className={`text-xs ${getSecondaryTextColor()} mt-1`}>
                       Points: {hoveredActivity.points || 100}
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="absolute w-2 h-2 bg-[#23232C] border-r border-b border-[#FFFFFF]/20 
-                transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2" />
+              <div className={`absolute w-2 h-2 ${getTooltipBackground()} border-r border-b ${getTooltipBorder()} 
+                transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2`} />
             </div>
           )}
 
           {/* Performance zone legend */}
           <div className="mt-6 flex flex-wrap gap-2 text-xs justify-center">
-            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+            <div className={`flex items-center gap-1 px-2 py-1 ${getInputBackground()} rounded`}>
               <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
               <span className="text-[#FF5555] text-xs">Below 70% (Failing)</span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+            <div className={`flex items-center gap-1 px-2 py-1 ${getInputBackground()} rounded`}>
               <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
               <span className="text-[#FFA600] text-xs">71-75% (Close to Failing)</span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+            <div className={`flex items-center gap-1 px-2 py-1 ${getInputBackground()} rounded`}>
               <div className="w-2 h-2 rounded-full bg-[#00A15D]"></div>
               <span className="text-[#00A15D] text-xs">76%+ (Passing)</span>
             </div>
@@ -917,28 +973,28 @@ const ClassAverageScores = ({
 
       {/* Collapsed State Summary - Simplified */}
       {!isExpanded && (
-        <div className="p-4 border-t border-[#FFFFFF]/10">
+        <div className={`p-4 border-t ${getCardBorder()}`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Left side - Stats summary only */}
             <div className="flex items-center gap-4">
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Class Average</div>
-                <div className="font-bold text-base text-[#FFFFFF]">{summary.average.toFixed(2)}%</div>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Class Average</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>{summary.average.toFixed(2)}%</div>
               </div>
               
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Highest Average</div>
-                <div className="font-bold text-base text-[#FFFFFF]">{summary.highest.toFixed(2)}%</div>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Highest Average</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>{summary.highest.toFixed(2)}%</div>
               </div>
               
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Lowest Average</div>
-                <div className="font-bold text-base text-[#FFFFFF]">{summary.lowest.toFixed(2)}%</div>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Lowest Average</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>{summary.lowest.toFixed(2)}%</div>
               </div>
 
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Total {getSelectedTypeLabel()}</div>
-                <div className="font-bold text-base text-[#FFFFFF]">{summary.total}</div>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Total {getSelectedTypeLabel()}</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>{summary.total}</div>
               </div>
             </div>
           </div>

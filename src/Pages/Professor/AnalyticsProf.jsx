@@ -13,6 +13,26 @@ export default function AnalyticsProf() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [professorId, setProfessorId] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Get user data from localStorage
   useEffect(() => {
@@ -152,7 +172,7 @@ export default function AnalyticsProf() {
             { week: 8, score: 85, activities: 21, reason: "Significant improvement in final assessments", submissionRate: 94 },
           ]
         }
-      ].map((section, index) => {
+      ].map((section) => {
         // Add performance changes to mock data
         const dataWithChanges = section.data.map((week, idx, arr) => {
           let performanceChange = 0;
@@ -190,8 +210,25 @@ export default function AnalyticsProf() {
     }
   };
 
+  // Theme-based colors
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-white/30" : "border-gray-200";
+  };
+
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`${getBackgroundColor()} min-h-screen`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`
         transition-all duration-300
@@ -199,7 +236,7 @@ export default function AnalyticsProf() {
       `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
-        <div className="p-3 sm:p-4 md:p-5 text-white">
+        <div className="p-3 sm:p-4 md:p-5">
           {/* Header Section */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-1">
@@ -208,13 +245,14 @@ export default function AnalyticsProf() {
                   src={Analytics} 
                   alt="Analytics" 
                   className="h-5 w-5 mr-2" 
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
-                <h1 className="font-bold text-lg text-white">Section Comparison Report</h1>
+                <h1 className={`font-bold text-lg ${getTextColor()}`}>Section Comparison Report</h1>
               </div>
               <button
                 onClick={refreshData}
                 disabled={loading}
-                className="flex items-center gap-1 px-3 py-1.5 bg-[#6366F1] hover:bg-[#4F46E5] rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-3 py-1.5 bg-[#6366F1] hover:bg-[#4F46E5] rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -222,7 +260,7 @@ export default function AnalyticsProf() {
                 Refresh
               </button>
             </div>
-            <div className="text-sm text-white/80">
+            <div className={`text-sm ${getSecondaryTextColor()}`}>
               <span>Compare performance across different class sections</span>
               {loading && <span className="ml-2 text-[#6366F1] animate-pulse">Loading real data...</span>}
               {error && <span className="ml-2 text-[#EF4444]">{error}</span>}
@@ -230,7 +268,7 @@ export default function AnalyticsProf() {
             </div>
           </div>
 
-          <hr className="border-white/30 mb-4 border-1" />
+          <hr className={`${getDividerColor()} mb-4 border-1`} />
 
           {/* Section Comparison Line Chart */}
           <div className="mb-6">
@@ -238,6 +276,7 @@ export default function AnalyticsProf() {
               sectionData={sectionPerformance}
               loading={loading}
               professorId={professorId}
+              isDarkMode={isDarkMode}
             />
           </div>
         </div>
@@ -275,7 +314,7 @@ const TrendArrow = ({ direction, color, size = 4 }) => {
 };
 
 // Section Comparison Line Chart Component
-const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
+const SectionComparisonChart = ({ sectionData, loading, isDarkMode }) => {
   const [hoveredNode, setHoveredNode] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -287,6 +326,51 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
   const svgRef = useRef(null);
   const tooltipRef = useRef(null);
   const dropdownRef = useRef(null);
+
+  // Theme-based colors
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getDropdownBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-white";
+  };
+
+  const getHoverBackgroundColor = () => {
+    return isDarkMode ? "bg-[#2A2A35]" : "bg-gray-100";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/60" : "text-gray-500";
+  };
+
+  const getLightTextColor = () => {
+    return isDarkMode ? "text-white/40" : "text-gray-400";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#2A2A35]" : "bg-gray-50";
+  };
+
+  const getTooltipBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-white";
+  };
+
+  const getTooltipBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/20" : "border-gray-300";
+  };
 
   // Initialize visible sections (show all by default)
   useMemo(() => {
@@ -506,14 +590,14 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
 
   if (loading) {
     return (
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
-        <div className="p-4 border-b border-[#FFFFFF]/10">
+      <div className={`${getBackgroundColor()} rounded-xl border ${getBorderColor()}`}>
+        <div className={`p-4 border-b ${getBorderColor()}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center">
-                <img src={Analytics} alt="Analytics" className="w-5 h-5" />
+                <img src={Analytics} alt="Analytics" className="w-5 h-5" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
               </div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Section Performance Comparison</h3>
+              <h3 className={`font-bold text-lg ${getTextColor()}`}>Section Performance Comparison</h3>
             </div>
           </div>
         </div>
@@ -522,7 +606,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
             <div className="flex items-center justify-center mx-auto mb-3">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#6366F1]"></div>
             </div>
-            <p className="text-[#FFFFFF]/60">Loading section performance data...</p>
+            <p className={getSecondaryTextColor()}>Loading section performance data...</p>
           </div>
         </div>
       </div>
@@ -531,24 +615,24 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
 
   if (sectionData.length === 0) {
     return (
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
-        <div className="p-4 border-b border-[#FFFFFF]/10">
+      <div className={`${getBackgroundColor()} rounded-xl border ${getBorderColor()}`}>
+        <div className={`p-4 border-b ${getBorderColor()}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center">
-                <img src={Analytics} alt="Analytics" className="w-5 h-5" />
+                <img src={Analytics} alt="Analytics" className="w-5 h-5" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
               </div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Section Performance Comparison</h3>
+              <h3 className={`font-bold text-lg ${getTextColor()}`}>Section Performance Comparison</h3>
             </div>
           </div>
         </div>
         <div className="h-48 flex items-center justify-center">
           <div className="text-center">
             <div className="flex items-center justify-center mx-auto mb-3">
-              <img src={Analytics} alt="Analytics" className="w-8 h-8 opacity-40" />
+              <img src={Analytics} alt="Analytics" className="w-8 h-8 opacity-40" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
             </div>
-            <p className="text-[#FFFFFF]/60">No section data available</p>
-            <p className="text-sm text-[#FFFFFF]/40 mt-1">Create classes and add activities to see performance data</p>
+            <p className={getSecondaryTextColor()}>No section data available</p>
+            <p className={`text-sm ${getLightTextColor()} mt-1`}>Create classes and add activities to see performance data</p>
           </div>
         </div>
       </div>
@@ -557,9 +641,9 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
 
   return (
     <>
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10 relative">
+      <div className={`${getBackgroundColor()} rounded-xl border ${getBorderColor()} relative`}>
         {/* Header */}
-        <div className="p-4 border-b border-[#FFFFFF]/10">
+        <div className={`p-4 border-b ${getBorderColor()}`}>
           <div className="flex flex-col md:flex-row md:items-center justify-between">
             <div className="flex items-center gap-3 mb-3 md:mb-0">
               <div className="flex items-center justify-center">
@@ -567,11 +651,12 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
                   src={Analytics} 
                   alt="Analytics" 
                   className="w-5 h-5"
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
               </div>
               <div>
-                <h3 className="font-bold text-lg text-[#FFFFFF]">Section Performance Trend</h3>
-                <p className="text-sm text-[#FFFFFF]/60">Weekly performance comparison across sections</p>
+                <h3 className={`font-bold text-lg ${getTextColor()}`}>Section Performance Trend</h3>
+                <p className={`text-sm ${getSecondaryTextColor()}`}>Weekly performance comparison across sections</p>
               </div>
             </div>
             
@@ -579,8 +664,8 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
             {overallStats && (
               <div className="flex items-center gap-4">
                 <div className="text-right hidden md:block">
-                  <div className="text-xs text-[#FFFFFF]/60">Average Score</div>
-                  <div className="font-bold text-base text-[#FFFFFF]">{overallStats.averageScore}%</div>
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Average Score</div>
+                  <div className={`font-bold text-base ${getTextColor()}`}>{overallStats.averageScore}%</div>
                 </div>
                 <div className={`p-1.5 rounded-lg ${overallStats.trendDirection === 'up' ? 'bg-[#00A15D]/10' : overallStats.trendDirection === 'down' ? 'bg-[#FF5555]/10' : 'bg-[#FFA600]/10'}`}>
                   <div className={`w-3 h-3 flex items-center justify-center ${overallStats.trendDirection === 'up' ? 'text-[#00A15D]' : overallStats.trendDirection === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
@@ -597,15 +682,15 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
         </div>
 
         {/* Filters Section */}
-        <div className="p-4 border-b border-[#FFFFFF]/10">
+        <div className={`p-4 border-b ${getBorderColor()}`}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div>
-                <label className="block text-xs text-white/60 mb-1">Activity Type</label>
+                <label className={`block text-xs ${getSecondaryTextColor()} mb-1`}>Activity Type</label>
                 <select 
                   value={activityTypeFilter}
                   onChange={(e) => setActivityTypeFilter(e.target.value)}
-                  className="bg-[#2A2A35] border border-[#FFFFFF]/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                  className={`${getInputBackgroundColor()} border ${getBorderColor()} rounded-lg px-3 py-2 text-sm ${getTextColor()} focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent`}
                 >
                   <option value="all">All Activities</option>
                   <option value="assignment">Assignments</option>
@@ -617,11 +702,11 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
               </div>
               
               <div>
-                <label className="block text-xs text-white/60 mb-1">Date Range</label>
+                <label className={`block text-xs ${getSecondaryTextColor()} mb-1`}>Date Range</label>
                 <select 
                   value={dateRangeFilter}
                   onChange={(e) => setDateRangeFilter(e.target.value)}
-                  className="bg-[#2A2A35] border border-[#FFFFFF]/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                  className={`${getInputBackgroundColor()} border ${getBorderColor()} rounded-lg px-3 py-2 text-sm ${getTextColor()} focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent`}
                 >
                   <option value="all">All Time</option>
                   <option value="week">Last Week</option>
@@ -634,13 +719,13 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
             {/* Section Selection Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-white/60 hidden md:block">Show Sections:</span>
+                <span className={`text-xs ${getSecondaryTextColor()} hidden md:block`}>Show Sections:</span>
                 
                 {/* Custom Dropdown Toggle */}
                 <div className="relative">
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#2A2A35] hover:bg-[#3A3A45] rounded-lg text-sm text-white transition-all duration-200 border border-[#FFFFFF]/10"
+                    className={`flex items-center gap-2 px-4 py-2 ${getInputBackgroundColor()} hover:${getHoverBackgroundColor()} rounded-lg text-sm ${getTextColor()} transition-all duration-200 border ${getBorderColor()}`}
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-sm font-medium">{visibleCount} selected</span>
@@ -660,10 +745,10 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
                   
                   {/* Dropdown Menu */}
                   {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-64 bg-[#23232C] border border-[#FFFFFF]/10 rounded-lg shadow-2xl z-50 overflow-hidden">
+                    <div className={`absolute right-0 mt-2 w-64 ${getDropdownBackgroundColor()} border ${getBorderColor()} rounded-lg shadow-2xl z-50 overflow-hidden`}>
                       {/* Dropdown Header */}
-                      <div className="p-3 border-b border-[#FFFFFF]/10 bg-[#1A1A24]">
-                        <span className="text-sm font-medium text-white">Select Sections</span>
+                      <div className={`p-3 border-b ${getBorderColor()} ${isDarkMode ? 'bg-[#1A1A24]' : 'bg-gray-50'}`}>
+                        <span className={`text-sm font-medium ${getTextColor()}`}>Select Sections</span>
                       </div>
                       
                       {/* Section List */}
@@ -674,14 +759,14 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
                           return (
                             <div
                               key={section.sectionCode}
-                              className="flex items-center p-3 hover:bg-[#2A2A35] cursor-pointer transition-all"
+                              className={`flex items-center p-3 hover:${getHoverBackgroundColor()} cursor-pointer transition-all`}
                               onClick={() => toggleSectionVisibility(section.sectionCode)}
                             >
                               {/* Custom Checkbox */}
                               <div className={`w-4 h-4 rounded flex items-center justify-center border mr-3 ${
                                 isVisible 
                                   ? 'bg-[#6366F1] border-[#6366F1]' 
-                                  : 'bg-transparent border-[#FFFFFF]/30'
+                                  : `${isDarkMode ? 'border-[#FFFFFF]/30' : 'border-gray-300'} bg-transparent`
                               }`}>
                                 {isVisible && (
                                   <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -696,7 +781,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
                                   className="w-2 h-2 rounded-full"
                                   style={{ backgroundColor: section.color }}
                                 />
-                                <div className="text-sm text-white">
+                                <div className={`text-sm ${getTextColor()}`}>
                                   {section.section}
                                 </div>
                               </div>
@@ -718,18 +803,18 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
               .map(section => (
                 <div
                   key={section.sectionCode}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-[#2A2A35] rounded-lg border border-[#FFFFFF]/5 hover:border-[#FFFFFF]/20 transition-all"
+                  className={`flex items-center gap-2 px-3 py-1.5 ${getInputBackgroundColor()} rounded-lg border ${isDarkMode ? 'border-[#FFFFFF]/5' : 'border-gray-200'} hover:${isDarkMode ? 'border-[#FFFFFF]/20' : 'border-gray-300'} transition-all`}
                 >
                   <div 
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: section.color }}
                   />
-                  <span className="text-xs text-white">
+                  <span className={`text-xs ${getTextColor()}`}>
                     {section.section}
                   </span>
                   <button
                     onClick={() => toggleSectionVisibility(section.sectionCode)}
-                    className="ml-1 text-[#FFFFFF]/40 hover:text-[#FF5555] transition-all"
+                    className={`ml-1 ${isDarkMode ? 'text-[#FFFFFF]/40' : 'text-gray-400'} hover:text-[#FF5555] transition-all`}
                   >
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -749,11 +834,11 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
           {visibleCount === 0 ? (
             <div className="h-64 flex flex-col items-center justify-center">
               <div className="text-center">
-                <svg className="w-12 h-12 text-white/20 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-12 h-12 ${isDarkMode ? 'text-white/20' : 'text-gray-300'} mx-auto mb-3`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <p className="text-white/60">No sections selected</p>
-                <p className="text-sm text-white/40 mt-1">Select sections from the dropdown above to display the chart</p>
+                <p className={getSecondaryTextColor()}>No sections selected</p>
+                <p className={`text-sm ${getLightTextColor()} mt-1`}>Select sections from the dropdown above to display the chart</p>
               </div>
             </div>
           ) : (
@@ -784,7 +869,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
                         y1={yScale(score)}
                         x2={innerWidth + margin.left}
                         y2={yScale(score)}
-                        stroke="#2A2A35"
+                        stroke={isDarkMode ? "#2A2A35" : "#e5e7eb"}
                         strokeWidth={1}
                         strokeDasharray={score === 70 || score === 75 || score === 100 ? "5,5" : "2,2"}
                         opacity={0.5}
@@ -794,7 +879,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
                         y={yScale(score)}
                         textAnchor="end"
                         dominantBaseline="middle"
-                        fill="#FFFFFF"
+                        fill={isDarkMode ? "#FFFFFF" : "#374151"}
                         fontSize="10"
                         fontWeight={score === 70 || score === 75 ? "bold" : "normal"}
                         opacity={0.7}
@@ -883,7 +968,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
                           x={xScale(week)}
                           y={chartHeight - 10}
                           textAnchor="middle"
-                          fill="#FFFFFF"
+                          fill={isDarkMode ? "#FFFFFF" : "#374151"}
                           fontSize="10"
                           opacity={0.7}
                         >
@@ -896,7 +981,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
 
                   {/* Data points for each visible section */}
                   {visibleSectionsData.map(section => {
-                    return section.data.map((week, index) => {
+                    return section.data.map((week) => {
                       const x = xScale(week.week);
                       const y = yScale(week.score);
                       const isHovered = hoveredNode?.sectionCode === section.sectionCode && hoveredNode?.week === week.week;
@@ -940,15 +1025,15 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
 
               {/* Performance zones legend */}
               <div className="mt-6 flex flex-wrap gap-3 text-xs justify-center">
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-[#2A2A35] rounded-lg">
+                <div className={`flex items-center gap-1 px-3 py-1.5 ${getCardBackgroundColor()} rounded-lg`}>
                   <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
                   <span className="text-[#FF5555] text-xs font-medium">Below 70% (Failing)</span>
                 </div>
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-[#2A2A35] rounded-lg">
+                <div className={`flex items-center gap-1 px-3 py-1.5 ${getCardBackgroundColor()} rounded-lg`}>
                   <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
                   <span className="text-[#FFA600] text-xs font-medium">71-75% (Close to Failing)</span>
                 </div>
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-[#2A2A35] rounded-lg">
+                <div className={`flex items-center gap-1 px-3 py-1.5 ${getCardBackgroundColor()} rounded-lg`}>
                   <div className="w-2 h-2 rounded-full bg-[#00A15D]"></div>
                   <span className="text-[#00A15D] text-xs font-medium">76%+ (Passing)</span>
                 </div>
@@ -957,25 +1042,25 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
               {/* Overall stats summary */}
               {overallStats && (
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-[#2A2A35] p-3 rounded-lg border border-[#FFFFFF]/5">
-                    <div className="text-xs text-white/60">Average Score</div>
-                    <div className="text-lg font-bold text-white mt-1">{overallStats.averageScore}%</div>
-                    <div className="text-xs text-white/40 mt-1">Across {overallStats.totalSections} sections</div>
+                  <div className={`${getCardBackgroundColor()} p-3 rounded-lg border ${getBorderColor()}`}>
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Average Score</div>
+                    <div className={`text-lg font-bold ${getTextColor()} mt-1`}>{overallStats.averageScore}%</div>
+                    <div className={`text-xs ${getLightTextColor()} mt-1`}>Across {overallStats.totalSections} sections</div>
                   </div>
-                  <div className="bg-[#2A2A35] p-3 rounded-lg border border-[#FFFFFF]/5">
-                    <div className="text-xs text-white/60">Highest Score</div>
+                  <div className={`${getCardBackgroundColor()} p-3 rounded-lg border ${getBorderColor()}`}>
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Highest Score</div>
                     <div className="text-lg font-bold text-[#00A15D] mt-1">{overallStats.highestScore}%</div>
-                    <div className="text-xs text-white/40 mt-1">Best performing week</div>
+                    <div className={`text-xs ${getLightTextColor()} mt-1`}>Best performing week</div>
                   </div>
-                  <div className="bg-[#2A2A35] p-3 rounded-lg border border-[#FFFFFF]/5">
-                    <div className="text-xs text-white/60">Lowest Score</div>
+                  <div className={`${getCardBackgroundColor()} p-3 rounded-lg border ${getBorderColor()}`}>
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Lowest Score</div>
                     <div className="text-lg font-bold text-[#FF5555] mt-1">{overallStats.lowestScore}%</div>
-                    <div className="text-xs text-white/40 mt-1">Lowest performing week</div>
+                    <div className={`text-xs ${getLightTextColor()} mt-1`}>Lowest performing week</div>
                   </div>
-                  <div className="bg-[#2A2A35] p-3 rounded-lg border border-[#FFFFFF]/5">
-                    <div className="text-xs text-white/60">Total Students</div>
-                    <div className="text-lg font-bold text-white mt-1">{overallStats.totalStudents}</div>
-                    <div className="text-xs text-white/40 mt-1">Across all sections</div>
+                  <div className={`${getCardBackgroundColor()} p-3 rounded-lg border ${getBorderColor()}`}>
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Total Students</div>
+                    <div className={`text-lg font-bold ${getTextColor()} mt-1`}>{overallStats.totalStudents}</div>
+                    <div className={`text-xs ${getLightTextColor()} mt-1`}>Across all sections</div>
                   </div>
                 </div>
               )}
@@ -987,7 +1072,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
         {hoveredNode && visibleCount > 0 && (
           <div 
             ref={tooltipRef}
-            className="fixed bg-[#23232C] border border-[#FFFFFF]/20 rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150"
+            className={`fixed ${getTooltipBackgroundColor()} border ${getTooltipBorderColor()} rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150`}
             style={{
               left: `${hoveredNode.x + 10}px`,
               top: `${hoveredNode.y - 120}px`,
@@ -997,8 +1082,8 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
           >
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[#FFFFFF] text-sm font-semibold">{hoveredNode.section}</span>
-                <span className="text-xs text-[#FFFFFF]/60">Week {hoveredNode.week}</span>
+                <span className={`text-sm font-semibold ${getTextColor()}`}>{hoveredNode.section}</span>
+                <span className={`text-xs ${getSecondaryTextColor()}`}>Week {hoveredNode.week}</span>
               </div>
               
               <div className="flex items-center gap-2">
@@ -1006,7 +1091,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: hoveredNode.color }}
                 />
-                <span className="text-lg font-bold text-white">
+                <span className={`text-lg font-bold ${getTextColor()}`}>
                   {hoveredNode.data?.score}%
                 </span>
               </div>
@@ -1040,14 +1125,14 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
               
               <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-white/10">
                 <div>
-                  <div className="text-xs text-white/60">Activities</div>
-                  <div className="text-sm font-medium text-white">
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Activities</div>
+                  <div className={`text-sm font-medium ${getTextColor()}`}>
                     {hoveredNode.data?.activities || 0}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/60">Submissions</div>
-                  <div className="text-sm font-medium text-white">
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Submissions</div>
+                  <div className={`text-sm font-medium ${getTextColor()}`}>
                     {hoveredNode.data?.submissionRate || 0}%
                   </div>
                 </div>
@@ -1055,22 +1140,22 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
               
               {hoveredNode.data?.performanceChange > 0 && (
                 <div className="flex items-center gap-1 text-xs mt-1">
-                  <span className="text-white/60">Trend: </span>
+                  <span className={getSecondaryTextColor()}>Trend: </span>
                   <span className={`font-medium ${hoveredNode.data?.changeDirection === 'up' ? 'text-[#00A15D]' : 'text-[#FF5555]'}`}>
                     {hoveredNode.data?.changeDirection === 'up' ? '↑' : '↓'} {hoveredNode.data?.performanceChange.toFixed(1)}%
-                    <span className="text-white/60 ml-1">from previous week</span>
+                    <span className={`${getSecondaryTextColor()} ml-1`}>from previous week</span>
                   </span>
                 </div>
               )}
               
-              <div className="text-xs text-[#FFFFFF]/40 mt-2 pt-1 border-t border-white/10">
+              <div className={`text-xs ${getLightTextColor()} mt-2 pt-1 border-t border-white/10`}>
                 Click for detailed analysis
               </div>
             </div>
             
             {/* Tooltip arrow */}
-            <div className="absolute w-2 h-2 bg-[#23232C] border-r border-b border-[#FFFFFF]/20 
-              transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2" />
+            <div className={`absolute w-2 h-2 ${getTooltipBackgroundColor()} border-r border-b ${getTooltipBorderColor()} 
+              transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2`} />
           </div>
         )}
       </div>
@@ -1086,6 +1171,7 @@ const SectionComparisonChart = ({ sectionData, loading, professorId }) => {
         sectionCode={selectedNode?.sectionCode}
         weekData={selectedNode?.weekData}
         color={selectedNode?.color}
+        isDarkMode={isDarkMode}
       />
     </>
   );

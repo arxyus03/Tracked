@@ -6,7 +6,7 @@ import DownArrowIcon from "../../assets/ArrowDown.svg";
 import ExpandIcon from "../../assets/ArrowUp.svg";
 import Classwork from "../../assets/Classwork.svg";
 
-export default function ActivitiesCard({ subjectCode }) {
+export default function ActivitiesCard({ subjectCode, isDarkMode = false }) {
   const [activities, setActivities] = useState([]);
   const [activityFilter, setActivityFilter] = useState('all');
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -25,6 +25,59 @@ export default function ActivitiesCard({ subjectCode }) {
       console.error("Error parsing user data:", error);
     }
     return null;
+  };
+
+  // Theme-based colors
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-white/5" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-gray-400" : "text-gray-600";
+  };
+
+  const getButtonBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-100";
+  };
+
+  const getButtonBorderColor = () => {
+    return isDarkMode ? "border-gray-700" : "border-gray-300";
+  };
+
+  const getButtonHoverColor = () => {
+    return isDarkMode ? "hover:bg-[#2A2A35]" : "hover:bg-gray-200";
+  };
+
+  const getDropdownBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-white";
+  };
+
+  const getDropdownBorderColor = () => {
+    return isDarkMode ? "border-gray-700" : "border-gray-200";
+  };
+
+  const getDropdownItemHoverColor = () => {
+    return isDarkMode ? "hover:bg-[#2A2A35]" : "hover:bg-gray-100";
+  };
+
+  const getTableHeaderTextColor = () => {
+    return isDarkMode ? "text-gray-400" : "text-gray-600";
+  };
+
+  const getTableBorderColor = () => {
+    return isDarkMode ? "border-gray-700" : "border-gray-200";
+  };
+
+  const getTableRowHoverColor = () => {
+    return isDarkMode ? "hover:bg-[#23232C]/50" : "hover:bg-gray-50";
   };
 
   // Fetch real activities from API
@@ -65,27 +118,27 @@ export default function ActivitiesCard({ subjectCode }) {
   }, [subjectCode]);
 
   const getActivityTypeColor = (type) => {
-    switch (type) {
-      case 'Assignment': return { bg: '#767EE0/15', text: '#767EE0' };
-      case 'Quiz': return { bg: '#B39DDB/15', text: '#B39DDB' };
-      case 'Activity': return { bg: '#00A15D/15', text: '#00A15D' };
-      case 'Project': return { bg: '#FFA600/15', text: '#FFA600' };
-      case 'Laboratory': return { bg: '#A15353/15', text: '#A15353' };
-      case 'Exam': return { bg: '#FF5252/15', text: '#FF5252' };
-      case 'Remedial': return { bg: '#3B82F6/15', text: '#3B82F6' };
-      default: return { bg: '#15151C', text: '#FFFFFF' };
-    }
+    const colors = {
+      'Assignment': { bg: isDarkMode ? '#767EE0/15' : '#767EE0/10', text: '#767EE0' },
+      'Quiz': { bg: isDarkMode ? '#B39DDB/15' : '#B39DDB/10', text: '#B39DDB' },
+      'Activity': { bg: isDarkMode ? '#00A15D/15' : '#00A15D/10', text: '#00A15D' },
+      'Project': { bg: isDarkMode ? '#FFA600/15' : '#FFA600/10', text: '#FFA600' },
+      'Laboratory': { bg: isDarkMode ? '#A15353/15' : '#A15353/10', text: '#A15353' },
+      'Exam': { bg: isDarkMode ? '#FF5252/15' : '#FF5252/10', text: '#FF5252' },
+      'Remedial': { bg: isDarkMode ? '#3B82F6/15' : '#3B82F6/10', text: '#3B82F6' }
+    };
+    return colors[type] || { bg: isDarkMode ? '#15151C' : '#f9fafb', text: isDarkMode ? '#FFFFFF' : '#111827' };
   };
 
   const getActivityStatusColor = (status) => {
-    switch (status) {
-      case 'submitted': return { bg: '#00A15D/15', text: '#00A15D' }; // Green - all submitted after deadline
-      case 'completed': return { bg: '#3B82F6/15', text: '#3B82F6' }; // Blue - all submitted before deadline
-      case 'assigned': return { bg: '#767EE0/15', text: '#767EE0' }; // Purple - ongoing
-      case 'incomplete': return { bg: '#FFA600/15', text: '#FFA600' }; // Yellow - more than half submitted after deadline
-      case 'missed': return { bg: '#A15353/15', text: '#A15353' }; // Red - less than half submitted after deadline
-      default: return { bg: '#15151C', text: '#FFFFFF' };
-    }
+    const colors = {
+      'submitted': { bg: isDarkMode ? '#00A15D/15' : '#00A15D/10', text: '#00A15D' },
+      'completed': { bg: isDarkMode ? '#3B82F6/15' : '#3B82F6/10', text: '#3B82F6' },
+      'assigned': { bg: isDarkMode ? '#767EE0/15' : '#767EE0/10', text: '#767EE0' },
+      'incomplete': { bg: isDarkMode ? '#FFA600/15' : '#FFA600/10', text: '#FFA600' },
+      'missed': { bg: isDarkMode ? '#A15353/15' : '#A15353/10', text: '#A15353' }
+    };
+    return colors[status] || { bg: isDarkMode ? '#15151C' : '#f9fafb', text: isDarkMode ? '#FFFFFF' : '#111827' };
   };
 
   const formatDate = (dateString) => {
@@ -109,7 +162,7 @@ export default function ActivitiesCard({ subjectCode }) {
       case 'Assignment': return 'Assignment';
       case 'Quiz': return 'Quiz';
       case 'Activity': return 'Activity';
-      case 'Project': return 'Project';
+      case 'Project': return 'Projects';
       case 'Laboratory': return 'Laboratory';
       case 'Exam': return 'Exam';
       case 'Remedial': return 'Remedial';
@@ -138,7 +191,7 @@ export default function ActivitiesCard({ subjectCode }) {
     
     return {
       total: activities.length,
-      submitted: submitted + completed, // Combine submitted and completed
+      submitted: submitted + completed,
       assigned,
       incomplete,
       missed
@@ -161,40 +214,40 @@ export default function ActivitiesCard({ subjectCode }) {
 
   if (loading) {
     return (
-      <div className="bg-[#15151C] rounded-lg border border-white/5 p-3 mb-6">
+      <div className={`rounded-lg border p-3 mb-6 ${getCardBorderColor()} ${getCardBackgroundColor()}`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-[#FF5252]/15 flex items-center justify-center">
-              <img src={Classwork} alt="Activities" className="h-3 w-3" />
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-[#FF5252]/15' : 'bg-[#FF5252]/10'}`}>
+              <img src={Classwork} alt="Activities" className="h-3 w-3" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
             </div>
-            <h3 className="text-base font-bold text-white">Posted Activities</h3>
+            <h3 className={`text-base font-bold ${getTextColor()}`}>Posted Activities</h3>
           </div>
         </div>
         <div className="text-center py-4">
           <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-[#00A15D] border-r-transparent"></div>
-          <p className="mt-2 text-sm text-gray-400">Loading activities...</p>
+          <p className={`mt-2 text-sm ${getSecondaryTextColor()}`}>Loading activities...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#15151C] rounded-lg border border-white/5 p-3 mb-6">
+    <div className={`rounded-lg border p-3 mb-6 ${getCardBorderColor()} ${getCardBackgroundColor()}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-[#FF5252]/15 flex items-center justify-center">
-            <img src={Classwork} alt="Activities" className="h-3 w-3" />
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-[#FF5252]/15' : 'bg-[#FF5252]/10'}`}>
+            <img src={Classwork} alt="Activities" className="h-3 w-3" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
           </div>
-          <h3 className="text-base font-bold text-white">Posted Activities</h3>
+          <h3 className={`text-base font-bold ${getTextColor()}`}>Posted Activities</h3>
         </div>
         
         <div className="flex items-center gap-2">
           {/* Expand/Collapse Button - Small */}
           <button
             onClick={() => setActivitiesExpanded(!activitiesExpanded)}
-            className="flex items-center gap-1 px-2 py-1.5 bg-[#23232C] border border-gray-700 rounded-md text-xs text-white hover:bg-[#2A2A35] transition-colors cursor-pointer"
+            className={`flex items-center gap-1 px-2 py-1.5 rounded-md border text-xs transition-colors cursor-pointer ${getButtonBackgroundColor()} ${getButtonBorderColor()} ${getButtonHoverColor()} ${getTextColor()}`}
           >
-            <img src={activitiesExpanded ? DownArrowIcon : ExpandIcon} alt={activitiesExpanded ? "Collapse" : "Expand"} className="h-3 w-3" />
+            <img src={activitiesExpanded ? DownArrowIcon : ExpandIcon} alt={activitiesExpanded ? "Collapse" : "Expand"} className="h-3 w-3" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
             <span>{activitiesExpanded ? 'Collapse' : 'Expand'}</span>
           </button>
           
@@ -203,36 +256,35 @@ export default function ActivitiesCard({ subjectCode }) {
             <div className="relative">
               <button
                 onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                className="flex items-center gap-1 px-2 py-1.5 bg-[#23232C] border border-gray-700 rounded-md text-xs text-white hover:bg-[#2A2A35] transition-colors cursor-pointer"
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-md border text-xs transition-colors cursor-pointer ${getButtonBackgroundColor()} ${getButtonBorderColor()} ${getButtonHoverColor()} ${getTextColor()}`}
               >
-                <img src={FilterIcon} alt="Filter" className="h-3 w-3" />
+                <img src={FilterIcon} alt="Filter" className="h-3 w-3" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                 <span>
                   {activityFilter === 'all' ? 'All' : getActivityTypeLabel(activityFilter)}
                 </span>
-                <img src={DownArrowIcon} alt="Dropdown" className="h-2 w-2" />
+                <img src={DownArrowIcon} alt="Dropdown" className="h-2 w-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
               </button>
               
               {showFilterDropdown && (
-                <div className="absolute right-0 mt-1 w-40 bg-[#23232C] border border-gray-700 rounded-md shadow-lg z-10">
+                <div className={`absolute right-0 mt-1 w-40 rounded-md shadow-lg z-10 border ${getDropdownBackgroundColor()} ${getDropdownBorderColor()}`}>
                   <button
                     onClick={() => {
                       setActivityFilter('all');
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2A2A35] cursor-pointer ${
-                      activityFilter === 'all' ? 'text-[#00A15D] font-semibold' : 'text-white'
+                    className={`w-full text-left px-3 py-1.5 text-xs ${getDropdownItemHoverColor()} cursor-pointer ${
+                      activityFilter === 'all' ? (isDarkMode ? 'text-[#00A15D] font-semibold' : 'text-[#00A15D] font-semibold') : getTextColor()
                     }`}
                   >
                     All Activities
                   </button>
-                  {/* Updated dropdown options based on ClassworkTab.jsx */}
                   <button
                     onClick={() => {
                       setActivityFilter('Assignment');
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2A2A35] cursor-pointer ${
-                      activityFilter === 'Assignment' ? 'text-[#767EE0] font-semibold' : 'text-white'
+                    className={`w-full text-left px-3 py-1.5 text-xs ${getDropdownItemHoverColor()} cursor-pointer ${
+                      activityFilter === 'Assignment' ? 'text-[#767EE0] font-semibold' : getTextColor()
                     }`}
                   >
                     Assignment
@@ -242,8 +294,8 @@ export default function ActivitiesCard({ subjectCode }) {
                       setActivityFilter('Quiz');
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2A2A35] cursor-pointer ${
-                      activityFilter === 'Quiz' ? 'text-[#B39DDB] font-semibold' : 'text-white'
+                    className={`w-full text-left px-3 py-1.5 text-xs ${getDropdownItemHoverColor()} cursor-pointer ${
+                      activityFilter === 'Quiz' ? 'text-[#B39DDB] font-semibold' : getTextColor()
                     }`}
                   >
                     Quiz
@@ -253,8 +305,8 @@ export default function ActivitiesCard({ subjectCode }) {
                       setActivityFilter('Activity');
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2A2A35] cursor-pointer ${
-                      activityFilter === 'Activity' ? 'text-[#00A15D] font-semibold' : 'text-white'
+                    className={`w-full text-left px-3 py-1.5 text-xs ${getDropdownItemHoverColor()} cursor-pointer ${
+                      activityFilter === 'Activity' ? 'text-[#00A15D] font-semibold' : getTextColor()
                     }`}
                   >
                     Activity
@@ -264,8 +316,8 @@ export default function ActivitiesCard({ subjectCode }) {
                       setActivityFilter('Project');
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2A2A35] cursor-pointer ${
-                      activityFilter === 'Project' ? 'text-[#FFA600] font-semibold' : 'text-white'
+                    className={`w-full text-left px-3 py-1.5 text-xs ${getDropdownItemHoverColor()} cursor-pointer ${
+                      activityFilter === 'Project' ? 'text-[#FFA600] font-semibold' : getTextColor()
                     }`}
                   >
                     Projects
@@ -275,8 +327,8 @@ export default function ActivitiesCard({ subjectCode }) {
                       setActivityFilter('Laboratory');
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2A2A35] cursor-pointer ${
-                      activityFilter === 'Laboratory' ? 'text-[#A15353] font-semibold' : 'text-white'
+                    className={`w-full text-left px-3 py-1.5 text-xs ${getDropdownItemHoverColor()} cursor-pointer ${
+                      activityFilter === 'Laboratory' ? 'text-[#A15353] font-semibold' : getTextColor()
                     }`}
                   >
                     Laboratory
@@ -286,8 +338,8 @@ export default function ActivitiesCard({ subjectCode }) {
                       setActivityFilter('Exam');
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2A2A35] cursor-pointer ${
-                      activityFilter === 'Exam' ? 'text-[#FF5252] font-semibold' : 'text-white'
+                    className={`w-full text-left px-3 py-1.5 text-xs ${getDropdownItemHoverColor()} cursor-pointer ${
+                      activityFilter === 'Exam' ? 'text-[#FF5252] font-semibold' : getTextColor()
                     }`}
                   >
                     Exam
@@ -297,8 +349,8 @@ export default function ActivitiesCard({ subjectCode }) {
                       setActivityFilter('Remedial');
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2A2A35] cursor-pointer ${
-                      activityFilter === 'Remedial' ? 'text-[#3B82F6] font-semibold' : 'text-white'
+                    className={`w-full text-left px-3 py-1.5 text-xs ${getDropdownItemHoverColor()} cursor-pointer ${
+                      activityFilter === 'Remedial' ? 'text-[#3B82F6] font-semibold' : getTextColor()
                     }`}
                   >
                     Remedial
@@ -318,32 +370,32 @@ export default function ActivitiesCard({ subjectCode }) {
               label: "Submitted", 
               value: stats.submitted,
               color: "text-[#00A15D]",
-              bgColor: "bg-[#00A15D]/10"
+              bgColor: isDarkMode ? "bg-[#00A15D]/10" : "bg-[#00A15D]/5"
             },
             { 
               label: "Assigned", 
               value: stats.assigned,
               color: "text-[#767EE0]",
-              bgColor: "bg-[#767EE0]/10"
+              bgColor: isDarkMode ? "bg-[#767EE0]/10" : "bg-[#767EE0]/5"
             },
             { 
               label: "Total", 
               value: stats.total, 
-              color: "text-white",
-              bgColor: "bg-[#23232C]"
+              color: getTextColor(),
+              bgColor: isDarkMode ? "bg-[#23232C]" : "bg-gray-100"
             }
           ].map((stat, index) => (
             <div key={index} className={`text-center p-2 rounded ${stat.bgColor}`}>
               <div className={`text-lg font-bold ${stat.color}`}>{stat.value}</div>
-              <div className="text-xs text-gray-400">{stat.label}</div>
+              <div className={`text-xs ${getSecondaryTextColor()}`}>{stat.label}</div>
             </div>
           ))}
         </div>
         
         {/* Activity Type Distribution */}
         {Object.keys(typeDistribution).length > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-800">
-            <div className="text-xs text-gray-400 mb-2">Activity Types:</div>
+          <div className={`mt-3 pt-3 border-t ${getTableBorderColor()}`}>
+            <div className={`text-xs mb-2 ${getSecondaryTextColor()}`}>Activity Types:</div>
             <div className="flex flex-wrap gap-1">
               {Object.entries(typeDistribution).map(([type, count]) => {
                 if (count === 0) return null;
@@ -370,13 +422,13 @@ export default function ActivitiesCard({ subjectCode }) {
           <div className="overflow-x-auto mb-3">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="text-left py-1.5 px-2 text-xs font-semibold text-gray-400">Activity Name</th>
-                  <th className="text-left py-1.5 px-2 text-xs font-semibold text-gray-400">Type</th>
-                  <th className="text-left py-1.5 px-2 text-xs font-semibold text-gray-400">Posted</th>
-                  <th className="text-left py-1.5 px-2 text-xs font-semibold text-gray-400">Due Date</th>
-                  <th className="text-left py-1.5 px-2 text-xs font-semibold text-gray-400">Submissions</th>
-                  <th className="text-left py-1.5 px-2 text-xs font-semibold text-gray-400">Status</th>
+                <tr className={`border-b ${getTableBorderColor()}`}>
+                  <th className={`text-left py-1.5 px-2 text-xs font-semibold ${getTableHeaderTextColor()}`}>Activity Name</th>
+                  <th className={`text-left py-1.5 px-2 text-xs font-semibold ${getTableHeaderTextColor()}`}>Type</th>
+                  <th className={`text-left py-1.5 px-2 text-xs font-semibold ${getTableHeaderTextColor()}`}>Posted</th>
+                  <th className={`text-left py-1.5 px-2 text-xs font-semibold ${getTableHeaderTextColor()}`}>Due Date</th>
+                  <th className={`text-left py-1.5 px-2 text-xs font-semibold ${getTableHeaderTextColor()}`}>Submissions</th>
+                  <th className={`text-left py-1.5 px-2 text-xs font-semibold ${getTableHeaderTextColor()}`}>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -385,12 +437,12 @@ export default function ActivitiesCard({ subjectCode }) {
                   const statusColor = getActivityStatusColor(activity.status);
                   
                   return (
-                    <tr key={activity.id} className="border-b border-gray-800 hover:bg-[#23232C]/50">
+                    <tr key={activity.id} className={`border-b ${getTableBorderColor()} ${getTableRowHoverColor()}`}>
                       <td className="py-1.5 px-2">
-                        <div className="font-medium text-white text-xs whitespace-normal">
+                        <div className={`font-medium text-xs whitespace-normal ${getTextColor()}`}>
                           {activity.title || `Untitled Activity`}
                           {activity.task_number && (
-                            <span className="text-gray-400 text-[10px] ml-1">
+                            <span className={`text-[10px] ml-1 ${getSecondaryTextColor()}`}>
                               #{activity.task_number}
                             </span>
                           )}
@@ -407,16 +459,16 @@ export default function ActivitiesCard({ subjectCode }) {
                           {getActivityTypeLabel(activity.activity_type)}
                         </span>
                       </td>
-                      <td className="py-1.5 px-2 text-xs text-gray-400 whitespace-nowrap">
+                      <td className={`py-1.5 px-2 text-xs whitespace-nowrap ${getSecondaryTextColor()}`}>
                         {activity.created_at ? formatDate(activity.created_at) : 'N/A'}
                       </td>
-                      <td className="py-1.5 px-2 text-xs text-gray-400 whitespace-nowrap">
+                      <td className={`py-1.5 px-2 text-xs whitespace-nowrap ${getSecondaryTextColor()}`}>
                         {formatDate(activity.deadline)}
                       </td>
-                      <td className="py-1.5 px-2 text-xs text-gray-400 whitespace-nowrap">
+                      <td className={`py-1.5 px-2 text-xs whitespace-nowrap ${getSecondaryTextColor()}`}>
                         <div className="flex items-center gap-1">
                           <span>{activity.submitted_count || 0}</span>
-                          <span className="text-gray-500">/</span>
+                          <span className={getSecondaryTextColor()}>/</span>
                           <span>{activity.total_students || 0}</span>
                         </div>
                       </td>
@@ -438,7 +490,7 @@ export default function ActivitiesCard({ subjectCode }) {
             </table>
             
             {filteredActivities.length === 0 && (
-              <div className="text-center py-4 text-gray-500 text-xs">
+              <div className={`text-center py-4 text-xs ${getSecondaryTextColor()}`}>
                 No activities found for the selected filter
               </div>
             )}

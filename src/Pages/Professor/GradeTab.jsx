@@ -16,7 +16,7 @@ import AnalyticsIcon from '../../assets/Analytics.svg';
 import Attendance from "../../assets/Attendance.svg";
 import Copy from '../../assets/Copy.svg';
 import SubjectOverview from "../../assets/SubjectOverview.svg";
-import TrackEdLogo from '../../assets/New-FullBlack-TrackEdLogo.png'; // Add this line
+import TrackEdLogo from '../../assets/New-FullBlack-TrackEdLogo.png';
 
 export default function GradeTab() {
   const [isOpen, setIsOpen] = useState(true);
@@ -32,6 +32,9 @@ export default function GradeTab() {
   const [gradeData, setGradeData] = useState([]);
   const [students, setStudents] = useState([]);
 
+  // ========== ADDED: Theme State ==========
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
   useEffect(() => {
     const checkScreenSize = () => {
       if (window.innerWidth >= 1024) {
@@ -44,6 +47,25 @@ export default function GradeTab() {
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+  
+  // ========== ADDED: Theme Listener ==========
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
   }, []);
  
   const fetchClassInfo = useCallback(async () => {
@@ -552,6 +574,23 @@ export default function GradeTab() {
     }
   };
 
+  // ========== THEME HELPER FUNCTIONS ==========
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/30" : "border-gray-200";
+  };
+
   // ========== RENDER ACTION BUTTON HELPER ==========
   const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
     <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
@@ -560,7 +599,7 @@ export default function GradeTab() {
           ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
           : colorClass
       }`}>
-        <img src={icon} alt="" className="h-4 w-4" />
+        <img src={icon} alt="" className="h-4 w-4" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
         <span className="sm:inline truncate">{label}</span>
       </button>
     </Link>
@@ -569,11 +608,11 @@ export default function GradeTab() {
   // Show error state
   if (error && !loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-5 text-center text-white">
+          <div className={`p-5 text-center ${getTextColor()}`}>
             <div className="text-[#A15353] text-lg mb-4">Error: {error}</div>
             <button 
               onClick={() => window.location.reload()}
@@ -589,13 +628,13 @@ export default function GradeTab() {
 
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 text-center text-white">
+          <div className={`p-8 text-center ${getTextColor()}`}>
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
-            <p className="mt-3 text-white/80">Loading grade data...</p>
+            <p className={`mt-3 ${getSecondaryTextColor()}`}>Loading grade data...</p>
             {error && <p className="mt-2 text-[#A15353] text-sm">{error}</p>}
           </div>
         </div>
@@ -604,7 +643,7 @@ export default function GradeTab() {
   }
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -619,18 +658,19 @@ export default function GradeTab() {
                 src={GradeIcon}
                 alt="Grade"
                 className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
               />
-              <h1 className="font-bold text-xl lg:text-2xl text-white">
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>
                 Grade
               </h1>
             </div>
-            <p className="text-sm lg:text-base text-gray-400">
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>
               View and manage class grades
             </p>
           </div>
 
           {/* ========== SUBJECT INFORMATION WITH COPY BUTTON ========== */}
-          <div className="flex flex-col gap-1 text-sm text-gray-400 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
               <div className="flex items-center gap-2">
@@ -638,13 +678,14 @@ export default function GradeTab() {
                 {classInfo?.subject_code && (
                   <button
                     onClick={copySubjectCode}
-                    className="p-1 text-gray-400 hover:text-white hover:bg-[#15151C] rounded transition-colors cursor-pointer flex items-center gap-1"
+                    className={`p-1 ${isDarkMode ? 'text-[#FFFFFF]/60 hover:text-[#FFFFFF] hover:bg-[#15151C]' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'} rounded transition-colors cursor-pointer flex items-center gap-1`}
                     title="Copy subject code"
                   >
                     <img 
                       src={Copy} 
                       alt="Copy" 
-                      className="w-4 h-4" 
+                      className="w-4 h-4"
+                      style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                     />
                   </button>
                 )}
@@ -667,13 +708,14 @@ export default function GradeTab() {
                     src={BackButton} 
                     alt="Back to Class Management" 
                     className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity"
+                    style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                   />
                 </Link>
               </div>
             </div>
           </div>
 
-          <hr className="border-gray-700 mb-4" />
+          <hr className={`${getBorderColor()} mb-4`} />
 
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -702,14 +744,15 @@ export default function GradeTab() {
               {/* Class Management Button */}
               <Link to={`/StudentList?code=${subjectCode}`}>
                 <div className="relative group">
-                  <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer">
+                  <button className={`p-2 ${isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'} rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer`}>
                     <img 
                       src={ClassManagementIcon} 
                       alt="ClassManagement" 
-                      className="h-4 w-4" 
+                      className="h-4 w-4"
+                      style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                     />
                   </button>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                  <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs ${getTextColor()} ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'} rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10`}>
                     Student List
                   </div>
                 </div>
@@ -725,6 +768,7 @@ export default function GradeTab() {
             subjectCode={subjectCode}
             isDownloading={isDownloading}
             onDownload={handleDownload}
+            isDarkMode={isDarkMode}
           />
         </div>
       </div>

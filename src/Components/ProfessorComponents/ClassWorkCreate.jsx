@@ -10,7 +10,8 @@ const ClassWorkCreate = ({
   activityTypes = ["Activity", "Assignment", "Quiz", "Laboratory", "Project", "Remedial", "Exam"],
   getCurrentDateTime,
   subjectCode,
-  creatingActivity = false
+  creatingActivity = false,
+  isDarkMode = true
 }) => {
   const [activityType, setActivityType] = useState("");
   const [taskNumber, setTaskNumber] = useState("");
@@ -31,27 +32,26 @@ const ClassWorkCreate = ({
 
   const filteredActivityTypes = activityTypes.filter(type => type !== "Announcement");
 
-  // Add CSS for styling the calendar icon
   useEffect(() => {
     if (isOpen) {
       const style = document.createElement('style');
       style.innerHTML = `
         .deadline-input::-webkit-calendar-picker-indicator {
-          filter: invert(1);
+          filter: ${isDarkMode ? 'invert(1)' : 'invert(0.5)'};
           cursor: pointer;
         }
         .deadline-input::-moz-calendar-picker-indicator {
-          filter: invert(1);
+          filter: ${isDarkMode ? 'invert(1)' : 'invert(0.5)'};
           cursor: pointer;
         }
         .deadline-input::-webkit-datetime-edit {
-          color: white;
+          color: ${isDarkMode ? 'white' : 'black'};
         }
         .deadline-input::-webkit-datetime-edit-fields-wrapper {
-          color: white;
+          color: ${isDarkMode ? 'white' : 'black'};
         }
         .deadline-input::-webkit-datetime-edit-text {
-          color: white;
+          color: ${isDarkMode ? 'white' : 'black'};
           padding: 0 0.3em;
         }
         .deadline-input::-webkit-datetime-edit-month-field,
@@ -60,7 +60,7 @@ const ClassWorkCreate = ({
         .deadline-input::-webkit-datetime-edit-hour-field,
         .deadline-input::-webkit-datetime-edit-minute-field,
         .deadline-input::-webkit-datetime-edit-ampm-field {
-          color: white;
+          color: ${isDarkMode ? 'white' : 'black'};
         }
         .deadline-input::-webkit-inner-spin-button {
           display: none;
@@ -72,9 +72,8 @@ const ClassWorkCreate = ({
         document.head.removeChild(style);
       };
     }
-  }, [isOpen]);
+  }, [isOpen, isDarkMode]);
 
-  // Fetch real students and existing activities
   useEffect(() => {
     if (isOpen && subjectCode) {
       fetchClassStudents();
@@ -175,7 +174,6 @@ const ClassWorkCreate = ({
       return;
     }
 
-    // If individual assignment is selected but no students are chosen
     if (assignTo === "individual" && selectedStudents.length === 0) {
       alert("Please select at least one student for individual assignment");
       return;
@@ -213,56 +211,70 @@ const ClassWorkCreate = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-2 sm:p-3">
-      <div className="bg-[#15151C] text-white rounded-lg w-full max-w-2xl mx-2 p-4 sm:p-5 relative max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+      <div className={`rounded-lg w-full max-w-2xl mx-2 p-4 sm:p-5 relative max-h-[90vh] overflow-y-auto ${
+        isDarkMode ? 'bg-[#15151C] text-white' : 'bg-white text-gray-900'
+      }`}>
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h2 className="text-lg font-bold text-white">Create School Work</h2>
-            <p className="text-xs text-gray-400 mt-1">Fill in the details to create a new activity</p>
+            <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Create School Work</h2>
+            <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Fill in the details to create a new activity</p>
           </div>
           <button
             onClick={handleClose}
-            className="p-1.5 hover:bg-gray-800 rounded"
+            className={`p-1.5 rounded ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
           >
-            <img src={BackButton} alt="Close" className="w-4 h-4" />
+            <img 
+              src={BackButton} 
+              alt="Close" 
+              className="w-4 h-4"
+              style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+            />
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Left Column */}
           <div className="space-y-3">
-            {/* Deadline */}
             <div>
-              <label className="text-xs font-medium mb-1 block">Deadline</label>
+              <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Deadline</label>
               <input
                 type="datetime-local"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
                 min={getCurrentDateTime()}
-                className="deadline-input w-full bg-[#23232C] border border-gray-700 rounded px-3 py-2 text-sm outline-none focus:border-[#767EE0] text-white"
+                className={`deadline-input w-full border rounded px-3 py-2 text-sm outline-none ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-700 focus:border-[#767EE0] text-white' 
+                    : 'bg-gray-50 border-gray-300 focus:border-[#767EE0] text-gray-900'
+                }`}
               />
             </div>
 
-            {/* Activity Type */}
             <div className="relative">
-              <label className="text-xs font-medium mb-1 block">
+              <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Activity Type <span className="text-[#A15353]">*</span>
               </label>
               <button
                 onClick={() => setActivityTypeDropdownOpen(!activityTypeDropdownOpen)}
-                className="w-full bg-[#23232C] border border-gray-700 text-white rounded px-3 py-2 text-sm flex justify-between items-center"
+                className={`w-full border rounded px-3 py-2 text-sm flex justify-between items-center ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-700 text-white' 
+                    : 'bg-gray-50 border-gray-300 text-gray-900'
+                }`}
               >
-                <span className={!activityType ? 'text-gray-500' : ''}>
+                <span className={!activityType ? (isDarkMode ? 'text-gray-500' : 'text-gray-400') : ''}>
                   {activityType || "Select Type"}
                 </span>
                 <img 
                   src={ArrowDown} 
                   alt="" 
-                  className={`w-3 h-3 transition-transform ${activityTypeDropdownOpen ? 'rotate-180' : ''}`} 
+                  className={`w-3 h-3 transition-transform ${activityTypeDropdownOpen ? 'rotate-180' : ''}`}
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
               {activityTypeDropdownOpen && (
-                <div className="absolute top-full mt-1 w-full bg-[#23232C] rounded border border-gray-700 z-10 max-h-60 overflow-y-auto">
+                <div className={`absolute top-full mt-1 w-full rounded border z-10 max-h-60 overflow-y-auto ${
+                  isDarkMode ? 'bg-[#23232C] border-gray-700' : 'bg-white border-gray-300'
+                }`}>
                   {filteredActivityTypes.map((type) => (
                     <button
                       key={type}
@@ -270,7 +282,11 @@ const ClassWorkCreate = ({
                         setActivityType(type);
                         setActivityTypeDropdownOpen(false);
                       }}
-                      className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
+                      className={`block w-full text-left px-3 py-2 text-sm ${
+                        isDarkMode 
+                          ? 'text-white hover:bg-gray-800' 
+                          : 'text-gray-900 hover:bg-gray-100'
+                      }`}
                     >
                       {type}
                     </button>
@@ -279,9 +295,8 @@ const ClassWorkCreate = ({
               )}
             </div>
 
-            {/* Task Number */}
             <div>
-              <label className="text-xs font-medium mb-1 block">
+              <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Task Number <span className="text-[#A15353]">*</span>
               </label>
               <input
@@ -294,8 +309,14 @@ const ClassWorkCreate = ({
                     setTaskNumber(value);
                   }
                 }}
-                className={`w-full bg-[#23232C] border rounded px-3 py-2 text-sm outline-none text-white placeholder:text-gray-500 ${
-                  isDuplicate ? 'border-[#A15353]' : 'border-gray-700 focus:border-[#767EE0]'
+                className={`w-full border rounded px-3 py-2 text-sm outline-none placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] text-white placeholder:text-gray-500' 
+                    : 'bg-gray-50 text-gray-900 placeholder:text-gray-400'
+                } ${
+                  isDuplicate 
+                    ? 'border-[#A15353]' 
+                    : (isDarkMode ? 'border-gray-700 focus:border-[#767EE0]' : 'border-gray-300 focus:border-[#767EE0]')
                 }`}
               />
               {isDuplicate && (
@@ -304,15 +325,14 @@ const ClassWorkCreate = ({
                 </p>
               )}
               {activityType && existingTaskNumbers.length > 0 && (
-                <p className="text-gray-500 text-xs mt-1">
+                <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
                   Existing {activityType}s: {existingTaskNumbers.join(', ')}
                 </p>
               )}
             </div>
 
-            {/* Title */}
             <div>
-              <label className="text-xs font-medium mb-1 block">
+              <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Title <span className="text-[#A15353]">*</span>
               </label>
               <input
@@ -320,38 +340,51 @@ const ClassWorkCreate = ({
                 placeholder="Enter title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-[#23232C] border border-gray-700 rounded px-3 py-2 text-sm outline-none focus:border-[#767EE0] text-white placeholder:text-gray-500"
+                className={`w-full border rounded px-3 py-2 text-sm outline-none placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-700 focus:border-[#767EE0] text-white' 
+                    : 'bg-gray-50 border-gray-300 focus:border-[#767EE0] text-gray-900'
+                }`}
               />
             </div>
           </div>
 
-          {/* Right Column */}
           <div className="space-y-3">
-            {/* Assign To */}
             <div className="relative">
-              <label className="text-xs font-medium mb-1 block">
+              <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Assign To <span className="text-[#A15353]">*</span>
               </label>
               <button
                 onClick={() => setAssignToDropdownOpen(!assignToDropdownOpen)}
-                className="w-full bg-[#23232C] border border-gray-700 text-white rounded px-3 py-2 text-sm flex justify-between items-center"
+                className={`w-full border rounded px-3 py-2 text-sm flex justify-between items-center ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-700 text-white' 
+                    : 'bg-gray-50 border-gray-300 text-gray-900'
+                }`}
               >
                 <span>{assignTo === "wholeClass" ? "Whole Class" : "Individual Students"}</span>
                 <img 
                   src={ArrowDown} 
                   alt="" 
-                  className={`w-3 h-3 transition-transform ${assignToDropdownOpen ? 'rotate-180' : ''}`} 
+                  className={`w-3 h-3 transition-transform ${assignToDropdownOpen ? 'rotate-180' : ''}`}
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
               {assignToDropdownOpen && (
-                <div className="absolute top-full mt-1 w-full bg-[#23232C] rounded border border-gray-700 z-10">
+                <div className={`absolute top-full mt-1 w-full rounded border z-10 ${
+                  isDarkMode ? 'bg-[#23232C] border-gray-700' : 'bg-white border-gray-300'
+                }`}>
                   <button
                     onClick={() => {
                       setAssignTo("wholeClass");
                       setAssignToDropdownOpen(false);
                       setSelectedStudents([]);
                     }}
-                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
+                    className={`block w-full text-left px-3 py-2 text-sm ${
+                      isDarkMode 
+                        ? 'text-white hover:bg-gray-800' 
+                        : 'text-gray-900 hover:bg-gray-100'
+                    }`}
                   >
                     Whole Class
                   </button>
@@ -360,7 +393,11 @@ const ClassWorkCreate = ({
                       setAssignTo("individual");
                       setAssignToDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-800 text-white"
+                    className={`block w-full text-left px-3 py-2 text-sm ${
+                      isDarkMode 
+                        ? 'text-white hover:bg-gray-800' 
+                        : 'text-gray-900 hover:bg-gray-100'
+                    }`}
                   >
                     Individual Students
                   </button>
@@ -368,11 +405,12 @@ const ClassWorkCreate = ({
               )}
             </div>
 
-            {/* Student Selection - Only show when "Individual Students" is selected */}
             {assignTo === "individual" && (
-              <div className="bg-[#23232C] border border-gray-700 rounded p-3">
+              <div className={`border rounded p-3 ${
+                isDarkMode ? 'bg-[#23232C] border-gray-700' : 'bg-gray-50 border-gray-300'
+              }`}>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-medium">
+                  <label className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Select Students <span className="text-[#A15353]">*</span>
                   </label>
                   {!loadingStudents && realStudents.length > 0 && (
@@ -388,10 +426,10 @@ const ClassWorkCreate = ({
                 {loadingStudents ? (
                   <div className="text-center py-3">
                     <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-[#00A15D] border-r-transparent"></div>
-                    <p className="text-xs text-gray-500 mt-2">Loading students...</p>
+                    <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>Loading students...</p>
                   </div>
                 ) : realStudents.length === 0 ? (
-                  <p className="text-xs text-gray-500 text-center py-2">No students found in this class</p>
+                  <p className={`text-xs text-center py-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>No students found in this class</p>
                 ) : (
                   <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
                     {realStudents.map((student) => (
@@ -405,17 +443,17 @@ const ClassWorkCreate = ({
                         />
                         <label 
                           htmlFor={`student-${student.tracked_ID}`}
-                          className="text-xs flex-1 text-white"
+                          className={`text-xs flex-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                         >
                           {student.tracked_firstname} {student.tracked_lastname}
-                          <span className="text-gray-500 text-xs block">ID: {student.tracked_ID}</span>
+                          <span className={`text-xs block ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>ID: {student.tracked_ID}</span>
                         </label>
                       </div>
                     ))}
                   </div>
                 )}
                 {selectedStudents.length > 0 && (
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
                   </p>
                 )}
@@ -427,9 +465,8 @@ const ClassWorkCreate = ({
               </div>
             )}
 
-            {/* Points */}
             <div>
-              <label className="text-xs font-medium mb-1 block">Points</label>
+              <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Points</label>
               <input
                 type="number"
                 placeholder="0"
@@ -440,36 +477,45 @@ const ClassWorkCreate = ({
                     setPoints(value);
                   }
                 }}
-                className="w-full bg-[#23232C] border border-gray-700 rounded px-3 py-2 text-sm outline-none focus:border-[#767EE0] text-white placeholder:text-gray-500"
+                className={`w-full border rounded px-3 py-2 text-sm outline-none placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-700 focus:border-[#767EE0] text-white' 
+                    : 'bg-gray-50 border-gray-300 focus:border-[#767EE0] text-gray-900'
+                }`}
               />
             </div>
 
-            {/* Link */}
             <div>
-              <label className="text-xs font-medium mb-1 block">Link</label>
+              <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Link</label>
               <input
                 type="text"
                 placeholder="Enter link (optional)"
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
-                className="w-full bg-[#23232C] border border-gray-700 rounded px-3 py-2 text-sm outline-none focus:border-[#767EE0] text-white placeholder:text-gray-500"
+                className={`w-full border rounded px-3 py-2 text-sm outline-none placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-700 focus:border-[#767EE0] text-white' 
+                    : 'bg-gray-50 border-gray-300 focus:border-[#767EE0] text-gray-900'
+                }`}
               />
             </div>
 
-            {/* Instruction */}
             <div>
-              <label className="text-xs font-medium mb-1 block">Instruction</label>
+              <label className={`text-xs font-medium mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Instruction</label>
               <textarea
                 placeholder="Enter instruction..."
                 value={instruction}
                 onChange={(e) => setInstruction(e.target.value)}
-                className="w-full bg-[#23232C] border border-gray-700 rounded px-3 py-2 text-sm outline-none focus:border-[#767EE0] h-24 resize-none text-white placeholder:text-gray-500"
+                className={`w-full border rounded px-3 py-2 text-sm outline-none h-24 resize-none placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-700 focus:border-[#767EE0] text-white' 
+                    : 'bg-gray-50 border-gray-300 focus:border-[#767EE0] text-gray-900'
+                }`}
               />
             </div>
           </div>
         </div>
 
-        {/* Create Button */}
         <button
           onClick={handleCreate}
           disabled={creatingActivity || isDuplicate || (assignTo === "individual" && selectedStudents.length === 0)}

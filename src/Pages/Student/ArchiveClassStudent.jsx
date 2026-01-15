@@ -20,11 +20,31 @@ export default function ArchivedClasses() {
   const [classToUnarchive, setClassToUnarchive] = useState(null);
   const [loading, setLoading] = useState(true);
   const [archivedClasses, setArchivedClasses] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
   
   // Popup states
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Get student ID from localStorage
   const getStudentId = () => {
@@ -178,13 +198,74 @@ export default function ArchivedClasses() {
     }
   };
 
+  // Theme helper functions
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getModalBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/80" : "text-gray-600";
+  };
+
+  const getTertiaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/60" : "text-gray-500";
+  };
+
+  const getQuaternaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/40" : "text-gray-400";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/30" : "border-gray-300";
+  };
+
+  const getHoverBorderColor = () => {
+    return isDarkMode ? "hover:border-[#767EE0]" : "hover:border-[#767EE0]";
+  };
+
+  const getButtonTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getModalOverlayColor = () => {
+    return isDarkMode ? "bg-black/50" : "bg-black/30";
+  };
+
+  const getModalBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getModalInnerBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getModalInnerBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
   // Function to render archived class cards
   const renderArchivedClassCards = () => {
     if (loading) {
       return (
         <div className="col-span-full text-center py-12">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#767EE0] border-r-transparent"></div>
-          <p className="mt-3 text-[#FFFFFF]/80">Loading archived classes...</p>
+          <p className={`mt-3 ${getTertiaryTextColor()}`}>Loading archived classes...</p>
         </div>
       );
     }
@@ -192,17 +273,18 @@ export default function ArchivedClasses() {
     if (archivedClasses.length === 0) {
       return (
         <div className="col-span-full text-center py-12">
-          <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-[#15151C] flex items-center justify-center">
+          <div className={`mx-auto w-16 h-16 mb-4 rounded-full ${getCardBackgroundColor()} flex items-center justify-center`}>
             <img 
               src={Subject} 
               alt="No archived classes" 
               className="h-8 w-8 opacity-50"
+              style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
             />
           </div>
-          <p className="text-[#FFFFFF]/60 text-sm">
+          <p className={`${getTertiaryTextColor()} text-sm`}>
             No archived classes found.
           </p>
-          <p className="text-[#FFFFFF]/40 text-xs mt-2">
+          <p className={`${getQuaternaryTextColor()} text-xs mt-2`}>
             Classes you archive will appear here.
           </p>
         </div>
@@ -212,7 +294,7 @@ export default function ArchivedClasses() {
     return archivedClasses.map((cls) => (
       <div
         key={cls.subject_code}
-        className="text-[#FFFFFF] bg-[#15151C] rounded-md p-3 shadow-md space-y-2 border border-[#FFFFFF]/10 hover:border-[#767EE0] transition-all duration-200"
+        className={`${getTextColor()} ${getCardBackgroundColor()} rounded-md p-3 shadow-md space-y-2 border ${getCardBorderColor()} ${getHoverBorderColor()} transition-all duration-200`}
       >
         {/* Header with Code & Title */}
         <div className="flex items-start justify-between gap-2">
@@ -226,42 +308,44 @@ export default function ArchivedClasses() {
           <div className="flex gap-1.5 flex-shrink-0">
             <button
               onClick={(e) => handleDelete(cls, e)}
-              className="bg-[#A15353] rounded-md w-8 h-8 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#FFFFFF] hover:scale-105 transition-all duration-200 cursor-pointer"
+              className="bg-[#A15353] rounded-md w-8 h-8 shadow-md flex items-center justify-center border-2 border-transparent hover:border-white hover:scale-105 transition-all duration-200 cursor-pointer"
               title="Delete permanently"
             >
               <img 
                 src={DeleteIcon} 
                 alt="Delete" 
                 className="h-4 w-4" 
+                style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
               />
             </button>
 
             <button
               onClick={(e) => handleUnarchive(cls, e)}
-              className="bg-[#00A15D] rounded-md w-8 h-8 shadow-md flex items-center justify-center border-2 border-transparent hover:border-[#FFFFFF] hover:scale-105 transition-all duration-200 cursor-pointer"
+              className="bg-[#00A15D] rounded-md w-8 h-8 shadow-md flex items-center justify-center border-2 border-transparent hover:border-white hover:scale-105 transition-all duration-200 cursor-pointer"
               title="Restore class"
             >
               <img 
                 src={ArchiveRow} 
                 alt="Restore" 
                 className="h-4 w-4" 
+                style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
               />
             </button>
           </div>
         </div>
 
         {/* Details */}
-        <div className="space-y-1.5 pt-2 border-t border-[#FFFFFF]/20">
+        <div className={`space-y-1.5 pt-2 border-t ${isDarkMode ? 'border-[#FFFFFF]/20' : 'border-gray-100'}`}>
           <div className="text-xs">
-            <span className="font-semibold text-[#FFFFFF]/80">Section:</span>
-            <span className="ml-2 text-[#FFFFFF]">{cls.section}</span>
+            <span className={`font-semibold ${getTertiaryTextColor()}`}>Section:</span>
+            <span className={`ml-2 ${getTextColor()}`}>{cls.section}</span>
           </div>
           <div className="text-xs">
-            <span className="font-semibold text-[#FFFFFF]/80">Year Level:</span>
-            <span className="ml-2 text-[#FFFFFF]">{cls.year_level}</span>
+            <span className={`font-semibold ${getTertiaryTextColor()}`}>Year Level:</span>
+            <span className={`ml-2 ${getTextColor()}`}>{cls.year_level}</span>
           </div>
           {cls.archived_at && (
-            <div className="text-xs text-[#FFFFFF]/60">
+            <div className={`text-xs ${getQuaternaryTextColor()}`}>
               <span className="font-semibold">Archived on:</span>
               <span className="ml-2">{formatDate(cls.archived_at)}</span>
             </div>
@@ -272,7 +356,7 @@ export default function ArchivedClasses() {
   };
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`${getBackgroundColor()} min-h-screen`}>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div
         className={`
@@ -283,7 +367,7 @@ export default function ArchivedClasses() {
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
         {/* Page Content */}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-6 text-[#FFFFFF]">
+        <div className={`p-4 sm:p-5 md:p-6 lg:p-6 ${getTextColor()}`}>
           {/* Header */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
@@ -292,8 +376,9 @@ export default function ArchivedClasses() {
                   src={Subject}
                   alt="Subjects"
                   className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
-                <h1 className="font-bold text-xl lg:text-2xl">
+                <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>
                   Archived Classes
                 </h1>
               </div>
@@ -308,16 +393,17 @@ export default function ArchivedClasses() {
                     src={BackButton}
                     alt="Back"
                     className="h-5 w-5"
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                   />
                 </button>
               </Link>
             </div>
-            <div className="text-sm text-[#FFFFFF]/80">
+            <div className={`text-sm ${getSecondaryTextColor()}`}>
               <span>List of archived classes</span>
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getDividerColor()} mb-4`} />
 
           {/* Archived Classes Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -329,7 +415,7 @@ export default function ArchivedClasses() {
       {/* Unarchive Confirmation Modal */}
       {showUnarchiveModal && classToUnarchive && (
         <div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          className={`fixed inset-0 ${getModalOverlayColor()} flex justify-center items-center z-50 overlay-fade p-4`}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowUnarchiveModal(false);
@@ -339,7 +425,7 @@ export default function ArchivedClasses() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-[#FFFFFF] rounded-md shadow-2xl w-full max-w-sm p-6 relative modal-pop border border-[#FFFFFF]/10">
+          <div className={`${getModalBackgroundColor()} ${getTextColor()} rounded-md shadow-2xl w-full max-w-sm p-6 relative modal-pop border ${getModalBorderColor()}`}>
             <div className="text-center">
               {/* Info Icon */}
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-[#00A15D]/20 mb-4">
@@ -347,25 +433,26 @@ export default function ArchivedClasses() {
                   src={ArchiveRow} 
                   alt="Restore" 
                   className="h-6 w-6"
+                  style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
                 />
               </div>
 
-              <h3 className="text-lg font-bold text-[#FFFFFF] mb-2">
+              <h3 className={`text-lg font-bold ${getTextColor()} mb-2`}>
                 Restore Class?
               </h3>
               
               <div className="mt-3 mb-5">
-                <p className="text-sm text-[#FFFFFF]/80 mb-3">
+                <p className={`text-sm ${getSecondaryTextColor()} mb-3`}>
                   Are you sure you want to restore this class?
                 </p>
-                <div className="bg-[#23232C] rounded-md p-3 text-left border border-[#FFFFFF]/10">
-                  <p className="text-sm font-semibold text-[#FFFFFF] break-words">
+                <div className={`${getModalInnerBackgroundColor()} rounded-md p-3 text-left border ${getModalInnerBorderColor()}`}>
+                  <p className={`text-sm font-semibold ${getTextColor()} break-words`}>
                     {classToUnarchive.subject_code}: {classToUnarchive.subject}
                   </p>
-                  <p className="text-xs text-[#FFFFFF]/60 mt-1">
+                  <p className={`text-xs ${getTertiaryTextColor()} mt-1`}>
                     Section: {classToUnarchive.section}
                   </p>
-                  <p className="text-xs text-[#FFFFFF]/60">
+                  <p className={`text-xs ${getTertiaryTextColor()}`}>
                     Year Level: {classToUnarchive.year_level}
                   </p>
                 </div>
@@ -377,7 +464,7 @@ export default function ArchivedClasses() {
                     setShowUnarchiveModal(false);
                     setClassToUnarchive(null);
                   }}
-                  className="flex-1 bg-[#23232C] hover:bg-[#2a2a35] text-[#FFFFFF] font-medium py-2.5 rounded-md transition-all duration-200 cursor-pointer border border-[#FFFFFF]/20"
+                  className={`flex-1 ${isDarkMode ? 'bg-[#23232C] hover:bg-[#2a2a35]' : 'bg-gray-100 hover:bg-gray-200'} ${getButtonTextColor()} font-medium py-2.5 rounded-md transition-all duration-200 cursor-pointer border ${isDarkMode ? 'border-[#FFFFFF]/20' : 'border-gray-300'}`}
                 >
                   Cancel
                 </button>
@@ -396,7 +483,7 @@ export default function ArchivedClasses() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && classToDelete && (
         <div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          className={`fixed inset-0 ${getModalOverlayColor()} flex justify-center items-center z-50 overlay-fade p-4`}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowDeleteModal(false);
@@ -406,7 +493,7 @@ export default function ArchivedClasses() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-[#FFFFFF] rounded-md shadow-2xl w-full max-w-sm p-6 relative modal-pop border border-[#FFFFFF]/10">
+          <div className={`${getModalBackgroundColor()} ${getTextColor()} rounded-md shadow-2xl w-full max-w-sm p-6 relative modal-pop border ${getModalBorderColor()}`}>
             <div className="text-center">
               {/* Warning Icon */}
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-[#A15353]/20 mb-4">
@@ -414,28 +501,29 @@ export default function ArchivedClasses() {
                   src={DeleteIcon} 
                   alt="Delete" 
                   className="h-6 w-6"
+                  style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
                 />
               </div>
 
-              <h3 className="text-lg font-bold text-[#FFFFFF] mb-2">
+              <h3 className={`text-lg font-bold ${getTextColor()} mb-2`}>
                 Delete Class?
               </h3>
               
               <div className="mt-3 mb-5">
-                <p className="text-sm text-[#FFFFFF]/80 mb-1">
+                <p className={`text-sm ${getSecondaryTextColor()} mb-1`}>
                   Are you sure you want to permanently delete this class?
                 </p>
                 <p className="text-sm font-semibold text-[#A15353] mb-3">
                   This action cannot be undone.
                 </p>
-                <div className="bg-[#23232C] rounded-md p-3 text-left border border-[#FFFFFF]/10">
-                  <p className="text-sm font-semibold text-[#FFFFFF] break-words">
+                <div className={`${getModalInnerBackgroundColor()} rounded-md p-3 text-left border ${getModalInnerBorderColor()}`}>
+                  <p className={`text-sm font-semibold ${getTextColor()} break-words`}>
                     {classToDelete.subject_code}: {classToDelete.subject}
                   </p>
-                  <p className="text-xs text-[#FFFFFF]/60 mt-1">
+                  <p className={`text-xs ${getTertiaryTextColor()} mt-1`}>
                     Section: {classToDelete.section}
                   </p>
-                  <p className="text-xs text-[#FFFFFF]/60">
+                  <p className={`text-xs ${getTertiaryTextColor()}`}>
                     Year Level: {classToDelete.year_level}
                   </p>
                 </div>
@@ -447,7 +535,7 @@ export default function ArchivedClasses() {
                     setShowDeleteModal(false);
                     setClassToDelete(null);
                   }}
-                  className="flex-1 bg-[#23232C] hover:bg-[#2a2a35] text-[#FFFFFF] font-medium py-2.5 rounded-md transition-all duration-200 cursor-pointer border border-[#FFFFFF]/20"
+                  className={`flex-1 ${isDarkMode ? 'bg-[#23232C] hover:bg-[#2a2a35]' : 'bg-gray-100 hover:bg-gray-200'} ${getButtonTextColor()} font-medium py-2.5 rounded-md transition-all duration-200 cursor-pointer border ${isDarkMode ? 'border-[#FFFFFF]/20' : 'border-gray-300'}`}
                 >
                   Cancel
                 </button>
@@ -466,21 +554,22 @@ export default function ArchivedClasses() {
       {/* Success Popup */}
       {showSuccessPopup && (
         <div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          className={`fixed inset-0 ${getModalOverlayColor()} flex justify-center items-center z-50 overlay-fade p-4`}
           onClick={() => setShowSuccessPopup(false)}
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-[#FFFFFF] rounded-md shadow-2xl w-full max-w-sm p-6 relative modal-pop border border-[#FFFFFF]/10">
+          <div className={`${getModalBackgroundColor()} ${getTextColor()} rounded-md shadow-2xl w-full max-w-sm p-6 relative modal-pop border ${getModalBorderColor()}`}>
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-[#00A15D]/20 mb-4">
                 <img 
                   src={SuccessIcon} 
                   alt="Success" 
                   className="h-6 w-6"
+                  style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
                 />
               </div>
-              <p className="text-sm text-[#FFFFFF]/80 mb-5">{popupMessage}</p>
+              <p className={`text-sm ${getSecondaryTextColor()} mb-5`}>{popupMessage}</p>
               <button
                 onClick={() => setShowSuccessPopup(false)}
                 className="w-full bg-[#00A15D] hover:bg-[#00874E] text-white font-medium py-2.5 rounded-md transition-all duration-200 cursor-pointer"
@@ -495,21 +584,22 @@ export default function ArchivedClasses() {
       {/* Error Popup */}
       {showErrorPopup && (
         <div
-          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 overlay-fade p-4"
+          className={`fixed inset-0 ${getModalOverlayColor()} flex justify-center items-center z-50 overlay-fade p-4`}
           onClick={() => setShowErrorPopup(false)}
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-[#FFFFFF] rounded-md shadow-2xl w-full max-w-sm p-6 relative modal-pop border border-[#FFFFFF]/10">
+          <div className={`${getModalBackgroundColor()} ${getTextColor()} rounded-md shadow-2xl w-full max-w-sm p-6 relative modal-pop border ${getModalBorderColor()}`}>
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-[#A15353]/20 mb-4">
                 <img 
                   src={ErrorIcon} 
                   alt="Error" 
                   className="h-6 w-6"
+                  style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
                 />
               </div>
-              <p className="text-sm text-[#FFFFFF]/80 mb-5">{popupMessage}</p>
+              <p className={`text-sm ${getSecondaryTextColor()} mb-5`}>{popupMessage}</p>
               <button
                 onClick={() => setShowErrorPopup(false)}
                 className="w-full bg-[#A15353] hover:bg-[#8a4242] text-white font-medium py-2.5 rounded-md transition-all duration-200 cursor-pointer"

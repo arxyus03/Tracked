@@ -8,13 +8,14 @@ const GradeTable = ({
   students, 
   subjectCode,
   isDownloading,
-  onDownload
+  onDownload,
+  isDarkMode // Added this prop
 }) => {
   const [selectedStudent, setSelectedStudent] = useState('all');
   const [filteredGradeData, setFilteredGradeData] = useState([]);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [studentGrades, setStudentGrades] = useState({});
-  const [editableGrades, setEditableGrades] = useState({});
+  const [, setEditableGrades] = useState({});
   const [summaryData, setSummaryData] = useState(null);
   
   // Expand states for different sections
@@ -269,11 +270,48 @@ const GradeTable = ({
     onDownload(selectedStudent, selectedStudentInfo);
   };
 
+  // ========== THEME HELPER FUNCTIONS ==========
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getTableHeaderBackground = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-100";
+  };
+
+  const getTableRowHover = () => {
+    return isDarkMode ? "hover:bg-[#23232C]" : "hover:bg-gray-50";
+  };
+
+  const getGroupHeaderBackground = () => {
+    return isDarkMode ? "bg-[#2A2A35]" : "bg-gray-100";
+  };
+
+  const getExamHeaderBackground = () => {
+    return isDarkMode ? "bg-[#33333F]" : "bg-gray-200";
+  };
+
+  const getInputBackground = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
   // ========== RENDER STUDENT FILTER ==========
   const renderStudentFilter = () => (
     <div className="w-full sm:w-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-        <label className="text-white text-sm font-medium whitespace-nowrap">
+        <label className={`text-sm font-medium whitespace-nowrap ${getTextColor()}`}>
           Filter by Student:
         </label>
         <div className="relative w-full sm:w-64">
@@ -281,7 +319,7 @@ const GradeTable = ({
             value={selectedStudent}
             onChange={handleStudentChange}
             disabled={isLoadingStudents || !students.length}
-            className="w-full bg-[#15151C] text-white text-sm rounded-md px-3 py-2 border border-white/10 focus:outline-none focus:ring-1 focus:ring-[#00A15D] appearance-none cursor-pointer"
+            className={`w-full ${getInputBackground()} ${getTextColor()} text-sm rounded-md px-3 py-2 border ${getBorderColor()} focus:outline-none focus:ring-1 focus:ring-[#00A15D] appearance-none cursor-pointer`}
           >
             <option value="all">All Students (Class Summary)</option>
             {students.map((student) => (
@@ -314,7 +352,7 @@ const GradeTable = ({
       <button 
         onClick={handleEnhancedDownload}
         disabled={isDownloading || filteredGradeData.length === 0}
-        className={`flex items-center gap-2 px-3 py-2 bg-[#15151C] font-semibold text-sm rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer text-white w-full sm:w-auto justify-center ${
+        className={`flex items-center gap-2 px-3 py-2 ${isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'} font-semibold text-sm rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer ${getTextColor()} w-full sm:w-auto justify-center ${
           isDownloading || filteredGradeData.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
         }`}
         title={filteredGradeData.length === 0 ? "No data to download" : "Download Grade Report as PDF"}
@@ -322,16 +360,17 @@ const GradeTable = ({
         {isDownloading ? (
           <>
             <div className="h-4 w-4 border-2 border-[#00A15D] border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-white">Generating PDF...</span>
+            <span className={getTextColor()}>Generating PDF...</span>
           </>
         ) : (
           <>
             <img 
               src={DownloadIcon} 
               alt="Download" 
-              className="h-4 w-4" 
+              className="h-4 w-4"
+              style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
             />
-            <span className="text-white">
+            <span className={getTextColor()}>
               {selectedStudent === 'all' ? 'Download Class PDF' : 'Download Student PDF'}
             </span>
           </>
@@ -407,12 +446,12 @@ const GradeTable = ({
   // ========== RENDER GROUP HEADER ==========
   const renderGroupHeader = (label, description, isExpanded, toggleFunction) => {
     return (
-      <tr className="group-header bg-[#2A2A35] hover:bg-[#2A2A35] border-b border-white/10">
+      <tr className={`group-header ${getGroupHeaderBackground()} border-b ${getBorderColor()}`}>
         <td colSpan="7" className="px-2 py-2">
           <div className="flex items-center gap-2">
             <button
               onClick={toggleFunction}
-              className="text-white hover:text-[#00A15D] transition-colors duration-200 focus:outline-none"
+              className={`${getTextColor()} hover:text-[#00A15D] transition-colors duration-200 focus:outline-none`}
               aria-label={isExpanded ? `Collapse ${label}` : `Expand ${label}`}
             >
               {isExpanded ? (
@@ -426,8 +465,8 @@ const GradeTable = ({
               )}
             </button>
             <div className="flex items-center gap-1">
-              <h3 className="text-sm font-bold text-white">{label}</h3>
-              <span className="text-xs text-white/50 ml-1">- {description}</span>
+              <h3 className={`text-sm font-bold ${getTextColor()}`}>{label}</h3>
+              <span className={`text-xs ${getSecondaryTextColor()} ml-1`}>- {description}</span>
             </div>
           </div>
         </td>
@@ -438,12 +477,12 @@ const GradeTable = ({
   // ========== RENDER EXAM HEADER ==========
   const renderExamHeader = (exam, isExpanded, toggleFunction) => {
     return (
-      <tr className="group-header bg-[#33333F] hover:bg-[#33333F] border-b border-white/10">
+      <tr className={`group-header ${getExamHeaderBackground()} border-b ${getBorderColor()}`}>
         <td colSpan="7" className="px-2 py-2">
           <div className="flex items-center gap-2 pl-4">
             <button
               onClick={toggleFunction}
-              className="text-white hover:text-[#00A15D] transition-colors duration-200 focus:outline-none"
+              className={`${getTextColor()} hover:text-[#00A15D] transition-colors duration-200 focus:outline-none`}
               aria-label={isExpanded ? `Collapse ${exam.label}` : `Expand ${exam.label}`}
             >
               {isExpanded ? (
@@ -456,7 +495,7 @@ const GradeTable = ({
                 </svg>
               )}
             </button>
-            <h3 className="text-sm font-bold text-white">{exam.label}</h3>
+            <h3 className={`text-sm font-bold ${getTextColor()}`}>{exam.label}</h3>
           </div>
         </td>
       </tr>
@@ -466,12 +505,12 @@ const GradeTable = ({
   // ========== RENDER ATTENDANCE HEADER ==========
   const renderAttendanceHeader = () => {
     return (
-      <tr className="group-header bg-[#2A2A35] hover:bg-[#2A2A35] border-b border-white/10">
+      <tr className={`group-header ${getGroupHeaderBackground()} border-b ${getBorderColor()}`}>
         <td colSpan="7" className="px-2 py-2">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setAttendanceExpanded(!attendanceExpanded)}
-              className="text-white hover:text-[#00A15D] transition-colors duration-200 focus:outline-none"
+              className={`${getTextColor()} hover:text-[#00A15D] transition-colors duration-200 focus:outline-none`}
               aria-label={attendanceExpanded ? `Collapse Attendance` : `Expand Attendance`}
             >
               {attendanceExpanded ? (
@@ -485,8 +524,8 @@ const GradeTable = ({
               )}
             </button>
             <div className="flex items-center gap-1">
-              <h3 className="text-sm font-bold text-white">Attendance</h3>
-              <span className="text-xs text-white/50 ml-1">- Class attendance records</span>
+              <h3 className={`text-sm font-bold ${getTextColor()}`}>Attendance</h3>
+              <span className={`text-xs ${getSecondaryTextColor()} ml-1`}>- Class attendance records</span>
             </div>
           </div>
         </td>
@@ -507,29 +546,29 @@ const GradeTable = ({
     return (
       <tr
         key={`${item.activityType}-${index}-${selectedStudent}`}
-        className="hover:bg-[#23232C] text-xs text-white border-b border-white/10"
+        className={`text-xs border-b ${getBorderColor()} ${getTableRowHover()}`}
       >
-        <td className="px-2 py-2 font-medium flex items-center gap-2">
+        <td className={`px-2 py-2 font-medium flex items-center gap-2 ${getTextColor()}`}>
           <div className={`w-2 h-2 rounded-full ${getActivityTypeColor(item.activityType).replace('/20', '/60')}`}></div>
           {item.activityType}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {assignedWorks}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {submissions}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {missedSubmissions}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {totalScores}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {sumGradedWorks.toFixed(1)}
         </td>
         <td className="px-2 py-2 text-center">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActivityTypeColor(item.activityType)}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActivityTypeColor(item.activityType)} ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
             {percentage}
           </span>
         </td>
@@ -550,29 +589,29 @@ const GradeTable = ({
     return (
       <tr
         key={`${item.activityType}-${index}-${selectedStudent}`}
-        className="hover:bg-[#23232C] text-xs text-white border-b border-white/10"
+        className={`text-xs border-b ${getBorderColor()} ${getTableRowHover()}`}
       >
-        <td className="px-2 py-2 font-medium flex items-center gap-2 pl-8">
+        <td className={`px-2 py-2 font-medium flex items-center gap-2 pl-8 ${getTextColor()}`}>
           <div className={`w-2 h-2 rounded-full ${getActivityTypeColor(item.activityType).replace('/20', '/60')}`}></div>
           {item.activityType}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {assignedWorks}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {submissions}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {missedSubmissions}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {totalScores}
         </td>
-        <td className="px-2 py-2 text-center">
+        <td className={`px-2 py-2 text-center ${getTextColor()}`}>
           {sumGradedWorks.toFixed(1)}
         </td>
         <td className="px-2 py-2 text-center">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActivityTypeColor(item.activityType)}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActivityTypeColor(item.activityType)} ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
             {percentage}
           </span>
         </td>
@@ -623,22 +662,22 @@ const GradeTable = ({
     const examsData = getExamsData();
 
     return (
-      <div className="mt-4 bg-[#15151C] rounded-lg shadow-md border border-white/10 overflow-hidden">
+      <div className={`mt-4 ${getBackgroundColor()} rounded-lg shadow-md border ${getBorderColor()} overflow-hidden`}>
         <div className="overflow-x-auto">
-          <div className="sm:hidden text-xs text-white/50 py-1.5 text-center bg-[#23232C]">
+          <div className={`sm:hidden text-xs ${getSecondaryTextColor()} py-1.5 text-center ${getTableHeaderBackground()}`}>
             ← Swipe to see all columns →
           </div>
           <div className="p-3">
             <table className="table-auto w-full border-collapse text-left min-w-[900px]">
               <thead>
-                <tr className="text-xs font-semibold bg-[#23232C] text-white">
-                  <th className="px-2 py-2 border-b border-white/10">Class Works</th>
-                  <th className="px-2 py-2 border-b border-white/10 text-center">Assigned Works</th>
-                  <th className="px-2 py-2 border-b border-white/10 text-center">Submissions</th>
-                  <th className="px-2 py-2 border-b border-white/10 text-center">Missed Submissions</th>
-                  <th className="px-2 py-2 border-b border-white/10 text-center">Total Scores</th>
-                  <th className="px-2 py-2 border-b border-white/10 text-center">Sum of Graded Works</th>
-                  <th className="px-2 py-2 border-b border-white/10 text-center">Percentage</th>
+                <tr className={`text-xs font-semibold ${getTableHeaderBackground()} ${getTextColor()}`}>
+                  <th className={`px-2 py-2 border-b ${getBorderColor()}`}>Class Works</th>
+                  <th className={`px-2 py-2 border-b ${getBorderColor()} text-center`}>Assigned Works</th>
+                  <th className={`px-2 py-2 border-b ${getBorderColor()} text-center`}>Submissions</th>
+                  <th className={`px-2 py-2 border-b ${getBorderColor()} text-center`}>Missed Submissions</th>
+                  <th className={`px-2 py-2 border-b ${getBorderColor()} text-center`}>Total Scores</th>
+                  <th className={`px-2 py-2 border-b ${getBorderColor()} text-center`}>Sum of Graded Works</th>
+                  <th className={`px-2 py-2 border-b ${getBorderColor()} text-center`}>Percentage</th>
                 </tr>
               </thead>
               <tbody>
@@ -683,28 +722,28 @@ const GradeTable = ({
         </div>
 
         {/* ========== SUMMARY SECTION ========== */}
-        <div className="p-3 border-t border-white/10 bg-[#23232C]">
+        <div className={`p-3 border-t ${getBorderColor()} ${getTableHeaderBackground()}`}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div className="text-center">
-              <div className="font-semibold text-white/70">Total Assigned</div>
-              <div className="text-sm font-bold text-white">
+              <div className={`font-semibold ${getSecondaryTextColor()}`}>Total Assigned</div>
+              <div className={`text-sm font-bold ${getTextColor()}`}>
                 {summary.totalAssigned}
               </div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-white/70">Total Submissions</div>
-              <div className="text-sm font-bold text-white">
+              <div className={`font-semibold ${getSecondaryTextColor()}`}>Total Submissions</div>
+              <div className={`text-sm font-bold ${getTextColor()}`}>
                 {summary.totalSubmissions}
               </div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-white/70">Overall Score</div>
-              <div className="text-sm font-bold text-white">
+              <div className={`font-semibold ${getSecondaryTextColor()}`}>Overall Score</div>
+              <div className={`text-sm font-bold ${getTextColor()}`}>
                 {summary.sumGradedWorks.toFixed(1)}
               </div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-white/70">Overall Percentage</div>
+              <div className={`font-semibold ${getSecondaryTextColor()}`}>Overall Percentage</div>
               <div className={`text-sm font-bold ${
                 summary.overallPercentage >= 70 ? 'text-green-400' : 
                 summary.overallPercentage >= 50 ? 'text-yellow-400' : 'text-red-400'
@@ -716,19 +755,19 @@ const GradeTable = ({
           
           {/* Weighted Percentage Breakdown (for individual students) */}
           {selectedStudent !== 'all' && summary.academicPercentage !== undefined && (
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <div className="text-xs text-white/70 mb-1">Weighted Performance:</div>
+            <div className={`mt-3 pt-3 border-t ${getBorderColor()}`}>
+              <div className={`text-xs ${getSecondaryTextColor()} mb-1`}>Weighted Performance:</div>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div className="text-center">
-                  <div className="text-white/60">Academic</div>
-                  <div className="text-white font-semibold">{summary.academicPercentage?.toFixed(2)}%</div>
+                  <div className={getSecondaryTextColor()}>Academic</div>
+                  <div className={`${getTextColor()} font-semibold`}>{summary.academicPercentage?.toFixed(2)}%</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-white/60">Attendance</div>
-                  <div className="text-white font-semibold">{summary.attendancePercentage?.toFixed(2)}%</div>
+                  <div className={getSecondaryTextColor()}>Attendance</div>
+                  <div className={`${getTextColor()} font-semibold`}>{summary.attendancePercentage?.toFixed(2)}%</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-white/60">Final (75/25)</div>
+                  <div className={getSecondaryTextColor()}>Final (75/25)</div>
                   <div className={`font-semibold ${
                     summary.overallPercentage >= 70 ? 'text-green-400' : 
                     summary.overallPercentage >= 50 ? 'text-yellow-400' : 'text-red-400'
@@ -741,25 +780,25 @@ const GradeTable = ({
           )}
           
           {/* Class Information Display */}
-          <div className="mt-3 pt-3 border-t border-white/10 text-center">
-            <div className="text-xs text-white/60">
-              Showing data for: <span className="font-semibold text-white">{classInfo?.subject} ({classInfo?.subject_code}) - Section {classInfo?.section}</span>
+          <div className={`mt-3 pt-3 border-t ${getBorderColor()} text-center`}>
+            <div className={`text-xs ${getSecondaryTextColor()}`}>
+              Showing data for: <span className={`font-semibold ${getTextColor()}`}>{classInfo?.subject} ({classInfo?.subject_code}) - Section {classInfo?.section}</span>
               {selectedStudent !== 'all' && selectedStudentInfo && (
                 <>
                   {' | '}
-                  <span className="font-semibold text-white">
+                  <span className={`font-semibold ${getTextColor()}`}>
                     Student: {selectedStudentInfo.first_name} {selectedStudentInfo.last_name}
                   </span>
                 </>
               )}
             </div>
-            <div className="text-xs text-white/50 mt-0.5">
-              Professor: <span className="text-white">{classInfo?.professor_name || `ID: ${classInfo?.professor_ID}`}</span>
+            <div className={`text-xs ${getSecondaryTextColor()} mt-0.5`}>
+              Professor: <span className={getTextColor()}>{classInfo?.professor_name || `ID: ${classInfo?.professor_ID}`}</span>
             </div>
             
             {/* Student Filter Status */}
             {selectedStudent !== 'all' && (
-              <div className="text-xs text-white/40 mt-0.5">
+              <div className={`text-xs ${getSecondaryTextColor()} mt-0.5`}>
                 {studentGrades[selectedStudent] 
                   ? "Showing student-specific grade data" 
                   : "Showing class summary data (student-specific data not available)"}

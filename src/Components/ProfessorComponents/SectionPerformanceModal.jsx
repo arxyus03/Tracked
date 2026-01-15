@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ArrowUp from '../../assets/ArrowUp.svg';
 import ArrowDown from '../../assets/ArrowDown.svg';
 
-const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekData, color }) => {
+const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekData, color, isDarkMode = false }) => {
   const [activityDetails, setActivityDetails] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [error, setError] = useState(null);
@@ -12,6 +12,35 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
       fetchActivityDetails();
     }
   }, [isOpen, sectionCode, weekData]);
+
+  // Theme-based colors
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/20" : "border-gray-200";
+  };
+
+  const getLightBorderColor = () => {
+    return isDarkMode ? "border-white/10" : "border-gray-100";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/60" : "text-gray-600";
+  };
+
+  const getLightTextColor = () => {
+    return isDarkMode ? "text-white/40" : "text-gray-400";
+  };
 
   const fetchActivityDetails = async () => {
     if (!sectionCode || !weekData) return;
@@ -139,24 +168,24 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
         hour: '2-digit',
         minute: '2-digit'
       });
-    } catch (e) {
+    } catch {
       return dateString;
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/20 p-5 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className={`${getBackgroundColor()} rounded-xl border ${getBorderColor()} p-5 max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-lg font-bold text-white">Section Performance Analysis</h3>
-            <p className="text-xs text-white/60">
+            <h3 className={`text-lg font-bold ${getTextColor()}`}>Section Performance Analysis</h3>
+            <p className={`text-xs ${getSecondaryTextColor()}`}>
               {section} - Week {weekData.week}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-white/60 hover:text-white p-1 transition-colors"
+            className={`${getSecondaryTextColor()} hover:${getTextColor()} p-1 transition-colors`}
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,12 +195,12 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
         </div>
 
         {/* Week Score at the Top */}
-        <div className="mb-4 p-4 bg-[#23232C] rounded-lg">
+        <div className={`mb-4 p-4 ${getCardBackgroundColor()} rounded-lg`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-white/60">Week {weekData.week} Performance</p>
+              <p className={`text-xs ${getSecondaryTextColor()}`}>Week {weekData.week} Performance</p>
               <div className="flex items-center gap-3">
-                <p className="text-2xl font-bold text-white">{weekData.score.toFixed(1)}%</p>
+                <p className={`text-2xl font-bold ${getTextColor()}`}>{weekData.score.toFixed(1)}%</p>
                 <div className={`px-2 py-1 rounded ${performanceZone.bg} ${performanceZone.border}`}>
                   <span className="text-xs font-medium" style={{ color: performanceZone.color }}>
                     {performanceZone.text}
@@ -184,15 +213,15 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: color }}
                   />
-                  <span className="text-xs text-white/60">{section}</span>
+                  <span className={`text-xs ${getSecondaryTextColor()}`}>{section}</span>
                 </div>
                 {weekData.studentCount && (
-                  <span className="text-xs text-white/60">
+                  <span className={`text-xs ${getSecondaryTextColor()}`}>
                     {weekData.studentCount} students
                   </span>
                 )}
                 {weekData.submissionRate && (
-                  <span className="text-xs text-white/60">
+                  <span className={`text-xs ${getSecondaryTextColor()}`}>
                     {weekData.submissionRate}% submission rate
                   </span>
                 )}
@@ -227,7 +256,7 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
                   )}
                   <span className='text-lg font-bold'>{weekData.performanceChange.toFixed(1)}%</span>
                 </div>
-                <p className="text-[10px] text-white/60 mt-0.5">
+                <p className={`text-[10px] ${getSecondaryTextColor()} mt-0.5`}>
                   from previous week
                 </p>
               </div>
@@ -238,8 +267,8 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
         {/* Activities Summary */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-white font-bold text-sm">Activities for Week {weekData.week}</h4>
-            <span className="text-xs text-white/60">
+            <h4 className={`font-bold text-sm ${getTextColor()}`}>Activities for Week {weekData.week}</h4>
+            <span className={`text-xs ${getSecondaryTextColor()}`}>
               {weekData.activities || 0} activity{weekData.activities !== 1 ? 's' : ''}
             </span>
           </div>
@@ -247,21 +276,21 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
           {loadingActivities ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#6366F1] mx-auto mb-3"></div>
-              <p className="text-white/60 text-sm">Loading activity details...</p>
+              <p className={`text-sm ${getSecondaryTextColor()}`}>Loading activity details...</p>
             </div>
           ) : error ? (
             <div className="p-4 bg-[#FF5555]/10 rounded-lg border border-[#FF5555]/20">
               <p className="text-sm text-[#FF5555] text-center">{error}</p>
-              <p className="text-xs text-white/60 text-center mt-1">Showing sample data for demonstration</p>
+              <p className={`text-xs ${getSecondaryTextColor()} text-center mt-1`}>Showing sample data for demonstration</p>
             </div>
           ) : activityDetails.length > 0 ? (
             <div className="space-y-3">
               {activityDetails.map((activity, index) => (
-                <div key={index} className="p-3 bg-[#23232C] rounded-lg border border-[#FFFFFF]/5">
+                <div key={index} className={`p-3 ${getCardBackgroundColor()} rounded-lg border ${getLightBorderColor()}`}>
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-white">{activity.title}</span>
+                        <span className={`text-sm font-medium ${getTextColor()}`}>{activity.title}</span>
                         <span className={`text-xs px-2 py-0.5 rounded ${
                           activity.performance === 'failing' ? 'bg-[#FF5555]/10 text-[#FF5555]' :
                           activity.performance === 'warning' ? 'bg-[#FFA600]/10 text-[#FFA600]' :
@@ -269,17 +298,17 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
                         }`}>
                           {activity.type}
                         </span>
-                        <span className="text-xs text-white/40">
+                        <span className={`text-xs ${getLightTextColor()}`}>
                           Task {activity.taskNumber}
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-3 text-xs text-white/60">
-                        <div>
-                          <span className="text-white/40">Posted: </span>
+                      <div className="flex flex-wrap gap-3 text-xs">
+                        <div className={getSecondaryTextColor()}>
+                          <span className={getLightTextColor()}>Posted: </span>
                           {formatDate(activity.createdAt)}
                         </div>
-                        <div>
-                          <span className="text-white/40">Due: </span>
+                        <div className={getSecondaryTextColor()}>
+                          <span className={getLightTextColor()}>Due: </span>
                           {formatDate(activity.deadline)}
                         </div>
                       </div>
@@ -296,29 +325,29 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
                   {/* Activity Stats */}
                   <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-white/10">
                     <div className="text-center">
-                      <div className="text-xs text-white/60">Submissions</div>
-                      <div className="text-sm font-medium text-white">
+                      <div className={`text-xs ${getSecondaryTextColor()}`}>Submissions</div>
+                      <div className={`text-sm font-medium ${getTextColor()}`}>
                         {activity.totalSubmissions}/{activity.totalStudents}
                       </div>
-                      <div className="text-xs text-white/40">
+                      <div className={`text-xs ${getLightTextColor()}`}>
                         ({activity.submissionRate}%)
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xs text-white/60">High Score</div>
+                      <div className={`text-xs ${getSecondaryTextColor()}`}>High Score</div>
                       <div className="text-sm font-medium text-[#00A15D]">
                         {activity.maxGrade}%
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xs text-white/60">Low Score</div>
+                      <div className={`text-xs ${getSecondaryTextColor()}`}>Low Score</div>
                       <div className="text-sm font-medium text-[#FF5555]">
                         {activity.minGrade}%
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-xs text-white/60">Max Points</div>
-                      <div className="text-sm font-medium text-white">
+                      <div className={`text-xs ${getSecondaryTextColor()}`}>Max Points</div>
+                      <div className={`text-sm font-medium ${getTextColor()}`}>
                         {activity.maxPoints}
                       </div>
                     </div>
@@ -327,13 +356,13 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
               ))}
             </div>
           ) : (
-            <div className="p-4 bg-[#23232C] rounded-lg border border-[#FFFFFF]/5">
+            <div className={`p-4 ${getCardBackgroundColor()} rounded-lg border ${getLightBorderColor()}`}>
               <div className="flex flex-col items-center justify-center text-center">
-                <svg className="w-8 h-8 text-white/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-8 h-8 ${getLightTextColor()} mb-2`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
                 </svg>
-                <p className="text-sm text-white/60">No activities for this week</p>
-                <p className="text-xs text-white/40 mt-1">Activities will appear here once created</p>
+                <p className={`text-sm ${getSecondaryTextColor()}`}>No activities for this week</p>
+                <p className={`text-xs ${getLightTextColor()} mt-1`}>Activities will appear here once created</p>
               </div>
             </div>
           )}
@@ -341,16 +370,16 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
 
         {/* Performance Analysis */}
         <div className="mb-5">
-          <h4 className="text-white font-bold mb-2 text-sm">Performance Analysis</h4>
-          <div className="p-3 bg-[#23232C] rounded-lg">
-            <p className="text-sm text-white/80">{weekData.reason}</p>
+          <h4 className={`font-bold mb-2 text-sm ${getTextColor()}`}>Performance Analysis</h4>
+          <div className={`p-3 ${getCardBackgroundColor()} rounded-lg`}>
+            <p className={`text-sm ${getSecondaryTextColor()}`}>{weekData.reason}</p>
             
             {activityDetails.length > 0 && (
               <div className="mt-3 pt-3 border-t border-white/10">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <div className="text-xs text-white/60 mb-1">Overall Submission Rate</div>
-                    <div className="text-sm font-medium text-white">
+                    <div className={`text-xs ${getSecondaryTextColor()} mb-1`}>Overall Submission Rate</div>
+                    <div className={`text-sm font-medium ${getTextColor()}`}>
                       {(
                         activityDetails.reduce((sum, act) => sum + act.submissionRate, 0) / 
                         activityDetails.length
@@ -358,8 +387,8 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-white/60 mb-1">Average Activity Score</div>
-                    <div className="text-sm font-medium text-white">
+                    <div className={`text-xs ${getSecondaryTextColor()} mb-1`}>Average Activity Score</div>
+                    <div className={`text-sm font-medium ${getTextColor()}`}>
                       {(
                         activityDetails.reduce((sum, act) => sum + act.averageGrade, 0) / 
                         activityDetails.length
@@ -374,7 +403,7 @@ const SectionPerformanceModal = ({ isOpen, onClose, section, sectionCode, weekDa
 
         {/* Recommendations */}
         <div className="mb-5">
-          <h4 className="text-white font-bold mb-2 text-sm">Recommendations</h4>
+          <h4 className={`font-bold mb-2 text-sm ${getTextColor()}`}>Recommendations</h4>
           <div className="space-y-2">
             {weekData.score < 71 ? (
               <>

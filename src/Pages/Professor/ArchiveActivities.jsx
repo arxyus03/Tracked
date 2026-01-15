@@ -9,8 +9,8 @@ import BackButton from "../../assets/BackButton(Light).svg";
 import DeleteIcon from "../../assets/Delete.svg";
 import UnarchiveIcon from "../../assets/Unarchive.svg";
 
-// Archived Activity Card Component - Updated for dark theme
-const ArchivedActivityCard = ({ activity, onDelete, onUnarchive }) => {
+// Archived Activity Card Component - Updated for light/dark theme
+const ArchivedActivityCard = ({ activity, onDelete, onUnarchive, isDarkMode }) => {
   const formatDate = (dateString) => {
     if (!dateString || dateString === "No deadline") return "No deadline";
     
@@ -90,7 +90,7 @@ const ArchivedActivityCard = ({ activity, onDelete, onUnarchive }) => {
     }
   };
 
-  // Get activity type color - updated for dark theme
+  // Get activity type color - updated for light/dark theme
   const getActivityTypeColor = (type) => {
     const colors = {
       'Assignment': 'bg-[#767EE0] text-white',
@@ -98,9 +98,9 @@ const ArchivedActivityCard = ({ activity, onDelete, onUnarchive }) => {
       'Activity': 'bg-[#00A15D] text-white',
       'Project': 'bg-[#FFA600] text-white',
       'Laboratory': 'bg-[#A15353] text-white',
-      'Announcement': 'bg-gray-500 text-white'
+      'Announcement': isDarkMode ? 'bg-gray-500 text-white' : 'bg-gray-600 text-white'
     };
-    return colors[type] || 'bg-gray-500 text-white';
+    return colors[type] || (isDarkMode ? 'bg-gray-500 text-white' : 'bg-gray-600 text-white');
   };
 
   // Handle card click
@@ -112,7 +112,11 @@ const ArchivedActivityCard = ({ activity, onDelete, onUnarchive }) => {
 
   return (
     <div 
-      className={`rounded-md shadow border p-3 hover:shadow-lg transition-shadow cursor-pointer bg-[#15151C] border-[#2D2D3A]`}
+      className={`rounded-md shadow border p-3 hover:shadow-lg transition-shadow cursor-pointer ${
+        isDarkMode 
+          ? 'bg-[#15151C] border-[#2D2D3A]' 
+          : 'bg-white border-gray-200'
+      }`}
       onClick={handleCardClick}
     >
       <div className="flex items-start justify-between">
@@ -122,31 +126,50 @@ const ArchivedActivityCard = ({ activity, onDelete, onUnarchive }) => {
             <span className={`px-2 py-0.5 ${getActivityTypeColor(activity.activity_type)} text-xs font-medium rounded`}>
               {activity.activity_type}
             </span>
-            <span className="text-xs text-gray-400">#{activity.task_number}</span>
+            <span className={`text-xs ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>#{activity.task_number}</span>
             
             {/* Archived status badge */}
             <div className="flex items-center gap-1">
-              <span className="px-2 py-0.5 bg-gray-700 text-gray-300 text-xs font-medium rounded flex items-center gap-1">
-                <img src={ArchiveIcon} alt="Archive" className="w-3 h-3" />
+              <span className={`px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1 ${
+                isDarkMode 
+                  ? 'bg-gray-700 text-gray-300' 
+                  : 'bg-gray-100 text-gray-700'
+              }`}>
+                <img 
+                  src={ArchiveIcon} 
+                  alt="Archive" 
+                  className="w-3 h-3"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                />
                 Archived
               </span>
             </div>
           </div>
           
-          <h3 className="font-semibold text-white text-sm mb-2 truncate">
+          <h3 className={`font-semibold text-sm mb-2 truncate ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
             {activity.title}
           </h3>
           
-          <div className="space-y-1 text-xs text-gray-400">
+          <div className={`space-y-1 text-xs ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
             {/* Deadline with icon */}
             <div className="flex items-center gap-1">
               <svg className={`w-3 h-3 ${
-                isDeadlinePassed(activity.deadline) ? 'text-[#A15353]' : 'text-gray-400'
+                isDeadlinePassed(activity.deadline) 
+                  ? 'text-[#A15353]' 
+                  : (isDarkMode ? 'text-gray-400' : 'text-gray-500')
               }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className={`font-medium ${
-                isDeadlinePassed(activity.deadline) ? 'text-[#A15353]' : 'text-gray-300'
+                isDeadlinePassed(activity.deadline) 
+                  ? 'text-[#A15353]' 
+                  : (isDarkMode ? 'text-gray-300' : 'text-gray-700')
               }`}>
                 {formatDate(activity.deadline)}
               </span>
@@ -154,7 +177,9 @@ const ArchivedActivityCard = ({ activity, onDelete, onUnarchive }) => {
 
             {/* Archived time */}
             <div className="flex items-center gap-1">
-              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-3 h-3 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span>Archived {getPostedTime(activity.archived_at || activity.created_at)}</span>
@@ -182,16 +207,25 @@ const ArchivedActivityCard = ({ activity, onDelete, onUnarchive }) => {
                   e.stopPropagation();
                   onDelete(activity);
                 }}
-                className="p-1.5 bg-gray-800 hover:bg-[#A15353] hover:text-white rounded transition-colors cursor-pointer"
+                className={`p-1.5 rounded transition-colors cursor-pointer ${
+                  isDarkMode 
+                    ? 'bg-gray-800 hover:bg-[#A15353] hover:text-white' 
+                    : 'bg-gray-100 hover:bg-[#A15353] hover:text-white'
+                }`}
                 title="Delete Permanently"
               >
                 <img 
                   src={DeleteIcon} 
                   alt="Delete" 
                   className="w-4 h-4"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 border border-gray-700">
+              <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 border ${
+                isDarkMode 
+                  ? 'text-white bg-gray-900 border-gray-700' 
+                  : 'text-gray-900 bg-gray-100 border-gray-300'
+              }`}>
                 Delete Permanently
               </div>
             </div>
@@ -203,16 +237,25 @@ const ArchivedActivityCard = ({ activity, onDelete, onUnarchive }) => {
                   e.stopPropagation();
                   onUnarchive(activity);
                 }}
-                className="p-1.5 bg-gray-800 hover:bg-[#00A15D] hover:text-white rounded transition-colors cursor-pointer"
+                className={`p-1.5 rounded transition-colors cursor-pointer ${
+                  isDarkMode 
+                    ? 'bg-gray-800 hover:bg-[#00A15D] hover:text-white' 
+                    : 'bg-gray-100 hover:bg-[#00A15D] hover:text-white'
+                }`}
                 title="Restore Activity"
               >
                 <img 
                   src={UnarchiveIcon} 
                   alt="Restore" 
                   className="w-4 h-4"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 border border-gray-700">
+              <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 border ${
+                isDarkMode 
+                  ? 'text-white bg-gray-900 border-gray-700' 
+                  : 'text-gray-900 bg-gray-100 border-gray-300'
+              }`}>
                 Restore Activity
               </div>
             </div>
@@ -232,10 +275,28 @@ export default function ArchiveActivities() {
   const [activityToDelete, setActivityToDelete] = useState(null);
   const [activityToUnarchive, setActivityToUnarchive] = useState(null);
   const [classInfo, setClassInfo] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const subjectCode = searchParams.get('code');
+
+  // Theme detection
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    handleThemeChange();
+    
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // GET LOGGED-IN USER ID
   const getProfessorId = () => {
@@ -405,7 +466,11 @@ export default function ArchiveActivities() {
       return (
         <div className="col-span-full text-center py-8">
           <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-[#767EE0] border-r-transparent"></div>
-          <p className="mt-2 text-gray-400 text-sm">Loading archived activities...</p>
+          <p className={`mt-2 text-sm ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
+            Loading archived activities...
+          </p>
         </div>
       );
     }
@@ -413,17 +478,24 @@ export default function ArchiveActivities() {
     if (archivedActivities.length === 0) {
       return (
         <div className="col-span-full text-center py-8">
-          <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-[#15151C] flex items-center justify-center">
+          <div className={`mx-auto w-12 h-12 mb-3 rounded-full flex items-center justify-center ${
+            isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'
+          }`}>
             <img 
               src={ArchiveIcon} 
               alt="No archived activities" 
               className="h-6 w-6 opacity-50"
+              style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
             />
           </div>
-          <p className="text-gray-400 text-sm">
+          <p className={`text-sm ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+          }`}>
             No archived activities found.
           </p>
-          <p className="text-gray-500 text-xs mt-1">
+          <p className={`text-xs mt-1 ${
+            isDarkMode ? 'text-gray-500' : 'text-gray-500'
+          }`}>
             Activities you archive will appear here.
           </p>
         </div>
@@ -438,6 +510,7 @@ export default function ArchiveActivities() {
             activity={activity}
             onDelete={handleDelete}
             onUnarchive={handleUnarchive}
+            isDarkMode={isDarkMode}
           />
         ))}
       </div>
@@ -445,7 +518,9 @@ export default function ArchiveActivities() {
   };
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${
+      isDarkMode ? 'bg-[#23232C]' : 'bg-gray-50'
+    }`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`
         transition-all duration-300
@@ -464,8 +539,11 @@ export default function ArchiveActivities() {
                   src={ArchiveIcon}
                   alt=""
                   className="h-5 w-5 sm:h-6 sm:w-6 mr-2"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
-                <h1 className="font-bold text-lg sm:text-xl lg:text-2xl text-white">
+                <h1 className={`font-bold text-lg sm:text-xl lg:text-2xl ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
                   Archived Activities
                 </h1>
               </div>
@@ -480,16 +558,21 @@ export default function ArchiveActivities() {
                     src={BackButton}
                     alt="Back"
                     className="h-5 w-5"
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                   />
                 </button>
               </Link>
             </div>
-            <p className="text-sm text-gray-400">
+            <p className={`text-sm ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               {classInfo ? `${classInfo.subject} - ${classInfo.section}` : 'Loading...'}
             </p>
           </div>
 
-          <hr className="border-gray-700 mb-4" />
+          <hr className={`mb-4 ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-300'
+          }`} />
 
           {/* Archived Activities Grid */}
           <div className="mt-3">
@@ -511,33 +594,50 @@ export default function ArchiveActivities() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-white rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-6 relative modal-pop border border-gray-700">
+          <div className={`rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-6 relative modal-pop border ${
+            isDarkMode ? 'bg-[#15151C] text-white border-gray-700' : 'bg-white text-gray-900 border-gray-300'
+          }`}>
             <div className="text-center">
               {/* Info Icon */}
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[#00A15D]/20 mb-4">
+              <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
+                isDarkMode ? 'bg-[#00A15D]/20' : 'bg-[#00A15D]/10'
+              }`}>
                 <img 
                   src={UnarchiveIcon} 
                   alt="Unarchive" 
                   className="h-6 w-6"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </div>
 
-              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
+              <h3 className={`text-lg sm:text-xl font-bold mb-2 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
                 Restore Activity?
               </h3>
               
               <div className="mt-4 mb-6">
-                <p className="text-sm text-gray-400 mb-3">
+                <p className={`text-sm mb-3 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
                   Are you sure you want to restore this activity?
                 </p>
-                <div className="bg-[#23232C] rounded-lg p-4 text-left border border-gray-700">
-                  <p className="text-base sm:text-lg font-semibold text-white break-words">
+                <div className={`rounded-lg p-4 text-left border ${
+                  isDarkMode ? 'bg-[#23232C] border-gray-700' : 'bg-gray-50 border-gray-300'
+                }`}>
+                  <p className={`text-base sm:text-lg font-semibold break-words ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
                     {activityToUnarchive.title}
                   </p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className={`text-sm mt-1 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                     Type: {activityToUnarchive.activity_type}
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className={`text-sm ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                     Task: {activityToUnarchive.task_number}
                   </p>
                 </div>
@@ -549,7 +649,11 @@ export default function ArchiveActivities() {
                     setShowUnarchiveModal(false);
                     setActivityToUnarchive(null);
                   }}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2.5 rounded transition-all duration-200 cursor-pointer"
+                  className={`flex-1 font-bold py-2.5 rounded transition-all duration-200 cursor-pointer ${
+                    isDarkMode 
+                      ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                  }`}
                 >
                   Cancel
                 </button>
@@ -578,36 +682,53 @@ export default function ArchiveActivities() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-white rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-6 relative modal-pop border border-gray-700">
+          <div className={`rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-6 relative modal-pop border ${
+            isDarkMode ? 'bg-[#15151C] text-white border-gray-700' : 'bg-white text-gray-900 border-gray-300'
+          }`}>
             <div className="text-center">
               {/* Warning Icon */}
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[#A15353]/20 mb-4">
+              <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
+                isDarkMode ? 'bg-[#A15353]/20' : 'bg-[#A15353]/10'
+              }`}>
                 <img 
                   src={DeleteIcon} 
                   alt="Delete" 
                   className="h-6 w-6"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </div>
 
-              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
+              <h3 className={`text-lg sm:text-xl font-bold mb-2 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
                 Delete Activity?
               </h3>
               
               <div className="mt-4 mb-6">
-                <p className="text-sm text-gray-400 mb-1">
+                <p className={`text-sm mb-1 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}>
                   Are you sure you want to permanently delete this activity?
                 </p>
-                <p className="text-sm font-semibold text-[#A15353] mb-3">
+                <p className={`text-sm font-semibold mb-3 text-[#A15353]`}>
                   This action cannot be undone.
                 </p>
-                <div className="bg-[#23232C] rounded-lg p-4 text-left border border-gray-700">
-                  <p className="text-base sm:text-lg font-semibold text-white break-words">
+                <div className={`rounded-lg p-4 text-left border ${
+                  isDarkMode ? 'bg-[#23232C] border-gray-700' : 'bg-gray-50 border-gray-300'
+                }`}>
+                  <p className={`text-base sm:text-lg font-semibold break-words ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
                     {activityToDelete.title}
                   </p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className={`text-sm mt-1 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                     Type: {activityToDelete.activity_type}
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className={`text-sm ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                     Task: {activityToDelete.task_number}
                   </p>
                 </div>
@@ -619,7 +740,11 @@ export default function ArchiveActivities() {
                     setShowDeleteModal(false);
                     setActivityToDelete(null);
                   }}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2.5 rounded transition-all duration-200 cursor-pointer"
+                  className={`flex-1 font-bold py-2.5 rounded transition-all duration-200 cursor-pointer ${
+                    isDarkMode 
+                      ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                  }`}
                 >
                   Cancel
                 </button>

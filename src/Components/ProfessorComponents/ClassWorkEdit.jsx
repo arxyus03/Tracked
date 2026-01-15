@@ -9,7 +9,8 @@ const ClassWorkEdit = ({
   activity,
   activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Remedial", "Exam", "Announcement"],
   getCurrentDateTime,
-  subjectCode
+  subjectCode,
+  isDarkMode = true
 }) => {
   const [activityType, setActivityType] = useState("");
   const [taskNumber, setTaskNumber] = useState("");
@@ -26,14 +27,12 @@ const ClassWorkEdit = ({
   const [activityTypeDropdownOpen, setActivityTypeDropdownOpen] = useState(false);
   const [assignToDropdownOpen, setAssignToDropdownOpen] = useState(false);
 
-  // Fetch real students when component opens and subjectCode is available
   useEffect(() => {
     if (isOpen && subjectCode) {
       fetchClassStudents();
     }
   }, [isOpen, subjectCode]);
 
-  // Initialize form with activity data
   useEffect(() => {
     if (activity) {
       setActivityType(activity.activity_type || "");
@@ -42,22 +41,19 @@ const ClassWorkEdit = ({
       setInstruction(activity.instruction || "");
       setLink(activity.link || "");
       setPoints(activity.points || "");
-      setAssignTo("wholeClass"); // Default to whole class for edit
-      setSelectedStudents([]); // Reset selected students for edit
+      setAssignTo("wholeClass");
+      setSelectedStudents([]);
 
-      // FIXED: Use the exact same deadline format as ClassworkTab.jsx
       if (activity.deadline && activity.deadline !== "No deadline") {
         try {
           const date = new Date(activity.deadline);
           if (!isNaN(date.getTime())) {
-            // Convert to local datetime string in the exact same format
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             const hours = String(date.getHours()).padStart(2, '0');
             const minutes = String(date.getMinutes()).padStart(2, '0');
             
-            // Format: YYYY-MM-DDTHH:mm (local time)
             const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
             setDeadline(localDateTimeString);
           }
@@ -130,7 +126,6 @@ const ClassWorkEdit = ({
   };
 
   const handleSave = () => {
-    // Validate required fields
     if (!activityType || !taskNumber || !title) {
       alert("Please fill in all required fields (Activity Type, Task Number, and Title)");
       return;
@@ -150,7 +145,6 @@ const ClassWorkEdit = ({
       }
     }
 
-    // Prepare assignment data
     const assignmentData = {
       assignTo,
       selectedStudents: assignTo === "individual" ? selectedStudents : []
@@ -163,7 +157,7 @@ const ClassWorkEdit = ({
       instruction,
       link,
       points: points || 0,
-      deadline, // This will preserve the exact deadline format
+      deadline,
       ...assignmentData
     });
   };
@@ -183,34 +177,38 @@ const ClassWorkEdit = ({
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-[#15151C] text-white rounded-lg shadow-2xl w-full max-w-3xl p-4 relative modal-pop max-h-[90vh] overflow-y-auto border border-gray-700">
+      <div className={`rounded-lg shadow-2xl w-full max-w-3xl p-4 relative modal-pop max-h-[90vh] overflow-y-auto border ${
+        isDarkMode 
+          ? 'bg-[#15151C] text-white border-gray-700' 
+          : 'bg-white text-gray-900 border-gray-300'
+      }`}>
         <button
           onClick={handleClose}
           aria-label="Close modal"
-          className="absolute top-3 right-3 p-1.5 hover:bg-[#23232C] active:bg-[#2D2D3A] rounded transition-colors cursor-pointer touch-manipulation"
+          className={`absolute top-3 right-3 p-1.5 rounded transition-colors cursor-pointer touch-manipulation ${
+            isDarkMode ? 'hover:bg-[#23232C] active:bg-[#2D2D3A]' : 'hover:bg-gray-100 active:bg-gray-200'
+          }`}
         >
           <img
             src={BackButton}
             alt="BackButton"
             className="w-4 h-4"
+            style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
           />
         </button>
 
-        <h2 className="text-lg font-bold mb-0.5 pr-8">
+        <h2 className={`text-lg font-bold mb-0.5 pr-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
           Edit School Work
         </h2>
-        <p className="text-xs text-gray-400 mb-3">
+        <p className={`text-xs mb-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           Update the activity details
         </p>
-        <hr className="border-gray-700 mb-4" />
+        <hr className={`mb-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`} />
 
-        {/* Modal Body - 2 Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Left Column - Basic Information */}
           <div className="space-y-3">
-            {/* Activity Type Dropdown */}
             <div className="relative">
-              <label className="text-xs font-semibold mb-1 block text-gray-300">
+              <label className={`text-xs font-semibold mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Activity Type <span className="text-[#A15353]">*</span>
               </label>
               <button
@@ -218,19 +216,26 @@ const ClassWorkEdit = ({
                   e.stopPropagation();
                   setActivityTypeDropdownOpen(!activityTypeDropdownOpen);
                 }}
-                className="w-full bg-[#23232C] border border-gray-600 text-white rounded px-3 py-2 flex items-center justify-between hover:border-[#767EE0] active:border-[#767EE0] focus:border-[#767EE0] transition-colors cursor-pointer touch-manipulation text-xs"
+                className={`w-full border rounded px-3 py-2 flex items-center justify-between transition-colors cursor-pointer touch-manipulation text-xs ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-600 text-white hover:border-[#767EE0] active:border-[#767EE0] focus:border-[#767EE0]' 
+                    : 'bg-gray-50 border-gray-300 text-gray-900 hover:border-[#767EE0] active:border-[#767EE0] focus:border-[#767EE0]'
+                }`}
               >
-                <span className={`${!activityType ? 'text-gray-500' : ''}`}>
+                <span className={`${!activityType ? (isDarkMode ? 'text-gray-500' : 'text-gray-400') : ''}`}>
                   {activityType || "Select Activity Type"}
                 </span>
                 <img 
                   src={ArrowDown} 
                   alt="" 
-                  className={`h-3 w-3 transition-transform ${activityTypeDropdownOpen ? 'rotate-180' : ''}`} 
+                  className={`h-3 w-3 transition-transform ${activityTypeDropdownOpen ? 'rotate-180' : ''}`}
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
               {activityTypeDropdownOpen && (
-                <div className="absolute top-full mt-0.5 w-full bg-[#23232C] rounded shadow-xl border border-gray-600 z-10 overflow-hidden max-h-32 overflow-y-auto">
+                <div className={`absolute top-full mt-0.5 w-full rounded shadow-xl border z-10 overflow-hidden max-h-32 overflow-y-auto ${
+                  isDarkMode ? 'bg-[#23232C] border-gray-600' : 'bg-white border-gray-300'
+                }`}>
                   {activityTypes.map((type) => (
                     <button
                       key={type}
@@ -239,7 +244,11 @@ const ClassWorkEdit = ({
                         setActivityType(type);
                         setActivityTypeDropdownOpen(false);
                       }}
-                      className="block w-full text-left px-3 py-2 text-xs hover:bg-[#2D2D3A] active:bg-[#374151] transition-colors cursor-pointer touch-manipulation"
+                      className={`block w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer touch-manipulation ${
+                        isDarkMode 
+                          ? 'hover:bg-[#2D2D3A] active:bg-[#374151] text-white' 
+                          : 'hover:bg-gray-100 active:bg-gray-200 text-gray-900'
+                      }`}
                     >
                       {type}
                     </button>
@@ -248,9 +257,8 @@ const ClassWorkEdit = ({
               )}
             </div>
 
-            {/* Task Number Input */}
             <div>
-              <label className="text-xs font-semibold mb-1 block text-gray-300">
+              <label className={`text-xs font-semibold mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Task Number <span className="text-[#A15353]">*</span>
               </label>
               <input
@@ -258,13 +266,16 @@ const ClassWorkEdit = ({
                 placeholder="Activity 1"
                 value={taskNumber}
                 onChange={(e) => setTaskNumber(e.target.value)}
-                className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white placeholder:text-gray-500"
+                className={`w-full border rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-600 text-white placeholder:text-gray-500' 
+                    : 'bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
               />
             </div>
 
-            {/* Title Input */}
             <div>
-              <label className="text-xs font-semibold mb-1 block text-gray-300">
+              <label className={`text-xs font-semibold mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Title <span className="text-[#A15353]">*</span>
               </label>
               <input
@@ -272,13 +283,16 @@ const ClassWorkEdit = ({
                 placeholder="Enter title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white placeholder:text-gray-500"
+                className={`w-full border rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-600 text-white placeholder:text-gray-500' 
+                    : 'bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
               />
             </div>
 
-            {/* Assign To Dropdown */}
             <div className="relative">
-              <label className="text-xs font-semibold mb-1 block text-gray-300">
+              <label className={`text-xs font-semibold mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Assign To <span className="text-[#A15353]">*</span>
               </label>
               <button
@@ -286,7 +300,11 @@ const ClassWorkEdit = ({
                   e.stopPropagation();
                   setAssignToDropdownOpen(!assignToDropdownOpen);
                 }}
-                className="w-full bg-[#23232C] border border-gray-600 text-white rounded px-3 py-2 flex items-center justify-between hover:border-[#767EE0] active:border-[#767EE0] focus:border-[#767EE0] transition-colors cursor-pointer touch-manipulation text-xs"
+                className={`w-full border rounded px-3 py-2 flex items-center justify-between transition-colors cursor-pointer touch-manipulation text-xs ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-600 text-white hover:border-[#767EE0] active:border-[#767EE0] focus:border-[#767EE0]' 
+                    : 'bg-gray-50 border-gray-300 text-gray-900 hover:border-[#767EE0] active:border-[#767EE0] focus:border-[#767EE0]'
+                }`}
               >
                 <span>
                   {assignTo === "wholeClass" ? "Whole Class" : "Individual Students"}
@@ -294,18 +312,25 @@ const ClassWorkEdit = ({
                 <img 
                   src={ArrowDown} 
                   alt="" 
-                  className={`h-3 w-3 transition-transform ${assignToDropdownOpen ? 'rotate-180' : ''}`} 
+                  className={`h-3 w-3 transition-transform ${assignToDropdownOpen ? 'rotate-180' : ''}`}
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
               {assignToDropdownOpen && (
-                <div className="absolute top-full mt-0.5 w-full bg-[#23232C] rounded shadow-xl border border-gray-600 z-10 overflow-hidden">
+                <div className={`absolute top-full mt-0.5 w-full rounded shadow-xl border z-10 overflow-hidden ${
+                  isDarkMode ? 'bg-[#23232C] border-gray-600' : 'bg-white border-gray-300'
+                }`}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setAssignTo("wholeClass");
                       setAssignToDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-3 py-2 text-xs hover:bg-[#2D2D3A] active:bg-[#374151] transition-colors cursor-pointer touch-manipulation"
+                    className={`block w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer touch-manipulation ${
+                      isDarkMode 
+                        ? 'hover:bg-[#2D2D3A] active:bg-[#374151] text-white' 
+                        : 'hover:bg-gray-100 active:bg-gray-200 text-gray-900'
+                    }`}
                   >
                     Whole Class
                   </button>
@@ -315,7 +340,11 @@ const ClassWorkEdit = ({
                       setAssignTo("individual");
                       setAssignToDropdownOpen(false);
                     }}
-                    className="block w-full text-left px-3 py-2 text-xs hover:bg-[#2D2D3A] active:bg-[#374151] transition-colors cursor-pointer touch-manipulation"
+                    className={`block w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer touch-manipulation ${
+                      isDarkMode 
+                        ? 'hover:bg-[#2D2D3A] active:bg-[#374151] text-white' 
+                        : 'hover:bg-gray-100 active:bg-gray-200 text-gray-900'
+                    }`}
                   >
                     Individual Students
                   </button>
@@ -323,11 +352,9 @@ const ClassWorkEdit = ({
               )}
             </div>
 
-            {/* Points and Deadline in a 2-column grid */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Points Input */}
               <div>
-                <label className="text-xs font-semibold mb-1 block text-gray-300">Points</label>
+                <label className={`text-xs font-semibold mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Points</label>
                 <input
                   type="number"
                   placeholder="0"
@@ -340,43 +367,53 @@ const ClassWorkEdit = ({
                   }}
                   min="0"
                   max="999"
-                  className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white placeholder:text-gray-500"
+                  className={`w-full border rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors placeholder:text-gray-500 ${
+                    isDarkMode 
+                      ? 'bg-[#23232C] border-gray-600 text-white placeholder:text-gray-500' 
+                      : 'bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400'
+                  }`}
                 />
               </div>
 
-              {/* Deadline Input */}
               <div>
-                <label className="text-xs font-semibold mb-1 block text-gray-300">Deadline</label>
+                <label className={`text-xs font-semibold mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Deadline</label>
                 <input
                   type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
                   min={getCurrentDateTime()}
-                  className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white"
+                  className={`w-full border rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors ${
+                    isDarkMode 
+                      ? 'bg-[#23232C] border-gray-600 text-white' 
+                      : 'bg-gray-50 border-gray-300 text-gray-900'
+                  }`}
                 />
               </div>
             </div>
 
-            {/* Link Input */}
             <div>
-              <label className="text-xs font-semibold mb-1 block text-gray-300">Link</label>
+              <label className={`text-xs font-semibold mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Link</label>
               <input
                 type="text"
                 placeholder="Enter link (optional)"
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
-                className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors text-white placeholder:text-gray-500"
+                className={`w-full border rounded px-3 py-2 outline-none text-xs focus:border-[#767EE0] transition-colors placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-600 text-white placeholder:text-gray-500' 
+                    : 'bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
               />
             </div>
           </div>
 
-          {/* Right Column - Student Selection and Instructions */}
           <div className="space-y-3">
-            {/* Student Selection (only show when individual is selected) */}
             {assignTo === "individual" && (
-              <div className="border border-gray-600 rounded p-3 bg-[#23232C]">
+              <div className={`border rounded p-3 ${
+                isDarkMode ? 'border-gray-600 bg-[#23232C]' : 'border-gray-300 bg-gray-50'
+              }`}>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold text-gray-300">
+                  <label className={`text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Select Students
                   </label>
                   {!loadingStudents && realStudents.length > 0 && (
@@ -392,31 +429,37 @@ const ClassWorkEdit = ({
                 {loadingStudents ? (
                   <div className="text-center py-2">
                     <div className="inline-block h-4 w-4 animate-spin rounded-full border border-solid border-[#767EE0] border-r-transparent"></div>
-                    <p className="text-xs text-gray-500 mt-1">Loading students...</p>
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>Loading students...</p>
                   </div>
                 ) : realStudents.length === 0 ? (
-                  <div className="text-center py-2 text-xs text-gray-500">
+                  <div className={`text-center py-2 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
                     No students found in this class.
                   </div>
                 ) : (
                   <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
                     {realStudents.map((student) => (
-                      <div key={student.tracked_ID} className="flex items-center gap-2 p-1.5 hover:bg-[#2D2D3A] rounded transition-colors">
+                      <div key={student.tracked_ID} className={`flex items-center gap-2 p-1.5 rounded transition-colors ${
+                        isDarkMode ? 'hover:bg-[#2D2D3A]' : 'hover:bg-gray-100'
+                      }`}>
                         <input
                           type="checkbox"
                           id={`student-${student.tracked_ID}`}
                           checked={selectedStudents.includes(student.tracked_ID)}
                           onChange={() => handleStudentSelection(student.tracked_ID)}
-                          className="h-3 w-3 text-[#767EE0] border-gray-600 rounded focus:ring-[#767EE0] cursor-pointer bg-[#2D2D3A]"
+                          className={`h-3 w-3 text-[#767EE0] rounded focus:ring-[#767EE0] cursor-pointer ${
+                            isDarkMode ? 'border-gray-600 bg-[#2D2D3A]' : 'border-gray-400 bg-white'
+                          }`}
                         />
                         <label 
                           htmlFor={`student-${student.tracked_ID}`}
-                          className="flex-1 text-xs text-gray-300 cursor-pointer"
+                          className={`flex-1 text-xs cursor-pointer ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-900'
+                          }`}
                         >
                           <div className="font-medium">
                             {student.tracked_firstname} {student.tracked_lastname}
                           </div>
-                          <div className="text-xs text-gray-500">ID: {student.tracked_ID}</div>
+                          <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>ID: {student.tracked_ID}</div>
                         </label>
                       </div>
                     ))}
@@ -424,28 +467,30 @@ const ClassWorkEdit = ({
                 )}
 
                 {selectedStudents.length > 0 && (
-                  <div className="mt-2 text-xs text-gray-500">
+                  <div className={`mt-2 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
                     {selectedStudents.length} student{selectedStudents.length !== 1 ? 's' : ''} selected
                   </div>
                 )}
               </div>
             )}
 
-            {/* Instruction Textarea - Dynamic height based on content */}
             <div className={assignTo === "individual" ? "min-h-[150px]" : "min-h-[220px]"}>
-              <label className="text-xs font-semibold mb-1 block text-gray-300">Instruction</label>
+              <label className={`text-xs font-semibold mb-1 block ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Instruction</label>
               <textarea
                 placeholder="Enter instruction..."
                 value={instruction}
                 onChange={(e) => setInstruction(e.target.value)}
-                className="w-full bg-[#23232C] border border-gray-600 rounded px-3 py-2 outline-none resize-none text-xs focus:border-[#767EE0] transition-colors h-full min-h-[100px] text-white placeholder:text-gray-500"
+                className={`w-full border rounded px-3 py-2 outline-none resize-none text-xs focus:border-[#767EE0] transition-colors h-full min-h-[100px] placeholder:text-gray-500 ${
+                  isDarkMode 
+                    ? 'bg-[#23232C] border-gray-600 text-white placeholder:text-gray-500' 
+                    : 'bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400'
+                }`}
                 rows={assignTo === "individual" ? 6 : 10}
               />
             </div>
           </div>
         </div>
 
-        {/* Save Button - Full width below the columns */}
         <div className="mt-4">
           <button
             onClick={handleSave}

@@ -2,8 +2,6 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
-import PerformanceLineChart from "../../Components/StudentComponents/PerformanceLineChart";
-import ActivityScoresBarChart from "../../Components/StudentComponents/ActivityScoresBarChart";
 import Analytics from '../../assets/Analytics.svg';
 import SubjectOverview from "../../assets/SubjectOverview.svg";
 import Announcement from "../../assets/Announcement.svg";
@@ -11,6 +9,9 @@ import Classwork from "../../assets/Classwork.svg";
 import Attendance from "../../assets/Attendance.svg";
 import BackButton from '../../assets/BackButton.svg';
 import StudentsIcon from "../../assets/StudentList.svg";
+
+import PerformanceLineChart from "../../Components/StudentComponents/PerformanceLineChart";
+import ActivityScoresBarChart from "../../Components/StudentComponents/ActivityScoresBarChart";
 
 export default function SubjectAnalyticsStudent() {
   const location = useLocation();
@@ -32,6 +33,26 @@ export default function SubjectAnalyticsStudent() {
   const [studentId, setStudentId] = useState("");
   const [performanceTrend, setPerformanceTrend] = useState([]);
   const [selectedActivityType, setSelectedActivityType] = useState('assignment');
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Handle sidebar responsiveness
   useEffect(() => {
@@ -316,13 +337,30 @@ export default function SubjectAnalyticsStudent() {
     setSelectedActivityType(type);
   };
 
+  // Theme helper functions
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/80" : "text-gray-600";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/30" : "border-gray-300";
+  };
+
   if (!studentId || loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`${getBackgroundColor()} min-h-screen`}>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 text-center text-[#FFFFFF]">
+          <div className={`p-8 text-center ${getTextColor()}`}>
             <p>Loading student data...</p>
           </div>
         </div>
@@ -331,7 +369,7 @@ export default function SubjectAnalyticsStudent() {
   }
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`${getBackgroundColor()} min-h-screen`}>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -340,14 +378,19 @@ export default function SubjectAnalyticsStudent() {
           {/* Page Header */}
           <div className="mb-4">
             <div className="flex items-center mb-2">
-              <img src={Analytics} alt="Analytics" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
-              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">Reports</h1>
+              <img 
+                src={Analytics} 
+                alt="Analytics" 
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-2" 
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+              />
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>Reports</h1>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">View Class Reports</p>
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>View Class Reports</p>
           </div>
 
           {/* Class Information */}
-          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{currentSubject?.subject || 'Loading...'}</span>
@@ -362,61 +405,92 @@ export default function SubjectAnalyticsStudent() {
                   src={BackButton} 
                   alt="Back" 
                   className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </Link>
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getDividerColor()} mb-4`} />
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
               <Link to={`/SubjectOverviewStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
                 <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#A15353]/20 text-[#A15353] border-[#A15353]/30 hover:bg-[#A15353]/30">
-                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                  <img 
+                    src={SubjectOverview} 
+                    alt="" 
+                    className="h-4 w-4" 
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                  />
                   <span className="sm:inline truncate">{currentSubject?.subject || 'Subject'} Overview</span>
                 </button>
               </Link>
               
               <Link to={`/SubjectAnnouncementStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
                 <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30">
-                  <img src={Announcement} alt="" className="h-4 w-4" />
+                  <img 
+                    src={Announcement} 
+                    alt="" 
+                    className="h-4 w-4" 
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                  />
                   <span className="sm:inline truncate">Announcements</span>
                 </button>
               </Link>
               
               <Link to={`/SubjectSchoolWorksStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
                 <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30">
-                  <img src={Classwork} alt="" className="h-4 w-4" />
+                  <img 
+                    src={Classwork} 
+                    alt="" 
+                    className="h-4 w-4" 
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                  />
                   <span className="sm:inline truncate">School Works</span>
                 </button>
               </Link>
               
               <Link to={`/SubjectAttendanceStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
                 <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30">
-                  <img src={Attendance} alt="" className="h-4 w-4" />
+                  <img 
+                    src={Attendance} 
+                    alt="" 
+                    className="h-4 w-4" 
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                  />
                   <span className="sm:inline truncate">Attendance</span>
                 </button>
               </Link>
               
               <Link to={`/SubjectAnalyticsStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
                 <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30">
-                  <img src={Analytics} alt="" className="h-4 w-4" />
+                  <img 
+                    src={Analytics} 
+                    alt="" 
+                    className="h-4 w-4" 
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                  />
                   <span className="sm:inline truncate">Reports</span>
                 </button>
               </Link>
             </div>
             <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
-              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#767EE0] transition-all duration-200 cursor-pointer">
-                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
+              <button className={`p-2 ${isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'} rounded-md shadow-md border-2 border-transparent hover:border-[#767EE0] transition-all duration-200 cursor-pointer`}>
+                <img 
+                  src={StudentsIcon} 
+                  alt="Student List" 
+                  className="h-4 w-4" 
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                />
               </button>
             </Link>
           </div>
 
           {/* Subject not found message */}
           {!loading && subjects.length > 0 && !currentSubject && (
-            <div className="bg-[#A15353]/10 border border-[#A15353]/30 rounded-md p-3 mb-4 text-center">
+            <div className={`${isDarkMode ? 'bg-[#A15353]/10 border-[#A15353]/30' : 'bg-red-50 border-red-200'} border rounded-md p-3 mb-4 text-center`}>
               <p className="text-[#A15353] text-sm">
                 Subject not found or you are not enrolled in this subject.
               </p>
@@ -430,6 +504,7 @@ export default function SubjectAnalyticsStudent() {
                 performanceTrend={performanceTrend} 
                 studentId={studentId}
                 subjectCode={subjectCode}
+                isDarkMode={isDarkMode}
               />
             </div>
           )}
@@ -443,6 +518,7 @@ export default function SubjectAnalyticsStudent() {
                 onTypeChange={handleActivityTypeChange}
                 studentId={studentId}
                 subjectCode={subjectCode}
+                isDarkMode={isDarkMode}
               />
             </div>
           )}

@@ -23,7 +23,8 @@ const ClassWorkSubmission = ({
   isOpen, 
   onClose, 
   onSave,
-  professorName
+  professorName,
+  isDarkMode = true
 }) => {
   const [filter, setFilter] = useState("All");
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
@@ -39,16 +40,14 @@ const ClassWorkSubmission = ({
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [, setAssignTo] = useState("wholeClass");
   
-  // File Upload States
   const [uploadedFilesList, setUploadedFilesList] = useState({});
   const [isUploading, setIsUploading] = useState(false);
-  const [fileRefreshKey, setFileRefreshKey] = useState(0); // New key to force refresh
+  const [fileRefreshKey, setFileRefreshKey] = useState(0);
   
   const scrollContainerRef = useRef(null);
   const filterButtonRef = useRef(null);
   const BACKEND_URL = 'https://tracked.6minds.site/Professor/SubjectDetailsDB';
 
-  // Circular Progress Bar Component
   const CircularProgressBar = ({ percentage, color, size = 120, strokeWidth = 10 }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
@@ -66,7 +65,7 @@ const ClassWorkSubmission = ({
             cy={size / 2}
             r={radius}
             strokeWidth={strokeWidth}
-            className="fill-none stroke-gray-700"
+            className={`fill-none ${isDarkMode ? 'stroke-gray-700' : 'stroke-gray-300'}`}
           />
           <circle
             cx={size / 2}
@@ -91,7 +90,7 @@ const ClassWorkSubmission = ({
           >
             {percentage}%
           </span>
-          <span className="text-xs text-gray-400 mt-1">
+          <span className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Score
           </span>
         </div>
@@ -99,8 +98,6 @@ const ClassWorkSubmission = ({
     );
   };
 
-  // ========== DATE FORMATTING FUNCTIONS ==========
-  
   const formatDeadline = (dateString) => {
     if (!dateString || dateString === "No deadline") return "No deadline";
     try {
@@ -199,7 +196,6 @@ const ClassWorkSubmission = ({
     };
   }, []);
 
-  // Fetch activity details including assignment type and assigned students
   const fetchActivityDetails = async () => {
     if (!activity?.id) return;
     
@@ -219,7 +215,6 @@ const ClassWorkSubmission = ({
         
         const assignedStudents = result.students || [];
         
-        // Fetch saved grades for assigned students
         const gradesResponse = await fetch(
           `${BACKEND_URL}/get_activity_grades.php?activity_id=${activity.id}`
         );
@@ -287,14 +282,12 @@ const ClassWorkSubmission = ({
             
             setLocalStudents(updatedStudents);
             
-            // Select first student if available
             if (updatedStudents.length > 0 && !selectedStudent) {
               const firstStudent = updatedStudents[0];
               setSelectedStudent({ 
                 id: firstStudent.user_ID, 
                 name: firstStudent.user_Name 
               });
-              // Fetch files for the first student
               fetchUploadedFiles(firstStudent.user_ID);
             }
           } else {
@@ -352,7 +345,6 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Get file icon based on file type
   const getFileIcon = (fileName, fileType) => {
     const name = fileName || '';
     const type = fileType || '';
@@ -464,9 +456,7 @@ const ClassWorkSubmission = ({
           };
         });
 
-        // Update the local student's file info in the database when saving grades
         if (uploadedBy === 'professor') {
-          // Update the student's uploaded_file_url in local state
           setLocalStudents(prev => prev.map(student =>
             student.user_ID === studentId
               ? {
@@ -480,7 +470,6 @@ const ClassWorkSubmission = ({
 
         alert('File uploaded successfully!');
         
-        // Refresh files and trigger re-render
         setTimeout(() => {
           fetchUploadedFiles(studentId);
           setFileRefreshKey(prev => prev + 1);
@@ -500,7 +489,6 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Fetch uploaded files for a student
   const fetchUploadedFiles = async (studentId) => {
     try {
       const response = await fetch(
@@ -543,7 +531,6 @@ const ClassWorkSubmission = ({
           [studentId]: filesMap
         }));
         
-        // Update student's file info in local state
         if (filesMap.professor.length > 0) {
           const latestProfessorFile = filesMap.professor[0];
           setLocalStudents(prev => prev.map(student =>
@@ -579,7 +566,6 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Delete uploaded file
   const handleDeleteFile = async (fileId, studentId) => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
@@ -623,7 +609,6 @@ const ClassWorkSubmission = ({
           return prev;
         });
         
-        // Clear student's file info if professor file was deleted
         setLocalStudents(prev => prev.map(student =>
           student.user_ID === studentId
             ? {
@@ -670,7 +655,6 @@ const ClassWorkSubmission = ({
     }
   }, [selectedStudent, isMobile]);
 
-  // Handle view specific file
   const handleViewFile = (file) => {
     if (file?.url) {
       if (isImageFile(file)) {
@@ -813,7 +797,6 @@ const ClassWorkSubmission = ({
     ));
   };
 
-  // Enhanced Progress Bar with multiple visualizations
   const renderProgressBar = (analytics) => {
     if (!analytics) return null;
     
@@ -831,17 +814,17 @@ const ClassWorkSubmission = ({
         </div>
         
         <div className="text-center mb-3">
-          <div className="text-3xl font-bold text-white mb-1">
+          <div className={`text-3xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             {grade}/{totalPoints}
           </div>
-          <div className="text-xs text-gray-400">
+          <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Points Earned
           </div>
         </div>
         
         <div className="w-full max-w-xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400">Performance Level</span>
+            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Performance Level</span>
             <span 
               className="text-xs font-semibold px-2 py-1 rounded-full"
               style={{ 
@@ -855,9 +838,11 @@ const ClassWorkSubmission = ({
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-400">Progress</span>
+            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Progress</span>
             <div className="flex items-center gap-2">
-              <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div className={`w-24 h-2 rounded-full overflow-hidden ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-300'
+              }`}>
                 <div 
                   className="h-full rounded-full transition-all duration-1000 ease-out"
                   style={{ 
@@ -867,7 +852,7 @@ const ClassWorkSubmission = ({
                   }}
                 />
               </div>
-              <span className="text-xs font-medium text-white">{percentage}%</span>
+              <span className={`text-xs font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{percentage}%</span>
             </div>
           </div>
         </div>
@@ -888,8 +873,8 @@ const ClassWorkSubmission = ({
             grade: student.grade || null,
             submitted: student.submitted || shouldMarkAsSubmitted,
             late: false,
-            uploaded_file_url: student.uploaded_file_url || null, // Include file URL
-            uploaded_file_name: student.uploaded_file_name || null // Include file name
+            uploaded_file_url: student.uploaded_file_url || null,
+            uploaded_file_name: student.uploaded_file_name || null
           };
         })
       };
@@ -921,7 +906,6 @@ const ClassWorkSubmission = ({
         setLocalStudents(updatedStudents);
         if (onSave) onSave(updatedStudents);
         
-        // Refresh all data
         fetchActivityDetails();
         if (selectedStudent?.id) {
           fetchUploadedFiles(selectedStudent.id);
@@ -952,10 +936,8 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Get professor file count
   const getProfessorFileCount = (studentId) => uploadedFilesList[studentId]?.professor?.length || 0;
 
-  // Get student file count
   const getStudentFileCount = (studentId) => uploadedFilesList[studentId]?.student?.length || 0;
 
   const getStudentAnalytics = (student) => {
@@ -974,44 +956,44 @@ const ClassWorkSubmission = ({
       showMascot = true;
       progressColor = "#00A15D";
       textColor = "#00A15D";
-      bgColor = "bg-[#00A15D]/10";
-      borderColor = "border-[#00A15D]/20";
+      bgColor = isDarkMode ? "bg-[#00A15D]/10" : "bg-[#00A15D]/5";
+      borderColor = isDarkMode ? "border-[#00A15D]/20" : "border-[#00A15D]/10";
     } else if (percentage >= 85) {
       performanceLevel = "Excellent";
       feedback = "Great job! Minor improvements could make it perfect.";
       progressColor = "#00A15D";
       textColor = "#00A15D";
-      bgColor = "bg-[#00A15D]/10";
-      borderColor = "border-[#00A15D]/20";
+      bgColor = isDarkMode ? "bg-[#00A15D]/10" : "bg-[#00A15D]/5";
+      borderColor = isDarkMode ? "border-[#00A15D]/20" : "border-[#00A15D]/10";
     } else if (percentage >= 75) {
       performanceLevel = "Good";
       feedback = "Solid understanding. Focus on details and accuracy.";
       progressColor = "#FFA600";
       textColor = "#FFA600";
-      bgColor = "bg-[#FFA600]/10";
-      borderColor = "border-[#FFA600]/20";
+      bgColor = isDarkMode ? "bg-[#FFA600]/10" : "bg-[#FFA600]/5";
+      borderColor = isDarkMode ? "border-[#FFA600]/20" : "border-[#FFA600]/10";
     } else if (percentage >= 65) {
       performanceLevel = "Average";
       feedback = "Needs improvement. Review key concepts and practice more.";
       progressColor = "#F97316";
       textColor = "#F97316";
-      bgColor = "bg-[#F97316]/10";
-      borderColor = "border-[#F97316]/20";
+      bgColor = isDarkMode ? "bg-[#F97316]/10" : "bg-[#F97316]/5";
+      borderColor = isDarkMode ? "border-[#F97316]/20" : "border-[#F97316]/10";
     } else if (percentage >= 50) {
       performanceLevel = "Below Average";
       feedback = "Requires attention. Consider additional support and review.";
       progressColor = "#A15353";
       textColor = "#A15353";
-      bgColor = "bg-[#A15353]/10";
-      borderColor = "border-[#A15353]/20";
+      bgColor = isDarkMode ? "bg-[#A15353]/10" : "bg-[#A15353]/5";
+      borderColor = isDarkMode ? "border-[#A15353]/20" : "border-[#A15353]/10";
     } else {
       performanceLevel = "Needs Help";
       feedback = "Significant improvement needed. Schedule a meeting to discuss.";
       showMascot = true;
       progressColor = "#A15353";
       textColor = "#A15353";
-      bgColor = "bg-[#A15353]/10";
-      borderColor = "border-[#A15353]/20";
+      bgColor = isDarkMode ? "bg-[#A15353]/10" : "bg-[#A15353]/5";
+      borderColor = isDarkMode ? "border-[#A15353]/20" : "border-[#A15353]/10";
     }
     
     return {
@@ -1052,35 +1034,37 @@ const ClassWorkSubmission = ({
     }
   };
 
-  // Get file type badge
   const getFileTypeBadge = (fileName) => {
     if (!fileName) return null;
     
     if (fileName.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i)) {
-      return { text: 'IMAGE', color: 'bg-[#00A15D]/10 text-[#00A15D]' };
+      return { text: 'IMAGE', color: isDarkMode ? 'bg-[#00A15D]/10 text-[#00A15D]' : 'bg-[#00A15D]/5 text-[#00A15D]' };
     } else if (fileName.match(/\.(pdf)$/i)) {
-      return { text: 'PDF', color: 'bg-[#FF4757]/10 text-[#FF4757]' };
+      return { text: 'PDF', color: isDarkMode ? 'bg-[#FF4757]/10 text-[#FF4757]' : 'bg-[#FF4757]/5 text-[#FF4757]' };
     } else if (fileName.match(/\.(doc|docx)$/i)) {
-      return { text: 'DOC', color: 'bg-[#2E8FF0]/10 text-[#2E8FF0]' };
+      return { text: 'DOC', color: isDarkMode ? 'bg-[#2E8FF0]/10 text-[#2E8FF0]' : 'bg-[#2E8FF0]/5 text-[#2E8FF0]' };
     } else if (fileName.match(/\.(mp4|avi|mov|wmv|flv|mkv)$/i)) {
-      return { text: 'VIDEO', color: 'bg-[#FFA600]/10 text-[#FFA600]' };
+      return { text: 'VIDEO', color: isDarkMode ? 'bg-[#FFA600]/10 text-[#FFA600]' : 'bg-[#FFA600]/5 text-[#FFA600]' };
     } else if (fileName.match(/\.(mp3|wav|ogg|flac|aac)$/i)) {
-      return { text: 'AUDIO', color: 'bg-[#B39DDB]/10 text-[#B39DDB]' };
+      return { text: 'AUDIO', color: isDarkMode ? 'bg-[#B39DDB]/10 text-[#B39DDB]' : 'bg-[#B39DDB]/5 text-[#B39DDB]' };
     } else if (fileName.match(/\.(zip|rar|7z|tar|gz)$/i)) {
-      return { text: 'ARCHIVE', color: 'bg-[#F97316]/10 text-[#F97316]' };
+      return { text: 'ARCHIVE', color: isDarkMode ? 'bg-[#F97316]/10 text-[#F97316]' : 'bg-[#F97316]/5 text-[#F97316]' };
     } else {
-      return { text: 'FILE', color: 'bg-gray-700/20 text-gray-400' };
+      return { text: 'FILE', color: isDarkMode ? 'bg-gray-700/20 text-gray-400' : 'bg-gray-300 text-gray-600' };
     }
   };
 
-  // Render file list item with image preview
   const renderFileItem = (file, studentId, isProfessorFile = true) => {
     const isImage = isImageFile(file);
     const fileIcon = getFileIcon(file.name, file.type);
     const fileBadge = getFileTypeBadge(file.name);
     
     return (
-      <div key={file.id} className="flex items-start justify-between p-2 bg-[#15151C] rounded mb-2 hover:bg-[#1a1a24] transition-colors">
+      <div key={file.id} className={`flex items-start justify-between p-2 rounded mb-2 hover:transition-colors ${
+        isDarkMode 
+          ? 'bg-[#15151C] hover:bg-[#1a1a24]' 
+          : 'bg-gray-50 hover:bg-gray-100'
+      }`}>
         <div className="flex items-start gap-3 flex-1 min-w-0">
           {isImage && file.url ? (
             <div 
@@ -1101,15 +1085,24 @@ const ClassWorkSubmission = ({
               </div>
             </div>
           ) : (
-            <div className="w-10 h-10 flex items-center justify-center bg-[#23232C] rounded flex-shrink-0">
-              <img src={fileIcon} alt="File" className="w-5 h-5" />
+            <div className={`w-10 h-10 flex items-center justify-center rounded flex-shrink-0 ${
+              isDarkMode ? 'bg-[#23232C]' : 'bg-gray-100'
+            }`}>
+              <img 
+                src={fileIcon} 
+                alt="File" 
+                className="w-5 h-5"
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+              />
             </div>
           )}
           
           <div className="flex-1 min-w-0 pt-1">
             <div className="flex items-center gap-2 mb-1">
               <p 
-                className="text-white text-xs font-medium truncate cursor-pointer hover:text-[#767EE0]"
+                className={`text-xs font-medium truncate cursor-pointer hover:text-[#767EE0] ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}
                 onClick={() => handleViewFile(file)}
                 title={file.name}
               >
@@ -1122,8 +1115,8 @@ const ClassWorkSubmission = ({
               )}
             </div>
             <div className="flex items-center gap-3">
-              <p className="text-gray-400 text-xs">{formatFileSize(file.size)}</p>
-              <span className="text-gray-500 text-xs">
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{formatFileSize(file.size)}</p>
+              <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                 {file.uploadedBy === 'professor' ? 'Professor' : 'Student'}
               </span>
             </div>
@@ -1162,7 +1155,6 @@ const ClassWorkSubmission = ({
     );
   };
 
-  // Function to extract and render URLs from instructions
   const renderInstructionWithLinks = (instruction) => {
     if (!instruction) return 'No instructions provided for this activity.';
     
@@ -1184,7 +1176,6 @@ const ClassWorkSubmission = ({
     });
   };
 
-  // Check if instruction has a link
   const hasLinkInInstruction = (instruction) => {
     if (!instruction) return false;
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -1199,27 +1190,37 @@ const ClassWorkSubmission = ({
   return (
     <>
       <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-2">
-        <div className="bg-[#15151C] rounded-lg shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col mx-1 border border-gray-700 min-w-0">
-          {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b border-gray-700 flex-shrink-0">
+        <div className={`rounded-lg shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col mx-1 border ${
+          isDarkMode ? 'bg-[#15151C] border-gray-700' : 'bg-white border-gray-300'
+        } min-w-0`}>
+          <div className={`flex items-center justify-between p-3 border-b flex-shrink-0 ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-300'
+          }`}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-[#767EE0] font-bold text-sm">
                   {activity.activity_type} #{activity.task_number}
                 </span>
                 {activity.school_work_edited === 1 && (
-                  <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
+                  <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${
+                    isDarkMode ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'bg-[#3B82F6]/10 text-[#3B82F6]'
+                  }`}>
                     Edited
                   </span>
                 )}
-                <h2 className="text-sm font-bold text-white truncate">Student Submissions - {activity.title}</h2>
+                <h2 className={`text-sm font-bold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Student Submissions - {activity.title}</h2>
               </div>
               
               <div className="space-y-1 mt-1">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
-                    <img src={ClockIcon} alt="Deadline" className="w-3 h-3 text-[#A15353]" />
-                    <span className="text-xs font-medium text-[#FFFFFF]/60">Deadline:</span>
+                    <img 
+                      src={ClockIcon} 
+                      alt="Deadline" 
+                      className="w-3 h-3"
+                      style={{ filter: 'invert(0.5)' }}
+                    />
+                    <span className={`text-xs font-medium ${isDarkMode ? 'text-white/60' : 'text-gray-600'}`}>Deadline:</span>
                   </div>
                   <span className={`text-xs font-medium ${getDeadlineColor(activity.deadline)}`}>
                     {formatDeadline(activity.deadline)}
@@ -1229,10 +1230,15 @@ const ClassWorkSubmission = ({
                 {activity.created_at && (
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
-                      <img src={TimeIcon} alt="Posted" className="w-3 h-3 opacity-60" />
-                      <span className="text-xs font-medium text-[#FFFFFF]/60">Posted:</span>
+                      <img 
+                        src={TimeIcon} 
+                        alt="Posted" 
+                        className="w-3 h-3 opacity-60"
+                        style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                      />
+                      <span className={`text-xs font-medium ${isDarkMode ? 'text-white/60' : 'text-gray-600'}`}>Posted:</span>
                     </div>
-                    <span className="text-xs font-medium text-[#FFFFFF]/80">
+                    <span className={`text-xs font-medium ${isDarkMode ? 'text-white/80' : 'text-gray-700'}`}>
                       {formatCreatedDate(activity.created_at)}
                     </span>
                   </div>
@@ -1241,41 +1247,50 @@ const ClassWorkSubmission = ({
             </div>
             
             <div className="flex items-center gap-1">
-              <button onClick={onClose} className="p-1 hover:bg-[#23232C] rounded transition-colors cursor-pointer flex-shrink-0 ml-1">
-                <img src={Cross} alt="Close" className="w-4 h-4" />
+              <button onClick={onClose} className={`p-1 rounded transition-colors cursor-pointer flex-shrink-0 ml-1 ${
+                isDarkMode ? 'hover:bg-[#23232C]' : 'hover:bg-gray-100'
+              }`}>
+                <img 
+                  src={Cross} 
+                  alt="Close" 
+                  className="w-4 h-4"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                />
               </button>
             </div>
           </div>
 
-          {/* Mobile View Tabs */}
           {isMobile && (
-            <div className="flex border-b border-gray-700 flex-shrink-0">
+            <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} flex-shrink-0`}>
               <button onClick={scrollToStudents} className={`flex-1 py-2 text-center text-xs font-medium transition-colors ${
-                  activeView === 'students' ? 'text-[#767EE0] border-b-2 border-[#767EE0] bg-[#767EE0]/10' : 'text-gray-400 hover:text-white hover:bg-[#23232C]'
+                  activeView === 'students' 
+                    ? (isDarkMode ? 'text-[#767EE0] border-b-2 border-[#767EE0] bg-[#767EE0]/10' : 'text-[#767EE0] border-b-2 border-[#767EE0] bg-[#767EE0]/5')
+                    : (isDarkMode ? 'text-gray-400 hover:text-white hover:bg-[#23232C]' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
                 }`}>
                 Students List
               </button>
               <button onClick={scrollToAnalytics} className={`flex-1 py-2 text-center text-xs font-medium transition-colors ${
-                  activeView === 'analytics' ? 'text-[#767EE0] border-b-2 border-[#767EE0] bg-[#767EE0]/10' : 'text-gray-400 hover:text-white hover:bg-[#23232C]'
+                  activeView === 'analytics' 
+                    ? (isDarkMode ? 'text-[#767EE0] border-b-2 border-[#767EE0] bg-[#767EE0]/10' : 'text-[#767EE0] border-b-2 border-[#767EE0] bg-[#767EE0]/5')
+                    : (isDarkMode ? 'text-gray-400 hover:text-white hover:bg-[#23232C]' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100')
                 }`} disabled={!selectedStudent}>
                 Analytics
               </button>
             </div>
           )}
 
-          {/* Main Content Container */}
           <div ref={scrollContainerRef} className={`flex-1 overflow-auto ${isMobile ? 'overflow-x-auto snap-x snap-mandatory' : ''}`} onScroll={handleScroll}>
             <div className={`flex ${isMobile ? 'w-[200%] flex-row' : 'w-full flex-row'} min-h-0`}>
-              {/* Left Panel - Students List */}
-              <div className={`${isMobile ? 'w-1/2 flex-shrink-0 snap-start' : 'w-1/2'} h-full border-r border-gray-700 flex flex-col overflow-hidden`}>
+              <div className={`${isMobile ? 'w-1/2 flex-shrink-0 snap-start' : 'w-1/2'} h-full border-r flex flex-col overflow-hidden ${
+                isDarkMode ? 'border-gray-700' : 'border-gray-300'
+              }`}>
                 <div className="flex-1 overflow-y-auto">
-                  {/* Instructions */}
                   <div className="p-3">
-                    <h3 className="text-xs font-semibold text-white mb-1">Instructions</h3>
+                    <h3 className={`text-xs font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Instructions</h3>
                     <div className="relative">
-                      <div className={`text-xs text-gray-300 whitespace-pre-wrap break-words ${
+                      <div className={`text-xs whitespace-pre-wrap break-words ${
                         instructionExpanded ? '' : 'max-h-16 overflow-hidden'
-                      }`}>
+                      } ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {renderInstructionWithLinks(activity.instruction)}
                       </div>
                       {activity.instruction && activity.instruction.length > 150 ? (
@@ -1286,10 +1301,9 @@ const ClassWorkSubmission = ({
                       ) : null}
                     </div>
                     
-                    {/* Reference Link - Moved outside the expandable section */}
                     {activity.link && !hasLinkInInstruction(activity.instruction) && (
                       <div className="mt-2">
-                        <p className="text-white text-xs font-medium mb-1">Reference Link:</p>
+                        <p className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Reference Link:</p>
                         <a href={activity.link} target="_blank" rel="noopener noreferrer"
                           className="text-[#767EE0] hover:text-[#5a62c4] hover:underline text-xs break-all">
                           {activity.link}
@@ -1298,23 +1312,28 @@ const ClassWorkSubmission = ({
                     )}
                   </div>
 
-                  {/* Status Rectangles */}
                   <div className="px-3 pb-3">
                     <div className="flex gap-2">
                       <button onClick={() => handleStatusClick("Submitted")} className={`flex-1 border rounded p-2 text-center transition-all duration-200 cursor-pointer ${
-                          filter === "Submitted" ? "bg-[#00A15D]/20 border-[#00A15D] shadow-md" : "bg-[#00A15D]/10 border-[#00A15D]/30 hover:bg-[#00A15D]/15"
+                          filter === "Submitted" 
+                            ? (isDarkMode ? "bg-[#00A15D]/20 border-[#00A15D] shadow-md" : "bg-[#00A15D]/10 border-[#00A15D] shadow-sm")
+                            : (isDarkMode ? "bg-[#00A15D]/10 border-[#00A15D]/30 hover:bg-[#00A15D]/15" : "bg-[#00A15D]/5 border-[#00A15D]/20 hover:bg-[#00A15D]/10")
                         }`}>
                         <div className="text-base font-bold text-[#00A15D]">{statusCounts.submitted}</div>
                         <div className="text-xs text-[#00A15D]">Submitted</div>
                       </button>
                       <button onClick={() => handleStatusClick("Assigned")} className={`flex-1 border rounded p-2 text-center transition-all duration-200 cursor-pointer ${
-                          filter === "Assigned" ? "bg-[#767EE0]/20 border-[#767EE0] shadow-md" : "bg-[#767EE0]/15 border-[#767EE0]/30 hover:bg-[#767EE0]/20"
+                          filter === "Assigned" 
+                            ? (isDarkMode ? "bg-[#767EE0]/20 border-[#767EE0] shadow-md" : "bg-[#767EE0]/10 border-[#767EE0] shadow-sm")
+                            : (isDarkMode ? "bg-[#767EE0]/15 border-[#767EE0]/30 hover:bg-[#767EE0]/20" : "bg-[#767EE0]/5 border-[#767EE0]/20 hover:bg-[#767EE0]/10")
                         }`}>
                         <div className="text-base font-bold text-[#767EE0]">{statusCounts.assigned}</div>
                         <div className="text-xs text-[#767EE0]">Assigned</div>
                       </button>
                       <button onClick={() => handleStatusClick("Missed")} className={`flex-1 border rounded p-2 text-center transition-all duration-200 cursor-pointer ${
-                          filter === "Missed" ? "bg-[#A15353]/20 border-[#A15353] shadow-md" : "bg-[#A15353]/10 border-[#A15353]/30 hover:bg-[#A15353]/15"
+                          filter === "Missed" 
+                            ? (isDarkMode ? "bg-[#A15353]/20 border-[#A15353] shadow-md" : "bg-[#A15353]/10 border-[#A15353] shadow-sm")
+                            : (isDarkMode ? "bg-[#A15353]/10 border-[#A15353]/30 hover:bg-[#A15353]/15" : "bg-[#A15353]/5 border-[#A15353]/20 hover:bg-[#A15353]/10")
                         }`}>
                         <div className="text-base font-bold text-[#A15353]">{statusCounts.missed}</div>
                         <div className="text-xs text-[#A15353]">Missed</div>
@@ -1322,24 +1341,35 @@ const ClassWorkSubmission = ({
                     </div>
                   </div>
 
-                  {/* Filter Section */}
                   <div className="px-3 pb-3 relative">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                       <div className="relative" ref={filterButtonRef}>
-                        <label className="text-xs font-medium text-white mr-1">Filter:</label>
+                        <label className={`text-xs font-medium mr-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Filter:</label>
                         <button onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                          className="flex items-center gap-1 px-2 py-1 border border-gray-600 rounded bg-[#23232C] text-xs font-medium text-white hover:bg-[#2D2D3A] cursor-pointer">
+                          className={`flex items-center gap-1 px-2 py-1 border rounded text-xs font-medium cursor-pointer ${
+                            isDarkMode 
+                              ? 'bg-[#23232C] border-gray-600 text-white hover:bg-[#2D2D3A]' 
+                              : 'bg-gray-50 border-gray-300 text-gray-900 hover:bg-gray-100'
+                          }`}>
                           {filter}
-                          <img src={ArrowDown} alt="" className={`w-3 h-3 transition-transform ${filterDropdownOpen ? 'rotate-180' : ''}`} />
+                          <img 
+                            src={ArrowDown} 
+                            alt="" 
+                            className={`w-3 h-3 transition-transform ${filterDropdownOpen ? 'rotate-180' : ''}`}
+                            style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                          />
                         </button>
 
-                        {/* Filter Dropdown - Now positioned absolutely above the table */}
                         {filterDropdownOpen && (
-                          <div className="absolute top-full left-0 mt-1 w-32 bg-[#23232C] rounded shadow-lg border border-gray-600 z-20">
+                          <div className={`absolute top-full left-0 mt-1 w-32 rounded shadow-lg border z-20 ${
+                            isDarkMode ? 'bg-[#23232C] border-gray-600' : 'bg-white border-gray-300'
+                          }`}>
                             {filterOptions.map(option => (
                               <button key={option} onClick={() => { setFilter(option); setFilterDropdownOpen(false); }}
-                                className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-[#2D2D3A] cursor-pointer text-white ${
-                                  filter === option ? 'bg-[#2D2D3A] font-medium' : ''
+                                className={`block w-full text-left px-3 py-1.5 text-xs hover:transition-colors cursor-pointer ${
+                                  filter === option 
+                                    ? (isDarkMode ? 'bg-[#2D2D3A] font-medium text-white' : 'bg-gray-100 font-medium text-gray-900')
+                                    : (isDarkMode ? 'text-white hover:bg-[#2D2D3A]' : 'text-gray-900 hover:bg-gray-100')
                                 }`}>
                                 {option}
                               </button>
@@ -1348,25 +1378,34 @@ const ClassWorkSubmission = ({
                         )}
                       </div>
 
-                      <div className="text-xs text-gray-400">
+                      <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         Showing {filteredStudents.length} of {localStudents.length} students
                       </div>
                     </div>
                   </div>
 
-                  {/* Students List */}
                   <div className="overflow-y-auto flex-1 min-h-0">
                     <div className="w-full">
                       <table className="w-full">
-                        <thead className="bg-[#23232C] sticky top-0 z-10">
+                        <thead className={`sticky top-0 z-10 ${
+                          isDarkMode ? 'bg-[#23232C]' : 'bg-gray-100'
+                        }`}>
                           <tr>
-                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[40%]">Student</th>
-                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[20%]">Status</th>
-                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[20%]">Grade</th>
-                            <th className="px-3 py-1.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[20%]">Actions</th>
+                            <th className={`px-3 py-1.5 text-left text-xs font-medium uppercase tracking-wider w-[40%] ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>Student</th>
+                            <th className={`px-3 py-1.5 text-left text-xs font-medium uppercase tracking-wider w-[20%] ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>Status</th>
+                            <th className={`px-3 py-1.5 text-left text-xs font-medium uppercase tracking-wider w-[20%] ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>Grade</th>
+                            <th className={`px-3 py-1.5 text-left text-xs font-medium uppercase tracking-wider w-[20%] ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-700">
+                        <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                           {filteredStudents.map((student) => {
                             const studentId = student.user_ID;
                             const isSelected = selectedStudent?.id === studentId;
@@ -1386,20 +1425,30 @@ const ClassWorkSubmission = ({
                             }
 
                             return (
-                              <tr key={studentId} className={`hover:bg-[#2D2D3A] cursor-pointer ${isSelected ? 'bg-[#767EE0]/10' : ''}`}
+                              <tr key={studentId} className={`hover:transition-colors cursor-pointer ${
+                                isSelected 
+                                  ? (isDarkMode ? 'bg-[#767EE0]/10' : 'bg-[#767EE0]/5') 
+                                  : (isDarkMode ? 'hover:bg-[#2D2D3A]' : 'hover:bg-gray-50')
+                              }`}
                                 onClick={() => {
                                   setSelectedStudent({ id: studentId, name: student.user_Name });
                                   fetchUploadedFiles(studentId);
                                 }}>
                                 <td className="px-3 py-2 w-[40%]">
-                                  <div className="text-xs font-medium text-white break-words">{student.user_Name}</div>
-                                  <div className="text-xs text-gray-400 break-words">{student.user_Email || 'No email'}</div>
+                                  <div className={`text-xs font-medium break-words ${
+                                    isDarkMode ? 'text-white' : 'text-gray-900'
+                                  }`}>{student.user_Name}</div>
+                                  <div className={`text-xs break-words ${
+                                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                  }`}>{student.user_Email || 'No email'}</div>
                                 </td>
                                 <td className="px-3 py-2 w-[20%] whitespace-nowrap">
                                   <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${
-                                    status === 'Submitted' ? 'bg-[#00A15D]/20 text-[#00A15D]' :
-                                    status === 'Missed' ? 'bg-[#A15353]/20 text-[#A15353]' :
-                                    'bg-[#767EE0]/15 text-[#767EE0]'
+                                    status === 'Submitted' 
+                                      ? (isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]')
+                                      : status === 'Missed' 
+                                      ? (isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]')
+                                      : (isDarkMode ? 'bg-[#767EE0]/15 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]')
                                   }`}>
                                     {status}
                                   </span>
@@ -1413,23 +1462,45 @@ const ClassWorkSubmission = ({
                                       value={displayGrade}
                                       onChange={(e) => handleGradeChange(studentId, e.target.value)}
                                       onBlur={(e) => handleGradeBlur(studentId, e.target.value)}
-                                      className={`w-12 px-1 py-0.5 border rounded text-xs focus:outline-none bg-[#23232C] text-white transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${gradeInputBorderClass}`}
+                                      className={`w-12 px-1 py-0.5 border rounded text-xs focus:outline-none transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${gradeInputBorderClass} ${
+                                        isDarkMode ? 'bg-[#23232C] text-white' : 'bg-white text-gray-900'
+                                      }`}
                                       onClick={(e) => e.stopPropagation()} 
                                       step="1" 
                                       placeholder="0" 
                                     />
-                                    {maxPoints && <span className="text-xs text-gray-400 ml-0.5">/ {maxPoints}</span>}
+                                    {maxPoints && <span className={`text-xs ml-0.5 ${
+                                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                    }`}>/ {maxPoints}</span>}
                                   </div>
                                 </td>
                                 <td className="px-3 py-2 w-[20%]" onClick={(e) => e.stopPropagation()}>
                                   <div className="flex items-center justify-start gap-1 flex-wrap">
                                     <button onClick={(e) => { e.stopPropagation(); handleEmailStudent(student.user_Email, student.user_Name); }}
-                                      className="text-gray-400 hover:text-[#767EE0] cursor-pointer p-0.5" title="Email Student">
-                                      <img src={EmailIcon} alt="Email" className="w-3.5 h-3.5" />
+                                      className={`cursor-pointer p-0.5 ${
+                                        isDarkMode 
+                                          ? 'text-gray-400 hover:text-[#767EE0]' 
+                                          : 'text-gray-600 hover:text-[#767EE0]'
+                                      }`} title="Email Student">
+                                      <img 
+                                        src={EmailIcon} 
+                                        alt="Email" 
+                                        className="w-3.5 h-3.5"
+                                        style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                                      />
                                     </button>
                                     <button onClick={(e) => { e.stopPropagation(); setDetailsModalOpen(true); }}
-                                      className="text-gray-400 hover:text-[#767EE0] cursor-pointer p-0.5" title="View Details">
-                                      <img src={DetailsIcon} alt="Details" className="w-3.5 h-3.5" />
+                                      className={`cursor-pointer p-0.5 ${
+                                        isDarkMode 
+                                          ? 'text-gray-400 hover:text-[#767EE0]' 
+                                          : 'text-gray-600 hover:text-[#767EE0]'
+                                      }`} title="View Details">
+                                      <img 
+                                        src={DetailsIcon} 
+                                        alt="Details" 
+                                        className="w-3.5 h-3.5"
+                                        style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                                      />
                                     </button>
                                   </div>
                                 </td>
@@ -1440,20 +1511,21 @@ const ClassWorkSubmission = ({
                       </table>
 
                       {filteredStudents.length === 0 && (
-                        <div className="text-center py-4 text-xs text-gray-500">No students found for the selected filter.</div>
+                        <div className={`text-center py-4 text-xs ${
+                          isDarkMode ? 'text-gray-500' : 'text-gray-600'
+                        }`}>No students found for the selected filter.</div>
                       )}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Panel - Analytics */}
               <div className={`${isMobile ? 'w-1/2 flex-shrink-0 snap-start' : 'w-1/2'} h-full flex flex-col overflow-hidden`}>
                 <div className="flex-1 overflow-y-auto">
                   {selectedStudent ? (
                     <div className="h-full flex flex-col p-3">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xs font-semibold text-white">Analytics - {selectedStudent.name}</h3>
+                        <h3 className={`text-xs font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Analytics - {selectedStudent.name}</h3>
                         {isMobile && (
                           <button onClick={scrollToStudents} className="text-xs text-[#767EE0] hover:text-[#5a62c4] font-medium cursor-pointer">
                             ← Back to List
@@ -1461,17 +1533,21 @@ const ClassWorkSubmission = ({
                         )}
                       </div>
                       
-                      {/* Analytics Content */}
                       <div className="flex flex-col items-center justify-center mb-3">
                         {studentAnalytics ? (
                           <>
                             {renderProgressBar(studentAnalytics)}
                             
                             <div className="mt-3 text-center w-full">
-                              <div className={`inline-block px-4 py-3 rounded-lg ${studentAnalytics.bgColor} ${studentAnalytics.borderColor} w-full max-w-xs`}>
+                              <div className={`inline-block px-4 py-3 rounded-lg w-full max-w-xs ${studentAnalytics.bgColor} ${studentAnalytics.borderColor}`}>
                                 <div className="flex items-center justify-center gap-2 mb-2">
                                   {studentAnalytics.showMascot && (
-                                    <img src={TrackEd} alt="TrackEd Mascot" className="w-5 h-5 opacity-80" />
+                                    <img 
+                                      src={TrackEd} 
+                                      alt="TrackEd Mascot" 
+                                      className="w-5 h-5 opacity-80"
+                                      style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                                    />
                                   )}
                                   <p 
                                     className="text-xs font-semibold"
@@ -1480,28 +1556,35 @@ const ClassWorkSubmission = ({
                                     {studentAnalytics.performanceLevel}
                                   </p>
                                 </div>
-                                <p className="text-xs text-gray-300 max-w-xs">{studentAnalytics.feedback}</p>
+                                <p className={`text-xs max-w-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{studentAnalytics.feedback}</p>
                               </div>
                             </div>
                           </>
                         ) : (
                           <div className="flex flex-col items-center justify-center">
-                            <img src={TrackEd} alt="TrackEd Mascot" className="w-16 h-16 mb-2 opacity-50" />
-                            <div className="text-center text-xs text-gray-500">
+                            <img 
+                              src={TrackEd} 
+                              alt="TrackEd Mascot" 
+                              className="w-16 h-16 mb-2 opacity-50"
+                              style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                            />
+                            <div className={`text-center text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
                               No grade data available for this student.
                             </div>
                           </div>
                         )}
                       </div>
 
-                      {/* Files Section */}
-                      <div className="bg-[#23232C] rounded-lg p-3">
+                      <div className={`rounded-lg p-3 ${
+                        isDarkMode ? 'bg-[#23232C]' : 'bg-gray-50'
+                      }`}>
                         <div className="grid grid-cols-2 gap-3">
-                          {/* Professor's Files Section */}
-                          <div className="bg-[#23232C] rounded">
+                          <div className={`rounded ${
+                            isDarkMode ? 'bg-[#23232C]' : 'bg-white'
+                          }`}>
                             <div className="flex items-center justify-between mb-2">
-                              <h5 className="text-white text-xs font-medium">Professor's Files</h5>
-                              <span className="text-gray-400 text-xs">{getProfessorFileCount(selectedStudent.id)} file(s)</span>
+                              <h5 className={`text-xs font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Professor's Files</h5>
+                              <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{getProfessorFileCount(selectedStudent.id)} file(s)</span>
                             </div>
                             
                             {getProfessorFileCount(selectedStudent.id) > 0 ? (
@@ -1511,11 +1594,26 @@ const ClassWorkSubmission = ({
                                 )}
                               </div>
                             ) : (
-                              <div className="w-full h-32 border-2 border-dashed border-gray-700 rounded flex flex-col items-center justify-center bg-[#15151C]">
-                                <div className="w-10 h-10 bg-gradient-to-br from-gray-700/20 to-gray-700/10 rounded-full flex items-center justify-center mb-2">
-                                  <img src={FileIcon} alt="File" className="w-5 h-5" />
+                              <div className={`w-full h-32 border-2 border-dashed rounded flex flex-col items-center justify-center ${
+                                isDarkMode 
+                                  ? 'bg-[#15151C] border-gray-700' 
+                                  : 'bg-gray-50 border-gray-300'
+                              }`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                                  isDarkMode 
+                                    ? 'bg-gradient-to-br from-gray-700/20 to-gray-700/10' 
+                                    : 'bg-gradient-to-br from-gray-300/20 to-gray-300/10'
+                                }`}>
+                                  <img 
+                                    src={FileIcon} 
+                                    alt="File" 
+                                    className="w-5 h-5"
+                                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                                  />
                                 </div>
-                                <p className="text-gray-400 text-xs text-center px-2">No files from professor</p>
+                                <p className={`text-xs text-center px-2 ${
+                                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                }`}>No files from professor</p>
                               </div>
                             )}
                             
@@ -1530,16 +1628,19 @@ const ClassWorkSubmission = ({
                             >
                               {isUploading ? 'Uploading...' : '+ Upload File'}
                             </button>
-                            <div className="text-xs text-gray-400 text-center mt-1">
+                            <div className={`text-xs text-center mt-1 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
                               Any file type - Max 50MB
                             </div>
                           </div>
 
-                          {/* Student's Files Section */}
-                          <div className="bg-[#23232C] rounded">
+                          <div className={`rounded ${
+                            isDarkMode ? 'bg-[#23232C]' : 'bg-white'
+                          }`}>
                             <div className="flex items-center justify-between mb-2">
-                              <h5 className="text-white text-xs font-medium">Student's Files</h5>
-                              <span className="text-gray-400 text-xs">{getStudentFileCount(selectedStudent.id)} file(s)</span>
+                              <h5 className={`text-xs font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Student's Files</h5>
+                              <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{getStudentFileCount(selectedStudent.id)} file(s)</span>
                             </div>
                             
                             {getStudentFileCount(selectedStudent.id) > 0 ? (
@@ -1549,15 +1650,32 @@ const ClassWorkSubmission = ({
                                 )}
                               </div>
                             ) : (
-                              <div className="w-full h-32 border-2 border-dashed border-gray-700 rounded flex flex-col items-center justify-center bg-[#15151C]">
-                                <div className="w-10 h-10 bg-gradient-to-br from-gray-700/20 to-gray-700/10 rounded-full flex items-center justify-center mb-2">
-                                  <img src={FileIcon} alt="File" className="w-5 h-5" />
+                              <div className={`w-full h-32 border-2 border-dashed rounded flex flex-col items-center justify-center ${
+                                isDarkMode 
+                                  ? 'bg-[#15151C] border-gray-700' 
+                                  : 'bg-gray-50 border-gray-300'
+                              }`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
+                                  isDarkMode 
+                                    ? 'bg-gradient-to-br from-gray-700/20 to-gray-700/10' 
+                                    : 'bg-gradient-to-br from-gray-300/20 to-gray-300/10'
+                                }`}>
+                                  <img 
+                                    src={FileIcon} 
+                                    alt="File" 
+                                    className="w-5 h-5"
+                                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                                  />
                                 </div>
-                                <p className="text-gray-400 text-xs text-center px-2">No submission from student yet</p>
+                                <p className={`text-xs text-center px-2 ${
+                                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                                }`}>No submission from student yet</p>
                               </div>
                             )}
                             
-                            <div className="mt-2 text-xs text-gray-400 text-center">
+                            <div className={`mt-2 text-xs text-center ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                            }`}>
                               Student can upload files in their view
                             </div>
                           </div>
@@ -1565,8 +1683,15 @@ const ClassWorkSubmission = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-xs text-gray-500 p-4">
-                      <img src={TrackEd} alt="TrackEd Mascot" className="w-24 h-24 mb-4 opacity-50" />
+                    <div className={`h-full flex flex-col items-center justify-center text-xs p-4 ${
+                      isDarkMode ? 'text-gray-500' : 'text-gray-600'
+                    }`}>
+                      <img 
+                        src={TrackEd} 
+                        alt="TrackEd Mascot" 
+                        className="w-24 h-24 mb-4 opacity-50"
+                        style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                      />
                       <p className="text-center mb-3">
                         {isMobile ? "Select a student from the list to view their analytics" : "Select a student to view analytics"}
                       </p>
@@ -1582,9 +1707,14 @@ const ClassWorkSubmission = ({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-1.5 p-3 border-t border-gray-700 bg-[#23232C] flex-shrink-0">
-            <button onClick={onClose} className="px-3 py-1 text-xs font-medium text-gray-300 bg-[#2D2D3A] border border-gray-600 rounded hover:bg-[#374151] cursor-pointer">
+          <div className={`flex justify-end gap-1.5 p-3 border-t flex-shrink-0 ${
+            isDarkMode ? 'bg-[#23232C] border-gray-700' : 'bg-gray-50 border-gray-300'
+          }`}>
+            <button onClick={onClose} className={`px-3 py-1 text-xs font-medium rounded cursor-pointer ${
+              isDarkMode 
+                ? 'text-gray-300 bg-[#2D2D3A] border border-gray-600 hover:bg-[#374151]' 
+                : 'text-gray-700 bg-gray-100 border border-gray-300 hover:bg-gray-200'
+            }`}>
               Cancel
             </button>
             <button onClick={handleSave} className="px-3 py-1 text-xs font-medium text-white bg-[#00A15D] border border-transparent rounded hover:bg-[#00874E] cursor-pointer">
@@ -1594,7 +1724,6 @@ const ClassWorkSubmission = ({
         </div>
       </div>
 
-      {/* Photo Viewer Modal */}
       {photoViewerOpen && viewingPhoto && (
         <div className="fixed inset-0 bg-black/90 flex justify-center items-center z-[70] p-2">
           <div className="relative w-full h-full flex flex-col items-center justify-center">
@@ -1648,7 +1777,6 @@ const ClassWorkSubmission = ({
         </div>
       )}
 
-      {/* Student Activities Details Modal */}
       <StudentActivitiesDetails
         activity={activity}
         students={localStudents}
@@ -1656,20 +1784,22 @@ const ClassWorkSubmission = ({
         onClose={() => setDetailsModalOpen(false)}
         subjectCode={activity?.subject_code}
         professorName={professorName}
+        isDarkMode={isDarkMode}
       />
 
-      {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-[70]">
-          <div className="bg-[#15151C] rounded p-4 m-3 max-w-sm w-full border border-gray-700">
+          <div className={`rounded p-4 m-3 max-w-sm w-full border ${
+            isDarkMode ? 'bg-[#15151C] border-gray-700' : 'bg-white border-gray-300'
+          }`}>
             <div className="text-center">
               <div className="w-12 h-12 bg-[#00A15D]/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg className="w-6 h-6 text-[#00A15D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-white mb-1">Success!</h3>
-              <p className="text-gray-300 text-xs">Grades saved successfully.</p>
+              <h3 className={`text-sm font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Success!</h3>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Grades saved successfully.</p>
             </div>
           </div>
         </div>

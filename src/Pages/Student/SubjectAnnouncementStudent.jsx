@@ -28,8 +28,27 @@ export default function SubjectAnnouncementStudent() {
   const [filterOption, setFilterOption] = useState("All");
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
 
   // ========== USE EFFECTS ==========
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const checkScreenSize = () => {
       if (window.innerWidth >= 1024) {
@@ -74,6 +93,55 @@ export default function SubjectAnnouncementStudent() {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [filterDropdownOpen]);
+
+  // ========== THEME HELPER FUNCTIONS ==========
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getMutedTextColor = () => {
+    return isDarkMode ? "text-white/60" : "text-gray-500";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-white/30" : "border-gray-300";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-gray-100";
+  };
+
+  const getInputBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-300";
+  };
+
+  const getInputFocusBorderColor = () => {
+    return isDarkMode ? "focus:border-[#767EE0]" : "focus:border-[#4F46E5]";
+  };
+
+  const getDropdownBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getDropdownBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getDropdownHoverBackgroundColor = () => {
+    return isDarkMode ? "hover:bg-[#23232C]" : "hover:bg-gray-50";
+  };
+
+  const getEmptyStateBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-gray-100";
+  };
 
   // ========== API CALL FUNCTIONS ==========
   const fetchClassDetails = async () => {
@@ -333,13 +401,26 @@ const AnnouncementCard = ({ announcement }) => {
 
     const formattedDeadline = formatDeadline(announcement.deadline);
 
+    // Theme-based colors for announcement card
+    const getAnnouncementCardBackground = () => {
+      return readStatus 
+        ? (isDarkMode ? 'bg-[#15151C]' : 'bg-gray-50')
+        : (isDarkMode ? 'bg-[#00A15D]/10' : 'bg-[#00A15D]/5');
+    };
+
+    const getAnnouncementCardBorder = () => {
+      return !readStatus 
+        ? (isDarkMode ? 'border-l-4 border-[#00A15D]' : 'border-l-4 border-[#059669]')
+        : '';
+    };
+
     return (
       <div 
-        className={`shadow-md rounded-md mt-3 w-full transition-all duration-200 ${
-          readStatus 
-            ? 'bg-[#15151C]' 
-            : 'bg-[#00A15D]/10 border-l-4 border-[#00A15D]'
-        } hover:shadow-lg hover:border-[#767EE0] hover:border-1`}
+        className={`shadow-md rounded-md mt-3 w-full transition-all duration-200 ${getAnnouncementCardBackground()} ${getAnnouncementCardBorder()} ${
+          isDarkMode 
+            ? 'hover:shadow-lg hover:border-[#767EE0] hover:border-1'
+            : 'hover:shadow-lg hover:border-[#4F46E5] hover:border-1'
+        }`}
       >
         {/* Header */}
         <div 
@@ -350,20 +431,24 @@ const AnnouncementCard = ({ announcement }) => {
             {/* Title and subject section */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 flex-1 min-w-0 text-sm">
-                <span className="font-bold text-[#FFFFFF]">{announcement.subject}:</span>
-                <span className="text-[#FFFFFF]/90 break-words">{announcement.title}</span>
+                <span className={`font-bold ${getTextColor()}`}>{announcement.subject}:</span>
+                <span className={getSecondaryTextColor()}>{announcement.title}</span>
                 {announcement.section && (
-                  <span className="text-xs text-[#FFFFFF]/60">({announcement.section})</span>
+                  <span className={`text-xs ${getMutedTextColor()}`}>({announcement.section})</span>
                 )}
                 {/* Show "Edited" badge when announcement has been updated */}
                 {edited && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#767EE0] text-[#FFFFFF]">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    isDarkMode ? 'bg-[#767EE0] text-[#FFFFFF]' : 'bg-[#4F46E5] text-white'
+                  }`}>
                     Edited
                   </span>
                 )}
                 {/* Show "New" badge only when unread */}
                 {!readStatus && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#00A15D] text-[#FFFFFF]">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    isDarkMode ? 'bg-[#00A15D] text-[#FFFFFF]' : 'bg-[#059669] text-white'
+                  }`}>
                     New
                   </span>
                 )}
@@ -372,8 +457,8 @@ const AnnouncementCard = ({ announcement }) => {
             
             {/* Timestamp - only shown when card is CLOSED */}
             {!open && (
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs text-[#FFFFFF]/60">
-                <span>{relativeTime}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs">
+                <span className={getMutedTextColor()}>{relativeTime}</span>
               </div>
             )}
           </div>
@@ -387,7 +472,9 @@ const AnnouncementCard = ({ announcement }) => {
                   e.stopPropagation();
                   handleMarkAsUnreadClick(e);
                 }}
-                className="text-xs text-[#00A15D] hover:text-[#00874E] font-medium hover:underline transition-colors cursor-pointer"
+                className={`text-xs ${
+                  isDarkMode ? 'text-[#00A15D] hover:text-[#00874E]' : 'text-[#059669] hover:text-[#047857]'
+                } font-medium hover:underline transition-colors cursor-pointer`}
                 title="Mark as unread"
               >
                 Mark Unread
@@ -396,32 +483,31 @@ const AnnouncementCard = ({ announcement }) => {
             <img
               src={ArrowDown}
               alt="Expand"
-              className={`h-4 w-4 transform transition-transform duration-300 brightness-0 invert ${
-                open ? "rotate-180" : ""
-              }`}
+              className={`h-4 w-4 transform transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+              style={isDarkMode ? { filter: 'brightness(0) invert(1)' } : { filter: 'invert(0.5)' }}
             />
           </div>
         </div>
 
         {/* Content - Only visible when expanded */}
         {open && (
-          <div className="p-3 border-t border-[#FFFFFF]/10">
+          <div className={`p-3 border-t ${isDarkMode ? 'border-white/10' : 'border-gray-200'}`}>
             <div className="flex flex-col sm:flex-row justify-between gap-2 mb-3">
               <div className="mb-2 sm:mb-0">
-                <p className="font-semibold text-base text-[#FFFFFF]">{announcement.title}</p>
+                <p className={`font-semibold text-base ${getTextColor()}`}>{announcement.title}</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-xs text-[#FFFFFF]/60">Posted By: {announcement.postedBy}</p>
+                  <p className={`text-xs ${getMutedTextColor()}`}>Posted By: {announcement.postedBy}</p>
                 </div>
                 {announcement.section && (
-                  <p className="text-xs text-[#FFFFFF]/60 mt-1">Section: {announcement.section}</p>
+                  <p className={`text-xs ${getMutedTextColor()} mt-1`}>Section: {announcement.section}</p>
                 )}
               </div>
 
               {/* Timestamp and deadline - shown when card is OPEN */}
-              <div className="text-xs text-[#FFFFFF]/60 sm:text-right">
-                <p className=''>{relativeTime}</p>
+              <div className={`text-xs ${getMutedTextColor()} sm:text-right`}>
+                <p>{relativeTime}</p>
                 {announcement.deadline && announcement.deadline !== "N/A" && announcement.deadline !== "No deadline" && (
-                  <p className="text-[#A15353] font-bold mt-1">
+                  <p className={`${isDarkMode ? 'text-[#A15353]' : 'text-red-600'} font-bold mt-1`}>
                     Deadline: {formattedDeadline}
                   </p>
                 )}
@@ -430,10 +516,10 @@ const AnnouncementCard = ({ announcement }) => {
 
             {/* Instructions with Show More/Less */}
             <div className="mt-4">
-              <p className="font-semibold mb-1 text-sm text-[#FFFFFF]">Instructions:</p>
+              <p className={`font-semibold mb-1 text-sm ${getTextColor()}`}>Instructions:</p>
               {announcement.instructions ? (
                 <>
-                  <p className="text-xs text-[#FFFFFF]/80 whitespace-pre-wrap break-words">
+                  <p className={`text-xs ${getSecondaryTextColor()} whitespace-pre-wrap break-words`}>
                     {displayInstructions}
                   </p>
                   {isInstructionsLong && (
@@ -442,21 +528,25 @@ const AnnouncementCard = ({ announcement }) => {
                         e.stopPropagation();
                         setShowFullInstructions(!showFullInstructions);
                       }}
-                      className="mt-1 text-[#00A15D] font-medium hover:underline text-xs cursor-pointer"
+                      className={`mt-1 ${
+                        isDarkMode ? 'text-[#00A15D]' : 'text-[#059669]'
+                      } font-medium hover:underline text-xs cursor-pointer`}
                     >
                       {showFullInstructions ? 'Show less' : 'Show more'}
                     </button>
                   )}
                 </>
               ) : (
-                <p className="text-xs text-[#FFFFFF]/60 italic">No instructions provided.</p>
+                <p className={`text-xs ${getMutedTextColor()} italic`}>No instructions provided.</p>
               )}
               {announcement.link && announcement.link !== "#" && announcement.link !== null && announcement.link !== "" && (
                 <a
                   href={announcement.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 inline-block text-[#767EE0] font-semibold hover:underline text-xs break-all"
+                  className={`mt-2 inline-block ${
+                    isDarkMode ? 'text-[#767EE0]' : 'text-[#4F46E5]'
+                  } font-semibold hover:underline text-xs break-all`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   🔗 View Link
@@ -495,20 +585,21 @@ const AnnouncementCard = ({ announcement }) => {
   // ========== RENDER HELPERS ==========
   const renderEmptyState = () => (
     <div className="col-span-full text-center py-12">
-      <div className="mx-auto w-20 h-20 mb-6 rounded-full bg-[#15151C] flex items-center justify-center">
+      <div className={`mx-auto w-20 h-20 mb-6 rounded-full ${getEmptyStateBackgroundColor()} flex items-center justify-center`}>
         <img 
           src={Announcement} 
           alt="No announcements" 
           className="h-10 w-10 opacity-50" 
+          style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
         />
       </div>
-      <p className="text-[#FFFFFF]/60 text-base mb-2">
+      <p className={`text-base mb-2 ${getSecondaryTextColor()}`}>
         {searchQuery || filterOption !== "All" 
           ? "No announcements match your search criteria" 
           : "No announcements available yet."
         }
       </p>
-      <p className="text-[#FFFFFF]/40 text-sm">
+      <p className={`text-sm ${getMutedTextColor()}`}>
         {searchQuery || filterOption !== "All" 
           ? "Try adjusting your search or filter options." 
           : "Check back later for new announcements from your professor."
@@ -517,27 +608,34 @@ const AnnouncementCard = ({ announcement }) => {
     </div>
   );
 
-  const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
-    <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
-      <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
-        active 
-          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
-          : colorClass
-      }`}>
-        <img src={icon} alt="" className="h-4 w-4" />
-        <span className="sm:inline truncate">{label}</span>
-      </button>
-    </Link>
-  );
+  const renderActionButton = (to, icon, label, active = false, colorClass = "") => {
+    const buttonClass = `flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
+      active 
+        ? (isDarkMode 
+            ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30' 
+            : 'bg-[#059669]/20 text-[#059669] border-[#059669]/30 hover:bg-[#059669]/30'
+          ) 
+        : colorClass
+    }`;
+    
+    return (
+      <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+        <button className={buttonClass}>
+          <img src={icon} alt="" className="h-4 w-4" style={isDarkMode ? {} : { filter: 'invert(0.5)' }} />
+          <span className="sm:inline truncate">{label}</span>
+        </button>
+      </Link>
+    );
+  };
 
   // ========== LOADING STATE ==========
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 text-center text-[#FFFFFF]">Loading announcements...</div>
+          <div className={`p-8 text-center ${getTextColor()}`}>Loading announcements...</div>
         </div>
       </div>
     );
@@ -545,7 +643,7 @@ const AnnouncementCard = ({ announcement }) => {
 
   // ========== MAIN RENDER ==========
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -556,14 +654,19 @@ const AnnouncementCard = ({ announcement }) => {
           {/* ========== PAGE HEADER ========== */}
           <div className="mb-4">
             <div className="flex items-center mb-2">
-              <img src={Announcement} alt="Class Announcements" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
-              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">Class Announcements</h1>
+              <img 
+                src={Announcement} 
+                alt="Class Announcements" 
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-2" 
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+              />
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>Class Announcements</h1>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">View Class announcements</p>
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>View Class announcements</p>
           </div>
 
           {/* ========== CLASS INFORMATION ========== */}
-          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'Loading...'}</span>
@@ -578,33 +681,66 @@ const AnnouncementCard = ({ announcement }) => {
                   src={BackButton} 
                   alt="Back" 
                   className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </Link>
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getDividerColor()} mb-4`} />
 
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
               {/* Updated Subject Overview Button with Dynamic Subject Name */}
               <Link to={`/SubjectOverviewStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
-                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30">
-                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
+                  isDarkMode 
+                    ? 'bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30' 
+                    : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                }`}>
+                  <img src={SubjectOverview} alt="" className="h-4 w-4" style={isDarkMode ? {} : { filter: 'invert(0.5)' }} />
                   <span className="sm:inline truncate">{classInfo?.subject || 'Subject'} Overview</span>
                 </button>
               </Link>
               
               {/* Existing buttons */}
               {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", true)}
-              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
-              {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
-              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
+              {renderActionButton(
+                "/SubjectSchoolWorksStudent", 
+                Classwork, 
+                "School Works", 
+                false, 
+                isDarkMode 
+                  ? 'bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30' 
+                  : 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100'
+              )}
+              {renderActionButton(
+                "/SubjectAttendanceStudent", 
+                Attendance, 
+                "Attendance", 
+                false, 
+                isDarkMode 
+                  ? 'bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30' 
+                  : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+              )}
+              {renderActionButton(
+                "/SubjectAnalyticsStudent", 
+                Analytics, 
+                "Reports", 
+                false, 
+                isDarkMode 
+                  ? 'bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30' 
+                  : 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100'
+              )}
             </div>
             <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
-              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer">
-                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
+              <button className={`p-2 rounded-md shadow-md border-2 ${
+                isDarkMode 
+                  ? 'bg-[#15151C] border-transparent hover:border-[#00A15D]' 
+                  : 'bg-white border-gray-300 hover:border-[#059669]'
+              } transition-all duration-200 cursor-pointer`}>
+                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" style={isDarkMode ? {} : { filter: 'invert(0.5)' }} />
               </button>
             </Link>
           </div>
@@ -614,10 +750,13 @@ const AnnouncementCard = ({ announcement }) => {
             <div className="relative filter-dropdown sm:w-36">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className={`flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
+                className={`flex items-center justify-between w-full px-2.5 py-1.5 ${getInputBackgroundColor()} rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
                   filterOption !== "All" 
-                    ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' 
-                    : 'border-[#FFFFFF]/10 hover:border-[#767EE0] text-[#FFFFFF]'
+                    ? (isDarkMode 
+                        ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' 
+                        : 'border-indigo-500 bg-indigo-50 text-indigo-600'
+                      ) 
+                    : `${getInputBorderColor()} hover:border-[#767EE0] ${getTextColor()}`
                 }`}
               >
                 <span>{filterOption}</span>
@@ -626,21 +765,23 @@ const AnnouncementCard = ({ announcement }) => {
                   alt="" 
                   className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${
                     filterDropdownOpen ? 'rotate-180' : ''
-                  } ${
-                    filterOption !== "All" ? 'invert-[0.5] sepia-[1] saturate-[5] hue-rotate-[200deg]' : ''
                   }`} 
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
 
               {filterDropdownOpen && (
-                <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-[#FFFFFF]/10 z-20 overflow-hidden">
+                <div className={`absolute top-full mt-1 ${getDropdownBackgroundColor()} rounded w-full shadow-xl border ${getDropdownBorderColor()} z-20 overflow-hidden`}>
                   {["All", "Unread", "Read"].map((option) => (
                     <button
                       key={option}
-                      className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
+                      className={`block px-2.5 py-1.5 w-full text-left ${getDropdownHoverBackgroundColor()} text-xs transition-colors cursor-pointer ${
                         filterOption === option 
-                          ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' 
-                          : 'text-[#FFFFFF]/80'
+                          ? (isDarkMode 
+                              ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' 
+                              : 'bg-indigo-50 text-indigo-600 border-l-2 border-indigo-500 font-semibold'
+                            ) 
+                          : getTextColor()
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -661,10 +802,15 @@ const AnnouncementCard = ({ announcement }) => {
                   placeholder="Search announcements..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors placeholder:text-[#FFFFFF]/40"
+                  className={`w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none ${getInputBackgroundColor()} text-xs ${getTextColor()} border ${getInputBorderColor()} ${getInputFocusBorderColor()} transition-colors placeholder:${getMutedTextColor()}`}
                 />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60">
-                  <img src={Search} alt="Search" className="h-3.5 w-3.5" />
+                <button className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <img 
+                    src={Search} 
+                    alt="Search" 
+                    className="h-3.5 w-3.5" 
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                  />
                 </button>
               </div>
             </div>

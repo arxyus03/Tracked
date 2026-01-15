@@ -77,6 +77,7 @@ export default function SubjectOverviewStudent() {
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
 
   // New state for activities breakdown
   const [activitiesBreakdown, setActivitiesBreakdown] = useState({
@@ -143,6 +144,25 @@ export default function SubjectOverviewStudent() {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   const itemsPerPage = 10;
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Handle screen size responsiveness
   useEffect(() => {
@@ -274,6 +294,79 @@ export default function SubjectOverviewStudent() {
       sub.subject_code === subjectCode
     ) || { absent: 0, late: 0 };
   }, [currentSubject, attendanceData, subjectCode]);
+
+  // Theme-based style functions
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-100";
+  };
+
+  const getInputFocusBorderColor = () => {
+    return isDarkMode ? "focus:border-[#00A15D]" : "focus:border-[#00A15D]";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/80" : "text-gray-600";
+  };
+
+  const getMutedTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/50" : "text-gray-500";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/30" : "border-gray-300";
+  };
+
+  const getButtonBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-gray-100";
+  };
+
+  const getActionButtonBackground = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-200";
+  };
+
+  const getActionButtonHover = () => {
+    return isDarkMode ? "hover:border-[#00A15D]" : "hover:border-[#00A15D]";
+  };
+
+  const getPopupBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getWarningBackground = () => {
+    return isDarkMode ? "bg-[#FFA600]/10" : "bg-yellow-50";
+  };
+
+  const getWarningBorder = () => {
+    return isDarkMode ? "border-[#FFA600]/30" : "border-yellow-200";
+  };
+
+  const getWarningText = () => {
+    return isDarkMode ? "text-[#FFA600]" : "text-yellow-600";
+  };
+
+  const getErrorBackground = () => {
+    return isDarkMode ? "bg-[#A15353]/10" : "bg-red-50";
+  };
+
+  const getErrorBorder = () => {
+    return isDarkMode ? "border-[#A15353]/30" : "border-red-200";
+  };
+
+  const getErrorText = () => {
+    return isDarkMode ? "text-[#A15353]" : "text-red-600";
+  };
 
   // Helper functions
   const toggleSection = (section) => {
@@ -757,21 +850,21 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
 
     return (
       <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-4">
-        <div className="bg-[#15151C] rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-[#FFFFFF]/10">
+        <div className={`${getPopupBackgroundColor()} rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'}`}>
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-[#FFFFFF]/10">
+          <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'}`}>
             <div>
-              <h3 className="text-lg font-semibold text-white">Email Professor</h3>
-              <p className="text-sm text-[#FFFFFF]/60 mt-0.5">
+              <h3 className={`text-lg font-semibold ${getTextColor()}`}>Email Professor</h3>
+              <p className={`text-sm ${getSecondaryTextColor()} mt-0.5`}>
                 {performanceData?.teacherName || 'Professor'} • {performanceData?.teacherEmail || 'Fetching email...'}
               </p>
             </div>
             <button
               onClick={() => setShowEmailModal(false)}
-              className="p-1.5 hover:bg-[#23232C] rounded transition-colors cursor-pointer"
+              className={`p-1.5 ${isDarkMode ? 'hover:bg-[#23232C]' : 'hover:bg-gray-100'} rounded transition-colors cursor-pointer`}
               disabled={isCheckingEmail}
             >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-5 h-5 ${getTextColor()}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -782,12 +875,12 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
             <div className="space-y-4">
               {/* Subject */}
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Subject</label>
+                <label className={`block text-sm font-medium ${getTextColor()} mb-1`}>Subject</label>
                 <input
                   type="text"
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#23232C] border border-[#FFFFFF]/20 rounded text-white text-sm focus:outline-none focus:border-[#767EE0]"
+                  className={`w-full px-3 py-2 ${getInputBackgroundColor()} border ${isDarkMode ? 'border-[#FFFFFF]/20' : 'border-gray-300'} rounded ${getTextColor()} text-sm focus:outline-none ${getInputFocusBorderColor()}`}
                   placeholder="Email subject"
                   disabled={isCheckingEmail}
                 />
@@ -795,25 +888,25 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
 
               {/* Message */}
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Message</label>
+                <label className={`block text-sm font-medium ${getTextColor()} mb-1`}>Message</label>
                 <textarea
                   value={emailMessage}
                   onChange={(e) => setEmailMessage(e.target.value)}
                   rows={12}
-                  className="w-full px-3 py-2 bg-[#23232C] border border-[#FFFFFF]/20 rounded text-white text-sm focus:outline-none focus:border-[#767EE0] resize-none"
+                  className={`w-full px-3 py-2 ${getInputBackgroundColor()} border ${isDarkMode ? 'border-[#FFFFFF]/20' : 'border-gray-300'} rounded ${getTextColor()} text-sm focus:outline-none ${getInputFocusBorderColor()} resize-none`}
                   placeholder="Write your message here..."
                   disabled={isCheckingEmail}
                 />
               </div>
 
               {/* Email Preview Info */}
-              <div className="bg-[#23232C]/50 rounded-lg p-3 border border-[#FFFFFF]/10">
-                <h4 className="text-sm font-medium text-white mb-2">Email Preview</h4>
+              <div className={`${getInputBackgroundColor()} rounded-lg p-3 border ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'}`}>
+                <h4 className={`text-sm font-medium ${getTextColor()} mb-2`}>Email Preview</h4>
                 <div className="space-y-2 text-xs text-[#FFFFFF]/70">
-                  <p><strong className="text-white">To:</strong> {performanceData?.teacherEmail || 'Fetching email...'}</p>
-                  <p><strong className="text-white">Subject:</strong> {emailSubject || 'No subject'}</p>
-                  <div className="mt-2 p-2 bg-[#15151C] rounded border border-[#FFFFFF]/5">
-                    <p className="text-xs text-[#FFFFFF]/60 whitespace-pre-wrap">{emailMessage.substring(0, 150)}...</p>
+                  <p><strong className={getTextColor()}>To:</strong> {performanceData?.teacherEmail || 'Fetching email...'}</p>
+                  <p><strong className={getTextColor()}>Subject:</strong> {emailSubject || 'No subject'}</p>
+                  <div className={`mt-2 p-2 ${getCardBackgroundColor()} rounded border ${isDarkMode ? 'border-[#FFFFFF]/5' : 'border-gray-200'}`}>
+                    <p className={`text-xs ${getMutedTextColor()} whitespace-pre-wrap`}>{emailMessage.substring(0, 150)}...</p>
                   </div>
                 </div>
               </div>
@@ -821,12 +914,12 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-2 p-4 border-t border-[#FFFFFF]/10 bg-[#23232C]/30">
+          <div className={`flex justify-end gap-2 p-4 border-t ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'} ${isDarkMode ? 'bg-[#23232C]/30' : 'bg-gray-50'}`}>
             <button
               onClick={() => setShowEmailModal(false)}
               disabled={isCheckingEmail}
-              className={`px-4 py-2 text-sm font-medium text-[#FFFFFF]/70 bg-[#2D2D3A] border border-[#FFFFFF]/20 rounded transition-colors cursor-pointer ${
-                isCheckingEmail ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#374151]'
+              className={`px-4 py-2 text-sm font-medium ${getSecondaryTextColor()} ${isDarkMode ? 'bg-[#2D2D3A]' : 'bg-gray-200'} border ${isDarkMode ? 'border-[#FFFFFF]/20' : 'border-gray-300'} rounded transition-colors cursor-pointer ${
+                isCheckingEmail ? 'opacity-50 cursor-not-allowed' : isDarkMode ? 'hover:bg-[#374151]' : 'hover:bg-gray-300'
               }`}
             >
               Cancel
@@ -878,12 +971,12 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
     };
 
     return (
-      <div className="bg-[#15151C] rounded-lg border border-[#FFFFFF]/10 mb-3 overflow-hidden">
+      <div className={`${getCardBackgroundColor()} rounded-lg border ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'} mb-3 overflow-hidden`}>
         <div 
           className={`cursor-pointer transition-all duration-200 ${
             isExpanded 
-              ? 'p-3 border-b border-[#FFFFFF]/10' 
-              : 'p-2 hover:bg-[#1E1E24]'
+              ? `p-3 border-b ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'}` 
+              : `p-2 ${isDarkMode ? 'hover:bg-[#1E1E24]' : 'hover:bg-gray-50'}`
           }`}
           onClick={() => toggleSection(type)}
         >
@@ -893,13 +986,13 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                 isExpanded 
                   ? 'w-8 h-8' 
                   : 'w-6 h-6'
-              } rounded-full flex items-center justify-center bg-[${color}]/20`}>
-                <div className={`text-[${color}]`}>
+              } rounded-full flex items-center justify-center ${color}/20`}>
+                <div className={`${color}`}>
                   {icon}
                 </div>
               </div>
               <div>
-                <h3 className={`font-semibold text-[#FFFFFF] ${
+                <h3 className={`font-semibold ${getTextColor()} ${
                   isExpanded 
                     ? 'text-base' 
                     : 'text-sm'
@@ -910,21 +1003,21 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                   isExpanded 
                     ? 'text-xs' 
                     : 'text-xs'
-                } text-[#FFFFFF]/60`}>
+                } ${getSecondaryTextColor()}`}>
                   <span>{activities.length} {activities.length === 1 ? 'activity' : 'activities'}</span>
-                  <span className="text-[#FFFFFF]/30">•</span>
+                  <span className={getSecondaryTextColor()}>•</span>
                   <span>
                     {type === 'passed' && '≥80% score'}
                     {type === 'low' && '75-79% score'}
                     {type === 'failed' && '<75% score'}
                     {type === 'missed' && 'Missed deadline'}
-                    {type === 'assigned' && 'Awaiting submission/grade'} {/* Updated text */}
+                    {type === 'assigned' && 'Awaiting submission/grade'}
                   </span>
                 </div>
               </div>
             </div>
             <div className="flex items-center">
-              <button className="text-[#FFFFFF] hover:text-[#FFFFFF]/80 transition-colors">
+              <button className={`${getTextColor()} ${isDarkMode ? 'hover:text-[#FFFFFF]/80' : 'hover:text-gray-700'} transition-colors`}>
                 {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
               </button>
             </div>
@@ -936,20 +1029,20 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
             <div className="overflow-x-auto mb-4">
               <table className="w-full min-w-full">
                 <thead>
-                  <tr className="border-b border-[#FFFFFF]/10">
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Activity</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Title</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Deadline</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Score</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Percentage</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70 w-24">Actions</th>
+                  <tr className={`border-b ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'}`}>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Activity</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Title</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Deadline</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Score</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Percentage</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()} w-24`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedActivities.map((activity) => {
                     const percentage = activity.grade !== null ? Math.round((activity.grade / activity.points) * 100) : null;
                     return (
-                      <tr key={activity.id} className="border-b border-[#FFFFFF]/5 hover:bg-[#23232C]/30 transition-colors">
+                      <tr key={activity.id} className={`border-b ${isDarkMode ? 'border-[#FFFFFF]/5' : 'border-gray-100'} ${isDarkMode ? 'hover:bg-[#23232C]/30' : 'hover:bg-gray-50'} transition-colors`}>
                         <td className="py-2 px-3">
                           <div className="flex items-center gap-2">
                             <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(activity)}`}>
@@ -957,8 +1050,8 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                             </span>
                           </div>
                         </td>
-                        <td className="py-2 px-3 text-xs text-[#FFFFFF] truncate max-w-[150px]">{activity.title}</td>
-                        <td className="py-2 px-3 text-xs text-[#FFFFFF]/80">
+                        <td className={`py-2 px-3 text-xs ${getTextColor()} truncate max-w-[150px]`}>{activity.title}</td>
+                        <td className={`py-2 px-3 text-xs ${getSecondaryTextColor()}`}>
                           {activity.deadline ? new Date(activity.deadline).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -977,7 +1070,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                               </span>
                             </div>
                           ) : (
-                            <span className="text-xs text-[#FFFFFF]/60">-</span>
+                            <span className={`text-xs ${getMutedTextColor()}`}>-</span>
                           )}
                         </td>
                         <td className="py-2 px-3">
@@ -990,24 +1083,26 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                               {percentage}%
                             </span>
                           ) : (
-                            <span className="text-xs text-[#FFFFFF]/60">-</span>
+                            <span className={`text-xs ${getMutedTextColor()}`}>-</span>
                           )}
                         </td>
                         <td className="py-2 px-3">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => handleViewActivityDetails(activity)}
-                              className="p-1 rounded hover:bg-[#FFFFFF]/10 transition-colors group"
+                              className={`p-1 rounded ${isDarkMode ? 'hover:bg-[#FFFFFF]/10' : 'hover:bg-gray-200'} transition-colors group`}
                               title="View Details"
                             >
-                              <img src={DetailsIcon} alt="Details" className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100" />
+                              <img src={DetailsIcon} alt="Details" className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100"
+                                style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                             </button>
                             <button
                               onClick={() => handleEmailTeacherAboutActivity(activity)}
-                              className="p-1 rounded hover:bg-[#FFFFFF]/10 transition-colors group"
+                              className={`p-1 rounded ${isDarkMode ? 'hover:bg-[#FFFFFF]/10' : 'hover:bg-gray-200'} transition-colors group`}
                               title="Email Teacher"
                             >
-                              <img src={EmailIcon} alt="Email" className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100" />
+                              <img src={EmailIcon} alt="Email" className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100"
+                                style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                             </button>
                           </div>
                         </td>
@@ -1019,8 +1114,8 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
             </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-[#FFFFFF]/10 pt-3">
-                <div className="text-xs text-[#FFFFFF]/60">
+              <div className={`flex items-center justify-between border-t ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'} pt-3`}>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>
                   Showing {startIndex + 1}-{Math.min(endIndex, activities.length)} of {activities.length} activities
                 </div>
                 <div className="flex items-center gap-2">
@@ -1029,8 +1124,8 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                     disabled={currentPageNum === 1}
                     className={`px-3 py-1 text-xs rounded-md transition-colors ${
                       currentPageNum === 1
-                        ? 'bg-[#15151C] text-[#FFFFFF]/30 cursor-not-allowed'
-                        : 'bg-[#23232C] text-[#FFFFFF] hover:bg-[#2A2A35]'
+                        ? `${getCardBackgroundColor()} ${getMutedTextColor()} cursor-not-allowed`
+                        : `${getActionButtonBackground()} ${getTextColor()} ${isDarkMode ? 'hover:bg-[#2A2A35]' : 'hover:bg-gray-300'}`
                     }`}
                   >
                     Previous
@@ -1056,7 +1151,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                           className={`w-8 h-8 text-xs rounded-md transition-colors ${
                             currentPageNum === pageNum
                               ? 'bg-[#FF5252] text-white'
-                              : 'bg-[#23232C] text-[#FFFFFF] hover:bg-[#2A2A35]'
+                              : `${getActionButtonBackground()} ${getTextColor()} ${isDarkMode ? 'hover:bg-[#2A2A35]' : 'hover:bg-gray-300'}`
                           }`}
                         >
                           {pageNum}
@@ -1070,8 +1165,8 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                     disabled={currentPageNum === totalPages}
                     className={`px-3 py-1 text-xs rounded-md transition-colors ${
                       currentPageNum === totalPages
-                        ? 'bg-[#15151C] text-[#FFFFFF]/30 cursor-not-allowed'
-                        : 'bg-[#23232C] text-[#FFFFFF] hover:bg-[#2A2A35]'
+                        ? `${getCardBackgroundColor()} ${getMutedTextColor()} cursor-not-allowed`
+                        : `${getActionButtonBackground()} ${getTextColor()} ${isDarkMode ? 'hover:bg-[#2A2A35]' : 'hover:bg-gray-300'}`
                     }`}
                   >
                     Next
@@ -1100,12 +1195,12 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
     const counts = activitiesBreakdown.counts;
 
     return (
-      <div className="bg-[#15151C] rounded-lg border border-[#FFFFFF]/10 mb-3 overflow-hidden">
+      <div className={`${getCardBackgroundColor()} rounded-lg border ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'} mb-3 overflow-hidden`}>
         <div 
           className={`cursor-pointer transition-all duration-200 ${
             isExpanded 
-              ? 'p-3 border-b border-[#FFFFFF]/10' 
-              : 'p-2 hover:bg-[#1E1E24]'
+              ? `p-3 border-b ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'}` 
+              : `p-2 ${isDarkMode ? 'hover:bg-[#1E1E24]' : 'hover:bg-gray-50'}`
           }`}
           onClick={() => toggleSection('all')}
         >
@@ -1121,7 +1216,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                 </div>
               </div>
               <div>
-                <h3 className={`font-semibold text-[#FFFFFF] ${
+                <h3 className={`font-semibold ${getTextColor()} ${
                   isExpanded 
                     ? 'text-base' 
                     : 'text-sm'
@@ -1132,11 +1227,11 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                   isExpanded 
                     ? 'text-xs' 
                     : 'text-xs'
-                } text-[#FFFFFF]/60`}>
+                } ${getSecondaryTextColor()}`}>
                   <span>{counts.total} total activities</span>
                   {performanceData.percentage > 0 && (
                     <>
-                      <span className="text-[#FFFFFF]/30">•</span>
+                      <span className={getSecondaryTextColor()}>•</span>
                       <span>Overall Performance: {performanceData.percentage.toFixed(2)}%</span>
                     </>
                   )}
@@ -1155,10 +1250,10 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                   {counts.failed + counts.missed} Failed/Missed
                 </span>
                 <span className="px-2 py-1 text-xs rounded bg-[#767EE0]/20 text-[#767EE0]">
-                  {counts.assigned} Assigned {/* Updated text */}
+                  {counts.assigned} Assigned
                 </span>
               </div>
-              <button className="text-[#FFFFFF] hover:text-[#FFFFFF]/80 transition-colors">
+              <button className={`${getTextColor()} ${isDarkMode ? 'hover:text-[#FFFFFF]/80' : 'hover:text-gray-700'} transition-colors`}>
                 {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
               </button>
             </div>
@@ -1178,7 +1273,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                 {counts.failed + counts.missed} Failed/Missed
               </span>
               <span className="px-2 py-1 text-xs rounded bg-[#767EE0]/20 text-[#767EE0]">
-                {counts.assigned} Assigned {/* Updated text */}
+                {counts.assigned} Assigned
               </span>
             </div>
           </div>
@@ -1189,14 +1284,14 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
             <div className="overflow-x-auto mb-4">
               <table className="w-full min-w-full">
                 <thead>
-                  <tr className="border-b border-[#FFFFFF]/10">
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Activity</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Title</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Deadline</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Status</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Score</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70">Percentage</th>
-                    <th className="text-left py-2 px-3 text-xs font-semibold text-[#FFFFFF]/70 w-24">Actions</th>
+                  <tr className={`border-b ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'}`}>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Activity</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Title</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Deadline</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Status</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Score</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()}`}>Percentage</th>
+                    <th className={`text-left py-2 px-3 text-xs font-semibold ${getSecondaryTextColor()} w-24`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1208,7 +1303,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                         case 'low': return 'Low (75-79%)';
                         case 'failed': return 'Failed (<75%)';
                         case 'missed': return 'Missed';
-                        case 'pending': return 'Assigned'; // Updated text
+                        case 'pending': return 'Assigned';
                         default: return 'Unknown';
                       }
                     };
@@ -1219,13 +1314,13 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                         case 'low': return 'text-[#FFA600]';
                         case 'failed': return 'text-[#A15353]';
                         case 'missed': return 'text-[#A15353]';
-                        case 'pending': return 'text-[#767EE0]'; // For assigned
-                        default: return 'text-[#FFFFFF]';
+                        case 'pending': return 'text-[#767EE0]';
+                        default: return getTextColor();
                       }
                     };
 
                     return (
-                      <tr key={activity.id} className="border-b border-[#FFFFFF]/5 hover:bg-[#23232C]/30 transition-colors">
+                      <tr key={activity.id} className={`border-b ${isDarkMode ? 'border-[#FFFFFF]/5' : 'border-gray-100'} ${isDarkMode ? 'hover:bg-[#23232C]/30' : 'hover:bg-gray-50'} transition-colors`}>
                         <td className="py-2 px-3">
                           <div className="flex items-center gap-2">
                             <span className={`px-2 py-1 text-xs font-medium rounded ${
@@ -1233,14 +1328,14 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                               activity.status === 'low' ? 'bg-[#FFA600]/20 text-[#FFA600]' :
                               activity.status === 'failed' ? 'bg-[#A15353]/20 text-[#A15353]' :
                               activity.status === 'missed' ? 'bg-[#A15353]/20 text-[#A15353]' :
-                              'bg-[#767EE0]/20 text-[#767EE0]' // For assigned
+                              'bg-[#767EE0]/20 text-[#767EE0]'
                             }`}>
                               {activity.activity_type} #{activity.task_number}
                             </span>
                           </div>
                         </td>
-                        <td className="py-2 px-3 text-xs text-[#FFFFFF] truncate max-w-[150px]">{activity.title}</td>
-                        <td className="py-2 px-3 text-xs text-[#FFFFFF]/80">
+                        <td className={`py-2 px-3 text-xs ${getTextColor()} truncate max-w-[150px]`}>{activity.title}</td>
+                        <td className={`py-2 px-3 text-xs ${getSecondaryTextColor()}`}>
                           {activity.deadline ? new Date(activity.deadline).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -1264,7 +1359,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                               </span>
                             </div>
                           ) : (
-                            <span className="text-xs text-[#FFFFFF]/60">-</span>
+                            <span className={`text-xs ${getMutedTextColor()}`}>-</span>
                           )}
                         </td>
                         <td className="py-2 px-3">
@@ -1277,24 +1372,26 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                               {percentage}%
                             </span>
                           ) : (
-                            <span className="text-xs text-[#FFFFFF]/60">-</span>
+                            <span className={`text-xs ${getMutedTextColor()}`}>-</span>
                           )}
                         </td>
                         <td className="py-2 px-3">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => handleViewActivityDetails(activity)}
-                              className="p-1 rounded hover:bg-[#FFFFFF]/10 transition-colors group"
+                              className={`p-1 rounded ${isDarkMode ? 'hover:bg-[#FFFFFF]/10' : 'hover:bg-gray-200'} transition-colors group`}
                               title="View Details"
                             >
-                              <img src={DetailsIcon} alt="Details" className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100" />
+                              <img src={DetailsIcon} alt="Details" className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100"
+                                style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                             </button>
                             <button
                               onClick={() => handleEmailTeacherAboutActivity(activity)}
-                              className="p-1 rounded hover:bg-[#FFFFFF]/10 transition-colors group"
+                              className={`p-1 rounded ${isDarkMode ? 'hover:bg-[#FFFFFF]/10' : 'hover:bg-gray-200'} transition-colors group`}
                               title="Email Teacher"
                             >
-                              <img src={EmailIcon} alt="Email" className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100" />
+                              <img src={EmailIcon} alt="Email" className="w-3.5 h-3.5 opacity-70 group-hover:opacity-100"
+                                style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                             </button>
                           </div>
                         </td>
@@ -1306,8 +1403,8 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
             </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-[#FFFFFF]/10 pt-3">
-                <div className="text-xs text-[#FFFFFF]/60">
+              <div className={`flex items-center justify-between border-t ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'} pt-3`}>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>
                   Showing {startIndex + 1}-{Math.min(endIndex, activities.length)} of {activities.length} activities
                 </div>
                 <div className="flex items-center gap-2">
@@ -1316,8 +1413,8 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                     disabled={currentPageNum === 1}
                     className={`px-3 py-1 text-xs rounded-md transition-colors ${
                       currentPageNum === 1
-                        ? 'bg-[#15151C] text-[#FFFFFF]/30 cursor-not-allowed'
-                        : 'bg-[#23232C] text-[#FFFFFF] hover:bg-[#2A2A35]'
+                        ? `${getCardBackgroundColor()} ${getMutedTextColor()} cursor-not-allowed`
+                        : `${getActionButtonBackground()} ${getTextColor()} ${isDarkMode ? 'hover:bg-[#2A2A35]' : 'hover:bg-gray-300'}`
                     }`}
                   >
                     Previous
@@ -1343,7 +1440,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                           className={`w-8 h-8 text-xs rounded-md transition-colors ${
                             currentPageNum === pageNum
                               ? 'bg-[#FF5252] text-white'
-                              : 'bg-[#23232C] text-[#FFFFFF] hover:bg-[#2A2A35]'
+                              : `${getActionButtonBackground()} ${getTextColor()} ${isDarkMode ? 'hover:bg-[#2A2A35]' : 'hover:bg-gray-300'}`
                           }`}
                         >
                           {pageNum}
@@ -1357,8 +1454,8 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                     disabled={currentPageNum === totalPages}
                     className={`px-3 py-1 text-xs rounded-md transition-colors ${
                       currentPageNum === totalPages
-                        ? 'bg-[#15151C] text-[#FFFFFF]/30 cursor-not-allowed'
-                        : 'bg-[#23232C] text-[#FFFFFF] hover:bg-[#2A2A35]'
+                        ? `${getCardBackgroundColor()} ${getMutedTextColor()} cursor-not-allowed`
+                        : `${getActionButtonBackground()} ${getTextColor()} ${isDarkMode ? 'hover:bg-[#2A2A35]' : 'hover:bg-gray-300'}`
                     }`}
                   >
                     Next
@@ -1380,7 +1477,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
           ? 'bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30' 
           : colorClass
       }`}>
-        <img src={icon} alt="" className="h-4 w-4" />
+        <img src={icon} alt="" className="h-4 w-4" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
         <span className="sm:inline truncate">{label}</span>
       </button>
     </Link>
@@ -1389,11 +1486,11 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
   // Loading state
   if (!studentId || loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 text-center text-[#FFFFFF]">
+          <div className={`p-8 text-center ${getTextColor()}`}>
             <p>Loading student data...</p>
           </div>
         </div>
@@ -1405,7 +1502,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
 
   // Main render
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -1414,13 +1511,14 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
           
           <div className="mb-4">
             <div className="flex items-center mb-2">
-              <img src={SubjectOverview} alt="Subject Overview" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
-              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">Subject Overview</h1>
+              <img src={SubjectOverview} alt="Subject Overview" className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>Subject Overview</h1>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">View {currentSubject?.subject || 'Subject'} overview and details</p>
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>View {currentSubject?.subject || 'Subject'} overview and details</p>
           </div>
 
-          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{currentSubject?.subject || 'Loading...'}</span>
@@ -1434,19 +1532,21 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                 <img 
                   src={BackButton} 
                   alt="Back" 
-                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
+                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity"
+                  style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
                 />
               </Link>
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getDividerColor()} mb-4`} />
 
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
               <div className="flex-1 sm:flex-initial min-w-0">
-                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30">
-                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30`}>
+                  <img src={SubjectOverview} alt="" className="h-4 w-4"
+                    style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                   <span className="sm:inline truncate">{currentSubject?.subject || 'Subject'} Overview</span>
                 </button>
               </div>
@@ -1457,14 +1557,15 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
               {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
             </div>
             <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
-              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 cursor-pointer">
-                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
+              <button className={`p-2 ${getButtonBackgroundColor()} rounded-md shadow-md border-2 border-transparent ${getActionButtonHover()} transition-all duration-200 cursor-pointer`}>
+                <img src={StudentsIcon} alt="Student List" className="h-4 w-4"
+                  style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
               </button>
             </Link>
           </div>
 
           {overallWarning && (
-            <div className="bg-[#FFA600]/10 border border-[#FFA600]/30 rounded-md p-3 mb-4">
+            <div className={`${getWarningBackground()} border ${getWarningBorder()} rounded-md p-3 mb-4`}>
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <svg className="h-4 w-4 text-[#FFA600]" viewBox="0 0 20 20" fill="currentColor">
@@ -1472,10 +1573,10 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-xs font-medium text-[#FFA600]">
+                  <h3 className={`text-xs font-medium ${getWarningText()}`}>
                     Attendance Warning
                   </h3>
-                  <div className="mt-1 text-xs text-[#FFA600]/90">
+                  <div className={`mt-1 text-xs ${getWarningText()}/90`}>
                     <p>
                       You have attendance warnings in some subjects. Students with 3 accumulated absences will be dropped from the course. 
                       3 late arrivals are equivalent to one absent.
@@ -1487,8 +1588,8 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
           )}
 
           {!loading && subjects.length > 0 && !currentSubject && (
-            <div className="bg-[#A15353]/10 border border-[#A15353]/30 rounded-md p-3 mb-4 text-center">
-              <p className="text-[#A15353] text-sm">
+            <div className={`${getErrorBackground()} border ${getErrorBorder()} rounded-md p-3 mb-4 text-center`}>
+              <p className={`${getErrorText()} text-sm`}>
                 Subject not found or you are not enrolled in this subject.
               </p>
             </div>
@@ -1511,21 +1612,22 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                   fetchActivitiesBreakdown();
                   fetchPerformanceData();
                 }}
+                isDarkMode={isDarkMode}
               />
 
               <div className="mt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-[#FFFFFF]">Activities Breakdown</h2>
+                  <h2 className={`text-lg font-bold ${getTextColor()}`}>Activities Breakdown</h2>
                   <div className="hidden sm:flex items-center gap-2 text-sm text-[#FFFFFF]/60">
                     <span>Total: {activitiesBreakdown.counts.total}</span>
-                    <span className="text-[#FFFFFF]/30">|</span>
+                    <span className={getSecondaryTextColor()}>|</span>
                     <span className="text-[#00A15D]">Passed: {activitiesBreakdown.counts.passed}</span>
-                    <span className="text-[#FFFFFF]/30">|</span>
+                    <span className={getSecondaryTextColor()}>|</span>
                     <span className="text-[#FFA600]">Low: {activitiesBreakdown.counts.low}</span>
-                    <span className="text-[#FFFFFF]/30">|</span>
+                    <span className={getSecondaryTextColor()}>|</span>
                     <span className="text-[#A15353]">Failed/Missed: {activitiesBreakdown.counts.failed + activitiesBreakdown.counts.missed}</span>
-                    <span className="text-[#FFFFFF]/30">|</span>
-                    <span className="text-[#767EE0]">Assigned: {activitiesBreakdown.counts.assigned}</span> {/* Updated text */}
+                    <span className={getSecondaryTextColor()}>|</span>
+                    <span className="text-[#767EE0]">Assigned: {activitiesBreakdown.counts.assigned}</span>
                   </div>
                 </div>
                 
@@ -1534,7 +1636,7 @@ ${studentEmail ? `Email: ${studentEmail}` : ''}`;
                 {renderActivityTable("Low Grade Activities (75-79%)", activitiesBreakdown.low, 'low', <LowGradeIcon />, '#FFA600')}
                 {renderActivityTable("Failed Activities (<75%)", activitiesBreakdown.failed, 'failed', <FailedIcon />, '#A15353')}
                 {renderActivityTable("Missed Activities", activitiesBreakdown.missed, 'missed', <MissedIcon />, '#A15353')}
-                {renderActivityTable("Assigned Activities", activitiesBreakdown.assigned, 'assigned', <AssignedIcon />, '#767EE0')} {/* Updated text */}
+                {renderActivityTable("Assigned Activities", activitiesBreakdown.assigned, 'assigned', <AssignedIcon />, '#767EE0')}
               </div>
             </div>
           )}

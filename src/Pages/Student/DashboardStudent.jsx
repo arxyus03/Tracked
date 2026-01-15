@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
+
 import CalendarDetails from "../../Components/StudentComponents/CalendarDetails";
 import TaskCompletionDetails from "../../Components/StudentComponents/TaskCompletionDetails";
 import SubjectPerformance from "../../Components/StudentComponents/SubjectPerformance";
@@ -15,10 +16,10 @@ import Pie from '../../assets/Pie.svg';
 import Details from '../../assets/Details(Light).svg';
 import CalendarIcon from '../../assets/Calendar.svg';
 
-// Set API base URL based on environment - UPDATED
+// Set API base URL based on environment - CORRECTED PATH
 const API_BASE = window.location.hostname === 'tracked.6minds.site' 
-  ? 'https://tracked.6minds.site/Student'  // Changed from '/api' to '/Student'
-  : 'http://localhost/TrackEd/Student';    // Added /Student for local too
+  ? 'https://tracked.6minds.site/api'  // Changed from '/Student' back to '/api'
+  : 'http://localhost/TrackEd/api';     // Changed from '/Student' back to '/api'
 
 export default function DashboardStudent() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,23 +29,24 @@ export default function DashboardStudent() {
   const [studentCourse, setStudentCourse] = useState("");
   const [studentYearLevel, setStudentYearLevel] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   // Widget states
-  const [completedActivities, setCompletedActivities] = useState(0);
-  const [overallSubmitted, setOverallSubmitted] = useState(0);
+  const [, setCompletedActivities] = useState(0);
+  const [, setOverallSubmitted] = useState(0);
   const [overallDaysAbsent, setOverallDaysAbsent] = useState(0);
-  const [pendingTask, setPendingTask] = useState(0);
-  const [totalDaysPresent, setTotalDaysPresent] = useState(0);
+  const [, setPendingTask] = useState(0);
+  const [, setTotalDaysPresent] = useState(0);
   const [overallMissed, setOverallMissed] = useState(0);
 
   // Analytics states
-  const [performanceScore, setPerformanceScore] = useState(0);
+  const [, setPerformanceScore] = useState(0);
   const [attendanceRate, setAttendanceRate] = useState(0);
   const [submissionRate, setSubmissionRate] = useState(0);
-  const [riskLevel, setRiskLevel] = useState("LOW");
+  const [, setRiskLevel] = useState("LOW");
   const [recentActivities, setRecentActivities] = useState([]);
   const [subjectPerformance, setSubjectPerformance] = useState([]);
-  const [warnings, setWarnings] = useState([]);
+  const [, setWarnings] = useState([]);
 
   // Calendar states
   const [selectedDate, setSelectedDate] = useState(null);
@@ -78,6 +80,23 @@ export default function DashboardStudent() {
 
   const navigate = useNavigate();
 
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    handleThemeChange();
+    
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const checkScreenSize = () => {
       setIsOpen(window.innerWidth >= 1024);
@@ -99,7 +118,7 @@ export default function DashboardStudent() {
           if (userIdFromStorage) {
             setUserId(userIdFromStorage);
             
-            // Use the API_BASE variable - UPDATED PATH
+            // CORRECTED API PATH - using direct path without /Student
             const response = await fetch(`${API_BASE}/DashboardStudentDB/get_student_info.php?id=${userIdFromStorage}`, {
               method: 'GET',
               headers: {
@@ -112,12 +131,32 @@ export default function DashboardStudent() {
             if (response.ok) {
               const data = await response.json();
               
-              if (data.success) {
-                const fullName = `${data.user.tracked_firstname} ${data.user.tracked_lastname}`;
-                setUserName(fullName || "N/A");
-                setUserEmail(data.user.tracked_email || "N/A");
-                setStudentCourse(data.user.tracked_program || "N/A");
+              if (data.success && data.user) {
+                console.log('User data received:', data.user);
                 
+                // Build full name from available fields
+                let fullName = "";
+                if (data.user.tracked_firstname && data.user.tracked_lastname) {
+                  fullName = `${data.user.tracked_firstname} ${data.user.tracked_lastname}`;
+                } else if (data.user.tracked_firstname) {
+                  fullName = data.user.tracked_firstname;
+                } else if (data.user.user_firstname && data.user.user_lastname) {
+                  fullName = `${data.user.user_firstname} ${data.user.user_lastname}`;
+                } else {
+                  fullName = "Student";
+                }
+                
+                setUserName(fullName);
+                
+                // Get email - check multiple possible fields
+                const email = data.user.tracked_email || data.user.user_Email || "No email available";
+                setUserEmail(email);
+                
+                // Get course/program
+                const course = data.user.tracked_program || data.user.user_program || "No course specified";
+                setStudentCourse(course);
+                
+                // Get year level
                 if (data.user.tracked_yearandsec) {
                   const yearChar = data.user.tracked_yearandsec.charAt(0);
                   const yearNum = parseInt(yearChar);
@@ -128,6 +167,8 @@ export default function DashboardStudent() {
                   } else {
                     setStudentYearLevel(data.user.tracked_yearandsec);
                   }
+                } else if (data.user.user_yearandsection) {
+                  setStudentYearLevel(data.user.user_yearandsection);
                 } else {
                   setStudentYearLevel("N/A");
                 }
@@ -137,28 +178,45 @@ export default function DashboardStudent() {
                 await fetchAnalyticsData(userIdFromStorage);
                 await generateCalendarData(userIdFromStorage);
                 await fetchTaskCompletionData(userIdFromStorage);
+              } else {
+                console.error('No user data in response:', data);
+                setFallbackData();
               }
             } else {
               console.error('Failed to fetch user data:', response.status);
-              // Fallback to mock data
-              setUserName("John Doe");
-              setUserEmail("student@example.com");
-              setStudentCourse("Computer Science");
-              setStudentYearLevel("2nd Year");
-              fetchMockData();
+              setFallbackData();
             }
           }
+        } else {
+          console.error('No user in localStorage');
+          setFallbackData();
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        // Fallback to mock data
-        setUserName("John Doe");
-        setUserEmail("student@example.com");
-        setStudentCourse("Computer Science");
-        setStudentYearLevel("2nd Year");
-        fetchMockData();
-        setLoading(false);
+        setFallbackData();
       }
+    };
+
+    const setFallbackData = () => {
+      // Use actual logged in user info if available
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.name) {
+          setUserName(user.name);
+        }
+        if (user.email) {
+          setUserEmail(user.email);
+        }
+      } else {
+        // Default fallback
+        setUserName("Student");
+        setUserEmail("student@example.com");
+      }
+      setStudentCourse("Computer Science");
+      setStudentYearLevel("4th Year");
+      fetchMockData();
+      setLoading(false);
     };
 
     fetchUserData();
@@ -321,7 +379,7 @@ export default function DashboardStudent() {
     }
   };
 
-  // Fetch real activity data - UPDATED PATH
+  // Fetch real activity data
   const fetchTaskCompletionData = async (studentId) => {
     try {
       const response = await fetch(`${API_BASE}/DashboardStudentDB/student_activities.php?student_id=${studentId}`);
@@ -405,14 +463,14 @@ export default function DashboardStudent() {
           const overallAttendanceRate = totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : 0;
           setAttendanceRate(overallAttendanceRate);
         } else {
-          setAttendanceRate(90); // Fallback
+          setAttendanceRate(90);
         }
       } else {
-        setAttendanceRate(90); // Fallback
+        setAttendanceRate(90);
       }
     } catch (error) {
       console.error("Error fetching attendance data:", error);
-      setAttendanceRate(90); // Fallback
+      setAttendanceRate(90);
     }
   };
 
@@ -424,7 +482,7 @@ export default function DashboardStudent() {
         month: 'short',
         day: 'numeric'
       });
-    } catch (error) {
+    } catch {
       return "Invalid date";
     }
   };
@@ -445,7 +503,7 @@ export default function DashboardStudent() {
     }
   };
 
-  // Fetch subject grades - UPDATED PATH
+  // Fetch subject grades
   const fetchSubjectGrades = async (studentId, subjectCode) => {
     try {
       const response = await fetch(`${API_BASE}/SubjectDetailsStudentDB/calculate_subject_performance.php?student_id=${studentId}&subject_code=${subjectCode}`);
@@ -867,8 +925,8 @@ export default function DashboardStudent() {
       case 'present': return 'bg-[#00A15D] border-[#00A15D]';
       case 'late': return 'bg-[#FFA600] border-[#FFA600]';
       case 'absent': return 'bg-[#A15353] border-[#A15353]';
-      case 'none': return 'bg-transparent border-white/20';
-      default: return 'bg-transparent border-white/20';
+      case 'none': return isDarkMode ? 'bg-transparent border-white/20' : 'bg-transparent border-gray-300';
+      default: return isDarkMode ? 'bg-transparent border-white/20' : 'bg-transparent border-gray-300';
     }
   };
 
@@ -887,50 +945,32 @@ export default function DashboardStudent() {
       case 'Present': return 'text-[#00A15D]';
       case 'Late': return 'text-[#FFA600]';
       case 'Absent': return 'text-[#A15353]';
-      default: return 'text-white/60';
-    }
-  };
-
-  const getRiskColor = (level) => {
-    switch (level) {
-      case "HIGH": return "text-[#A15353]";
-      case "MEDIUM": return "text-[#FFA600]";
-      case "LOW": return "text-[#00A15D]";
-      default: return "text-gray-600";
-    }
-  };
-
-  const getRiskBorderColor = (level) => {
-    switch (level) {
-      case "HIGH": return "border-[#A15353]";
-      case "MEDIUM": return "border-[#FFA600]";
-      case "LOW": return "border-[#00A15D]";
-      default: return "border-gray-600";
+      default: return isDarkMode ? 'text-white/60' : 'text-gray-500';
     }
   };
 
   const getActivityTypeColor = (type) => {
     const colors = {
-      'Assignment': 'bg-[#767EE0]/20 text-[#767EE0]',
-      'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
-      'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
-      'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
-      'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
-      'Exam': 'bg-[#A15353]/20 text-[#A15353]',
-      'Essay': 'bg-[#00A15D]/20 text-[#00A15D]',
-      'Lab Report': 'bg-[#A15353]/20 text-[#A15353]',
-      'Research Paper': 'bg-[#FFA600]/20 text-[#FFA600]',
-      'Discussion': 'bg-[#767EE0]/20 text-[#767EE0]'
+      'Assignment': isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]',
+      'Quiz': isDarkMode ? 'bg-[#B39DDB]/20 text-[#B39DDB]' : 'bg-[#B39DDB]/10 text-[#B39DDB]',
+      'Activity': isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]',
+      'Project': isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]',
+      'Laboratory': isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]',
+      'Exam': isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]',
+      'Essay': isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]',
+      'Lab Report': isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]',
+      'Research Paper': isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]',
+      'Discussion': isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]'
     };
-    return colors[type] || 'bg-[#767EE0]/20 text-[#767EE0]';
+    return colors[type] || (isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]');
   };
 
   const getActivityStatusColor = (status) => {
     switch (status) {
-      case 'missed': return 'text-[#A15353] border-[#A15353]/30 bg-[#A15353]/10';
-      case 'active': return 'text-[#767EE0] border-[#767EE0]/30 bg-[#767EE0]/10';
-      case 'submitted': return 'text-[#00A15D] border-[#00A15D]/30 bg-[#00A15D]/10';
-      default: return 'text-white/60 border-white/20';
+      case 'missed': return isDarkMode ? 'text-[#A15353] border-[#A15353]/30 bg-[#A15353]/10' : 'text-[#A15353] border-[#A15353]/20 bg-[#A15353]/5';
+      case 'active': return isDarkMode ? 'text-[#767EE0] border-[#767EE0]/30 bg-[#767EE0]/10' : 'text-[#767EE0] border-[#767EE0]/20 bg-[#767EE0]/5';
+      case 'submitted': return isDarkMode ? 'text-[#00A15D] border-[#00A15D]/30 bg-[#00A15D]/10' : 'text-[#00A15D] border-[#00A15D]/20 bg-[#00A15D]/5';
+      default: return isDarkMode ? 'text-white/60 border-white/20' : 'text-gray-500 border-gray-200';
     }
   };
 
@@ -950,22 +990,22 @@ export default function DashboardStudent() {
     if (isGraded) {
       return {
         text: 'Graded',
-        color: 'bg-[#00A15D]/20 text-[#00A15D]'
+        color: isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]'
       };
     } else if (isSubmitted) {
       return {
         text: 'Pending Grade',
-        color: 'bg-[#FFA600]/20 text-[#FFA600]'
+        color: isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]'
       };
     } else if (activity.status === 'active') {
       return {
         text: 'Not Submitted',
-        color: 'bg-[#767EE0]/20 text-[#767EE0]'
+        color: isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]'
       };
     } else if (activity.status === 'missed') {
       return {
         text: 'Missed',
-        color: 'bg-[#A15353]/20 text-[#A15353]'
+        color: isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]'
       };
     }
     return null;
@@ -982,14 +1022,39 @@ export default function DashboardStudent() {
     window.open(`mailto:${professorEmail}?subject=${subject}&body=${body}`);
   };
 
+  // Theme-based background colors
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-[#15151C]" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-white/30" : "border-gray-200";
+  };
+
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[260px] xl:ml-[290px] 2xl:ml-[310px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
           <div className="p-8 flex justify-center items-center h-64">
-            <div className="text-white text-sm">Loading...</div>
+            <div className={`text-sm ${getTextColor()}`}>Loading...</div>
           </div>
         </div>
       </div>
@@ -997,23 +1062,23 @@ export default function DashboardStudent() {
   }
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[260px] xl:ml-[290px] 2xl:ml-[310px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
-        <div className="p-3 sm:p-4 md:p-5 text-white">
+        <div className="p-3 sm:p-4 md:p-5">
           <div className="mb-3">
             <div className="flex items-center mb-1">
-              <img src={Dashboard} alt="Dashboard" className="h-5 w-5 mr-2" />
-              <h1 className="font-bold text-lg text-white">Dashboard</h1>
+              <img src={Dashboard} alt="Dashboard" className="h-5 w-5 mr-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
+              <h1 className={`font-bold text-lg ${getTextColor()}`}>Dashboard</h1>
             </div>
-            <p className="text-sm text-white/80">
-              Hi <span className="font-bold text-white">{userName}</span>! Check your progress.
+            <p className={`text-sm ${getSecondaryTextColor()}`}>
+              Hi <span className={`font-bold ${getTextColor()}`}>{userName}</span>! Check your progress.
             </p>
           </div>
 
-          <hr className="border-white/30 mb-4 border-1" />
+          <hr className={`${getDividerColor()} mb-4 border-1`} />
 
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 mb-6">
             <OverallPerformanceCard
@@ -1022,76 +1087,72 @@ export default function DashboardStudent() {
               tasksDone={tasksDone}
               totalTasks={totalTasks}
               submissionRate={submissionRate}
+              isDarkMode={isDarkMode}
             />
 
-            <div className="lg:col-span-3 bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]">
+            <div className={`lg:col-span-3 ${getCardBackgroundColor()} rounded-lg shadow p-3 border-2 ${getCardBorderColor()}`}>
               <div className="flex items-center mb-3">
-                <img src={Pie} alt="Task Completion" className="h-5 w-5 mr-2" />
-                <h2 className="font-bold text-sm text-white">Task Completion</h2>
+                <img src={Pie} alt="Task Completion" className="h-5 w-5 mr-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
+                <h2 className={`font-bold text-sm ${getTextColor()}`}>Task Completion</h2>
               </div>
 
               <div className="text-center mb-4">
                 <div className="flex items-baseline justify-center mb-2">
-                  <p className="text-3xl font-bold text-white">{tasksDone}</p>
-                  <p className="text-xl font-bold text-white/60 mx-1">/</p>
-                  <p className="text-2xl font-bold text-white/60">{totalTasks}</p>
+                  <p className={`text-3xl font-bold ${getTextColor()}`}>{tasksDone}</p>
+                  <p className={`text-xl font-bold ${getSecondaryTextColor()} mx-1`}>/</p>
+                  <p className={`text-2xl font-bold ${getSecondaryTextColor()}`}>{totalTasks}</p>
                 </div>
-                <p className="text-xs text-white/60 mb-3">Tasks Done vs Total Tasks</p>
-                <div className="w-full bg-[#767EE0]/20 rounded-full h-2 mb-2">
+                <p className={`text-xs ${getSecondaryTextColor()} mb-3`}>Tasks Done vs Total Tasks</p>
+                <div className={`w-full ${isDarkMode ? 'bg-[#767EE0]/20' : 'bg-gray-200'} rounded-full h-2 mb-2`}>
                   <div 
                     className="bg-[#767EE0] h-2 rounded-full"
                     style={{ width: `${taskCompletionPercentage}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-white/80 mb-4">{taskCompletionPercentage}% Complete</p>
+                <p className={`text-xs ${getSecondaryTextColor()} mb-4`}>{taskCompletionPercentage}% Complete</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <button 
                   onClick={() => handleActivityTypeClick('missed')}
-                  className={`p-3 rounded-lg border-2 text-center transition-all ${getActivityStatusColor('missed')}`}
+                  className={`cursor-pointer p-3 rounded-lg border-2 text-center transition-all ${getActivityStatusColor('missed')}`}
                 >
                   <div className="flex items-center justify-center mb-1">
-                    {activityAlerts.missed > 0 && (
-                      <svg className="w-4 h-4 mr-1 text-[#A15353]" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    <p className="text-lg font-bold">{activityAlerts.missed}</p>
+                    <p className={`text-lg font-bold ${isDarkMode ? 'text-[#A15353]' : 'text-[#A15353]'}`}>{activityAlerts.missed}</p>
                   </div>
                   <p className="text-xs">Missed</p>
                 </button>
 
                 <button 
                   onClick={() => handleActivityTypeClick('active')}
-                  className={`p-3 rounded-lg border-2 text-center transition-all ${getActivityStatusColor('active')}`}
+                  className={`cursor-pointer p-3 rounded-lg border-2 text-center transition-all ${getActivityStatusColor('active')}`}
                 >
                   <div className="mb-1">
-                    <p className="text-lg font-bold">{activityAlerts.active}</p>
+                    <p className={`text-lg font-bold ${isDarkMode ? 'text-[#767EE0]' : 'text-[#767EE0]'}`}>{activityAlerts.active}</p>
                   </div>
                   <p className="text-xs">Active</p>
                 </button>
               </div>
             </div>
 
-            <div className="lg:col-span-1 bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]">
+            <div className={`lg:col-span-1 ${getCardBackgroundColor()} rounded-lg shadow p-3 border-2 ${getCardBorderColor()}`}>
               <div className="flex flex-col h-full">
                 <div className="mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
                       <div className="flex justify-center items-center h-6 w-6 rounded mr-1.5">
-                        <img src={CalendarIcon} alt="Calendar" className="h-4 w-4" />
+                        <img src={CalendarIcon} alt="Calendar" className="h-4 w-4" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                       </div>
                       <div>
-                        <h2 className="font-bold text-xs text-white">Attendance</h2>
-                        <p className="text-[10px] text-white/50">{getMonthName()} {currentYear}</p>
+                        <h2 className={`font-bold text-xs ${getTextColor()}`}>Attendance</h2>
+                        <p className={`text-[10px] ${getSecondaryTextColor()}`}>{getMonthName()} {currentYear}</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={goToPreviousMonth}
-                        className="text-white/70 hover:text-white p-1 rounded hover:bg-white/5 transition-colors"
+                        className={`${getSecondaryTextColor()} hover:${getTextColor()} p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}
                         title="Previous month"
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1100,7 +1161,7 @@ export default function DashboardStudent() {
                       </button>
                       <button
                         onClick={goToNextMonth}
-                        className="text-white/70 hover:text-white p-1 rounded hover:bg-white/5 transition-colors"
+                        className={`${getSecondaryTextColor()} hover:${getTextColor()} p-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}
                         title="Next month"
                       >
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1111,15 +1172,15 @@ export default function DashboardStudent() {
                   </div>
                   
                   <div className="text-center mb-2">
-                    <p className="text-[10px] text-white/80 mb-0.5">This Month</p>
+                    <p className={`text-[10px] ${getSecondaryTextColor()} mb-0.5`}>This Month</p>
                     <div className="flex items-baseline justify-center">
-                      <p className="text-xl font-bold text-white">{attendanceRate}</p>
-                      <p className="text-base font-bold text-white ml-0.5">%</p>
+                      <p className={`text-xl font-bold ${getTextColor()}`}>{attendanceRate}</p>
+                      <p className={`text-base font-bold ${getTextColor()} ml-0.5`}>%</p>
                     </div>
                   </div>
                   
                   <div className="mb-2">
-                    <div className="w-full bg-[#767EE0]/20 rounded-full h-1">
+                    <div className={`w-full ${isDarkMode ? 'bg-[#767EE0]/20' : 'bg-gray-200'} rounded-full h-1`}>
                       <div 
                         className="bg-[#767EE0] h-1 rounded-full"
                         style={{ width: `${attendanceRate}%` }}
@@ -1132,7 +1193,7 @@ export default function DashboardStudent() {
                   <div className="grid grid-cols-7 gap-0.5 mb-0.5">
                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
                       <div key={index} className="text-center">
-                        <p className="text-[8px] text-white/50">{day}</p>
+                        <p className={`text-[8px] ${getSecondaryTextColor()}`}>{day}</p>
                       </div>
                     ))}
                   </div>
@@ -1150,7 +1211,7 @@ export default function DashboardStudent() {
                               ${day.isToday ? 'ring-0.5 ring-white ring-offset-0.5 ring-offset-[#15151C]' : ''}
                               ${day.isFuture ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110 transition-transform cursor-pointer'}
                               flex items-center justify-center
-                              ${day.status === 'none' ? 'text-white/40' : 'text-white'}
+                              ${day.status === 'none' ? (isDarkMode ? 'text-white/40' : 'text-gray-400') : 'text-white'}
                             `}
                           >
                             <span className="font-medium">
@@ -1168,15 +1229,15 @@ export default function DashboardStudent() {
                 <div className="flex justify-between items-center text-[6px] mt-1 pt-1 border-t border-white/10">
                   <div className="flex items-center gap-0.5">
                     <div className="h-1 w-1 rounded-full bg-[#00A15D]"></div>
-                    <span className="text-white/60">Present</span>
+                    <span className={getSecondaryTextColor()}>Present</span>
                   </div>
                   <div className="flex items-center gap-0.5">
                     <div className="h-1 w-1 rounded-full bg-[#FFA600]"></div>
-                    <span className="text-white/60">Late</span>
+                    <span className={getSecondaryTextColor()}>Late</span>
                   </div>
                   <div className="flex items-center gap-0.5">
                     <div className="h-1 w-1 rounded-full bg-[#A15353]"></div>
-                    <span className="text-white/60">Absent</span>
+                    <span className={getSecondaryTextColor()}>Absent</span>
                   </div>
                 </div>
               </div>
@@ -1198,6 +1259,7 @@ export default function DashboardStudent() {
             setCurrentYear={setCurrentYear}
             generateCalendarData={generateCalendarData}
             userId={userId}
+            isDarkMode={isDarkMode}
           />
 
           <TaskCompletionDetails
@@ -1213,43 +1275,44 @@ export default function DashboardStudent() {
             formatModalDate={formatModalDate}
             getGradingStatus={getGradingStatus}
             userName={userName}
+            isDarkMode={isDarkMode}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
-            <SubjectPerformance subjectPerformance={subjectPerformance} />
+            <SubjectPerformance subjectPerformance={subjectPerformance} isDarkMode={isDarkMode} />
 
-            <div className="bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]">
-              <h3 className="text-sm font-semibold mb-3 flex items-center text-white">
-                <img src={RecentActivity} alt="Activity" className="h-4 w-4 mr-1" />
+            <div className={`${getCardBackgroundColor()} rounded-lg shadow p-3 border-2 ${getCardBorderColor()}`}>
+              <h3 className={`text-sm font-semibold mb-3 flex items-center ${getTextColor()}`}>
+                <img src={RecentActivity} alt="Activity" className="h-4 w-4 mr-1" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                 Recent Activities
               </h3>
               <div className="max-h-48 overflow-y-auto space-y-2">
                 {recentActivities.length > 0 ? (
                   recentActivities.map((activity, index) => (
-                    <div key={index} className="p-2 bg-[#23232C] rounded border border-white/5">
+                    <div key={index} className={`p-2 ${isDarkMode ? 'bg-[#23232C]' : 'bg-gray-50'} rounded border ${isDarkMode ? 'border-white/5' : 'border-gray-200'}`}>
                       <div className="flex items-center gap-1 mb-1">
                         <span className={`px-1.5 py-0.5 text-xs rounded border ${getActivityTypeColor(activity.activity_type)}`}>
                           {activity.activity_type}
                         </span>
                         <span className={`text-xs px-1.5 py-0.5 rounded border ${
-                          activity.submitted ? 'bg-[#00A15D]/20 text-[#00A15D]' : 
-                          activity.missing ? 'bg-[#A15353]/20 text-[#A15353]' : 
-                          'bg-[#767EE0]/20 text-[#767EE0]'
+                          activity.submitted ? (isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]') : 
+                          activity.missing ? (isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]') : 
+                          (isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]')
                         }`}>
                           {activity.submitted ? 'Submitted' : activity.missing ? 'Missed' : 'Assigned'}
                         </span>
                       </div>
-                      <p className="text-xs font-medium truncate mb-1 text-white">{activity.subject}: {activity.title}</p>
-                      <div className="text-xs text-white/50">{activity.formatted_date}</div>
+                      <p className={`text-xs font-medium truncate mb-1 ${getTextColor()}`}>{activity.subject}: {activity.title}</p>
+                      <div className={`text-xs ${getSecondaryTextColor()}`}>{activity.formatted_date}</div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-white/50 text-center py-3 text-xs">No recent activities</p>
+                  <p className={`${getSecondaryTextColor()} text-center py-3 text-xs`}>No recent activities</p>
                 )}
               </div>
               <div className="flex justify-center mt-3">
                 <Link to="/Subjects">
-                  <button className="bg-[#00A15D] text-white px-3 py-1 rounded text-xs hover:bg-[#00874E] border-2 border-[#00A15D]/30">
+                  <button className="cursor-pointer bg-[#00A15D] text-white px-3 py-1 rounded text-xs hover:bg-[#00874E] border-2 border-[#00A15D]/30">
                     View Activities
                   </button>
                 </Link>
@@ -1257,28 +1320,28 @@ export default function DashboardStudent() {
             </div>
           </div>
 
-          <div className="bg-[#15151C] rounded-lg shadow mt-3 p-3 text-xs border-2 border-[#15151C]">
+          <div className={`${getCardBackgroundColor()} rounded-lg shadow mt-3 p-3 text-xs border-2 ${getCardBorderColor()}`}>
             <div className="flex items-center">
-              <img src={ID} alt="ID" className="h-4 w-4 mr-1" />
-              <p className="font-bold text-xs text-white">{userName}</p>
+              <img src={ID} alt="ID" className="h-4 w-4 mr-1" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
+              <p className={`font-bold text-xs ${getTextColor()}`}>{userName}</p>
             </div>
-            <hr className="border-white/30 my-2 border-1" />
+            <hr className={`${getDividerColor()} my-2 border-1`} />
             <div className="space-y-1">
               <div className="flex">
-                <span className="font-medium w-20 text-white/70">Student ID:</span>
-                <span className="text-white">{userId || "Loading..."}</span>
+                <span className={`font-medium w-20 ${getSecondaryTextColor()}`}>Student ID:</span>
+                <span className={getTextColor()}>{userId || "Loading..."}</span>
               </div>
               <div className="flex">
-                <span className="font-medium w-20 text-white/70">Email:</span>
-                <span className="truncate text-white">{userEmail || "Loading..."}</span>
+                <span className={`font-medium w-20 ${getSecondaryTextColor()}`}>Email:</span>
+                <span className={`truncate ${getTextColor()}`}>{userEmail || "No email available"}</span>
               </div>
               <div className="flex">
-                <span className="font-medium w-20 text-white/70">Course:</span>
-                <span className="text-white">{studentCourse || "Loading..."}</span>
+                <span className={`font-medium w-20 ${getSecondaryTextColor()}`}>Course:</span>
+                <span className={getTextColor()}>{studentCourse || "No course specified"}</span>
               </div>
               <div className="flex">
-                <span className="font-medium w-20 text-white/70">Year Level:</span>
-                <span className="text-white">{studentYearLevel || "Loading..."}</span>
+                <span className={`font-medium w-20 ${getSecondaryTextColor()}`}>Year Level:</span>
+                <span className={getTextColor()}>{studentYearLevel || "N/A"}</span>
               </div>
             </div>
           </div>

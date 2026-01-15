@@ -21,7 +21,8 @@ const StudentActivityDetails = ({
   teacherEmail, 
   teacherName, 
   subjectName,
-  onActivitySubmitted // New prop for activity submission callback
+  onActivitySubmitted, // New prop for activity submission callback
+  isDarkMode = false // Added theme prop
 }) => {
   const [professorFiles, setProfessorFiles] = useState([]);
   const [studentFiles, setStudentFiles] = useState([]);
@@ -112,32 +113,32 @@ const StudentActivityDetails = ({
       return {
         text: "Excellent work! You've mastered this activity. Keep up the great performance.",
         color: "text-[#00A15D]",
-        bgColor: "bg-[#00A15D]/10",
-        borderColor: "border-[#00A15D]/30",
+        bgColor: isDarkMode ? "bg-[#00A15D]/10" : "bg-[#00A15D]/5",
+        borderColor: isDarkMode ? "border-[#00A15D]/30" : "border-[#00A15D]/20",
         performanceLevel: "Excellent"
       };
     } else if (percentage >= 75) {
       return {
         text: "Good job! You have a solid understanding of the material. Review any minor mistakes for improvement.",
         color: "text-[#00A15D]",
-        bgColor: "bg-[#00A15D]/10",
-        borderColor: "border-[#00A15D]/30",
+        bgColor: isDarkMode ? "bg-[#00A15D]/10" : "bg-[#00A15D]/5",
+        borderColor: isDarkMode ? "border-[#00A15D]/30" : "border-[#00A15D]/20",
         performanceLevel: "Good"
       };
     } else if (percentage >= 60) {
       return {
         text: "Almost there! You passed but consider reviewing the material and professor's feedback to improve.",
         color: "text-[#FFA600]",
-        bgColor: "bg-[#FFA600]/10",
-        borderColor: "border-[#FFA600]/30",
+        bgColor: isDarkMode ? "bg-[#FFA600]/10" : "bg-[#FFA600]/5",
+        borderColor: isDarkMode ? "border-[#FFA600]/30" : "border-[#FFA600]/20",
         performanceLevel: "Needs Improvement"
       };
     } else {
       return {
         text: "Let's improve this! Consider reviewing the instructions, seeking help from your professor, and practicing similar tasks.",
         color: "text-[#A15353]",
-        bgColor: "bg-[#A15353]/10",
-        borderColor: "border-[#A15353]/30",
+        bgColor: isDarkMode ? "bg-[#A15353]/10" : "bg-[#A15353]/5",
+        borderColor: isDarkMode ? "border-[#A15353]/30" : "border-[#A15353]/20",
         performanceLevel: "Needs Work"
       };
     }
@@ -146,15 +147,15 @@ const StudentActivityDetails = ({
   // Get activity type color - Updated to include Remedial and Exam
   const getActivityTypeColor = (type) => {
     const colors = {
-      'Assignment': 'bg-[#767EE0]/20 text-[#767EE0]',
-      'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
-      'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
-      'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
-      'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
-      'Exam': 'bg-[#FF5252]/20 text-[#FF5252]',
-      'Remedial': 'bg-[#3B82F6]/20 text-[#3B82F6]'
+      'Assignment': isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]',
+      'Quiz': isDarkMode ? 'bg-[#B39DDB]/20 text-[#B39DDB]' : 'bg-[#B39DDB]/10 text-[#B39DDB]',
+      'Activity': isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]',
+      'Project': isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]',
+      'Laboratory': isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]',
+      'Exam': isDarkMode ? 'bg-[#FF5252]/20 text-[#FF5252]' : 'bg-[#FF5252]/10 text-[#FF5252]',
+      'Remedial': isDarkMode ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'bg-[#3B82F6]/10 text-[#3B82F6]'
     };
-    return colors[type] || 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80';
+    return colors[type] || (isDarkMode ? 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80' : 'bg-gray-100 text-gray-700');
   };
 
   // Function to generate email message for missed activity
@@ -268,22 +269,58 @@ const StudentActivityDetails = ({
 
   // Email Modal Component
   const EmailModal = () => {
+    const getModalBackground = () => {
+      return isDarkMode ? "bg-[#15151C]" : "bg-white";
+    };
+
+    const getModalBorder = () => {
+      return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+    };
+
+    const getModalTextColor = () => {
+      return isDarkMode ? "text-white" : "text-gray-900";
+    };
+
+    const getModalSecondaryTextColor = () => {
+      return isDarkMode ? "text-[#FFFFFF]/60" : "text-gray-600";
+    };
+
+    const getInputBackground = () => {
+      return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+    };
+
+    const getInputBorder = () => {
+      return isDarkMode ? "border-[#FFFFFF]/20" : "border-gray-300";
+    };
+
+    const getInputFocusBorder = () => {
+      return isDarkMode ? "border-[#767EE0]" : "border-blue-500";
+    };
+
+    const getInfoBackground = () => {
+      return isDarkMode ? "bg-[#23232C]/50" : "bg-gray-100/50";
+    };
+
+    const getInfoBorder = () => {
+      return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+    };
+
     return (
       <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-[100] p-4">
-        <div className="bg-[#15151C] rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-[#FFFFFF]/10">
+        <div className={`${getModalBackground()} rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border ${getModalBorder()}`}>
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-[#FFFFFF]/10">
+          <div className={`flex items-center justify-between p-4 border-b ${getModalBorder()}`}>
             <div>
-              <h3 className="text-lg font-semibold text-white">Email Professor</h3>
-              <p className="text-sm text-[#FFFFFF]/60 mt-0.5">
+              <h3 className={`text-lg font-semibold ${getModalTextColor()}`}>Email Professor</h3>
+              <p className={`text-sm ${getModalSecondaryTextColor()} mt-0.5`}>
                 {teacherName || 'Professor'} • {teacherEmail || ''}
               </p>
             </div>
             <button
               onClick={() => setShowEmailModal(false)}
-              className="p-1.5 hover:bg-[#23232C] rounded transition-colors cursor-pointer"
+              className={`p-1.5 ${isDarkMode ? 'hover:bg-[#23232C]' : 'hover:bg-gray-100'} rounded transition-colors cursor-pointer`}
             >
-              <img src={CrossIcon} alt="Close" className="w-5 h-5" />
+              <img src={CrossIcon} alt="Close" className="w-5 h-5" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
             </button>
           </div>
 
@@ -292,37 +329,37 @@ const StudentActivityDetails = ({
             <div className="space-y-4">
               {/* Subject */}
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Subject</label>
+                <label className={`block text-sm font-medium ${getModalTextColor()} mb-1`}>Subject</label>
                 <input
                   type="text"
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#23232C] border border-[#FFFFFF]/20 rounded text-white text-sm focus:outline-none focus:border-[#767EE0]"
+                  className={`w-full px-3 py-2 ${getInputBackground()} border ${getInputBorder()} rounded ${getModalTextColor()} text-sm focus:outline-none focus:${getInputFocusBorder()}`}
                   placeholder="Email subject"
                 />
               </div>
 
               {/* Message */}
               <div>
-                <label className="block text-sm font-medium text-white mb-1">Message</label>
+                <label className={`block text-sm font-medium ${getModalTextColor()} mb-1`}>Message</label>
                 <textarea
                   value={emailMessage}
                   onChange={(e) => setEmailMessage(e.target.value)}
                   rows={12}
-                  className="w-full px-3 py-2 bg-[#23232C] border border-[#FFFFFF]/20 rounded text-white text-sm focus:outline-none focus:border-[#767EE0] resize-none"
+                  className={`w-full px-3 py-2 ${getInputBackground()} border ${getInputBorder()} rounded ${getModalTextColor()} text-sm focus:outline-none focus:${getInputFocusBorder()} resize-none`}
                   placeholder="Write your message here..."
                 />
               </div>
 
               {/* Email Preview Info */}
-              <div className="bg-[#23232C]/50 rounded-lg p-3 border border-[#FFFFFF]/10">
-                <h4 className="text-sm font-medium text-white mb-2">Email Preview</h4>
-                <div className="space-y-2 text-xs text-[#FFFFFF]/70">
-                  <p><strong className="text-white">To:</strong> {teacherEmail || 'Not available'}</p>
-                  <p><strong className="text-white">From:</strong> {localStorage.getItem('user_email') || localStorage.getItem('user_name') || 'Student'}</p>
-                  <p><strong className="text-white">Subject:</strong> {emailSubject || 'No subject'}</p>
-                  <div className="mt-2 p-2 bg-[#15151C] rounded border border-[#FFFFFF]/5">
-                    <p className="text-xs text-[#FFFFFF]/60 whitespace-pre-wrap">{emailMessage.substring(0, 150)}...</p>
+              <div className={`${getInfoBackground()} rounded-lg p-3 border ${getInfoBorder()}`}>
+                <h4 className={`text-sm font-medium ${getModalTextColor()} mb-2`}>Email Preview</h4>
+                <div className={`space-y-2 text-xs ${getModalSecondaryTextColor()}`}>
+                  <p><strong className={getModalTextColor()}>To:</strong> {teacherEmail || 'Not available'}</p>
+                  <p><strong className={getModalTextColor()}>From:</strong> {localStorage.getItem('user_email') || localStorage.getItem('user_name') || 'Student'}</p>
+                  <p><strong className={getModalTextColor()}>Subject:</strong> {emailSubject || 'No subject'}</p>
+                  <div className={`mt-2 p-2 ${isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'} rounded border ${isDarkMode ? 'border-[#FFFFFF]/5' : 'border-gray-300'}`}>
+                    <p className={`text-xs ${isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-600'} whitespace-pre-wrap`}>{emailMessage.substring(0, 150)}...</p>
                   </div>
                 </div>
               </div>
@@ -330,10 +367,10 @@ const StudentActivityDetails = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-2 p-4 border-t border-[#FFFFFF]/10 bg-[#23232C]/30">
+          <div className={`flex justify-end gap-2 p-4 border-t ${getModalBorder()} ${isDarkMode ? 'bg-[#23232C]/30' : 'bg-gray-50/30'}`}>
             <button
               onClick={() => setShowEmailModal(false)}
-              className="px-4 py-2 text-sm font-medium text-[#FFFFFF]/70 bg-[#2D2D3A] border border-[#FFFFFF]/20 rounded hover:bg-[#374151] transition-colors cursor-pointer"
+              className={`px-4 py-2 text-sm font-medium ${isDarkMode ? 'text-[#FFFFFF]/70 bg-[#2D2D3A] border-[#FFFFFF]/20' : 'text-gray-600 bg-gray-200 border-gray-300'} border rounded hover:${isDarkMode ? 'bg-[#374151]' : 'bg-gray-300'} transition-colors cursor-pointer`}
             >
               Cancel
             </button>
@@ -745,12 +782,65 @@ const StudentActivityDetails = ({
   const percentage = hasGrade ? ((parseFloat(currentActivity.grade) / totalPoints) * 100).toFixed(0) : null;
   const gradeRecommendation = hasGrade ? getGradeRecommendation(parseInt(percentage)) : null;
 
+  // Theme helper functions
+  const getModalBackground = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getModalTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getModalSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/80" : "text-gray-600";
+  };
+
+  const getSectionBackground = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getSectionBorder = () => {
+    return isDarkMode ? "border-gray-800" : "border-gray-200";
+  };
+
+  const getButtonHover = () => {
+    return isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100";
+  };
+
+  const getFileBackground = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getFileHover = () => {
+    return isDarkMode ? "hover:bg-[#15151C]/80" : "hover:bg-gray-50";
+  };
+
+  const getMissedBackground = () => {
+    return isDarkMode ? "from-[#A15353]/10 to-[#A15353]/5" : "from-red-50/10 to-red-50/5";
+  };
+
+  const getMissedBorder = () => {
+    return isDarkMode ? "border-[#A15353]/30" : "border-red-200";
+  };
+
+  const getUploadAreaBorder = () => {
+    return isDarkMode ? "border-[#767EE0]" : "border-[#767EE0]";
+  };
+
+  const getUploadAreaHover = () => {
+    return isDarkMode ? "hover:border-[#00A15D]" : "hover:border-green-500";
+  };
+
+  const getUploadAreaText = () => {
+    return isDarkMode ? "text-[#767EE0]" : "text-[#767EE0]";
+  };
+
   return (
     <>
-      <div className="fixed inset-0 bg-[#23232C]/90 flex justify-center items-center z-50 p-2">
-        <div className="bg-[#15151C] rounded-lg w-full max-w-2xl max-h-[95vh] flex flex-col">
+      <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 p-2">
+        <div className={`${getModalBackground()} rounded-lg w-full max-w-2xl max-h-[95vh] flex flex-col border ${getSectionBorder()}`}>
           {/* Header */}
-          <div className="flex items-start justify-between p-3 border-b border-gray-800">
+          <div className={`flex items-start justify-between p-3 border-b ${getSectionBorder()}`}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={`px-1.5 py-0.5 ${getActivityTypeColor(currentActivity.activity_type)} text-xs font-medium rounded`}>
@@ -758,7 +848,7 @@ const StudentActivityDetails = ({
                 </span>
                 {/* Added Edited label next to title */}
                 {currentActivity.school_work_edited === 1 && (
-                  <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
+                  <span className={`px-1.5 py-0.5 text-xs font-medium rounded ${isDarkMode ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'bg-[#3B82F6]/10 text-[#3B82F6]'}`}>
                     Edited
                   </span>
                 )}
@@ -773,7 +863,7 @@ const StudentActivityDetails = ({
                   </span>
                 )}
               </div>
-              <h2 className="text-white font-bold truncate text-sm mt-1">
+              <h2 className={`${getModalTextColor()} font-bold truncate text-sm mt-1`}>
                 {currentActivity.title}
               </h2>
               
@@ -781,12 +871,12 @@ const StudentActivityDetails = ({
               <div className="mt-2 space-y-1">
                 {/* Deadline */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-[#FFFFFF]/60">Deadline:</span>
+                  <span className={`text-xs font-medium ${getModalSecondaryTextColor()}`}>Deadline:</span>
                   <span className={`text-xs font-medium ${getDeadlineColor(currentActivity.deadline)}`}>
                     {formatDate(currentActivity.deadline)}
                   </span>
                   {deadlineLabel && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-[#A15353]/20 text-[#A15353]">
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]'}`}>
                       {deadlineLabel}
                     </span>
                   )}
@@ -795,8 +885,8 @@ const StudentActivityDetails = ({
                 {/* Created Date (Posted Date) */}
                 {currentActivity.created_at && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#FFFFFF]/60">Posted:</span>
-                    <span className="text-xs font-medium text-[#FFFFFF]/80">
+                    <span className={`text-xs font-medium ${getModalSecondaryTextColor()}`}>Posted:</span>
+                    <span className={`text-xs font-medium ${getModalSecondaryTextColor()}`}>
                       {formatCreatedDate(currentActivity.created_at)}
                     </span>
                   </div>
@@ -806,13 +896,13 @@ const StudentActivityDetails = ({
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="text-[#FFA600] font-bold text-sm">{totalPoints} pts</div>
-                <div className="text-gray-400 text-xs">Total Points</div>
+                <div className={`text-xs ${getModalSecondaryTextColor()}`}>Total Points</div>
               </div>
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-gray-800 rounded cursor-pointer ml-2"
+                className={`p-1 ${getButtonHover()} rounded cursor-pointer ml-2`}
               >
-                <img src={Close} alt="Close" className="w-4 h-4 invert" />
+                <img src={Close} alt="Close" className="w-4 h-4" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
               </button>
             </div>
           </div>
@@ -827,15 +917,15 @@ const StudentActivityDetails = ({
               <div className="space-y-3">
                 {/* Grade Section (only if has grade) */}
                 {hasGrade && (
-                  <div className="bg-[#23232C] rounded p-3">
+                  <div className={`${getSectionBackground()} rounded p-3`}>
                     <div className="flex items-center justify-between">
-                      <h3 className="text-white font-semibold text-sm">Your Grade</h3>
+                      <h3 className={`${getModalTextColor()} font-semibold text-sm`}>Your Grade</h3>
                       <span className="text-[#00A15D] text-sm font-medium">
                         {percentage}%
                       </span>
                     </div>
                     <div className="flex items-center gap-1 mt-2">
-                      <p className="text-white font-bold text-lg">
+                      <p className={`${getModalTextColor()} font-bold text-lg`}>
                         {formatGrade(currentActivity.grade)}/{totalPoints}
                       </p>
                     </div>
@@ -852,7 +942,7 @@ const StudentActivityDetails = ({
                             <p className={`text-xs font-bold mb-1 ${gradeRecommendation.color}`}>
                               {gradeRecommendation.performanceLevel}
                             </p>
-                            <p className="text-white text-xs">
+                            <p className={getModalTextColor()}>
                               {gradeRecommendation.text}
                             </p>
                           </div>
@@ -863,9 +953,9 @@ const StudentActivityDetails = ({
                 )}
 
                 {/* Instructions with Scrollable Container */}
-                <div className="bg-[#23232C] rounded p-3">
+                <div className={`${getSectionBackground()} rounded p-3`}>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-white font-semibold text-sm">Instructions</h3>
+                    <h3 className={`${getModalTextColor()} font-semibold text-sm`}>Instructions</h3>
                     {currentActivity.instruction && currentActivity.instruction.length > 150 && (
                       <button
                         onClick={() => setInstructionsExpanded(!instructionsExpanded)}
@@ -877,38 +967,38 @@ const StudentActivityDetails = ({
                   </div>
                   
                   {/* Scrollable instructions container */}
-                  <div className={`text-gray-200 text-sm whitespace-pre-wrap break-words overflow-y-auto custom-scrollbar ${
+                  <div className={`text-sm whitespace-pre-wrap break-words overflow-y-auto custom-scrollbar ${
                     !instructionsExpanded && currentActivity.instruction && currentActivity.instruction.length > 150 
                       ? 'max-h-24' 
                       : ''
-                  }`}>
+                  } ${getModalTextColor()}`}>
                     {currentActivity.instruction || 'No instructions provided.'}
                   </div>
                   
                   {/* Link if exists */}
                   {currentActivity.link && (
-                    <div className="mt-2 pt-2 border-t border-gray-700">
+                    <div className={`mt-2 pt-2 border-t ${getSectionBorder()}`}>
                       <a 
                         href={currentActivity.link} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-[#767EE0] text-sm font-medium break-all hover:underline flex items-center gap-1"
                       >
-                        <img src={DownloadIcon} alt="Link" className="w-3 h-3 invert" />
+                        <img src={DownloadIcon} alt="Link" className="w-3 h-3" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                         <span>Reference Link</span>
                       </a>
-                      <div className="text-xs text-gray-400 truncate mt-1">{currentActivity.link}</div>
+                      <div className={`text-xs truncate mt-1 ${getModalSecondaryTextColor()}`}>{currentActivity.link}</div>
                     </div>
                   )}
                 </div>
 
                 {/* Missed Activity Notice with Email Button */}
                 {missed && !submitted && teacherEmail && (
-                  <div className="bg-gradient-to-r from-[#A15353]/10 to-[#A15353]/5 border border-[#A15353]/30 rounded p-3">
+                  <div className={`bg-gradient-to-r ${getMissedBackground()} border ${getMissedBorder()} rounded p-3`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="text-[#A15353] font-semibold text-sm mb-1">Missed Activity</h3>
-                        <p className="text-white text-xs">
+                        <p className={getModalTextColor()}>
                           The deadline for this activity has passed. You can contact your professor to request an extension or alternative arrangement.
                         </p>
                       </div>
@@ -926,9 +1016,9 @@ const StudentActivityDetails = ({
                 {/* Files Section */}
                 <div className="grid grid-cols-2 gap-3">
                   {/* Professor Files - Student can only view */}
-                  <div className="bg-[#23232C] rounded p-3">
+                  <div className={`${getSectionBackground()} rounded p-3`}>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-white font-semibold text-sm">Professor's Files</h3>
+                      <h3 className={`${getModalTextColor()} font-semibold text-sm`}>Professor's Files</h3>
                       <button
                         onClick={fetchActivityDetails}
                         className="text-[#767EE0] text-xs font-medium cursor-pointer"
@@ -950,7 +1040,7 @@ const StudentActivityDetails = ({
                               <div key={index} className="space-y-3">
                                 {/* Image preview - Show actual uploaded image */}
                                 <div 
-                                  className="w-full h-40 bg-[#15151C] rounded overflow-hidden cursor-pointer group relative"
+                                  className={`w-full h-40 ${getFileBackground()} rounded overflow-hidden cursor-pointer group relative`}
                                   onClick={() => handleViewFile(file)}
                                 >
                                   <div className="w-full h-full flex items-center justify-center overflow-hidden">
@@ -963,8 +1053,8 @@ const StudentActivityDetails = ({
                                         onLoad={() => setProfessorFileErrors(prev => ({ ...prev, [index]: false }))}
                                       />
                                     ) : (
-                                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#23232C] to-[#15151C]">
-                                        <img src={fileIcon} alt="File" className="w-8 h-8" />
+                                      <div className={`w-full h-full flex items-center justify-center ${getSectionBackground()}`}>
+                                        <img src={fileIcon} alt="File" className="w-8 h-8" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                       </div>
                                     )}
                                   </div>
@@ -975,10 +1065,10 @@ const StudentActivityDetails = ({
                                 
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-white text-xs font-medium truncate">
+                                    <p className={`${getModalTextColor()} text-xs font-medium truncate`}>
                                       {file.original_name}
                                     </p>
-                                    <p className="text-gray-400 text-xs">
+                                    <p className={`text-xs ${getModalSecondaryTextColor()}`}>
                                       {file.file_size ? formatFileSize(file.file_size) : ''}
                                     </p>
                                   </div>
@@ -990,17 +1080,17 @@ const StudentActivityDetails = ({
                             return (
                               <div 
                                 key={index}
-                                className="flex items-center justify-between p-3 bg-[#15151C] rounded cursor-pointer hover:bg-[#15151C]/80 transition-colors"
+                                className={`flex items-center justify-between p-3 ${getFileBackground()} rounded cursor-pointer ${getFileHover()} transition-colors`}
                                 onClick={() => handleViewFile(file)}
                               >
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                                  <img src={fileIcon} alt="File" className="w-6 h-6" />
+                                  <img src={fileIcon} alt="File" className="w-6 h-6" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-white text-xs font-medium truncate">
+                                    <p className={`${getModalTextColor()} text-xs font-medium truncate`}>
                                       {file.original_name}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
-                                      <p className="text-gray-400 text-xs">
+                                      <p className={`text-xs ${getModalSecondaryTextColor()}`}>
                                         {file.file_size ? formatFileSize(file.file_size) : ''}
                                       </p>
                                       {isImageFile(file) && (
@@ -1021,18 +1111,18 @@ const StudentActivityDetails = ({
                                     </div>
                                   </div>
                                 </div>
-                                <img src={DownloadIcon} alt="Download" className="w-4 h-4 invert opacity-60" />
+                                <img src={DownloadIcon} alt="Download" className="w-4 h-4 opacity-60" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                               </div>
                             );
                           }
                         })}
                       </div>
                     ) : (
-                      <div className="w-full h-40 border-2 border-dashed border-gray-700 rounded flex flex-col items-center justify-center bg-[#15151C]">
-                        <div className="w-12 h-12 bg-gradient-to-br from-gray-700/20 to-gray-700/10 rounded-full flex items-center justify-center mb-2">
-                          <img src={FileIcon} alt="File" className="w-5 h-5 invert" />
+                      <div className={`w-full h-40 border-2 border-dashed ${getSectionBorder()} rounded flex flex-col items-center justify-center ${getFileBackground()}`}>
+                        <div className={`w-12 h-12 ${getSectionBackground()} rounded-full flex items-center justify-center mb-2`}>
+                          <img src={FileIcon} alt="File" className="w-5 h-5" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                         </div>
-                        <p className="text-gray-400 text-sm font-medium">
+                        <p className={`${getModalSecondaryTextColor()} text-sm font-medium`}>
                           No files from professor
                         </p>
                       </div>
@@ -1040,10 +1130,10 @@ const StudentActivityDetails = ({
                   </div>
 
                   {/* Student Files Section */}
-                  <div className="bg-[#23232C] rounded p-3">
+                  <div className={`${getSectionBackground()} rounded p-3`}>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-white font-semibold text-sm">Your File</h3>
-                      <span className="text-gray-400 text-xs">
+                      <h3 className={`${getModalTextColor()} font-semibold text-sm`}>Your File</h3>
+                      <span className={`text-xs ${getModalSecondaryTextColor()}`}>
                         {studentFiles.length > 0 ? 'Uploaded' : 'Not uploaded'}
                       </span>
                     </div>
@@ -1056,7 +1146,7 @@ const StudentActivityDetails = ({
                             {isImageFile(studentFiles[0]) ? (
                               // Image preview
                               <div 
-                                className="w-full h-40 bg-[#15151C] rounded overflow-hidden cursor-pointer group relative"
+                                className={`w-full h-40 ${getFileBackground()} rounded overflow-hidden cursor-pointer group relative`}
                                 onClick={() => handleViewFile(studentFiles[0])}
                               >
                                 {/* Show actual uploaded image */}
@@ -1071,14 +1161,14 @@ const StudentActivityDetails = ({
                                         onLoad={() => setImageError(false)}
                                       />
                                     ) : (
-                                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#23232C] to-[#15151C]">
-                                        <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-8 h-8" />
+                                      <div className={`w-full h-full flex items-center justify-center ${getSectionBackground()}`}>
+                                        <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-8 h-8" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                       </div>
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#23232C] to-[#15151C]">
-                                    <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-8 h-8" />
+                                  <div className={`w-full h-full flex items-center justify-center ${getSectionBackground()}`}>
+                                    <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-8 h-8" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                   </div>
                                 )}
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -1088,17 +1178,17 @@ const StudentActivityDetails = ({
                             ) : (
                               // Non-image file display
                               <div 
-                                className="flex items-center justify-between p-3 bg-[#15151C] rounded cursor-pointer hover:bg-[#15151C]/80 transition-colors"
+                                className={`flex items-center justify-between p-3 ${getFileBackground()} rounded cursor-pointer ${getFileHover()} transition-colors`}
                                 onClick={() => handleViewFile(studentFiles[0])}
                               >
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                                  <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-6 h-6" />
+                                  <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-6 h-6" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-white text-xs font-medium truncate">
+                                    <p className={`${getModalTextColor()} text-xs font-medium truncate`}>
                                       {studentFiles[0].original_name}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
-                                      <p className="text-gray-400 text-xs">
+                                      <p className={`text-xs ${getModalSecondaryTextColor()}`}>
                                         {studentFiles[0].file_size ? formatFileSize(studentFiles[0].file_size) : ''}
                                       </p>
                                       {isImageFile(studentFiles[0]) && (
@@ -1114,24 +1204,24 @@ const StudentActivityDetails = ({
                                     </div>
                                   </div>
                                 </div>
-                                <img src={DownloadIcon} alt="Download" className="w-4 h-4 invert opacity-60" />
+                                <img src={DownloadIcon} alt="Download" className="w-4 h-4 opacity-60" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                               </div>
                             )}
                             
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
-                                <p className="text-white text-xs font-medium truncate">
+                                <p className={`${getModalTextColor()} text-xs font-medium truncate`}>
                                   {studentFiles[0].original_name}
                                 </p>
-                                <p className="text-gray-400 text-xs">
+                                <p className={`text-xs ${getModalSecondaryTextColor()}`}>
                                   {studentFiles[0].file_size ? formatFileSize(studentFiles[0].file_size) : ''}
                                 </p>
                               </div>
                             </div>
                             <div className={`text-xs p-2 rounded ${
                               missed 
-                                ? 'text-[#A15353] bg-[#A15353]/10' 
-                                : 'text-[#00A15D] bg-[#00A15D]/10'
+                                ? `text-[#A15353] ${isDarkMode ? 'bg-[#A15353]/10' : 'bg-[#A15353]/5'}` 
+                                : `text-[#00A15D] ${isDarkMode ? 'bg-[#00A15D]/10' : 'bg-[#00A15D]/5'}`
                             }`}>
                               {missed 
                                 ? 'The deadline for this activity has passed. You can view your submission but cannot modify it.' 
@@ -1139,14 +1229,14 @@ const StudentActivityDetails = ({
                             </div>
                           </div>
                         ) : (
-                          <div className="w-full h-40 border-2 border-dashed border-gray-700 rounded flex flex-col items-center justify-center bg-[#15151C]">
-                            <div className="w-12 h-12 bg-gradient-to-br from-gray-700/20 to-gray-700/10 rounded-full flex items-center justify-center mb-2">
-                              <img src={FileIcon} alt="File" className="w-5 h-5 invert" />
+                          <div className={`w-full h-40 border-2 border-dashed ${getSectionBorder()} rounded flex flex-col items-center justify-center ${getFileBackground()}`}>
+                            <div className={`w-12 h-12 ${getSectionBackground()} rounded-full flex items-center justify-center mb-2`}>
+                              <img src={FileIcon} alt="File" className="w-5 h-5" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                             </div>
-                            <p className="text-gray-400 text-sm font-medium">
+                            <p className={`${getModalSecondaryTextColor()} text-sm font-medium`}>
                               {missed ? 'Activity Missed' : 'Submitted'}
                             </p>
-                            <p className="text-gray-400 text-xs mt-1 text-center px-2">
+                            <p className={`${getModalSecondaryTextColor()} text-xs mt-1 text-center px-2`}>
                               {missed 
                                 ? 'The deadline has passed. You cannot upload a file.' 
                                 : 'You cannot modify a submitted activity.'}
@@ -1164,7 +1254,7 @@ const StudentActivityDetails = ({
                             {pendingPreview && isImageFile(pendingFile) ? (
                               // Image preview
                               <div 
-                                className="w-full h-40 bg-[#15151C] rounded overflow-hidden cursor-pointer group relative"
+                                className={`w-full h-40 ${getFileBackground()} rounded overflow-hidden cursor-pointer group relative`}
                                 onClick={() => window.open(pendingPreview, '_blank')}
                               >
                                 <div className="w-full h-full flex items-center justify-center overflow-hidden">
@@ -1182,15 +1272,15 @@ const StudentActivityDetails = ({
                               </div>
                             ) : (
                               // Non-image file display
-                              <div className="flex items-center justify-between p-3 bg-[#15151C] rounded">
+                              <div className={`flex items-center justify-between p-3 ${getFileBackground()} rounded`}>
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                                  <img src={getFileIcon(pendingFile.name, pendingFile.type)} alt="File" className="w-6 h-6" />
+                                  <img src={getFileIcon(pendingFile.name, pendingFile.type)} alt="File" className="w-6 h-6" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-white text-xs font-medium truncate">
+                                    <p className={`${getModalTextColor()} text-xs font-medium truncate`}>
                                       {pendingFile.name}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">
-                                      <p className="text-gray-400 text-xs">
+                                      <p className={`text-xs ${getModalSecondaryTextColor()}`}>
                                         {formatFileSize(pendingFile.size)}
                                       </p>
                                       {isImageFile(pendingFile) && (
@@ -1211,10 +1301,10 @@ const StudentActivityDetails = ({
                             
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
-                                <p className="text-white text-xs font-medium truncate">
+                                <p className={`${getModalTextColor()} text-xs font-medium truncate`}>
                                   {pendingFile.name}
                                 </p>
-                                <p className="text-gray-400 text-xs">
+                                <p className={`text-xs ${getModalSecondaryTextColor()}`}>
                                   {formatFileSize(pendingFile.size)}
                                 </p>
                               </div>
@@ -1240,7 +1330,7 @@ const StudentActivityDetails = ({
                             {isUploading && (
                               <div className="text-center">
                                 <div className="w-4 h-4 border-2 border-[#00A15D] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                                <p className="text-gray-400 text-xs mt-1">Uploading your file...</p>
+                                <p className={`text-xs mt-1 ${getModalSecondaryTextColor()}`}>Uploading your file...</p>
                               </div>
                             )}
                           </div>
@@ -1252,7 +1342,7 @@ const StudentActivityDetails = ({
                                 {isImageFile(studentFiles[0]) ? (
                                   // Image preview
                                   <div 
-                                    className="w-full h-40 bg-[#15151C] rounded overflow-hidden cursor-pointer group relative"
+                                    className={`w-full h-40 ${getFileBackground()} rounded overflow-hidden cursor-pointer group relative`}
                                     onClick={() => handleViewFile(studentFiles[0])}
                                   >
                                     {studentFiles[0].file_url || studentFiles[0].url ? (
@@ -1266,14 +1356,14 @@ const StudentActivityDetails = ({
                                             onLoad={() => setImageError(false)}
                                           />
                                         ) : (
-                                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#23232C] to-[#15151C]">
-                                            <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-8 h-8" />
+                                          <div className={`w-full h-full flex items-center justify-center ${getSectionBackground()}`}>
+                                            <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-8 h-8" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                           </div>
                                         )}
                                       </div>
                                     ) : (
-                                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#23232C] to-[#15151C]">
-                                        <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-8 h-8" />
+                                      <div className={`w-full h-full flex items-center justify-center ${getSectionBackground()}`}>
+                                        <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-8 h-8" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                       </div>
                                     )}
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -1283,17 +1373,17 @@ const StudentActivityDetails = ({
                                 ) : (
                                   // Non-image file display
                                   <div 
-                                    className="flex items-center justify-between p-3 bg-[#15151C] rounded cursor-pointer hover:bg-[#15151C]/80 transition-colors"
+                                    className={`flex items-center justify-between p-3 ${getFileBackground()} rounded cursor-pointer ${getFileHover()} transition-colors`}
                                     onClick={() => handleViewFile(studentFiles[0])}
                                   >
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-6 h-6" />
+                                      <img src={getFileIcon(studentFiles[0].original_name, studentFiles[0].file_type)} alt="File" className="w-6 h-6" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-white text-xs font-medium truncate">
+                                        <p className={`${getModalTextColor()} text-xs font-medium truncate`}>
                                           {studentFiles[0].original_name}
                                         </p>
                                         <div className="flex items-center gap-2 mt-1">
-                                          <p className="text-gray-400 text-xs">
+                                          <p className={`text-xs ${getModalSecondaryTextColor()}`}>
                                             {studentFiles[0].file_size ? formatFileSize(studentFiles[0].file_size) : ''}
                                           </p>
                                           {isImageFile(studentFiles[0]) && (
@@ -1309,16 +1399,16 @@ const StudentActivityDetails = ({
                                         </div>
                                       </div>
                                     </div>
-                                    <img src={DownloadIcon} alt="Download" className="w-4 h-4 invert opacity-60" />
+                                    <img src={DownloadIcon} alt="Download" className="w-4 h-4 opacity-60" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                   </div>
                                 )}
                                 
                                 <div className="flex items-center justify-between">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-white text-xs font-medium truncate">
+                                    <p className={`${getModalTextColor()} text-xs font-medium truncate`}>
                                       {studentFiles[0].original_name}
                                     </p>
-                                    <p className="text-gray-400 text-xs">
+                                    <p className={`text-xs ${getModalSecondaryTextColor()}`}>
                                       {studentFiles[0].file_size ? formatFileSize(studentFiles[0].file_size) : ''}
                                     </p>
                                   </div>
@@ -1339,14 +1429,14 @@ const StudentActivityDetails = ({
                               </div>
                             ) : (
                               <div 
-                                className="w-full h-40 border-2 border-dashed border-[#767EE0] rounded flex flex-col items-center justify-center cursor-pointer hover:border-[#00A15D] transition-colors group"
+                                className={`w-full h-40 border-2 border-dashed ${getUploadAreaBorder()} rounded flex flex-col items-center justify-center cursor-pointer ${getUploadAreaHover()} transition-colors group`}
                                 onClick={handleFileSelect}
                               >
-                                <div className="w-12 h-12 bg-gradient-to-br from-[#767EE0]/20 to-[#767EE0]/10 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                                  <img src={Add} alt="Add" className="w-5 h-5 invert" />
+                                <div className={`w-12 h-12 ${isDarkMode ? 'bg-[#767EE0]/20' : 'bg-[#767EE0]/10'} rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                                  <img src={Add} alt="Add" className="w-5 h-5" style={!isDarkMode ? { filter: 'invert(0.5)' } : {}} />
                                 </div>
-                                <p className="text-[#767EE0] text-sm font-medium">Select File</p>
-                                <p className="text-gray-400 text-xs mt-1">Any file type - Max 50MB</p>
+                                <p className={`${getUploadAreaText()} text-sm font-medium`}>Select File</p>
+                                <p className={`${getModalSecondaryTextColor()} text-xs mt-1`}>Any file type - Max 50MB</p>
                                 <div className="flex flex-wrap justify-center gap-1 mt-2">
                                   <span className="text-[#00A15D] text-[10px] bg-[#00A15D]/10 px-2 py-0.5 rounded">Images</span>
                                   <span className="text-[#FF4757] text-[10px] bg-[#FF4757]/10 px-2 py-0.5 rounded">PDF</span>
@@ -1366,7 +1456,7 @@ const StudentActivityDetails = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-2 p-3 border-t border-gray-800">
+          <div className={`flex justify-end gap-2 p-3 border-t ${getSectionBorder()}`}>
             {/* Add email professor button */}
             {teacherEmail && (
               <button
@@ -1407,7 +1497,7 @@ const StudentActivityDetails = ({
               onClick={handleCloseImage}
               className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full z-10"
             >
-              <img src={Close} alt="Close" className="w-5 h-5 invert" />
+              <img src={Close} alt="Close" className="w-5 h-5" style={!isDarkMode ? { filter: 'invert(1)' } : {}} />
             </button>
             
             <img

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import Analytics from '../../assets/LineGraph.svg';
 import WeekPerformancePopup from './WeekPerformancePopup';
 
-const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
+const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode, isDarkMode = true }) => {
   const [hoveredWeek, setHoveredWeek] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -225,10 +225,51 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
     setSelectedWeekData(null);
   };
 
+  // Theme helper functions
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/60" : "text-gray-600";
+  };
+
+  const getTertiaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/40" : "text-gray-400";
+  };
+
+  const getGridColor = () => {
+    return isDarkMode ? "#2A2A35" : "#e5e7eb";
+  };
+
+  const getBackgroundColor = () => {
+    return isDarkMode ? "#23232C" : "#ffffff";
+  };
+
+  const getLegendBackgroundColor = () => {
+    return isDarkMode ? "#2A2A35" : "#f3f4f6";
+  };
+
+  const getButtonBackgroundColor = () => {
+    return isDarkMode ? "#2A2A35" : "#f3f4f6";
+  };
+
+  const getButtonHoverBackgroundColor = () => {
+    return isDarkMode ? "#3A3A45" : "#e5e7eb";
+  };
+
   if (weeks.length === 0) {
     return (
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
-        <div className="p-4 border-b border-[#FFFFFF]/10">
+      <div className={`${getCardBackgroundColor()} rounded-xl border ${getCardBorderColor()}`}>
+        <div className={`p-4 border-b ${getCardBorderColor()}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center">
@@ -236,11 +277,12 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                   src={Analytics} 
                   alt="Analytics" 
                   className="w-5 h-5"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Performance Trend</h3>
+              <h3 className={`font-bold text-lg ${getTextColor()}`}>Performance Trend</h3>
             </div>
-            <div className="text-sm text-[#FFFFFF]/60">No data available</div>
+            <div className={`text-sm ${getSecondaryTextColor()}`}>No data available</div>
           </div>
         </div>
         <div className="h-48 flex items-center justify-center">
@@ -250,9 +292,10 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                 src={Analytics} 
                 alt="Analytics" 
                 className="w-8 h-8 opacity-40"
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
               />
             </div>
-            <p className="text-[#FFFFFF]/60">No performance data available for this subject</p>
+            <p className={`${getSecondaryTextColor()}`}>No performance data available for this subject</p>
           </div>
         </div>
       </div>
@@ -261,9 +304,9 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
 
   return (
     <>
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10 relative">
+      <div className={`${getCardBackgroundColor()} rounded-xl border ${getCardBorderColor()} relative`}>
         {/* Header - Always visible */}
-        <div className="p-4 border-b border-[#FFFFFF]/10">
+        <div className={`p-4 border-b ${getCardBorderColor()}`}>
           <div className="flex flex-col md:flex-row md:items-center justify-between">
             <div className="flex items-center gap-3 mb-3 md:mb-0">
               <div className="flex items-center justify-center">
@@ -271,11 +314,12 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                   src={Analytics} 
                   alt="Analytics" 
                   className="w-5 h-5"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </div>
               <div>
-                <h3 className="font-bold text-lg text-[#FFFFFF]">Performance Trend</h3>
-                <p className="text-sm text-[#FFFFFF]/60">Weekly progress overview - Click any point for details</p>
+                <h3 className={`font-bold text-lg ${getTextColor()}`}>Performance Trend</h3>
+                <p className={`text-sm ${getSecondaryTextColor()}`}>Weekly progress overview - Click any point for details</p>
               </div>
             </div>
             
@@ -284,8 +328,8 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
               {/* Current week stats */}
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <div className="text-xs text-[#FFFFFF]/60">Current Week</div>
-                  <div className="font-bold text-base text-[#FFFFFF]">{trendInsights.currentWeekScore}%</div>
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Current Week</div>
+                  <div className={`font-bold text-base ${getTextColor()}`}>{trendInsights.currentWeekScore}%</div>
                 </div>
                 <div className={`p-1.5 rounded-lg ${trendInsights.trend === 'up' ? 'bg-[#00A15D]/10' : trendInsights.trend === 'down' ? 'bg-[#FF5555]/10' : 'bg-[#FFA600]/10'}`}>
                   <div className={`w-3 h-3 flex items-center justify-center ${trendInsights.trend === 'up' ? 'text-[#00A15D]' : trendInsights.trend === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
@@ -301,16 +345,16 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
               {/* Collapse/Expand button */}
               <button
                 onClick={toggleCollapse}
-                className="p-1.5 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
+                className={`p-1.5 rounded-lg ${getButtonBackgroundColor()} hover:${getButtonHoverBackgroundColor()} transition-all duration-200 cursor-pointer`}
                 aria-label={isCollapsed ? "Expand chart" : "Collapse chart"}
               >
                 <div className="w-4 h-4 flex items-center justify-center">
                   {isCollapsed ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF" className="w-3 h-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isDarkMode ? "#FFFFFF" : "#374151"} className="w-3 h-3">
                       <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF" className="w-3 h-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isDarkMode ? "#FFFFFF" : "#374151"} className="w-3 h-3">
                       <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
                     </svg>
                   )}
@@ -341,13 +385,13 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                 >
                   <defs>
                     <linearGradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.15"/>
-                      <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+                      <stop offset="0%" stopColor={isDarkMode ? "#FFFFFF" : "#6b7280"} stopOpacity="0.15"/>
+                      <stop offset="100%" stopColor={isDarkMode ? "#FFFFFF" : "#6b7280"} stopOpacity="0"/>
                     </linearGradient>
                     
                     <linearGradient id="lineGradient" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1"/>
-                      <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.8"/>
+                      <stop offset="0%" stopColor={isDarkMode ? "#FFFFFF" : "#4f46e5"} stopOpacity="1"/>
+                      <stop offset="100%" stopColor={isDarkMode ? "#FFFFFF" : "#4f46e5"} stopOpacity="0.8"/>
                     </linearGradient>
                   </defs>
 
@@ -363,7 +407,7 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                           y1={y}
                           x2={innerWidth + margin.left}
                           y2={y}
-                          stroke="#2A2A35"
+                          stroke={getGridColor()}
                           strokeWidth={1}
                           strokeDasharray={score === 75 || score === 85 ? "5,5" : "2,2"}
                           opacity={0.5}
@@ -373,7 +417,7 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                           y={y}
                           textAnchor="end"
                           dominantBaseline="middle"
-                          fill="#FFFFFF"
+                          fill={isDarkMode ? "#FFFFFF" : "#374151"}
                           fontSize="10"
                           fontWeight={score === 75 || score === 85 ? "bold" : "normal"}
                           opacity={0.7}
@@ -439,7 +483,7 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                           x={x}
                           y={chartHeight - 10}
                           textAnchor="middle"
-                          fill="#FFFFFF"
+                          fill={isDarkMode ? "#FFFFFF" : "#374151"}
                           fontSize="10"
                           opacity={0.7}
                         >
@@ -484,7 +528,7 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                             cy={y}
                             r={isHovered ? 10 : 8}
                             fill="none"
-                            stroke="#FFFFFF"
+                            stroke={isDarkMode ? "#FFFFFF" : "#374151"}
                             strokeWidth="2"
                             strokeOpacity="0.8"
                           />
@@ -496,7 +540,7 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                           cy={y}
                           r={isHovered ? 6 : 4}
                           fill={scoreColor}
-                          stroke="#15151C"
+                          stroke={isDarkMode ? "#15151C" : "#ffffff"}
                           strokeWidth={isCurrent ? "3" : "2"}
                           onMouseEnter={(e) => handleMouseEnter(week.week, e)}
                           onMouseLeave={() => setHoveredWeek(null)}
@@ -512,23 +556,23 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
 
             {/* Performance zones legend */}
             <div className="mt-4 flex flex-wrap gap-2 text-xs justify-center">
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className={`flex items-center gap-1 px-2 py-1 ${getLegendBackgroundColor()} rounded`}>
                 <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
                 <span className="text-[#FF5555] text-xs">Below 75%</span>
               </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className={`flex items-center gap-1 px-2 py-1 ${getLegendBackgroundColor()} rounded`}>
                 <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
                 <span className="text-[#FFA600] text-xs">75-84%</span>
               </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+              <div className={`flex items-center gap-1 px-2 py-1 ${getLegendBackgroundColor()} rounded`}>
                 <div className="w-2 h-2 rounded-full bg-[#00A15D]"></div>
                 <span className="text-[#00A15D] text-xs">85%+</span>
               </div>
-              <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
-                <div className="w-3 h-3 rounded-full border border-[#FFFFFF] flex items-center justify-center">
-                  <div className="w-1 h-1 rounded-full bg-[#FFFFFF]"></div>
+              <div className={`flex items-center gap-1 px-2 py-1 ${getLegendBackgroundColor()} rounded`}>
+                <div className="w-3 h-3 rounded-full border ${isDarkMode ? 'border-[#FFFFFF]' : 'border-gray-400'} flex items-center justify-center">
+                  <div className={`w-1 h-1 rounded-full ${isDarkMode ? 'bg-[#FFFFFF]' : 'bg-gray-400'}`}></div>
                 </div>
-                <span className="text-[#FFFFFF] text-xs">Current Week</span>
+                <span className={`${getTextColor()} text-xs`}>Current Week</span>
               </div>
             </div>
           </div>
@@ -536,22 +580,22 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
 
         {/* Collapsed State Summary - Made smaller */}
         {isCollapsed && (
-          <div className="p-4 border-t border-[#FFFFFF]/10">
+          <div className={`p-4 border-t ${getCardBorderColor()}`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               {/* Left side - Stats summary */}
               <div className="flex items-center gap-4">
                 <div className="text-left">
-                  <div className="text-xs text-[#FFFFFF]/60">Highest Score</div>
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Highest Score</div>
                   <div className="font-bold text-base text-[#00A15D]">{trendInsights.highestWeek?.score || 0}%</div>
                 </div>
                 
                 <div className="text-left">
-                  <div className="text-xs text-[#FFFFFF]/60">Lowest Score</div>
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Lowest Score</div>
                   <div className="font-bold text-base text-[#FF5555]">{trendInsights.lowestWeek?.score || 0}%</div>
                 </div>
                 
                 <div className="text-left">
-                  <div className="text-xs text-[#FFFFFF]/60">Trend</div>
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Trend</div>
                   <div className={`font-bold text-base ${trendInsights.trend === 'up' ? 'text-[#00A15D]' : trendInsights.trend === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
                     {trendInsights.trend === 'up' ? '↑' : trendInsights.trend === 'down' ? '↓' : '→'} {trendInsights.trendPercentage}%
                   </div>
@@ -560,10 +604,10 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
               
               {/* Right side - Weeks info */}
               <div className="text-right">
-                <div className="text-xs text-[#FFFFFF]/60">
+                <div className={`text-xs ${getSecondaryTextColor()}`}>
                   {weeks.length} weeks tracked
                 </div>
-                <div className="text-xs text-[#FFFFFF]/40">
+                <div className={`text-xs ${getTertiaryTextColor()}`}>
                   Week {trendInsights.currentWeekNumber} current
                 </div>
               </div>
@@ -575,19 +619,21 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
         {hoveredWeekData && !isCollapsed && (
           <div 
             ref={tooltipRef}
-            className="fixed bg-[#23232C] border border-[#FFFFFF]/20 rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150"
+            className="fixed border rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150"
             style={{
               left: `${tooltipPosition.x + 10}px`,
               top: `${tooltipPosition.y - 100}px`,
               transform: 'translateX(-50%)',
-              minWidth: '140px'
+              minWidth: '140px',
+              backgroundColor: getBackgroundColor(),
+              borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
             }}
           >
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[#FFFFFF] text-sm font-semibold">Week {hoveredWeekData.week}</span>
+                <span className={`text-sm font-semibold ${getTextColor()}`}>Week {hoveredWeekData.week}</span>
                 {isCurrentWeek(hoveredWeekData.week) && (
-                  <span className="text-xs text-[#FFFFFF] font-medium bg-[#6366F1] px-2 py-0.5 rounded">
+                  <span className={`text-xs font-medium bg-[#6366F1] px-2 py-0.5 rounded ${getTextColor()}`}>
                     Current Week
                   </span>
                 )}
@@ -600,17 +646,21 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
                   {hoveredWeekData.score}%
                 </span>
               </div>
-              <div className="text-[#FFFFFF]/60 text-xs mt-1">
+              <div className={`${getSecondaryTextColor()} text-xs mt-1`}>
                 {hoveredWeekData.activities} activities completed
               </div>
-              <div className="text-[#FFFFFF]/40 text-xs mt-2">
+              <div className={`${getTertiaryTextColor()} text-xs mt-2`}>
                 Click for detailed analysis
               </div>
             </div>
             
             {/* Tooltip arrow */}
-            <div className="absolute w-2 h-2 bg-[#23232C] border-r border-b border-[#FFFFFF]/20 
-              transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2" />
+            <div className="absolute w-2 h-2 transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2" 
+                 style={{ 
+                   backgroundColor: getBackgroundColor(),
+                   borderRight: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
+                   borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`
+                 }} />
           </div>
         )}
       </div>
@@ -622,6 +672,7 @@ const PerformanceLineChart = ({ performanceTrend, studentId, subjectCode }) => {
         weekData={selectedWeekData}
         studentId={studentId}
         subjectCode={subjectCode}
+        isDarkMode={isDarkMode}
       />
     </>
   );

@@ -21,7 +21,29 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
   const [loadingClasses, setLoadingClasses] = useState(false);
   const [subjectsDropdownOpen, setSubjectsDropdownOpen] = useState(false);
   const [classesDropdownOpen, setClassesDropdownOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Default to light mode
   const location = useLocation();
+
+  // Check for theme preference on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const isDark = savedTheme === 'dark';
+    setIsDarkMode(isDark);
+  }, []);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setIsDarkMode(isDark);
+    };
+
+    // Create a mutation observer to watch for class changes on html element
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
 
   const isControlled = typeof isOpenProp !== "undefined" && typeof setIsOpenProp === "function";
   const isOpen = isControlled ? isOpenProp : localOpen;
@@ -211,8 +233,40 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
     setClassesDropdownOpen(false);
   };
 
-  // Updated hover color to 20% opacity
-  const navItemBase = "flex items-center px-4 py-3 rounded-lg hover:bg-[#00A15D]/20 cursor-pointer select-none transition-colors duration-150";
+  // Theme-based styles
+  const getBackgroundColor = () => {
+    return isDarkMode ? "#15151C" : "#ffffff";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "#23232C" : "#e5e7eb";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "#ffffff" : "#1f2937";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "#d1d5db" : "#6b7280";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "#dbdbdb/40" : "#e5e7eb";
+  };
+
+  const getHoverBgColor = () => {
+    return isDarkMode ? "rgba(0, 161, 93, 0.2)" : "rgba(0, 161, 93, 0.1)";
+  };
+
+  const getActiveBgColor = () => {
+    return isDarkMode ? "rgba(0, 161, 93, 0.2)" : "rgba(0, 161, 93, 0.15)";
+  };
+
+  const getLogoFilter = () => {
+    return isDarkMode ? "none" : "invert(1)";
+  };
+
+  const navItemBase = "flex items-center px-4 py-3 rounded-lg cursor-pointer select-none transition-colors duration-150";
 
   return (
     <>
@@ -224,20 +278,28 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
         />
       )}
 
-      {/* Removed right margin/padding and added border-right */}
       <aside
-        className={`fixed top-0 left-0 h-screen bg-[#15151C] select-none z-50 shadow-xl transition-transform duration-300 ease-in-out border-r border-[#23232C]
+        className={`fixed top-0 left-0 h-screen select-none z-50 shadow-xl transition-transform duration-300 ease-in-out border-r
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         w-[75%] max-w-[280px] sm:w-[240px] lg:w-[250px] xl:w-[270px] 2xl:w-[290px]`}
+        style={{ 
+          backgroundColor: getBackgroundColor(),
+          borderColor: getBorderColor()
+        }}
         role="navigation"
         aria-label="Main navigation"
       >
         <div className="flex flex-col h-full overflow-hidden">
           <div className="flex-shrink-0 p-4 pb-3">
             <div className="flex justify-center">
-              <img src={TextLogo} alt="TrackED Logo" className="h-10" />
+              <img 
+                src={TextLogo} 
+                alt="TrackED Logo" 
+                className="h-10" 
+                style={{ filter: getLogoFilter() }}
+              />
             </div>
-            <hr className="border-[#DBDBDB] rounded border-1 opacity-40 mt-4" />
+            <hr className="rounded border-1 mt-4" style={{ borderColor: getDividerColor() }} />
           </div>
 
           <nav 
@@ -254,13 +316,22 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                     <div className="mb-1">
                       <button
                         onClick={() => setSubjectsDropdownOpen(!subjectsDropdownOpen)}
-                        className={`${navItemBase} w-full justify-between ${
-                          subjectsDropdownOpen ? "bg-[#00A15D]/20" : ""
-                        }`}
+                        className={`${navItemBase} w-full justify-between`}
+                        style={{ 
+                          backgroundColor: subjectsDropdownOpen ? getActiveBgColor() : 'transparent',
+                          color: getTextColor()
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = getHoverBgColor()}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = subjectsDropdownOpen ? getActiveBgColor() : 'transparent'}
                       >
                         <div className="flex items-center">
-                          <img src={item.icon} alt="icons" className="h-5 w-5 mr-3 flex-shrink-0" />
-                          <span className="text-white text-sm sm:text-[1rem] truncate">{item.label}</span>
+                          <img 
+                            src={item.icon} 
+                            alt="icons" 
+                            className="h-5 w-5 mr-3 flex-shrink-0" 
+                            style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                          />
+                          <span className="text-sm sm:text-[1rem] truncate">{item.label}</span>
                         </div>
                         <img 
                           src={ArrowDown} 
@@ -268,6 +339,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                           className={`h-3 w-3 transition-transform duration-200 ${
                             subjectsDropdownOpen ? "rotate-180" : ""
                           }`}
+                          style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                         />
                       </button>
                       
@@ -275,7 +347,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                         <div className="ml-4 mt-1 mb-2 border-transparent pl-2">
                           {loadingSubjects ? (
                             <div className="px-4 py-2">
-                              <div className="text-white text-xs opacity-70">Loading subjects...</div>
+                              <div className="text-xs opacity-70" style={{ color: getSecondaryTextColor() }}>Loading subjects...</div>
                             </div>
                           ) : studentSubjects.length > 0 ? (
                             studentSubjects.map((subject) => {
@@ -287,13 +359,17 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                                   key={subject.subject_code}
                                   to={`/SubjectOverviewStudent?code=${subject.subject_code}`}
                                   onClick={handleDropdownClick}
-                                  className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mb-1 ${
-                                    isSubjectActive ? "bg-[#00A15D]/20 font-semibold" : ""
-                                  }`}
+                                  className={`flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm transition-colors duration-150 mb-1`}
+                                  style={{ 
+                                    color: getTextColor(),
+                                    backgroundColor: isSubjectActive ? getActiveBgColor() : 'transparent'
+                                  }}
+                                  onMouseEnter={(e) => !isSubjectActive && (e.currentTarget.style.backgroundColor = getHoverBgColor())}
+                                  onMouseLeave={(e) => !isSubjectActive && (e.currentTarget.style.backgroundColor = 'transparent')}
                                 >
                                   <div className="min-w-0 flex-1">
                                     <div className="font-medium truncate">{subject.subject}</div>
-                                    <div className="text-white/70 text-xs truncate">
+                                    <div className="text-xs truncate" style={{ color: getSecondaryTextColor() }}>
                                       {subject.section} • {subject.subject_code}
                                     </div>
                                   </div>
@@ -302,18 +378,21 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                             })
                           ) : (
                             <div className="px-3 py-2">
-                              <div className="text-white text-xs opacity-70">No subjects enrolled</div>
+                              <div className="text-xs opacity-70" style={{ color: getSecondaryTextColor() }}>No subjects enrolled</div>
                             </div>
                           )}
                           
                           <NavLink
                             to="/Subjects"
                             onClick={handleDropdownClick}
-                            className={({ isActive }) =>
-                              `flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mt-1 border-t border-white/20 pt-2 ${
-                                isActive ? "bg-[#00A15D]/20" : ""
-                              }`
-                            }
+                            className={`flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm transition-colors duration-150 mt-1 border-t pt-2`}
+                            style={({ isActive }) => ({
+                              color: getTextColor(),
+                              backgroundColor: isActive ? getActiveBgColor() : 'transparent',
+                              borderColor: getDividerColor()
+                            })}
+                            onMouseEnter={(e) => !e.currentTarget.classList.contains('bg-[#00A15D]/20') && (e.currentTarget.style.backgroundColor = getHoverBgColor())}
+                            onMouseLeave={(e) => !e.currentTarget.classList.contains('bg-[#00A15D]/20') && (e.currentTarget.style.backgroundColor = 'transparent')}
                           >
                             <div className="font-medium">View All Subjects</div>
                           </NavLink>
@@ -324,13 +403,22 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                     <div className="mb-1">
                       <button
                         onClick={() => setClassesDropdownOpen(!classesDropdownOpen)}
-                        className={`${navItemBase} w-full justify-between ${
-                          classesDropdownOpen ? "bg-[#00A15D]/20" : ""
-                        }`}
+                        className={`${navItemBase} w-full justify-between`}
+                        style={{ 
+                          backgroundColor: classesDropdownOpen ? getActiveBgColor() : 'transparent',
+                          color: getTextColor()
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = getHoverBgColor()}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = classesDropdownOpen ? getActiveBgColor() : 'transparent'}
                       >
                         <div className="flex items-center">
-                          <img src={item.icon} alt="icons" className="h-5 w-5 mr-3 flex-shrink-0" />
-                          <span className="text-white text-sm sm:text-[1rem] truncate">{item.label}</span>
+                          <img 
+                            src={item.icon} 
+                            alt="icons" 
+                            className="h-5 w-5 mr-3 flex-shrink-0" 
+                            style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                          />
+                          <span className="text-sm sm:text-[1rem] truncate">{item.label}</span>
                         </div>
                         <img 
                           src={ArrowDown} 
@@ -338,6 +426,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                           className={`h-3 w-3 transition-transform duration-200 ${
                             classesDropdownOpen ? "rotate-180" : ""
                           }`}
+                          style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                         />
                       </button>
                       
@@ -345,7 +434,7 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                         <div className="ml-4 mt-1 mb-2 border-transparent pl-2">
                           {loadingClasses ? (
                             <div className="px-4 py-2">
-                              <div className="text-white text-xs opacity-70">Loading classes...</div>
+                              <div className="text-xs opacity-70" style={{ color: getSecondaryTextColor() }}>Loading classes...</div>
                             </div>
                           ) : teacherClasses.length > 0 ? (
                             teacherClasses.map((classItem) => {
@@ -357,13 +446,18 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                                   key={classItem.subject_code}
                                   to={`/SubjectOverviewProfessor?code=${classItem.subject_code}`}
                                   onClick={handleDropdownClick}
-                                  className={`flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mb-1 ${
-                                    isClassActive ? "bg-[#00A15D]/20 border-l-2 border-white font-semibold" : ""
-                                  }`}
+                                  className={`flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm transition-colors duration-150 mb-1`}
+                                  style={{ 
+                                    color: getTextColor(),
+                                    backgroundColor: isClassActive ? getActiveBgColor() : 'transparent',
+                                    borderLeft: isClassActive ? '2px solid currentColor' : 'none'
+                                  }}
+                                  onMouseEnter={(e) => !isClassActive && (e.currentTarget.style.backgroundColor = getHoverBgColor())}
+                                  onMouseLeave={(e) => !isClassActive && (e.currentTarget.style.backgroundColor = 'transparent')}
                                 >
                                   <div className="min-w-0 flex-1">
                                     <div className="font-medium truncate">{classItem.subject}</div>
-                                    <div className="text-white/70 text-xs truncate">
+                                    <div className="text-xs truncate" style={{ color: getSecondaryTextColor() }}>
                                       {classItem.section} • {classItem.year_level} • {classItem.subject_code}
                                     </div>
                                   </div>
@@ -372,18 +466,21 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                             })
                           ) : (
                             <div className="px-3 py-2">
-                              <div className="text-white text-xs opacity-70">No classes created</div>
+                              <div className="text-xs opacity-70" style={{ color: getSecondaryTextColor() }}>No classes created</div>
                             </div>
                           )}
                           
                           <NavLink
                             to="/ClassManagement"
                             onClick={handleDropdownClick}
-                            className={({ isActive }) =>
-                              `flex items-center px-3 py-2 rounded-lg text-white text-xs sm:text-sm hover:bg-[#00A15D]/20 transition-colors duration-150 mt-1 border-t border-white/20 pt-2 ${
-                                isActive ? "bg-[#00A15D]/20" : ""
-                              }`
-                            }
+                            className={`flex items-center px-3 py-2 rounded-lg text-xs sm:text-sm transition-colors duration-150 mt-1 border-t pt-2`}
+                            style={({ isActive }) => ({
+                              color: getTextColor(),
+                              backgroundColor: isActive ? getActiveBgColor() : 'transparent',
+                              borderColor: getDividerColor()
+                            })}
+                            onMouseEnter={(e) => !e.currentTarget.classList.contains('bg-[#00A15D]/20') && (e.currentTarget.style.backgroundColor = getHoverBgColor())}
+                            onMouseLeave={(e) => !e.currentTarget.classList.contains('bg-[#00A15D]/20') && (e.currentTarget.style.backgroundColor = 'transparent')}
                           >
                             <div className="font-medium">Manage All Classes</div>
                           </NavLink>
@@ -394,12 +491,21 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
                     <NavLink
                       to={item.path}
                       onClick={handleLinkClick}
-                      className={({ isActive }) =>
-                        `${navItemBase} ${isActive ? "bg-[#00A15D]/20" : ""}`
-                      }
+                      className={({ isActive }) => `${navItemBase}`}
+                      style={({ isActive }) => ({
+                        color: getTextColor(),
+                        backgroundColor: isActive ? getActiveBgColor() : 'transparent'
+                      })}
+                      onMouseEnter={(e) => !e.currentTarget.classList.contains('bg-[#00A15D]/20') && (e.currentTarget.style.backgroundColor = getHoverBgColor())}
+                      onMouseLeave={(e) => !e.currentTarget.classList.contains('bg-[#00A15D]/20') && (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
-                      <img src={item.icon} alt="icons" className="h-5 w-5 mr-3 flex-shrink-0" />
-                      <span className="text-white text-sm sm:text-[1rem] truncate">{item.label}</span>
+                      <img 
+                        src={item.icon} 
+                        alt="icons" 
+                        className="h-5 w-5 mr-3 flex-shrink-0" 
+                        style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                      />
+                      <span className="text-sm sm:text-[1rem] truncate">{item.label}</span>
                     </NavLink>
                   )}
                 </div>
@@ -408,19 +514,28 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
 
             {menus[role]?.extras?.length > 0 && (
               <div className="pt-2 pb-2">
-                <hr className="border-[#DBDBDB] rounded border-1 opacity-40 my-3" />
+                <hr className="rounded border-1 my-3" style={{ borderColor: getDividerColor() }} />
                 <div className="flex flex-col gap-1">
                   {menus[role].extras.map((item, index) => (
                     <NavLink
                       key={`${item.label}-extra-${index}`}
                       to={item.path}
                       onClick={handleLinkClick}
-                      className={({ isActive }) =>
-                        `${navItemBase} ${isActive ? "bg-[#00A15D]/20" : ""}`
-                      }
+                      className={({ isActive }) => `${navItemBase}`}
+                      style={({ isActive }) => ({
+                        color: getTextColor(),
+                        backgroundColor: isActive ? getActiveBgColor() : 'transparent'
+                      })}
+                      onMouseEnter={(e) => !e.currentTarget.classList.contains('bg-[#00A15D]/20') && (e.currentTarget.style.backgroundColor = getHoverBgColor())}
+                      onMouseLeave={(e) => !e.currentTarget.classList.contains('bg-[#00A15D]/20') && (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
-                      <img src={item.icon} alt="" className="h-5 w-5 mr-3 flex-shrink-0" />
-                      <span className="text-white text-sm sm:text-[1rem] truncate">{item.label}</span>
+                      <img 
+                        src={item.icon} 
+                        alt="" 
+                        className="h-5 w-5 mr-3 flex-shrink-0" 
+                        style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                      />
+                      <span className="text-sm sm:text-[1rem] truncate">{item.label}</span>
                     </NavLink>
                   ))}
                 </div>
@@ -428,14 +543,22 @@ export default function Sidebar({ role = "student", isOpen: isOpenProp, setIsOpe
             )}
           </nav>
 
-          <div className="flex-shrink-0 p-4 pt-2 border-t border-[#DBDBDB]/20">
+          <div className="flex-shrink-0 p-4 pt-2 border-t" style={{ borderColor: getDividerColor() }}>
             <NavLink 
               to="/Login" 
               onClick={handleLinkClick} 
               className={navItemBase}
+              style={{ color: getTextColor() }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = getHoverBgColor()}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <img src={LogOut} alt="" className="h-5 w-5 mr-3 flex-shrink-0" />
-              <span className="text-white text-sm sm:text-[1rem] truncate">Log out</span>
+              <img 
+                src={LogOut} 
+                alt="" 
+                className="h-5 w-5 mr-3 flex-shrink-0" 
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+              />
+              <span className="text-sm sm:text-[1rem] truncate">Log out</span>
             </NavLink>
           </div>
         </div>

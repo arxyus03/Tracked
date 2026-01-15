@@ -24,31 +24,27 @@ import GradeIcon from "../../assets/Grade.svg";
 import AnalyticsIcon from "../../assets/Analytics.svg";
 import Copy from "../../assets/Copy.svg";
 import SubjectOverview from "../../assets/SubjectOverview.svg";
-import TimeIcon from "../../assets/Clock.svg"; // Added time icon
+import TimeIcon from '../../assets/Clock.svg';
 
 // ========== TIME INDICATOR HELPER FUNCTION ==========
 const getTimeAgo = (createdAt) => {
   if (!createdAt) return "";
   
   try {
-    // Parse the UTC date from the database
     const createdDate = new Date(createdAt);
     const now = new Date();
     
-    // Calculate difference in milliseconds
     const diffInSeconds = Math.floor((now - createdDate) / 1000);
     
-    // If the date is in the future or invalid, return empty
     if (diffInSeconds < 0 || isNaN(diffInSeconds)) return "";
     
-    // Calculate time differences
     const seconds = diffInSeconds;
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
     const weeks = Math.floor(days / 7);
-    const months = Math.floor(days / 30.44); // Average days in month
-    const years = Math.floor(days / 365.25); // Account for leap years
+    const months = Math.floor(days / 30.44);
+    const years = Math.floor(days / 365.25);
     
     if (years > 0) return `${years}y`;
     if (months > 0) return `${months}mo`;
@@ -66,247 +62,245 @@ const getTimeAgo = (createdAt) => {
 };
 
 // New Minimal Small Activity Card Component
-  const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions }) => {
-    const formatDate = (dateString) => {
-      if (!dateString || dateString === "No deadline") return "No deadline";
-      
-      try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-      } catch {
-        return dateString;
-      }
-    };
-
-    // Check if deadline is past deadline
-    const isDeadlinePassed = (deadline) => {
-      if (!deadline || deadline === "No deadline") return false;
-      
-      try {
-        const deadlineDate = new Date(deadline);
-        const now = new Date();
-        return deadlineDate < now;
-      } catch {
-        return false;
-      }
-    };
-
-    // Check if activity is fully graded
-    const isFullyGraded = (activity) => {
-      if (!activity.students || activity.students.length === 0) return false;
-      
-      return activity.students.every(student => {
-        const grade = student.grade;
-        return grade != null && 
-              grade !== '' && 
-              grade !== undefined && 
-              grade !== 0 && 
-              grade !== '0';
-      });
-    };
-
-    // Check if activity has any grades (excluding 0 grades)
-    const hasSomeGrades = (activity) => {
-      if (!activity.students || activity.students.length === 0) return false;
-      
-      return activity.students.some(student => {
-        const grade = student.grade;
-        return grade != null && 
-              grade !== '' && 
-              grade !== undefined && 
-              grade !== 0 && 
-              grade !== '0';
-      });
-    };
-
-    // Check if activity is active (not past deadline and not fully graded)
-    const isActivityActive = (activity) => {
-      return !isDeadlinePassed(activity.deadline) && !isFullyGraded(activity);
-    };
-
-    // Get only students who have submitted
-    const submittedCount = activity.students ? 
-      activity.students.filter(s => s.submitted).length : 0;
+const MinimalActivityCard = ({ activity, onEdit, onArchive, onOpenSubmissions, isDarkMode }) => {
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === "No deadline") return "No deadline";
     
-    // Get total assigned students count
-    const totalCount = activity.students ? activity.students.length : 0;
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateString;
+    }
+  };
 
-    // Get activity type color - Minimal version
-    const getActivityTypeColor = (type) => {
-      const colors = {
-        'Assignment': 'bg-[#767EE0]/20 text-[#767EE0]',
-        'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
-        'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
-        'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
-        'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
-        'Exam': 'bg-[#FF5252]/20 text-[#FF5252]',
-        'Remedial': 'bg-[#3B82F6]/20 text-[#3B82F6]'
+  const isDeadlinePassed = (deadline) => {
+    if (!deadline || deadline === "No deadline") return false;
+    
+    try {
+      const deadlineDate = new Date(deadline);
+      const now = new Date();
+      return deadlineDate < now;
+    } catch {
+      return false;
+    }
+  };
+
+  const isFullyGraded = (activity) => {
+    if (!activity.students || activity.students.length === 0) return false;
+    
+    return activity.students.every(student => {
+      const grade = student.grade;
+      return grade != null && 
+            grade !== '' && 
+            grade !== undefined && 
+            grade !== 0 && 
+            grade !== '0';
+    });
+  };
+
+  const hasSomeGrades = (activity) => {
+    if (!activity.students || activity.students.length === 0) return false;
+    
+    return activity.students.some(student => {
+      const grade = student.grade;
+      return grade != null && 
+            grade !== '' && 
+            grade !== undefined && 
+            grade !== 0 && 
+            grade !== '0';
+    });
+  };
+
+  const isActivityActive = (activity) => {
+    return !isDeadlinePassed(activity.deadline) && !isFullyGraded(activity);
+  };
+
+  const submittedCount = activity.students ? 
+    activity.students.filter(s => s.submitted).length : 0;
+  
+  const totalCount = activity.students ? activity.students.length : 0;
+
+  const getActivityTypeColor = (type) => {
+    const colors = {
+      'Assignment': isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]',
+      'Quiz': isDarkMode ? 'bg-[#B39DDB]/20 text-[#B39DDB]' : 'bg-[#B39DDB]/10 text-[#B39DDB]',
+      'Activity': isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]',
+      'Project': isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]',
+      'Laboratory': isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]',
+      'Exam': isDarkMode ? 'bg-[#FF5252]/20 text-[#FF5252]' : 'bg-[#FF5252]/10 text-[#FF5252]',
+      'Remedial': isDarkMode ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'bg-[#3B82F6]/10 text-[#3B82F6]'
+    };
+    return colors[type] || (isDarkMode ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-300 text-gray-600');
+  };
+
+  const handleCardClick = (e) => {
+    if (e.target.closest('button')) {
+      return;
+    }
+    onOpenSubmissions(activity);
+  };
+
+  const getGradingStatus = () => {
+    if (isFullyGraded(activity)) {
+      return {
+        text: 'Graded',
+        color: isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]'
       };
-      return colors[type] || 'bg-gray-500/20 text-gray-400';
-    };
+    } else if (hasSomeGrades(activity)) {
+      return {
+        text: 'Partially Graded',
+        color: isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]'
+      };
+    } else if (isDeadlinePassed(activity.deadline)) {
+      return {
+        text: 'Past Deadline',
+        color: isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]'
+      };
+    }
+    return null;
+  };
 
-    // Handle card click to open submissions
-    const handleCardClick = (e) => {
-      if (e.target.closest('button')) {
-        return;
-      }
-      onOpenSubmissions(activity);
-    };
+  const gradingStatus = getGradingStatus();
 
-    // Get grading status for the top label
-    const getGradingStatus = () => {
-      if (isFullyGraded(activity)) {
-        return {
-          text: 'Graded',
-          color: 'bg-[#00A15D]/20 text-[#00A15D]'
-        };
-      } else if (hasSomeGrades(activity)) {
-        return {
-          text: 'Partially Graded',
-          color: 'bg-[#FFA600]/20 text-[#FFA600]'
-        };
-      } else if (isDeadlinePassed(activity.deadline)) {
-        return {
-          text: 'Past Deadline',
-          color: 'bg-[#A15353]/20 text-[#A15353]'
-        };
-      }
-      return null;
-    };
+  const getCardBackground = () => {
+    if (isFullyGraded(activity)) {
+      return isDarkMode ? 'bg-[#00A15D]/5 border-[#00A15D]/20' : 'bg-[#00A15D]/3 border-[#00A15D]/10';
+    } else if (isDeadlinePassed(activity.deadline)) {
+      return isDarkMode ? 'bg-[#A15353]/5 border-[#A15353]/20' : 'bg-[#A15353]/3 border-[#A15353]/10';
+    } else if (hasSomeGrades(activity)) {
+      return isDarkMode ? 'bg-[#FFA600]/5 border-[#FFA600]/20' : 'bg-[#FFA600]/3 border-[#FFA600]/10';
+    }
+    return isDarkMode ? 'bg-[#15151C] border-white/10' : 'bg-white border-gray-200';
+  };
 
-    const gradingStatus = getGradingStatus();
+  const timeAgo = getTimeAgo(activity.created_at);
 
-    // Determine card background based on status
-    const getCardBackground = () => {
-      if (isFullyGraded(activity)) {
-        return 'bg-[#00A15D]/5 border-[#00A15D]/20';
-      } else if (isDeadlinePassed(activity.deadline)) {
-        return 'bg-[#A15353]/5 border-[#A15353]/20';
-      } else if (hasSomeGrades(activity)) {
-        return 'bg-[#FFA600]/5 border-[#FFA600]/20';
-      }
-      return 'bg-[#15151C] border-[#FFFFFF]/10';
-    };
-
-    // Get relative time
-    const timeAgo = getTimeAgo(activity.created_at);
-
-    return (
-      <div 
-        className={`rounded-lg border p-2.5 hover:shadow-sm transition-all cursor-pointer hover:border-[#00A15D]/30 ${getCardBackground()}`}
-        onClick={handleCardClick}
-      >
-        {/* Header with type+number and top right buttons */}
-        <div className="flex items-center justify-between mb-1.5">
-          <span className={`px-1.5 py-0.5 ${getActivityTypeColor(activity.activity_type)} text-xs font-medium rounded`}>
-            {activity.activity_type} #{activity.task_number}
-          </span>
+  return (
+    <div 
+      className={`rounded-lg border p-2.5 hover:shadow-sm transition-all cursor-pointer ${
+        isDarkMode 
+          ? 'hover:border-[#00A15D]/30' 
+          : 'hover:border-[#00A15D]/50'
+      } ${getCardBackground()}`}
+      onClick={handleCardClick}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span className={`px-1.5 py-0.5 ${getActivityTypeColor(activity.activity_type)} text-xs font-medium rounded`}>
+          {activity.activity_type} #{activity.task_number}
+        </span>
+        
+        <div className="flex items-center gap-2">
+          {activity.school_work_edited === 1 && (
+            <span className={`px-1 py-0.5 text-xs font-medium rounded ${
+              isDarkMode ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'bg-[#3B82F6]/10 text-[#3B82F6]'
+            }`}>
+              Edited
+            </span>
+          )}
           
-          {/* Top Right Section: Labels first, then Action Buttons at the far right */}
-          <div className="flex items-center gap-2">
-            {/* Edited Label - Show if school_work_edited is 1 */}
-            {activity.school_work_edited === 1 && (
-              <span className="px-1 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
-                Edited
-              </span>
-            )}
-            
-            {/* Grading Status - First label */}
-            {gradingStatus && (
-              <span className={`px-1 py-0.5 text-xs font-medium rounded ${gradingStatus.color}`}>
-                {gradingStatus.text}
-              </span>
-            )}
-            
-            {/* Submission Stats - Second label */}
-            <div className="text-xs font-medium text-[#FFFFFF]/80">
-              {submittedCount}/{totalCount}
-            </div>
-            
-            {/* Action Buttons - Edit and Archive at the far right */}
-            <div className="flex items-center gap-0.5">
-              {/* Edit Button */}
+          {gradingStatus && (
+            <span className={`px-1 py-0.5 text-xs font-medium rounded ${gradingStatus.color}`}>
+              {gradingStatus.text}
+            </span>
+          )}
+          
+          <div className={`text-xs font-medium ${isDarkMode ? 'text-white/80' : 'text-gray-700'}`}>
+            {submittedCount}/{totalCount}
+          </div>
+          
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(activity);
+              }}
+              className={`p-1 rounded transition-colors cursor-pointer border ${
+                isDarkMode 
+                  ? 'bg-[#15151C] hover:bg-[#23232C] border-white/10 hover:border-[#00A15D]/30 text-gray-400 hover:text-[#00A15D]'
+                  : 'bg-white hover:bg-gray-50 border-gray-300 hover:border-[#00A15D] text-gray-600 hover:text-[#00A15D]'
+              }`}
+              title="Edit Activity"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+
+            {!isActivityActive(activity) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEdit(activity);
+                  onArchive(activity);
                 }}
-                className="p-1 bg-[#15151C] hover:bg-[#23232C] rounded transition-colors cursor-pointer border border-[#FFFFFF]/10 hover:border-[#00A15D]/30"
-                title="Edit Activity"
+                className={`p-1 rounded transition-colors cursor-pointer border ${
+                  isDarkMode 
+                    ? 'bg-[#15151C] hover:bg-[#23232C] border-white/10 hover:border-[#00A15D]/30'
+                    : 'bg-white hover:bg-gray-50 border-gray-300 hover:border-[#00A15D]'
+                }`}
+                title="Archive Activity"
               >
-                <svg className="w-3.5 h-3.5 text-gray-400 hover:text-[#00A15D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+                <img 
+                  src={Archive} 
+                  alt="Archive" 
+                  className="w-3.5 h-3.5 opacity-80 hover:opacity-100" 
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+                />
               </button>
-
-              {/* Archive Button - Only show for non-active activities */}
-              {!isActivityActive(activity) && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onArchive(activity);
-                  }}
-                  className="p-1 bg-[#15151C] hover:bg-[#23232C] rounded transition-colors cursor-pointer border border-[#FFFFFF]/10 hover:border-[#00A15D]/30"
-                  title="Archive Activity"
-                >
-                  <img src={Archive} alt="Archive" className="w-3.5 h-3.5 opacity-80 hover:opacity-100" />
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </div>
-        
-        {/* Title - Smaller */}
-        <h3 className="font-medium text-[#FFFFFF] text-xs mb-2 truncate">
-          {activity.title}
-        </h3>
-        
-        {/* Minimal Info Row - Compact with Clock Icon */}
-        <div className="flex items-center justify-between mb-1">
-          {/* Deadline with Clock Icon */}
-          <div className="flex items-center gap-1">
-            {/* Clock Icon - Always red text when deadline is passed */}
-            <div className={`${isDeadlinePassed(activity.deadline) ? 'text-[#A15353]' : 'text-[#FFFFFF]/80'}`}>
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            
-            {/* Deadline Text - Red when deadline is passed */}
-            <span className={`text-xs font-medium ${
-              isDeadlinePassed(activity.deadline) 
-                ? 'text-[#A15353]' 
-                : 'text-[#FFFFFF]/80'
-            }`}>
-              {formatDate(activity.deadline)}
-            </span>
+      </div>
+      
+      <h3 className={`font-medium text-xs mb-2 truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        {activity.title}
+      </h3>
+      
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1">
+          <div className={isDeadlinePassed(activity.deadline) ? 'text-[#A15353]' : (isDarkMode ? 'text-white/80' : 'text-gray-600')}>
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
           
-          {/* Points */}
-          <div className="flex items-center gap-1">
-            <span className="text-xs font-medium text-[#FFA600]">
-              {activity.points || 0} pts
-            </span>
-          </div>
+          <span className={`text-xs font-medium ${
+            isDeadlinePassed(activity.deadline) 
+              ? 'text-[#A15353]' 
+              : (isDarkMode ? 'text-white/80' : 'text-gray-600')
+          }`}>
+            {formatDate(activity.deadline)}
+          </span>
         </div>
-
-        {/* Time Indicator - Added below the main info row */}
-        {timeAgo && (
-          <div className="flex items-center gap-1 mt-1">
-            <img src={TimeIcon} alt="Time" className="w-2.5 h-2.5 opacity-60" />
-            <span className="text-[10px] font-medium text-[#FFFFFF]/60">
-              {timeAgo} ago
-            </span>
-          </div>
-        )}
+        
+        <div className="flex items-center gap-1">
+          <span className="text-xs font-medium text-[#FFA600]">
+            {activity.points || 0} pts
+          </span>
+        </div>
       </div>
-    );
-  };
+
+      {timeAgo && (
+        <div className="flex items-center gap-1 mt-1">
+          <img 
+            src={TimeIcon} 
+            alt="Time" 
+            className="w-2.5 h-2.5 opacity-60"
+            style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
+          />
+          <span className={`text-[10px] font-medium ${isDarkMode ? 'text-white/60' : 'text-gray-500'}`}>
+            {timeAgo} ago
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function ClassworkTab() {
   const location = useLocation();
@@ -322,8 +316,8 @@ export default function ClassworkTab() {
   const [editingActivity, setEditingActivity] = useState(null);
   const [activityToArchive, setActivityToArchive] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
-  // Separate state variables for each modal type
   const [showCreateSuccessModal, setShowCreateSuccessModal] = useState(false);
   const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
   const [showGradeSuccessModal, setShowGradeSuccessModal] = useState(false);
@@ -337,12 +331,26 @@ export default function ClassworkTab() {
   
   const activityTypes = ["Assignment", "Quiz", "Activity", "Project", "Laboratory", "Exam", "Remedial"];
 
-  // Search and Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [filterOption, setFilterOption] = useState("All");
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
 
-  // Get professor ID from localStorage
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    handleThemeChange();
+    
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const getProfessorId = () => {
     try {
       const userDataString = localStorage.getItem('user');
@@ -356,18 +364,15 @@ export default function ClassworkTab() {
     return null;
   };
 
-  // Get current datetime in YYYY-MM-DDTHH:mm format for min attribute
   const getCurrentDateTime = () => {
     const now = new Date();
     return now.toISOString().slice(0, 16);
   };
 
-  // Copy subject code to clipboard
   const copySubjectCode = () => {
     if (classInfo?.subject_code) {
       navigator.clipboard.writeText(classInfo.subject_code)
         .then(() => {
-          // Show temporary feedback
           const originalText = document.querySelector('.copy-text');
           if (originalText) {
             originalText.textContent = 'Copied!';
@@ -382,7 +387,6 @@ export default function ClassworkTab() {
     }
   };
 
-  // Fetch all data in sequence
   useEffect(() => {
     const fetchAllData = async () => {
       if (!subjectCode) {
@@ -442,7 +446,6 @@ export default function ClassworkTab() {
         const result = await response.json();
         console.log('Fetched activities result:', result);
         if (result.success) {
-          // The activities now only contain assigned students
           setActivities(result.activities || []);
         } else {
           console.error('Error fetching activities:', result.message);
@@ -457,7 +460,6 @@ export default function ClassworkTab() {
     }
   };
 
-  // Check if activity already exists (duplicate detection for activity type + task number)
   const isActivityDuplicate = (activityType, taskNumber) => {
     return activities.some(activity => 
       activity.activity_type === activityType && 
@@ -465,7 +467,6 @@ export default function ClassworkTab() {
     );
   };
 
-  // Check if activity title already exists (duplicate title detection)
   const isTitleDuplicate = (title, excludeActivityId = null) => {
     return activities.some(activity => {
       if (excludeActivityId && activity.id === excludeActivityId) {
@@ -475,7 +476,6 @@ export default function ClassworkTab() {
     });
   };
 
-  // Get existing task numbers for a specific activity type
   const getExistingTaskNumbers = (activityType) => {
     return activities
       .filter(activity => activity.activity_type === activityType)
@@ -483,12 +483,10 @@ export default function ClassworkTab() {
       .sort((a, b) => a - b);
   };
 
-  // Get existing activity titles
   const getExistingTitles = () => {
     return activities.map(activity => activity.title);
   };
 
-  // Check if activity is fully graded
   const isFullyGraded = (activity) => {
     if (!activity.students || activity.students.length === 0) return false;
     
@@ -502,12 +500,10 @@ export default function ClassworkTab() {
     });
   };
 
-  // Check if activity is active - From second component
   const isActivityActive = (activity) => {
     return !isDeadlinePassed(activity.deadline) && !isFullyGraded(activity);
   };
 
-  // Check if deadline is passed
   const isDeadlinePassed = (deadline) => {
     if (!deadline || deadline === "No deadline") return false;
     
@@ -520,16 +516,12 @@ export default function ClassworkTab() {
     }
   };
 
-  // Handle create activity from modal
-
   const handleCreateActivity = async (activityData) => {
-    // Validate required fields
     if (!activityData.activityType || !activityData.taskNumber || !activityData.title) {
       alert("Please fill in all required fields (Activity Type, Task Number, and Title)");
       return;
     }
 
-    // Check for duplicate activity (activity type + task number)
     if (isActivityDuplicate(activityData.activityType, activityData.taskNumber)) {
       const existingTaskNumbers = getExistingTaskNumbers(activityData.activityType);
       const message = `"${activityData.activityType} ${activityData.taskNumber}" already exists.\n\nExisting ${activityData.activityType}s:\n${existingTaskNumbers.map(num => `${num}`).join('\n')}`;
@@ -538,7 +530,6 @@ export default function ClassworkTab() {
       return;
     }
 
-    // Check for duplicate title
     if (isTitleDuplicate(activityData.title)) {
       const existingTitles = getExistingTitles();
       const message = `Title "${activityData.title}" is already used.\n\nExisting titles:\n${existingTitles.map((title, index) => `${index + 1}. "${title}"`).join('\n')}`;
@@ -547,13 +538,11 @@ export default function ClassworkTab() {
       return;
     }
 
-    // Validate points (should not be negative)
     if (activityData.points < 0) {
       alert("Points cannot be negative. Please enter a value of 0 or higher.");
       return;
     }
 
-    // Validate deadline (should not be in the past)
     if (activityData.deadline) {
       const selectedDate = new Date(activityData.deadline);
       const now = new Date();
@@ -563,14 +552,12 @@ export default function ClassworkTab() {
       }
     }
 
-    // Validate individual assignment has selected students
     if (activityData.assignTo === "individual" && (!activityData.selectedStudents || activityData.selectedStudents.length === 0)) {
       alert("Please select at least one student for individual assignment");
       return;
     }
 
     try {
-      // Set creating state
       setCreatingActivity(true);
 
       const professorId = getProfessorId();
@@ -589,8 +576,8 @@ export default function ClassworkTab() {
         link: activityData.link,
         points: activityData.points || 0,
         deadline: activityData.deadline,
-        assignTo: activityData.assignTo || 'wholeClass', // Ensure assignTo is sent
-        selectedStudents: activityData.selectedStudents || [] // Ensure selectedStudents is sent
+        assignTo: activityData.assignTo || 'wholeClass',
+        selectedStudents: activityData.selectedStudents || []
       };
 
       console.log('Creating activity with data:', apiData);
@@ -606,7 +593,6 @@ export default function ClassworkTab() {
       const rawResponse = await response.text();
       console.log('Raw response from server:', rawResponse);
 
-      // Check if response looks like HTML/error
       if (rawResponse.trim().startsWith('<') || rawResponse.includes('<br />') || rawResponse.includes('<!DOCTYPE')) {
         console.error('Server returned HTML instead of JSON. This indicates a PHP error.');
         alert('Server error: Please check the PHP error logs');
@@ -640,14 +626,11 @@ export default function ClassworkTab() {
       console.error('Network error creating activity:', error);
       alert('Network error creating activity. Please try again.');
     } finally {
-      // Reset creating state
       setCreatingActivity(false);
     }
   };
 
-  // Handle edit activity
   const handleEditActivity = async (activityData) => {
-    // Check for duplicate activity
     if (isActivityDuplicate(activityData.activityType, activityData.taskNumber) && 
         (editingActivity.activity_type !== activityData.activityType || 
          editingActivity.task_number !== activityData.taskNumber)) {
@@ -658,7 +641,6 @@ export default function ClassworkTab() {
       return;
     }
 
-    // Check for duplicate title
     if (isTitleDuplicate(activityData.title, editingActivity.id)) {
       const existingTitles = getExistingTitles();
       const filteredTitles = existingTitles.filter(title => 
@@ -715,9 +697,7 @@ export default function ClassworkTab() {
     }
   };
 
-  // Handle archive activity
   const handleArchiveActivity = async (activity) => {
-    // Prevent archiving active activities
     if (isActivityActive(activity)) {
       alert("Cannot archive active activities. Please wait until the deadline passes or all submissions are graded.");
       setShowArchiveModal(false);
@@ -754,7 +734,7 @@ export default function ClassworkTab() {
           setShowArchiveSuccessModal(false);
         }, 2000);
       } else {
-        alert('Error archiving activity: ' +result.message);
+        alert('Error archiving activity: ' + result.message);
         setShowArchiveModal(false);
       }
     } catch (error) {
@@ -764,7 +744,6 @@ export default function ClassworkTab() {
     }
   };
 
-  // Handle archive button click - check if activity is active
   const handleArchiveSchoolWork = (activity) => {
     if (isActivityActive(activity)) {
       alert("Cannot archive active activities. Please wait until the deadline passes or all submissions are graded.");
@@ -774,7 +753,6 @@ export default function ClassworkTab() {
     setShowArchiveModal(true);
   };
 
-  // Handle saving grades from submissions modal
   const handleSaveSubmissions = async (updatedStudents) => {
     try {
       console.log('Saving grades for activity:', selectedActivity.id, 'Students:', updatedStudents);
@@ -821,7 +799,6 @@ export default function ClassworkTab() {
     }
   };
 
-  // Filter activities based on search and filter
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = activity.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          activity.task_number?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -846,7 +823,6 @@ export default function ClassworkTab() {
     return matchesSearch && matchesFilter;
   });
 
-  // Group activities by status for visual separation
   const groupedActivities = {
     active: filteredActivities.filter(activity => isActivityActive(activity)),
     graded: filteredActivities.filter(activity => isFullyGraded(activity)),
@@ -855,7 +831,6 @@ export default function ClassworkTab() {
     )
   };
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterDropdownOpen && !event.target.closest('.filter-dropdown')) {
@@ -870,35 +845,35 @@ export default function ClassworkTab() {
     };
   }, [filterDropdownOpen]);
 
-  // Handle opening submissions modal
   const handleOpenSubmissions = (activity) => {
     setSelectedActivity(activity);
     setShowSubmissionsModal(true);
   };
 
-  // Handle edit school work
   const handleEditSchoolWork = (activity) => {
     setEditingActivity(activity);
     setShowEditModal(true);
   };
 
-  // Render empty state when no activities
   const renderEmptyState = () => (
     <div className="col-span-full text-center py-6">
-      <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-[#15151C] flex items-center justify-center">
+      <div className={`mx-auto w-12 h-12 mb-3 rounded-full flex items-center justify-center ${
+        isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'
+      }`}>
         <img 
           src={SubjectDetailsIcon} 
           alt="No activities" 
-          className="h-6 w-6 opacity-50" 
+          className="h-6 w-6 opacity-50"
+          style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
         />
       </div>
-      <p className="text-[#FFFFFF]/60 text-xs mb-0.5">
+      <p className={`text-xs mb-0.5 ${isDarkMode ? 'text-white/60' : 'text-gray-600'}`}>
         {searchQuery || filterOption !== "All" 
           ? "No activities match your search" 
           : "No activities created yet"
         }
       </p>
-      <p className="text-[#FFFFFF]/40 text-[10px]">
+      <p className={`text-[10px] ${isDarkMode ? 'text-white/40' : 'text-gray-500'}`}>
         Click the + button to create your first activity
       </p>
     </div>
@@ -906,42 +881,45 @@ export default function ClassworkTab() {
 
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen overflow-x-hidden">
+      <div className={`min-h-screen ${isDarkMode ? 'bg-[#23232C]' : 'bg-gray-50'}`}>
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'} max-w-full overflow-x-hidden`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-5 text-center text-white">
+          <div className={`p-5 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
-            <p className="mt-3 text-gray-400">Loading class details...</p>
+            <p className={`mt-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading class details...</p>
           </div>
         </div>
       </div>
     );
   }
 
-  // Helper function to render action buttons with consistent styling
   const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
     <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
       <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto min-w-0 ${
         active 
-          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
+          ? (isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' : 'bg-[#00A15D]/10 text-[#00A15D] border-[#00A15D]/20')
           : colorClass
       }`}>
-        <img src={icon} alt="" className="h-4 w-4 flex-shrink-0" />
+        <img 
+          src={icon} 
+          alt="" 
+          className="h-4 w-4 flex-shrink-0"
+          style={isDarkMode ? {} : { filter: active ? 'none' : 'invert(0.5)' }}
+        />
         <span className="sm:inline truncate text-xs sm:text-sm">{label}</span>
       </button>
     </Link>
   );
 
-  // Helper function to render activity section
   const renderActivitySection = (title, activities, color) => (
     activities.length > 0 && (
       <>
         <div className="mb-2.5 mt-2.5">
-          <h3 className="text-sm font-semibold text-[#FFFFFF] flex items-center gap-2">
+          <h3 className={`text-sm font-semibold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${color}`}></span>
             {title}
-            <span className="text-xs font-normal text-[#FFFFFF]/50 ml-2">
+            <span className={`text-xs font-normal ml-2 ${isDarkMode ? 'text-white/50' : 'text-gray-500'}`}>
               ({activities.length})
             </span>
           </h3>
@@ -954,42 +932,40 @@ export default function ClassworkTab() {
               onEdit={handleEditSchoolWork}
               onArchive={handleArchiveSchoolWork}
               onOpenSubmissions={handleOpenSubmissions}
+              isDarkMode={isDarkMode}
             />
           ))}
         </div>
-        <hr className="my-3 border-[#FFFFFF]/10" />
+        <hr className={`my-3 ${isDarkMode ? 'border-white/10' : 'border-gray-200'}`} />
       </>
     )
   );
 
   return (
-    <div className="bg-[#23232C] min-h-screen overflow-x-hidden">
+    <div className={`min-h-screen overflow-x-hidden ${isDarkMode ? 'bg-[#23232C]' : 'bg-gray-50'}`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'} max-w-full overflow-x-hidden`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
 
-        {/* Main Content */}
         <div className="p-4 sm:p-5 md:p-6 lg:p-6 max-w-full overflow-x-hidden">
-          
-          {/* Page Header */}
           <div className="mb-4">
             <div className="flex items-center mb-2">
               <img
                 src={Classwork}
                 alt="Class"
                 className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
               />
-              <h1 className="font-bold text-xl lg:text-2xl text-white truncate">
+              <h1 className={`font-bold text-xl lg:text-2xl truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 Class Work
               </h1>
             </div>
-            <p className="text-sm lg:text-base text-gray-400">
+            <p className={`text-sm lg:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               Manage and create your class works
             </p>
           </div>
 
-          {/* Subject Information with Copy Button */}
-          <div className="flex flex-col gap-1 text-sm text-gray-400 mb-4">
+          <div className={`flex flex-col gap-1 text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
               <div className="flex items-center gap-2">
@@ -997,13 +973,18 @@ export default function ClassworkTab() {
                 {classInfo?.subject_code && (
                   <button
                     onClick={copySubjectCode}
-                    className="p-1 text-gray-400 hover:text-white hover:bg-[#15151C] rounded transition-colors cursor-pointer flex items-center gap-1"
+                    className={`p-1 rounded transition-colors cursor-pointer flex items-center gap-1 ${
+                      isDarkMode 
+                        ? 'text-gray-400 hover:text-white hover:bg-[#15151C]' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
                     title="Copy subject code"
                   >
                     <img 
                       src={Copy} 
                       alt="Copy" 
-                      className="w-4 h-4" 
+                      className="w-4 h-4"
+                      style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                     />
                   </button>
                 )}
@@ -1026,122 +1007,128 @@ export default function ClassworkTab() {
                     src={BackButton} 
                     alt="Back to Class Management" 
                     className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity"
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                   />
                 </Link>
               </div>
             </div>
           </div>
 
-          <hr className="border-gray-700 mb-4" />
+          <hr className={`mb-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`} />
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4 flex-wrap">
             <div className="flex flex-col sm:flex-row gap-2 flex-1 flex-wrap min-w-0">
-              {/* NEW: Subject Overview Button */}
-              {renderActionButton("/SubjectOverviewProfessor", SubjectOverview, "Subject Overview", false, "bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30")}
-              
-              {/* Announcement Button */}
-              {renderActionButton("/Class", Announcement, "Announcements", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
-              
-              {/* Classwork Button - Active */}
+              {renderActionButton("/SubjectOverviewProfessor", SubjectOverview, "Subject Overview", false, isDarkMode ? "bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30" : "bg-[#FF5252]/10 text-[#FF5252] border-[#FF5252]/20 hover:bg-[#FF5252]/20")}
+              {renderActionButton("/Class", Announcement, "Announcements", false, isDarkMode ? "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30" : "bg-[#767EE0]/10 text-[#767EE0] border-[#767EE0]/20 hover:bg-[#767EE0]/20")}
               {renderActionButton("/ClassworkTab", Classwork, "Class Work", true)}
-              
-              {/* Attendance Button */}
-              {renderActionButton("/Attendance", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
-              
-              {/* Grade Button - CHANGED TO RED */}
-              {renderActionButton("/GradeTab", GradeIcon, "Grade", false, "bg-[#A15353]/20 text-[#A15353] border-[#A15353]/30 hover:bg-[#A15353]/30")}
-              
-              {/* Analytics Button */}
-              {renderActionButton("/AnalyticsTab", AnalyticsIcon, "Analytics", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
+              {renderActionButton("/Attendance", Attendance, "Attendance", false, isDarkMode ? "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30" : "bg-[#FFA600]/10 text-[#FFA600] border-[#FFA600]/20 hover:bg-[#FFA600]/20")}
+              {renderActionButton("/GradeTab", GradeIcon, "Grade", false, isDarkMode ? "bg-[#A15353]/20 text-[#A15353] border-[#A15353]/30 hover:bg-[#A15353]/30" : "bg-[#A15353]/10 text-[#A15353] border-[#A15353]/20 hover:bg-[#A15353]/20")}
+              {renderActionButton("/AnalyticsTab", AnalyticsIcon, "Analytics", false, isDarkMode ? "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30" : "bg-[#B39DDB]/10 text-[#B39DDB] border-[#B39DDB]/20 hover:bg-[#B39DDB]/20")}
             </div>
             
-            {/* Icon Buttons */}
             <div className="flex items-center gap-2 justify-end sm:justify-start min-w-0">
-              {/* Class Management Button */}
               <Link to={`/StudentList?code=${subjectCode}`}>
                 <div className="relative group">
-                  <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer">
+                  <button className={`p-2 rounded-md shadow-md border-2 transition-all duration-200 flex-shrink-0 cursor-pointer ${
+                    isDarkMode 
+                      ? 'bg-[#15151C] border-transparent hover:border-[#00A15D]' 
+                      : 'bg-white border-transparent hover:border-[#00A15D]'
+                  }`}>
                     <img 
                       src={ClassManagementIcon} 
                       alt="ClassManagement" 
-                      className="h-4 w-4" 
+                      className="h-4 w-4"
+                      style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                     />
                   </button>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                  <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 ${
+                    isDarkMode ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100 border border-gray-300'
+                  }`}>
                     Student List
                   </div>
                 </div>
               </Link>
 
-              {/* Archive Button */}
               <Link to={`/ArchiveActivities?code=${subjectCode}`}>
                 <div className="relative group">
-                  <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer">
+                  <button className={`p-2 rounded-md shadow-md border-2 transition-all duration-200 flex-shrink-0 cursor-pointer ${
+                    isDarkMode 
+                      ? 'bg-[#15151C] border-transparent hover:border-[#00A15D]' 
+                      : 'bg-white border-transparent hover:border-[#00A15D]'
+                  }`}>
                     <img 
                       src={Archive} 
                       alt="Archive" 
-                      className="h-4 w-4" 
+                      className="h-4 w-4"
+                      style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                     />
                   </button>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                  <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 ${
+                    isDarkMode ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100 border border-gray-300'
+                  }`}>
                     Archived Activities
                   </div>
                 </div>
               </Link>
 
-              {/* Add Activity Button */}
               <div className="relative group">
                 <button 
                   onClick={() => setShowCreateModal(true)}
-                  className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer">
+                  className={`p-2 rounded-md shadow-md border-2 transition-all duration-200 flex-shrink-0 cursor-pointer ${
+                    isDarkMode 
+                      ? 'bg-[#15151C] border-transparent hover:border-[#00A15D]' 
+                      : 'bg-white border-transparent hover:border-[#00A15D]'
+                  }`}>
                   <img 
                     src={Add} 
                     alt="Add" 
-                    className="h-4 w-4" 
+                    className="h-4 w-4"
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                   />
                 </button>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 ${
+                  isDarkMode ? 'text-white bg-gray-800' : 'text-gray-900 bg-gray-100 border border-gray-300'
+                }`}>
                   Create Activity
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Filter and Search Section */}
           <div className="flex flex-col sm:flex-row gap-2.5 mb-3">
-            {/* Filter dropdown */}
             <div className="relative filter-dropdown sm:w-36 min-w-0">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className={`flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border transition-all duration-200 text-xs font-medium cursor-pointer min-w-0 ${
+                className={`flex items-center justify-between w-full px-2.5 py-1.5 rounded border transition-all duration-200 text-xs font-medium cursor-pointer min-w-0 ${
                   filterOption !== "All" 
-                    ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' 
-                    : 'border-gray-700 hover:border-[#767EE0] text-gray-300'
+                    ? (isDarkMode ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' : 'border-[#767EE0] bg-[#767EE0]/5 text-[#767EE0]')
+                    : (isDarkMode ? 'border-gray-700 hover:border-[#767EE0] text-gray-300' : 'border-gray-300 hover:border-[#767EE0] text-gray-700')
                 }`}
               >
                 <span className="truncate">{filterOption}</span>
                 <img
                   src={ArrowDown}
                   alt=""
-                  className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 flex-shrink-0 ${
+                  className={`ml-1.5 h-2.5 w-2.5 transition-transform flex-shrink-0 ${
                     filterDropdownOpen ? 'rotate-180' : ''
                   } ${
                     filterOption !== "All" ? 'invert-[0.5] sepia-[1] saturate-[5] hue-rotate-[200deg]' : ''
                   }`}
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
 
-              {/* Dropdown options */}
               {filterDropdownOpen && (
-                <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-gray-700 z-20 overflow-hidden min-w-0">
+                <div className={`absolute top-full mt-1 rounded w-full shadow-xl border z-20 overflow-hidden min-w-0 ${
+                  isDarkMode ? 'bg-[#15151C] border-gray-700' : 'bg-white border-gray-300'
+                }`}>
                   {["All", "Active", ...activityTypes, "Graded", "Past Deadline"].map((option) => (
                     <button
                       key={option}
-                      className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer truncate ${
+                      className={`block px-2.5 py-1.5 w-full text-left hover:transition-colors cursor-pointer truncate text-xs ${
                         filterOption === option 
-                          ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' 
-                          : 'text-gray-300'
+                          ? (isDarkMode ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' : 'bg-[#767EE0]/5 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold')
+                          : (isDarkMode ? 'text-gray-300 hover:bg-[#23232C]' : 'text-gray-700 hover:bg-gray-100')
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -1155,7 +1142,6 @@ export default function ClassworkTab() {
               )}
             </div>
 
-            {/* Search bar */}
             <div className="flex-1 min-w-0">
               <div className="relative">
                 <input
@@ -1163,31 +1149,34 @@ export default function ClassworkTab() {
                   placeholder="Search activities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-white border border-gray-700 focus:border-[#767EE0] transition-colors placeholder:text-gray-500 min-w-0"
+                  className={`w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none text-xs border transition-colors placeholder:text-gray-500 min-w-0 ${
+                    isDarkMode 
+                      ? 'bg-[#15151C] text-white border-gray-700 focus:border-[#767EE0]' 
+                      : 'bg-white text-gray-900 border-gray-300 focus:border-[#767EE0]'
+                  }`}
                 />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
+                <button className="absolute right-2 top-1/2 -translate-y-1/2">
                   <img
                     src={Search}
                     alt="Search"
                     className="h-3.5 w-3.5"
+                    style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                   />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* MINIMAL ACTIVITY CARDS WITH VISUAL SEPARATION */}
           <div className="mt-2.5 min-w-0">
-            {renderActivitySection("Active Activities", groupedActivities.active, "bg-[#767EE0]")}
-            {renderActivitySection("Graded Activities", groupedActivities.graded, "bg-[#00A15D]")}
-            {renderActivitySection("Past Deadline", groupedActivities.pastDeadline, "bg-[#A15353]")}
+            {renderActivitySection("Active Activities", groupedActivities.active, isDarkMode ? "bg-[#767EE0]" : "bg-[#767EE0]/80")}
+            {renderActivitySection("Graded Activities", groupedActivities.graded, isDarkMode ? "bg-[#00A15D]" : "bg-[#00A15D]/80")}
+            {renderActivitySection("Past Deadline", groupedActivities.pastDeadline, isDarkMode ? "bg-[#A15353]" : "bg-[#A15353]/80")}
             
             {filteredActivities.length === 0 && renderEmptyState()}
           </div>
         </div>
       </div>
 
-      {/* Components */}
       <ClassWorkCreate
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -1196,6 +1185,7 @@ export default function ClassworkTab() {
         getCurrentDateTime={getCurrentDateTime}
         subjectCode={subjectCode}
         creatingActivity={creatingActivity}
+        isDarkMode={isDarkMode}
       />
 
       <ClassWorkEdit
@@ -1206,6 +1196,7 @@ export default function ClassworkTab() {
         activityTypes={activityTypes}
         getCurrentDateTime={getCurrentDateTime}
         subjectCode={subjectCode}
+        isDarkMode={isDarkMode}
       />
 
       <ClassWorkArchive
@@ -1213,6 +1204,7 @@ export default function ClassworkTab() {
         onClose={() => setShowArchiveModal(false)}
         onConfirm={handleArchiveActivity}
         activity={activityToArchive}
+        isDarkMode={isDarkMode}
       />
 
       <ClassWorkSubmission
@@ -1221,13 +1213,12 @@ export default function ClassworkTab() {
         onClose={() => setShowSubmissionsModal(false)}
         onSave={handleSaveSubmissions}
         professorName={classInfo?.professor_name}
+        isDarkMode={isDarkMode}
       />
 
-      {/* Duplicate Activity Modal */}
       {showDuplicateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -1249,7 +1240,6 @@ export default function ClassworkTab() {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-4">
               <div className="mb-4">
                 <p className="text-gray-600">
@@ -1288,12 +1278,12 @@ export default function ClassworkTab() {
         </div>
       )}
 
-      {/* Separate Success Modals for Different Operations */}
       <ClassWorkSuccess
         isOpen={showCreateSuccessModal}
         onClose={() => setShowCreateSuccessModal(false)}
         message="Activity created successfully!"
         type="success"
+        isDarkMode={isDarkMode}
       />
 
       <ClassWorkSuccess
@@ -1301,6 +1291,7 @@ export default function ClassworkTab() {
         onClose={() => setShowEditSuccessModal(false)}
         message="Activity updated successfully!"
         type="edit"
+        isDarkMode={isDarkMode}
       />
 
       <ClassWorkSuccess
@@ -1308,6 +1299,7 @@ export default function ClassworkTab() {
         onClose={() => setShowGradeSuccessModal(false)}
         message="Grades saved successfully!"
         type="grade"
+        isDarkMode={isDarkMode}
       />
 
       <ClassWorkSuccess
@@ -1315,6 +1307,7 @@ export default function ClassworkTab() {
         onClose={() => setShowArchiveSuccessModal(false)}
         message="Activity archived successfully!"
         type="archive"
+        isDarkMode={isDarkMode}
       />
     </div>
   );

@@ -5,7 +5,8 @@ const ClassWorkSuccess = ({
   isOpen, 
   onClose,
   message = "Operation completed successfully!",
-  type = "success" // "success", "duplicate", "edit", "grade", "archive"
+  type = "success",
+  isDarkMode = true
 }) => {
   if (!isOpen) return null;
 
@@ -15,7 +16,9 @@ const ClassWorkSuccess = ({
         return {
           title: "Duplicate Task Number",
           icon: (
-            <div className="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-[#A15353]/20 mb-2">
+            <div className={`mx-auto flex items-center justify-center h-10 w-10 rounded-full mb-2 ${
+              isDarkMode ? 'bg-[#A15353]/20' : 'bg-[#A15353]/10'
+            }`}>
               <svg className="h-4 w-4 text-[#A15353]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
@@ -29,7 +32,9 @@ const ClassWorkSuccess = ({
         return {
           title: "Changes Saved!",
           icon: (
-            <div className="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-[#767EE0]/20 mb-2">
+            <div className={`mx-auto flex items-center justify-center h-10 w-10 rounded-full mb-2 ${
+              isDarkMode ? 'bg-[#767EE0]/20' : 'bg-[#767EE0]/10'
+            }`}>
               <svg className="h-4 w-4 text-[#767EE0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
@@ -43,7 +48,9 @@ const ClassWorkSuccess = ({
         return {
           title: "Graded Successfully!",
           icon: (
-            <div className="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-[#00A15D]/20 mb-2">
+            <div className={`mx-auto flex items-center justify-center h-10 w-10 rounded-full mb-2 ${
+              isDarkMode ? 'bg-[#00A15D]/20' : 'bg-[#00A15D]/10'
+            }`}>
               <img 
                 src={SuccessIcon} 
                 alt="Success" 
@@ -59,7 +66,9 @@ const ClassWorkSuccess = ({
         return {
           title: "Archived Successfully!",
           icon: (
-            <div className="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-[#FFA600]/20 mb-2">
+            <div className={`mx-auto flex items-center justify-center h-10 w-10 rounded-full mb-2 ${
+              isDarkMode ? 'bg-[#FFA600]/20' : 'bg-[#FFA600]/10'
+            }`}>
               <svg className="h-4 w-4 text-[#FFA600]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
               </svg>
@@ -69,11 +78,13 @@ const ClassWorkSuccess = ({
           buttonClass: "bg-[#FFA600] hover:bg-[#e69500] text-white"
         };
       
-      default: // success
+      default:
         return {
           title: "Success!",
           icon: (
-            <div className="mx-auto flex items-center justify-center h-10 w-10 rounded-full bg-[#00A15D]/20 mb-2">
+            <div className={`mx-auto flex items-center justify-center h-10 w-10 rounded-full mb-2 ${
+              isDarkMode ? 'bg-[#00A15D]/20' : 'bg-[#00A15D]/10'
+            }`}>
               <img 
                 src={SuccessIcon} 
                 alt="Success" 
@@ -91,24 +102,24 @@ const ClassWorkSuccess = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50 overlay-fade p-3">
-      <div className="bg-[#15151C] text-white rounded-lg shadow-xl w-full max-w-xs mx-2 p-4 border border-[#2D2D3A] modal-pop">
+      <div className={`rounded-lg shadow-xl w-full max-w-xs mx-2 p-4 border ${
+        isDarkMode ? 'bg-[#15151C] text-white border-[#2D2D3A]' : 'bg-white text-gray-900 border-gray-300'
+      } modal-pop`}>
         <div className="text-center">
-          {/* Icon */}
           {config.icon}
 
-          {/* Title */}
-          <h3 className="text-base font-bold text-white mb-1">
+          <h3 className={`text-base font-bold mb-1 ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
             {config.title}
           </h3>
           
-          {/* Message */}
-          <div className={`mb-3 text-xs text-gray-300 ${
+          <div className={`mb-3 text-xs ${
             type === 'duplicate' ? 'whitespace-pre-line' : ''
-          }`}>
+          } ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             {message}
           </div>
 
-          {/* Button */}
           <button
             onClick={onClose}
             className={`w-full px-4 py-1.5 font-medium rounded transition-colors duration-200 cursor-pointer text-xs ${config.buttonClass}`}

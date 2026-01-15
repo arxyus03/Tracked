@@ -83,7 +83,8 @@ const activityTypes = [
 const ClassPerformanceTrend = ({ 
   students: propStudents, 
   subjectCode,
-  useMockData = false
+  useMockData = false,
+  isDarkMode = false // Added theme prop
 }) => {
   const [hoveredWeek, setHoveredWeek] = useState(null);
   const [hoveredStudent, setHoveredStudent] = useState(null);
@@ -102,6 +103,59 @@ const ClassPerformanceTrend = ({
   const studentDropdownRef = useRef(null);
   const activityDropdownRef = useRef(null);
 
+  // Theme-based styles
+  const getCardBackground = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/60" : "text-gray-600";
+  };
+
+  const getInputBackground = () => {
+    return isDarkMode ? "bg-[#2A2A35]" : "bg-gray-100";
+  };
+
+  const getInputBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-300";
+  };
+
+  const getInputHover = () => {
+    return isDarkMode ? "hover:bg-[#3A3A45]" : "hover:bg-gray-200";
+  };
+
+  const getDropdownBackground = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-white";
+  };
+
+  const getDropdownBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getDropdownHeader = () => {
+    return isDarkMode ? "bg-[#1A1A24]" : "bg-gray-50";
+  };
+
+  const getHoverBackground = () => {
+    return isDarkMode ? "hover:bg-[#2A2A35]" : "hover:bg-gray-100";
+  };
+
+  const getTooltipBackground = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-white";
+  };
+
+  const getTooltipBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/20" : "border-gray-200";
+  };
+
   // Fetch performance data for selected students and activity type
   useEffect(() => {
     if (!subjectCode || propStudents.length === 0) return;
@@ -111,7 +165,7 @@ const ClassPerformanceTrend = ({
       try {
         // Get student IDs that are currently visible
         const visibleStudentIds = Object.entries(visibleStudents)
-          .filter(([id, isVisible]) => isVisible)
+          .filter(([isVisible]) => isVisible)
           .map(([id]) => id);
 
         // If no students selected, use first 4 students
@@ -167,7 +221,7 @@ const ClassPerformanceTrend = ({
   const currentStudent = useMemo(() => {
     if (performanceData.length === 0) return null;
     const visibleStudentIds = Object.entries(visibleStudents)
-      .filter(([id, isVisible]) => isVisible)
+      .filter(([isVisible]) => isVisible)
       .map(([id]) => id);
     
     return performanceData.find(s => s.studentId === visibleStudentIds[0]) || performanceData[0];
@@ -436,8 +490,8 @@ const ClassPerformanceTrend = ({
 
   if (loading) {
     return (
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
-        <div className="p-4 border-b border-[#FFFFFF]/10">
+      <div className={`${getCardBackground()} rounded-xl border ${getCardBorder()}`}>
+        <div className={`p-4 border-b ${getCardBorder()}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center">
@@ -445,17 +499,18 @@ const ClassPerformanceTrend = ({
                   src={LineGraphIcon} 
                   alt="Analytics" 
                   className="w-5 h-5"
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
               </div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Student Performance Trend</h3>
+              <h3 className={`font-bold text-lg ${getTextColor()}`}>Student Performance Trend</h3>
             </div>
-            <div className="text-sm text-[#FFFFFF]/60">Loading...</div>
+            <div className={`text-sm ${getSecondaryTextColor()}`}>Loading...</div>
           </div>
         </div>
         <div className="h-48 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#6366F1] mx-auto mb-3"></div>
-            <p className="text-[#FFFFFF]/60">Loading performance data...</p>
+            <p className={getSecondaryTextColor()}>Loading performance data...</p>
           </div>
         </div>
       </div>
@@ -464,8 +519,8 @@ const ClassPerformanceTrend = ({
 
   if (performanceData.length === 0 && !useMockData) {
     return (
-      <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10">
-        <div className="p-4 border-b border-[#FFFFFF]/10">
+      <div className={`${getCardBackground()} rounded-xl border ${getCardBorder()}`}>
+        <div className={`p-4 border-b ${getCardBorder()}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center">
@@ -473,11 +528,12 @@ const ClassPerformanceTrend = ({
                   src={LineGraphIcon} 
                   alt="Analytics" 
                   className="w-5 h-5"
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
               </div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Student Performance Trend</h3>
+              <h3 className={`font-bold text-lg ${getTextColor()}`}>Student Performance Trend</h3>
             </div>
-            <div className="text-sm text-[#FFFFFF]/60">No data available</div>
+            <div className={`text-sm ${getSecondaryTextColor()}`}>No data available</div>
           </div>
         </div>
         <div className="h-48 flex items-center justify-center">
@@ -487,10 +543,11 @@ const ClassPerformanceTrend = ({
                 src={LineGraphIcon} 
                 alt="Analytics" 
                 className="w-8 h-8 opacity-40"
+                style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
               />
             </div>
-            <p className="text-[#FFFFFF]/60">No performance data available for this subject</p>
-            <p className="text-sm text-[#FFFFFF]/40 mt-2">Check if activities and attendance have been recorded</p>
+            <p className={getSecondaryTextColor()}>No performance data available for this subject</p>
+            <p className={`text-sm ${getSecondaryTextColor()} mt-2`}>Check if activities and attendance have been recorded</p>
           </div>
         </div>
       </div>
@@ -498,9 +555,9 @@ const ClassPerformanceTrend = ({
   }
 
   return (
-    <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10 relative">
+    <div className={`${getCardBackground()} rounded-xl border ${getCardBorder()} relative`}>
       {/* Header - Always visible */}
-      <div className="p-4 border-b border-[#FFFFFF]/10">
+      <div className={`p-4 border-b ${getCardBorder()}`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between">
           <div className="flex items-center gap-3 mb-3 md:mb-0">
             <div className="flex items-center justify-center">
@@ -508,11 +565,12 @@ const ClassPerformanceTrend = ({
                 src={LineGraphIcon} 
                 alt="Analytics" 
                 className="w-5 h-5"
+                style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
               />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Student Performance Trend</h3>
-              <p className="text-sm text-[#FFFFFF]/60">
+              <h3 className={`font-bold text-lg ${getTextColor()}`}>Student Performance Trend</h3>
+              <p className={`text-sm ${getSecondaryTextColor()}`}>
                 Individual student performance comparison
                 {selectedActivityType !== 'all' && (
                   <span className="ml-2 text-[#FFA600] text-xs">
@@ -532,8 +590,8 @@ const ClassPerformanceTrend = ({
             {currentStudent && (
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <div className="text-xs text-[#FFFFFF]/60">Student Rank</div>
-                  <div className="font-bold text-base text-[#FFFFFF]">
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Student Rank</div>
+                  <div className={`font-bold text-base ${getTextColor()}`}>
                     #{comparisonInsights.currentStudentRank} of {comparisonInsights.totalStudents}
                   </div>
                 </div>
@@ -552,7 +610,7 @@ const ClassPerformanceTrend = ({
             {/* Collapse/Expand button */}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-1.5 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
+              className={`p-1.5 rounded-lg ${getInputBackground()} ${getInputHover()} transition-all duration-200 cursor-pointer`}
               aria-label={isCollapsed ? "Expand chart" : "Collapse chart"}
             >
               <div className="w-4 h-4 flex items-center justify-center">
@@ -561,12 +619,14 @@ const ClassPerformanceTrend = ({
                     src={ArrowDown} 
                     alt="Expand" 
                     className="w-3 h-3"
+                    style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                   />
                 ) : (
                   <img 
                     src={ArrowUp} 
                     alt="Collapse" 
                     className="w-3 h-3"
+                    style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                   />
                 )}
               </div>
@@ -585,10 +645,10 @@ const ClassPerformanceTrend = ({
             {/* Activity Type Filter */}
             <div className="relative" ref={activityDropdownRef}>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#FFFFFF]/60">Filter by:</span>
+                <span className={`text-xs ${getSecondaryTextColor()}`}>Filter by:</span>
                 <button
                   onClick={() => setActivityDropdownOpen(!activityDropdownOpen)}
-                  className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] hover:bg-[#3A3A45] rounded-lg text-sm text-white transition-all duration-200 border border-[#FFFFFF]/10 min-w-[180px]"
+                  className={`flex items-center justify-between gap-2 px-3 py-2 ${getInputBackground()} ${getInputHover()} rounded-lg text-sm ${getTextColor()} transition-all duration-200 border ${getInputBorder()} min-w-[180px]`}
                 >
                   <div className="flex items-center gap-2">
                     <div 
@@ -614,24 +674,24 @@ const ClassPerformanceTrend = ({
                 
                 {/* Activity Type Dropdown Menu */}
                 {activityDropdownOpen && (
-                  <div className="absolute left-0 mt-2 w-56 bg-[#23232C] border border-[#FFFFFF]/10 rounded-lg shadow-2xl z-50 overflow-hidden">
-                    <div className="p-3 border-b border-[#FFFFFF]/10 bg-[#1A1A24]">
-                      <span className="text-sm font-medium text-white">Select Activity Type</span>
+                  <div className={`absolute left-0 mt-2 w-56 ${getDropdownBackground()} border ${getDropdownBorder()} rounded-lg shadow-2xl z-50 overflow-hidden`}>
+                    <div className={`p-3 border-b ${getDropdownBorder()} ${getDropdownHeader()}`}>
+                      <span className={`text-sm font-medium ${getTextColor()}`}>Select Activity Type</span>
                     </div>
                     <div className="max-h-48 overflow-y-auto custom-scrollbar">
                       {activityTypes.map(type => (
                         <button
                           key={type.value}
                           onClick={() => handleActivityTypeChange(type.value)}
-                          className={`w-full flex items-center gap-3 p-3 hover:bg-[#2A2A35] transition-all ${
-                            selectedActivityType === type.value ? 'bg-[#2A2A35]' : ''
+                          className={`w-full flex items-center gap-3 p-3 ${getHoverBackground()} transition-all ${
+                            selectedActivityType === type.value ? `${isDarkMode ? 'bg-[#2A2A35]' : 'bg-gray-100'}` : ''
                           }`}
                         >
                           <div 
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: type.color }}
                           />
-                          <span className="text-sm text-white">
+                          <span className={`text-sm ${getTextColor()}`}>
                             {type.label}
                           </span>
                           {selectedActivityType === type.value && (
@@ -650,10 +710,10 @@ const ClassPerformanceTrend = ({
             {/* Student Selection Dropdown */}
             <div className="relative" ref={studentDropdownRef}>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#FFFFFF]/60">Students:</span>
+                <span className={`text-xs ${getSecondaryTextColor()}`}>Students:</span>
                 <button
                   onClick={() => setStudentDropdownOpen(!studentDropdownOpen)}
-                  className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] hover:bg-[#3A3A45] rounded-lg text-sm text-white transition-all duration-200 border border-[#FFFFFF]/10 min-w-[180px]"
+                  className={`flex items-center justify-between gap-2 px-3 py-2 ${getInputBackground()} ${getInputHover()} rounded-lg text-sm ${getTextColor()} transition-all duration-200 border ${getInputBorder()} min-w-[180px]`}
                 >
                   <span className="flex items-center gap-1">
                     <span className="text-xs font-medium">{visibleCount} selected</span>
@@ -673,10 +733,10 @@ const ClassPerformanceTrend = ({
                 
                 {/* Student Dropdown Menu */}
                 {studentDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-[#23232C] border border-[#FFFFFF]/10 rounded-lg shadow-2xl z-50 overflow-hidden">
-                    <div className="p-3 border-b border-[#FFFFFF]/10 bg-[#1A1A24]">
+                  <div className={`absolute right-0 mt-2 w-56 ${getDropdownBackground()} border ${getDropdownBorder()} rounded-lg shadow-2xl z-50 overflow-hidden`}>
+                    <div className={`p-3 border-b ${getDropdownBorder()} ${getDropdownHeader()}`}>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-white">Select Students</span>
+                        <span className={`text-sm font-medium ${getTextColor()}`}>Select Students</span>
                         <button
                           onClick={toggleAllStudents}
                           className="text-xs text-[#6366F1] hover:text-[#767EE0] transition-colors"
@@ -695,7 +755,7 @@ const ClassPerformanceTrend = ({
                         return (
                           <div
                             key={student.studentId}
-                            className={`flex items-center p-3 hover:bg-[#2A2A35] cursor-pointer transition-all ${
+                            className={`flex items-center p-3 ${getHoverBackground()} cursor-pointer transition-all ${
                               !hasPerformanceData ? 'opacity-50' : ''
                             }`}
                             onClick={() => {
@@ -708,7 +768,7 @@ const ClassPerformanceTrend = ({
                             <div className={`w-4 h-4 rounded flex items-center justify-center border mr-3 ${
                               isVisible && hasPerformanceData
                                 ? 'bg-[#6366F1] border-[#6366F1]' 
-                                : 'bg-transparent border-[#FFFFFF]/30'
+                                : `${getInputBorder()} ${getInputBackground()}`
                             } ${!hasPerformanceData ? 'cursor-not-allowed' : ''}`}>
                               {isVisible && hasPerformanceData && (
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -718,7 +778,7 @@ const ClassPerformanceTrend = ({
                             </div>
                             
                             {/* Student Name */}
-                            <div className="text-sm text-white flex-1">
+                            <div className={`text-sm ${getTextColor()} flex-1`}>
                               {student.studentName}
                               {!hasPerformanceData && (
                                 <span className="ml-2 text-xs text-[#FFA600]">(No data)</span>
@@ -727,7 +787,7 @@ const ClassPerformanceTrend = ({
                             
                             {/* Student Score if available */}
                             {studentData && studentData.performanceTrend.length > 0 && (
-                              <div className="text-xs text-[#FFFFFF]/60 ml-2">
+                              <div className={`text-xs ${getSecondaryTextColor()} ml-2`}>
                                 {(
                                   studentData.performanceTrend.reduce((sum, week) => sum + week.score, 0) / 
                                   studentData.performanceTrend.length
@@ -754,13 +814,13 @@ const ClassPerformanceTrend = ({
                 return (
                   <div
                     key={student.studentId}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-[#2A2A35] rounded-lg border border-[#FFFFFF]/5"
+                    className={`flex items-center gap-2 px-3 py-1.5 ${getInputBackground()} rounded-lg border ${getInputBorder()}`}
                   >
                     <div 
                       className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: studentColors[student.studentId] || '#6366F1' }}
                     />
-                    <span className="text-xs text-white">
+                    <span className={`text-xs ${getTextColor()}`}>
                       {student.studentName.split(' ')[0]}
                     </span>
                     {studentData && (
@@ -773,7 +833,7 @@ const ClassPerformanceTrend = ({
                     )}
                     <button
                       onClick={() => toggleStudentVisibility(student.studentId)}
-                      className="ml-1 text-[#FFFFFF]/40 hover:text-[#FF5555] transition-all"
+                      className={`ml-1 ${getSecondaryTextColor()} hover:text-[#FF5555] transition-all`}
                     >
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -820,7 +880,7 @@ const ClassPerformanceTrend = ({
                         y1={margin.top + yScale(score)}
                         x2={innerWidth + margin.left}
                         y2={margin.top + yScale(score)}
-                        stroke="#2A2A35"
+                        stroke={isDarkMode ? "#2A2A35" : "#e5e7eb"}
                         strokeWidth={1}
                         strokeDasharray={score === 70 || score === 75 || score === 100 ? "5,5" : "2,2"}
                         opacity={0.5}
@@ -830,7 +890,7 @@ const ClassPerformanceTrend = ({
                         y={margin.top + yScale(score)}
                         textAnchor="end"
                         dominantBaseline="middle"
-                        fill="#FFFFFF"
+                        fill={isDarkMode ? "#FFFFFF" : "#374151"}
                         fontSize="10"
                         fontWeight={score === 70 || score === 75 ? "bold" : "normal"}
                         opacity={0.7}
@@ -916,7 +976,7 @@ const ClassPerformanceTrend = ({
                           x={margin.left + xScale(week.week)}
                           y={chartHeight - 10}
                           textAnchor="middle"
-                          fill="#FFFFFF"
+                          fill={isDarkMode ? "#FFFFFF" : "#374151"}
                           fontSize="10"
                           opacity={0.7}
                         >
@@ -931,7 +991,7 @@ const ClassPerformanceTrend = ({
                   {visibleStudentsData.map(student => {
                     const isFirst = visibleStudentsData[0]?.studentId === student.studentId;
                     
-                    return student.performanceTrend.map((week, index) => {
+                    return student.performanceTrend.map((week) => {
                       const x = margin.left + xScale(week.week);
                       const y = margin.top + yScale(week.score);
                       const isHovered = hoveredWeek === week.week && hoveredStudent === student.studentId;
@@ -984,34 +1044,35 @@ const ClassPerformanceTrend = ({
                     src={LineGraphIcon} 
                     alt="Analytics" 
                     className="w-8 h-8 opacity-40"
+                    style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                   />
                 </div>
-                <p className="text-[#FFFFFF]/60">No students selected or no performance data available</p>
-                <p className="text-sm text-[#FFFFFF]/40 mt-2">Select students from the dropdown above</p>
+                <p className={getSecondaryTextColor()}>No students selected or no performance data available</p>
+                <p className={`text-sm ${getSecondaryTextColor()} mt-2`}>Select students from the dropdown above</p>
               </div>
             </div>
           )}
 
           {/* Performance zones legend */}
           <div className="mt-6 flex flex-wrap gap-2 text-xs justify-center">
-            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+            <div className={`flex items-center gap-1 px-2 py-1 ${getInputBackground()} rounded`}>
               <div 
                 className="w-2 h-2 rounded-full"
                 style={{ 
                   backgroundColor: activityTypes.find(t => t.value === selectedActivityType)?.color || '#6366F1' 
                 }}
               />
-              <span className="text-[#FFFFFF] text-xs">{getSelectedActivityLabel()}</span>
+              <span className={`text-xs ${getTextColor()}`}>{getSelectedActivityLabel()}</span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+            <div className={`flex items-center gap-1 px-2 py-1 ${getInputBackground()} rounded`}>
               <div className="w-2 h-2 rounded-full bg-[#FF5555]"></div>
               <span className="text-[#FF5555] text-xs">Below 70% (Failing)</span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+            <div className={`flex items-center gap-1 px-2 py-1 ${getInputBackground()} rounded`}>
               <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
               <span className="text-[#FFA600] text-xs">71-75% (Close to Failing)</span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-[#2A2A35] rounded">
+            <div className={`flex items-center gap-1 px-2 py-1 ${getInputBackground()} rounded`}>
               <div className="w-2 h-2 rounded-full bg-[#00A15D]"></div>
               <span className="text-[#00A15D] text-xs">76%+ (Passing)</span>
             </div>
@@ -1021,23 +1082,23 @@ const ClassPerformanceTrend = ({
 
       {/* Collapsed State Summary */}
       {isCollapsed && currentStudent && (
-        <div className="p-4 border-t border-[#FFFFFF]/10">
+        <div className={`p-4 border-t ${getCardBorder()}`}>
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             {/* Left side - Current student summary */}
             <div className="flex items-start gap-6">
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Current Student</div>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Current Student</div>
                 <div className="font-bold text-base text-[#6366F1]">
                   {currentStudent?.studentName?.split(' ')[0] || "Student"}
                 </div>
-                <div className="text-sm text-[#FFFFFF] mt-1">
+                <div className={`text-sm ${getTextColor()} mt-1`}>
                   Avg: {comparisonInsights.currentStudentAvg.toFixed(2)}%
                 </div>
               </div>
               
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Class Average</div>
-                <div className="font-bold text-base text-[#FFFFFF]">
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Class Average</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>
                   {comparisonInsights.classAvg.toFixed(2)}%
                 </div>
                 <div className={`text-sm ${comparisonInsights.trendDirection === 'up' ? 'text-[#00A15D]' : comparisonInsights.trendDirection === 'down' ? 'text-[#FF5555]' : 'text-[#FFA600]'}`}>
@@ -1047,26 +1108,26 @@ const ClassPerformanceTrend = ({
               </div>
               
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Student Ranking</div>
-                <div className="font-bold text-base text-[#FFFFFF]">
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Student Ranking</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>
                   #{comparisonInsights.currentStudentRank} / {comparisonInsights.totalStudents}
                 </div>
                 {comparisonInsights.topStudent && (
-                  <div className="text-sm text-[#FFFFFF]/60 mt-1">
+                  <div className={`text-sm ${getSecondaryTextColor()} mt-1`}>
                     Top: {comparisonInsights.topStudent.studentName.split(' ')[0]}
                   </div>
                 )}
               </div>
 
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Activity Type</div>
-                <div className="font-bold text-base text-white">
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Activity Type</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>
                   {getSelectedActivityLabel()}
                 </div>
                 {selectedActivityType === 'all' ? (
-                  <div className="text-xs text-[#FFFFFF]/60 mt-1">(75% Academic + 25% Attendance)</div>
+                  <div className={`text-xs ${getSecondaryTextColor()} mt-1`}>(75% Academic + 25% Attendance)</div>
                 ) : (
-                  <div className="text-xs text-[#FFFFFF]/60 mt-1">(Academic Only)</div>
+                  <div className={`text-xs ${getSecondaryTextColor()} mt-1`}>(Academic Only)</div>
                 )}
               </div>
             </div>
@@ -1076,14 +1137,14 @@ const ClassPerformanceTrend = ({
               {currentStudent && selectedActivityType === 'all' && (
                 <>
                   <div className="text-left">
-                    <div className="text-xs text-[#FFFFFF]/60">Attendance</div>
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Attendance</div>
                     <div className="font-bold text-base text-[#00A15D]">
                       {currentStudent.attendance || 0}%
                     </div>
                   </div>
                   
                   <div className="text-left">
-                    <div className="text-xs text-[#FFFFFF]/60">Assignments</div>
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Assignments</div>
                     <div className="font-bold text-base text-[#10B981]">
                       {currentStudent.assignmentCompletion || 0}%
                     </div>
@@ -1099,7 +1160,7 @@ const ClassPerformanceTrend = ({
       {hoveredWeek && hoveredStudent && !isCollapsed && visibleStudentsData.length > 0 && (
         <div 
           ref={tooltipRef}
-          className="fixed bg-[#23232C] border border-[#FFFFFF]/20 rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150"
+          className={`fixed ${getTooltipBackground()} border ${getTooltipBorder()} rounded-lg p-3 shadow-2xl z-50 pointer-events-none transition-all duration-150`}
           style={{
             left: `${tooltipPosition.x + 10}px`,
             top: `${tooltipPosition.y - 120}px`,
@@ -1109,8 +1170,8 @@ const ClassPerformanceTrend = ({
         >
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[#FFFFFF] text-sm font-semibold">Week {hoveredWeek}</span>
-              <span className="text-xs text-[#FFFFFF]/60">
+              <span className={`${getTextColor()} text-sm font-semibold`}>Week {hoveredWeek}</span>
+              <span className={`text-xs ${getSecondaryTextColor()}`}>
                 {visibleStudentsData.find(s => s.studentId === hoveredStudent)?.studentName}
               </span>
             </div>
@@ -1152,19 +1213,19 @@ const ClassPerformanceTrend = ({
               );
             })()}
 
-            <div className="text-xs text-[#FFFFFF]/60">
+            <div className={`text-xs ${getSecondaryTextColor()}`}>
               {getSelectedActivityLabel()}
               {selectedActivityType === 'all' ? ' (Weighted)' : ' (Academic)'}
             </div>
             
-            <div className="text-xs text-[#FFFFFF]/40 mt-1">
+            <div className={`text-xs ${getSecondaryTextColor()} mt-1`}>
               Click for detailed analysis
             </div>
           </div>
           
           {/* Tooltip arrow */}
-          <div className="absolute w-2 h-2 bg-[#23232C] border-r border-b border-[#FFFFFF]/20 
-            transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2" />
+          <div className={`absolute w-2 h-2 ${getTooltipBackground()} border-r border-b ${getTooltipBorder()} 
+            transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2`} />
         </div>
       )}
 
@@ -1175,6 +1236,7 @@ const ClassPerformanceTrend = ({
         studentData={selectedDataPoint?.studentData}
         weekData={selectedDataPoint?.weekData}
         activityType={selectedActivityType}
+        isDarkMode={isDarkMode}
       />
     </div>
   );

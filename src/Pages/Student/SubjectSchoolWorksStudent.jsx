@@ -56,7 +56,7 @@ const getTimeAgo = (createdAt) => {
 };
 
 // ========== STUDENT ACTIVITY CARD COMPONENT ==========
-const StudentActivityCard = ({ activity, onViewDetails }) => {
+const StudentActivityCard = ({ activity, onViewDetails, isDarkMode }) => {
   const formatDate = (dateString) => {
     if (!dateString || dateString === "No deadline") return "No deadline";
     try {
@@ -99,15 +99,15 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
 
   const getActivityTypeColor = (type) => {
     const colors = {
-      'Assignment': 'bg-[#767EE0]/20 text-[#767EE0]',
-      'Quiz': 'bg-[#B39DDB]/20 text-[#B39DDB]',
-      'Activity': 'bg-[#00A15D]/20 text-[#00A15D]',
-      'Project': 'bg-[#FFA600]/20 text-[#FFA600]',
-      'Laboratory': 'bg-[#A15353]/20 text-[#A15353]',
-      'Exam': 'bg-[#FF5252]/20 text-[#FF5252]',
-      'Remedial': 'bg-[#3B82F6]/20 text-[#3B82F6]'
+      'Assignment': isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]',
+      'Quiz': isDarkMode ? 'bg-[#B39DDB]/20 text-[#B39DDB]' : 'bg-[#B39DDB]/10 text-[#B39DDB]',
+      'Activity': isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]',
+      'Project': isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]',
+      'Laboratory': isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]',
+      'Exam': isDarkMode ? 'bg-[#FF5252]/20 text-[#FF5252]' : 'bg-[#FF5252]/10 text-[#FF5252]',
+      'Remedial': isDarkMode ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'bg-[#3B82F6]/10 text-[#3B82F6]'
     };
-    return colors[type] || 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80';
+    return colors[type] || (isDarkMode ? 'bg-[#FFFFFF]/10 text-[#FFFFFF]/80' : 'bg-gray-100 text-gray-700');
   };
 
   const getStudentStatus = (activity) => {
@@ -125,7 +125,7 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
     
     if (isOverdue) return { 
       status: "Missed", 
-      color: "bg-[#A15353]/20 text-[#A15353]", 
+      color: isDarkMode ? "bg-[#A15353]/20 text-[#A15353]" : "bg-[#A15353]/10 text-[#A15353]", 
       type: "missed" 
     };
     if (isSubmitted) return { 
@@ -147,7 +147,7 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
   const isGraded = activity.grade !== null && activity.grade !== undefined && activity.grade !== '';
   const deadlineColor = isDeadlinePassed(activity.deadline) || isDeadlineUrgent(activity.deadline) 
     ? 'text-[#A15353]' 
-    : 'text-[#FFFFFF]/80';
+    : (isDarkMode ? 'text-[#FFFFFF]/80' : 'text-gray-600');
   
   // Round grade to whole number
   const displayGrade = isGraded ? Math.round(parseFloat(activity.grade)) : null;
@@ -155,9 +155,9 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
 
   // Determine card background color based on status
   const getCardBackground = () => {
-    if (statusInfo.type === 'missed') return 'bg-[#A15353]/10';
-    if (statusInfo.type === 'submitted') return 'bg-[#15151C]';
-    return 'bg-[#15151C]';
+    if (statusInfo.type === 'missed') return isDarkMode ? 'bg-[#A15353]/10' : 'bg-[#A15353]/5';
+    if (statusInfo.type === 'submitted') return isDarkMode ? 'bg-[#15151C]' : 'bg-white';
+    return isDarkMode ? 'bg-[#15151C]' : 'bg-white';
   };
 
   // Get grading status for the top label
@@ -165,17 +165,17 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
     if (isGraded) {
       return {
         text: 'Graded',
-        color: 'bg-[#00A15D]/20 text-[#00A15D]'
+        color: isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]'
       };
     } else if (statusInfo.type === 'submitted') {
       return {
         text: 'Pending Grade',
-        color: 'bg-[#FFA600]/20 text-[#FFA600]'
+        color: isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]'
       };
     } else if (statusInfo.type === 'active') {
       return {
         text: 'Not Submitted',
-        color: 'bg-[#767EE0]/20 text-[#767EE0]'
+        color: isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]'
       };
     }
     return null;
@@ -186,7 +186,7 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
 
   return (
     <div 
-      className={`rounded-lg border border-[#FFFFFF]/10 p-2.5 hover:shadow-sm transition-all cursor-pointer hover:border-[#00A15D]/30 ${getCardBackground()}`}
+      className={`rounded-lg border ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'} p-2.5 hover:shadow-sm transition-all cursor-pointer hover:border-[#00A15D]/30 ${getCardBackground()}`}
       onClick={() => onViewDetails(activity)}
     >
       {/* Header with type+number and status */}
@@ -201,11 +201,12 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
               src={FileIcon} 
               alt="Reference Materials" 
               className={`w-3.5 h-3.5 ${hasProfessorSubmission ? 'opacity-100' : 'opacity-40'}`}
+              style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
             />
             <span className={`text-xs font-bold ${
               hasProfessorSubmission 
                 ? 'text-[#00A15D]' 
-                : 'text-[#767EE0]'
+                : (isDarkMode ? 'text-[#767EE0]' : 'text-[#767EE0]')
             }`}>
               {hasProfessorSubmission ? (activity.professor_file_count || 1) : 0}
             </span>
@@ -213,7 +214,7 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
           
           {/* Edited Label - Show if school_work_edited is 1 */}
           {activity.school_work_edited === 1 && (
-            <span className="px-1 py-0.5 text-xs font-medium rounded bg-[#3B82F6]/20 text-[#3B82F6]">
+            <span className={`px-1 py-0.5 text-xs font-medium rounded ${isDarkMode ? 'bg-[#3B82F6]/20 text-[#3B82F6]' : 'bg-[#3B82F6]/10 text-[#3B82F6]'}`}>
               Edited
             </span>
           )}
@@ -233,7 +234,7 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
       </div>
       
       {/* Title - Smaller */}
-      <h3 className="font-medium text-[#FFFFFF] text-xs mb-2.5 truncate">
+      <h3 className={`font-medium ${isDarkMode ? 'text-[#FFFFFF]' : 'text-gray-900'} text-xs mb-2.5 truncate`}>
         {activity.title}
       </h3>
       
@@ -241,7 +242,12 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
       <div className="flex items-center justify-between mb-2">
         {/* Deadline */}
         <div className="flex items-center gap-1">
-          <img src={DeadlineIcon} alt="Deadline" className="w-2.5 h-2.5" />
+          <img 
+            src={DeadlineIcon} 
+            alt="Deadline" 
+            className="w-2.5 h-2.5"
+            style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+          />
           <span className={`text-xs font-medium ${deadlineColor}`}>
             {formatDate(activity.deadline)}
           </span>
@@ -249,13 +255,18 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
         
         {/* Grade Status */}
         <div className="flex items-center gap-1">
-          <img src={GradeIcon} alt="Grade" className="w-2.5 h-2.5" />
+          <img 
+            src={GradeIcon} 
+            alt="Grade" 
+            className="w-2.5 h-2.5"
+            style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+          />
           {isGraded ? (
             <span className="text-xs font-medium text-[#FFA600]">
               {displayGrade}/{displayPoints}
             </span>
           ) : (
-            <span className="text-xs font-medium text-[#FFA600]">
+            <span className={`text-xs font-medium ${isDarkMode ? 'text-[#FFA600]' : 'text-amber-600'}`}>
               No Grade
             </span>
           )}
@@ -265,8 +276,13 @@ const StudentActivityCard = ({ activity, onViewDetails }) => {
       {/* Time Indicator - Added below Grade Status */}
       {timeAgo && (
         <div className="flex items-center gap-1 mt-1">
-          <img src={TimeIcon} alt="Time" className="w-2.5 h-2.5 opacity-60" />
-          <span className="text-[10px] font-medium text-[#FFFFFF]/60">
+          <img 
+            src={TimeIcon} 
+            alt="Time" 
+            className="w-2.5 h-2.5 opacity-60"
+            style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+          />
+          <span className={`text-[10px] font-medium ${isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-500'}`}>
             {timeAgo} ago
           </span>
         </div>
@@ -293,6 +309,7 @@ export default function SubjectSchoolWorksStudent() {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [studentImages, setStudentImages] = useState({});
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
 
   // ========== USE EFFECTS ==========
   useEffect(() => {
@@ -307,6 +324,25 @@ export default function SubjectSchoolWorksStudent() {
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -485,23 +521,57 @@ export default function SubjectSchoolWorksStudent() {
     missed: filteredActivities.filter(activity => getActivityStatus(activity) === "missed")
   };
 
+  // ========== THEME HELPER FUNCTIONS ==========
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-white/30" : "border-gray-200";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getInputBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-300";
+  };
+
+  const getInputFocusBorderColor = () => {
+    return isDarkMode ? "border-[#767EE0]" : "border-blue-500";
+  };
+
+  const getPlaceholderColor = () => {
+    return isDarkMode ? "placeholder:text-[#FFFFFF]/40" : "placeholder:text-gray-400";
+  };
+
   // ========== RENDER HELPERS ==========
   const renderEmptyState = () => (
     <div className="col-span-full text-center py-6">
-      <div className="mx-auto w-12 h-12 mb-3 rounded-full bg-[#15151C] flex items-center justify-center">
+      <div className={`mx-auto w-12 h-12 mb-3 rounded-full ${isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'} flex items-center justify-center`}>
         <img 
           src={Classwork} 
           alt="No activities" 
-          className="h-6 w-6 opacity-50" 
+          className="h-6 w-6 opacity-50"
+          style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
         />
       </div>
-      <p className="text-[#FFFFFF]/60 text-xs mb-0.5">
+      <p className={`text-xs mb-0.5 ${isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-500'}`}>
         {searchQuery || filterOption !== "All" 
           ? "No activities match your search" 
           : "No activities available"
         }
       </p>
-      <p className="text-[#FFFFFF]/40 text-[10px]">
+      <p className={`text-[10px] ${isDarkMode ? 'text-[#FFFFFF]/40' : 'text-gray-400'}`}>
         {searchQuery || filterOption !== "All" 
           ? "Try adjusting search or filters" 
           : "Check back later"
@@ -514,10 +584,15 @@ export default function SubjectSchoolWorksStudent() {
     <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
       <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
         active 
-          ? 'bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30' 
+          ? (isDarkMode ? 'bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30' : 'bg-[#767EE0]/10 text-[#767EE0] border-[#767EE0]/20 hover:bg-[#767EE0]/20')
           : colorClass
       }`}>
-        <img src={icon} alt="" className="h-4 w-4" />
+        <img 
+          src={icon} 
+          alt="" 
+          className="h-4 w-4"
+          style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+        />
         <span className="sm:inline truncate">{label}</span>
       </button>
     </Link>
@@ -527,10 +602,10 @@ export default function SubjectSchoolWorksStudent() {
     activities.length > 0 && (
       <>
         <div className="mb-2.5 mt-2.5">
-          <h3 className="text-sm font-semibold text-[#FFFFFF] flex items-center gap-2">
+          <h3 className={`text-sm font-semibold ${getTextColor()} flex items-center gap-2`}>
             <span className={`w-1.5 h-1.5 rounded-full ${color}`}></span>
             {title}
-            <span className="text-xs font-normal text-[#FFFFFF]/50 ml-2">
+            <span className={`text-xs font-normal ml-2 ${isDarkMode ? 'text-[#FFFFFF]/50' : 'text-gray-500'}`}>
               ({activities.length})
             </span>
           </h3>
@@ -542,10 +617,11 @@ export default function SubjectSchoolWorksStudent() {
               activity={activity}
               onViewDetails={handleViewDetails}
               studentImages={studentImages}
+              isDarkMode={isDarkMode}
             />
           ))}
         </div>
-        <hr className="my-3 border-[#FFFFFF]/10" />
+        <hr className={`my-3 ${getDividerColor()}`} />
       </>
     )
   );
@@ -553,11 +629,11 @@ export default function SubjectSchoolWorksStudent() {
   // ========== LOADING STATE ==========
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 text-center text-[#FFFFFF]">Loading activities...</div>
+          <div className={`p-8 text-center ${getTextColor()}`}>Loading activities...</div>
         </div>
       </div>
     );
@@ -565,7 +641,7 @@ export default function SubjectSchoolWorksStudent() {
 
   // ========== MAIN RENDER ==========
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -576,14 +652,19 @@ export default function SubjectSchoolWorksStudent() {
           {/* ========== PAGE HEADER ========== */}
           <div className="mb-4">
             <div className="flex items-center mb-2">
-              <img src={Classwork} alt="School Works" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
-              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">School Works</h1>
+              <img 
+                src={Classwork} 
+                alt="School Works" 
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+              />
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>School Works</h1>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">Manage your academic activities</p>
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>Manage your academic activities</p>
           </div>
 
           {/* ========== CLASS INFORMATION ========== */}
-          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'Loading...'}</span>
@@ -597,34 +678,45 @@ export default function SubjectSchoolWorksStudent() {
                 <img 
                   src={BackButton} 
                   alt="Back" 
-                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
+                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity"
+                  style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
                 />
               </Link>
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getDividerColor()} mb-4`} />
 
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
               {/* New Subject Name Overview Button (Red) */}
               <Link to={`/SubjectOverviewStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
-                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30">
-                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${isDarkMode ? 'bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30' : 'bg-[#FF5252]/10 text-[#FF5252] border-[#FF5252]/20 hover:bg-[#FF5252]/20'}`}>
+                  <img 
+                    src={SubjectOverview} 
+                    alt="" 
+                    className="h-4 w-4"
+                    style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+                  />
                   <span className="sm:inline truncate">{classInfo?.subject || 'Subject'} Overview</span>
                 </button>
               </Link>
               
               {/* Existing buttons */}
-              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
+              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, isDarkMode ? "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30" : "bg-[#00A15D]/10 text-[#00A15D] border-[#00A15D]/20 hover:bg-[#00A15D]/20")}
               {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", true)}
-              {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30")}
-              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
+              {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", false, isDarkMode ? "bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30" : "bg-[#FFA600]/10 text-[#FFA600] border-[#FFA600]/20 hover:bg-[#FFA600]/20")}
+              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, isDarkMode ? "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30" : "bg-[#B39DDB]/10 text-[#B39DDB] border-[#B39DDB]/20 hover:bg-[#B39DDB]/20")}
             </div>
             <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
-              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#767EE0] transition-all duration-200 cursor-pointer">
-                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
+              <button className={`p-2 ${isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'} rounded-md shadow-md border-2 border-transparent hover:border-[#767EE0] transition-all duration-200 cursor-pointer`}>
+                <img 
+                  src={StudentsIcon} 
+                  alt="Student List" 
+                  className="h-4 w-4"
+                  style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+                />
               </button>
             </Link>
           </div>
@@ -634,10 +726,10 @@ export default function SubjectSchoolWorksStudent() {
             <div className="relative filter-dropdown sm:w-36">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className={`flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
+                className={`flex items-center justify-between w-full px-2.5 py-1.5 ${getInputBackgroundColor()} rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
                   filterOption !== "All" 
                     ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' 
-                    : 'border-[#FFFFFF]/10 hover:border-[#767EE0] text-[#FFFFFF]'
+                    : `${getInputBorderColor()} hover:border-[#767EE0] ${getTextColor()}`
                 }`}
               >
                 <span>{filterOption}</span>
@@ -648,20 +740,21 @@ export default function SubjectSchoolWorksStudent() {
                     filterDropdownOpen ? 'rotate-180' : ''
                   } ${
                     filterOption !== "All" ? 'invert-[0.5] sepia-[1] saturate-[5] hue-rotate-[200deg]' : ''
-                  }`} 
+                  }`}
+                  style={!isDarkMode && filterOption === "All" ? { filter: 'invert(0.5)' } : {}}
                 />
               </button>
 
               {filterDropdownOpen && (
-                <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-[#FFFFFF]/10 z-20 overflow-hidden">
+                <div className={`absolute top-full mt-1 ${isDarkMode ? 'bg-[#15151C]' : 'bg-white'} rounded w-full shadow-xl border ${isDarkMode ? 'border-[#FFFFFF]/10' : 'border-gray-200'} z-20 overflow-hidden`}>
                   {/* Added "Remedial" and "Exam" to the filter options */}
                   {["All", "Active", "Submitted", "Missed", "Assignment", "Quiz", "Activity", "Project", "Laboratory", "Exam", "Remedial"].map((option) => (
                     <button
                       key={option}
-                      className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
+                      className={`block px-2.5 py-1.5 w-full text-left ${isDarkMode ? 'hover:bg-[#23232C]' : 'hover:bg-gray-50'} text-xs transition-colors cursor-pointer ${
                         filterOption === option 
-                          ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' 
-                          : 'text-[#FFFFFF]/80'
+                          ? `${isDarkMode ? 'bg-[#767EE0]/10 text-[#767EE0]' : 'bg-[#767EE0]/10 text-[#767EE0]'} border-l-2 border-[#767EE0] font-semibold` 
+                          : (isDarkMode ? 'text-[#FFFFFF]/80' : 'text-gray-700')
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -682,10 +775,15 @@ export default function SubjectSchoolWorksStudent() {
                   placeholder="Search activities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors placeholder:text-[#FFFFFF]/40"
+                  className={`w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none ${getInputBackgroundColor()} text-xs ${getTextColor()} border ${getInputBorderColor()} ${getPlaceholderColor()} focus:${getInputFocusBorderColor()} transition-colors`}
                 />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60">
-                  <img src={Search} alt="Search" className="h-3.5 w-3.5" />
+                <button className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <img 
+                    src={Search} 
+                    alt="Search" 
+                    className="h-3.5 w-3.5"
+                    style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+                  />
                 </button>
               </div>
             </div>
@@ -708,6 +806,7 @@ export default function SubjectSchoolWorksStudent() {
         isOpen={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         studentId={studentId}
+        isDarkMode={isDarkMode}
       />
     </div>
   );

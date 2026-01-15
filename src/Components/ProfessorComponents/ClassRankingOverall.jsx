@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import RankingIcon from '../../assets/Ranking.svg';
 import TrackEdIcon from '../../assets/TrackEd.svg';
 import ArrowDown from '../../assets/ArrowDown.svg';
@@ -9,8 +9,8 @@ import ArrowDownLight from '../../assets/ArrowDown.svg';
 const ClassRankingOverall = ({ 
   studentPerformance = [], 
   classInfo = {}, 
-  classStats = {}, 
-  subjectCode 
+  subjectCode,
+  isDarkMode = false 
 }) => {
   const [viewMode, setViewMode] = useState('lowest');
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -57,16 +57,65 @@ const ClassRankingOverall = ({
     switch (status) {
       case 'Submitted': 
       case 'Completed': 
-        return 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30';
+        return isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30' : 'bg-[#00A15D]/10 text-[#00A15D] border border-[#00A15D]/20';
       case 'Late': 
-        return 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30';
+        return isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600] border border-[#FFA600]/30' : 'bg-[#FFA600]/10 text-[#FFA600] border border-[#FFA600]/20';
       case 'Missed': 
-        return 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30';
+        return isDarkMode ? 'bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30' : 'bg-[#A15353]/10 text-[#A15353] border border-[#A15353]/20';
       case 'Assigned': 
-        return 'bg-gray-700 text-gray-300 border border-gray-600';
+        return isDarkMode ? 'bg-gray-700 text-gray-300 border border-gray-600' : 'bg-gray-200 text-gray-700 border border-gray-300';
       default: 
-        return 'bg-gray-700 text-gray-300 border border-gray-600';
+        return isDarkMode ? 'bg-gray-700 text-gray-300 border border-gray-600' : 'bg-gray-200 text-gray-700 border border-gray-300';
     }
+  };
+
+  // Theme-based colors
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-white/10" : "border-gray-200";
+  };
+
+  const getSectionBackgroundColor = () => {
+    return isDarkMode ? "bg-[#0F0F15]" : "bg-gray-50";
+  };
+
+  const getSectionBorderColor = () => {
+    return isDarkMode ? "border-white/5" : "border-gray-200";
+  };
+
+  const getModalBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getModalBorderColor = () => {
+    return isDarkMode ? "border-white/10" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/60" : "text-gray-600";
+  };
+
+  const getHoverBackgroundColor = () => {
+    return isDarkMode ? "hover:bg-[#767EE0]/20" : "hover:bg-gray-100";
+  };
+
+  const getButtonBackgroundColor = (isSelected) => {
+    if (isSelected) {
+      return viewMode === 'lowest' ? 'bg-[#A15353]' : 'bg-[#00A15D]';
+    }
+    return isDarkMode ? 'bg-[#0F0F15]' : 'bg-gray-100';
+  };
+
+  const getButtonTextColor = (isSelected) => {
+    if (isSelected) return 'text-white';
+    return isDarkMode ? 'text-white/60' : 'text-gray-600';
   };
 
   const getSortedStudents = () => {
@@ -182,25 +231,25 @@ const ClassRankingOverall = ({
 
   return (
     <>
-      <div className="bg-[#15151C] rounded-lg shadow-lg p-3 mb-4 border border-white/10 overflow-hidden">
+      <div className={`rounded-lg shadow-lg p-3 mb-4 overflow-hidden border ${getCardBorderColor()} ${getCardBackgroundColor()}`}>
         {/* Header with title and toggle buttons */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center">
-            <div className="flex justify-center items-center h-5 w-5 rounded-lg mr-2 bg-[#0F0F15]">
-              <img src={RankingIcon} alt="Ranking" className="h-3.5 w-3.5" />
+            <div className={`flex justify-center items-center h-5 w-5 rounded-lg mr-2 ${isDarkMode ? 'bg-[#0F0F15]' : 'bg-gray-100'}`}>
+              <img src={RankingIcon} alt="Ranking" className="h-3.5 w-3.5" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
             </div>
             <div>
-              <h2 className="font-bold text-sm text-[#FFFFFF]">Class Ranking</h2>
-              <p className="text-xs text-white/60">{classInfo?.subject} • {classInfo?.section}</p>
+              <h2 className={`font-bold text-sm ${getTextColor()}`}>Class Ranking</h2>
+              <p className={`text-xs ${getSecondaryTextColor()}`}>{classInfo?.subject} • {classInfo?.section}</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-2">
             <button 
               onClick={() => setIsCollapsed(!isCollapsed)} 
-              className="p-1 rounded-lg hover:bg-[#767EE0]/20 transition-colors"
+              className={`p-1 rounded-lg ${getHoverBackgroundColor()} transition-colors`}
             >
-              <img src={isCollapsed ? ArrowDown : ArrowUp} alt="Toggle" className="h-4 w-4" />
+              <img src={isCollapsed ? ArrowDown : ArrowUp} alt="Toggle" className="h-4 w-4" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
             </button>
             
             <div className="flex items-center space-x-1">
@@ -209,7 +258,7 @@ const ClassRankingOverall = ({
                 className={`px-2 py-1 text-[10px] rounded-lg transition-all duration-200 font-medium ${
                   viewMode === 'lowest' 
                     ? 'bg-[#A15353] text-white shadow-md' 
-                    : 'bg-[#0F0F15] text-white/60 hover:bg-[#767EE0]/20 hover:text-white'
+                    : `${getButtonBackgroundColor(false)} ${getButtonTextColor(false)} hover:${isDarkMode ? 'bg-[#767EE0]/20' : 'bg-gray-200'} hover:text-white`
                 }`}
               >
                 Lowest
@@ -219,7 +268,7 @@ const ClassRankingOverall = ({
                 className={`px-2 py-1 text-[10px] rounded-lg transition-all duration-200 font-medium ${
                   viewMode === 'highest' 
                     ? 'bg-[#00A15D] text-white shadow-md' 
-                    : 'bg-[#0F0F15] text-white/60 hover:bg-[#767EE0]/20 hover:text-white'
+                    : `${getButtonBackgroundColor(false)} ${getButtonTextColor(false)} hover:${isDarkMode ? 'bg-[#767EE0]/20' : 'bg-gray-200'} hover:text-white`
                 }`}
               >
                 Highest
@@ -232,16 +281,16 @@ const ClassRankingOverall = ({
         {isCollapsed ? (
           <div className="space-y-2">
             {/* Highest Performers Summary */}
-            <div className="bg-[#0F0F15] rounded-lg border border-white/5 p-2">
+            <div className={`rounded-lg border p-2 ${getSectionBackgroundColor()} ${getSectionBorderColor()}`}>
               <div className="flex items-center justify-between mb-1">
-                <h3 className="text-xs font-semibold text-[#FFFFFF]">Top 3 Performers</h3>
-                <div className="flex items-center text-[10px] text-white/60">
+                <h3 className={`text-xs font-semibold ${getTextColor()}`}>Top 3 Performers</h3>
+                <div className={`flex items-center text-[10px] ${getSecondaryTextColor()}`}>
                   <div className="h-2 w-2 rounded-full bg-[#00A15D] mr-1"></div>
                   Highest
                 </div>
               </div>
               {summary.highest.length === 0 ? (
-                <p className="text-xs text-white/50 text-center py-1">No data available</p>
+                <p className={`text-xs text-center py-1 ${getSecondaryTextColor()}`}>No data available</p>
               ) : (
                 <div className="space-y-1">
                   {summary.highest.map((student, index) => (
@@ -250,7 +299,7 @@ const ClassRankingOverall = ({
                         <div className="w-4 h-4 rounded-full bg-[#00A15D]/20 text-[#00A15D] border border-[#00A15D]/30 flex items-center justify-center text-[8px] font-bold mr-2">
                           {index + 1}
                         </div>
-                        <span className="text-xs text-white truncate max-w-[100px]">{student.name}</span>
+                        <span className={`text-xs truncate max-w-[100px] ${getTextColor()}`}>{student.name}</span>
                       </div>
                       <span className="text-xs font-bold text-[#00A15D]">{student.average.toFixed(1)}%</span>
                     </div>
@@ -260,16 +309,16 @@ const ClassRankingOverall = ({
             </div>
 
             {/* Lowest Performers Summary */}
-            <div className="bg-[#0F0F15] rounded-lg border border-white/5 p-2">
+            <div className={`rounded-lg border p-2 ${getSectionBackgroundColor()} ${getSectionBorderColor()}`}>
               <div className="flex items-center justify-between mb-1">
-                <h3 className="text-xs font-semibold text-[#FFFFFF]">Lowest 3 Performers</h3>
-                <div className="flex items-center text-[10px] text-white/60">
+                <h3 className={`text-xs font-semibold ${getTextColor()}`}>Lowest 3 Performers</h3>
+                <div className={`flex items-center text-[10px] ${getSecondaryTextColor()}`}>
                   <div className="h-2 w-2 rounded-full bg-[#A15353] mr-1"></div>
                   Lowest
                 </div>
               </div>
               {summary.lowest.length === 0 ? (
-                <p className="text-xs text-white/50 text-center py-1">No data available</p>
+                <p className={`text-xs text-center py-1 ${getSecondaryTextColor()}`}>No data available</p>
               ) : (
                 <div className="space-y-1">
                   {summary.lowest.map((student, index) => (
@@ -278,7 +327,7 @@ const ClassRankingOverall = ({
                         <div className="w-4 h-4 rounded-full bg-[#A15353]/20 text-[#A15353] border border-[#A15353]/30 flex items-center justify-center text-[8px] font-bold mr-2">
                           {studentPerformance.length - summary.lowest.length + index + 1}
                         </div>
-                        <span className="text-xs text-white truncate max-w-[100px]">{student.name}</span>
+                        <span className={`text-xs truncate max-w-[100px] ${getTextColor()}`}>{student.name}</span>
                       </div>
                       <span className="text-xs font-bold text-[#A15353]">{student.average.toFixed(1)}%</span>
                     </div>
@@ -291,20 +340,20 @@ const ClassRankingOverall = ({
           /* Expanded View - Full List */
           <div className="space-y-1.5 max-h-64 overflow-y-auto pr-0.5 overflow-x-hidden">
             {sortedStudents.length === 0 ? (
-              <div className="text-center py-3 bg-[#0F0F15] rounded-lg border border-white/5">
-                <div className="text-[#767EE0]/40 mb-1">
+              <div className={`text-center py-3 rounded-lg border ${getSectionBackgroundColor()} ${getSectionBorderColor()}`}>
+                <div className={isDarkMode ? 'text-[#767EE0]/40' : 'text-gray-400'}>
                   <svg className="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <p className="text-xs text-white/50">No students found</p>
+                <p className={`text-xs mt-1 ${getSecondaryTextColor()}`}>No students found</p>
               </div>
             ) : (
               sortedStudents.map((student, index) => (
                 <button 
                   key={student.id} 
                   onClick={() => handleStudentClick(student)} 
-                  className="w-full bg-[#0F0F15] rounded-lg border border-white/5 p-2 hover:border-[#00A15D] hover:shadow-md hover:shadow-[#00A15D]/10 transition-all duration-200 text-left group"
+                  className={`w-full rounded-lg border p-2 hover:border-[#00A15D] hover:shadow-md hover:shadow-[#00A15D]/10 transition-all duration-200 text-left group ${getSectionBackgroundColor()} ${getSectionBorderColor()}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center flex-1 min-w-0">
@@ -322,8 +371,8 @@ const ClassRankingOverall = ({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col items-start">
-                            <p className="text-xs font-semibold text-[#FFFFFF] truncate">{student.name}</p>
-                            <p className="text-[10px] text-white/60 truncate">
+                            <p className={`text-xs font-semibold truncate ${getTextColor()}`}>{student.name}</p>
+                            <p className={`text-[10px] truncate ${getSecondaryTextColor()}`}>
                               {student.status === 'excellent' ? 'Excellent' :
                                student.status === 'good' ? 'Good' :
                                student.status === 'needs-improvement' ? 'Needs Improvement' : 'At Risk'}
@@ -350,9 +399,9 @@ const ClassRankingOverall = ({
       {/* Performance Details Modal */}
       {isModalOpen && selectedStudent && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-hidden">
-          <div className="bg-[#15151C] rounded-xl shadow-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden border border-white/10">
+          <div className={`rounded-xl shadow-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden border ${getModalBorderColor()} ${getModalBackgroundColor()}`}>
             {/* Modal Header */}
-            <div className="p-4 border-b border-white/10">
+            <div className={`p-4 border-b ${getModalBorderColor()}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-2 ${
@@ -367,18 +416,18 @@ const ClassRankingOverall = ({
                     {sortedStudents.findIndex(s => s.id === selectedStudent.id) + 1}
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-[#FFFFFF]">{selectedStudent.name}</h3>
-                    <p className="text-xs text-white/60">{selectedStudent.email}</p>
+                    <h3 className={`font-bold text-sm ${getTextColor()}`}>{selectedStudent.name}</h3>
+                    <p className={`text-xs ${getSecondaryTextColor()}`}>{selectedStudent.email}</p>
                   </div>
                 </div>
-                <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-[#767EE0]/20 transition-colors">
-                  <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button onClick={closeModal} className={`p-1.5 rounded-lg ${isDarkMode ? 'hover:bg-[#767EE0]/20' : 'hover:bg-gray-200'} transition-colors`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
               <div className="mt-2">
-                <p className="text-xs text-white/80">{classInfo?.subject} • {classInfo?.section}</p>
+                <p className={`text-xs ${getSecondaryTextColor()}`}>{classInfo?.subject} • {classInfo?.section}</p>
                 <div className="flex items-baseline mt-1">
                   <p className={`text-xl font-bold ${
                     selectedStudent.average >= 90 ? 'text-[#00A15D]' :
@@ -387,7 +436,7 @@ const ClassRankingOverall = ({
                   }`}>
                     {selectedStudent.average.toFixed(1)}%
                   </p>
-                  <p className="text-xs text-white/60 ml-2">Overall Performance</p>
+                  <p className={`text-xs ml-2 ${getSecondaryTextColor()}`}>Overall Performance</p>
                 </div>
               </div>
             </div>
@@ -395,18 +444,18 @@ const ClassRankingOverall = ({
             {loadingDetails || !studentDetails[selectedStudent.id] ? (
               <div className="p-8 text-center">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
-                <p className="mt-3 text-white/80 text-sm">Loading student details...</p>
+                <p className={`mt-3 text-sm ${getSecondaryTextColor()}`}>Loading student details...</p>
               </div>
             ) : (
               <div className="flex flex-col lg:flex-row h-[calc(85vh-140px)]">
                 {/* Left Column - Statistics */}
-                <div className="lg:w-1/2 p-4 border-r border-white/10 overflow-y-auto">
+                <div className={`lg:w-1/2 p-4 border-r ${getModalBorderColor()} overflow-y-auto`}>
                   <div className="space-y-4">
                     {/* Attendance Section */}
-                    <div className="bg-[#23232C] rounded-lg border border-white/5 p-4">
+                    <div className={`rounded-lg border p-4 ${isDarkMode ? 'bg-[#23232C] border-white/5' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="mb-3">
-                        <h4 className="text-sm font-semibold text-[#FFFFFF]">Attendance</h4>
-                        <p className="text-xs text-white/60">
+                        <h4 className={`text-sm font-semibold ${getTextColor()}`}>Attendance</h4>
+                        <p className={`text-xs ${getSecondaryTextColor()}`}>
                           Rate: {studentDetails[selectedStudent.id].attendance.rate}%
                         </p>
                       </div>
@@ -416,8 +465,8 @@ const ClassRankingOverall = ({
                           { label: 'Lates', value: studentDetails[selectedStudent.id].attendance.lates, color: 'text-[#FFA600]' },
                           { label: 'Present', value: studentDetails[selectedStudent.id].attendance.present, color: 'text-[#00A15D]' }
                         ].map((item, idx) => (
-                          <div key={idx} className="text-center bg-[#15151C] p-3 rounded-lg">
-                            <p className="text-xs text-white/50 mb-1">{item.label}</p>
+                          <div key={idx} className={`text-center p-3 rounded-lg ${isDarkMode ? 'bg-[#15151C]' : 'bg-white'}`}>
+                            <p className={`text-xs mb-1 ${getSecondaryTextColor()}`}>{item.label}</p>
                             <p className={`text-base font-bold ${item.color}`}>
                               {item.value}
                             </p>
@@ -427,19 +476,19 @@ const ClassRankingOverall = ({
                     </div>
 
                     {/* Activity Summary */}
-                    <div className="bg-[#23232C] rounded-lg border border-white/5 p-4">
-                      <h4 className="text-sm font-semibold text-[#FFFFFF] mb-3">Activity Summary</h4>
+                    <div className={`rounded-lg border p-4 ${isDarkMode ? 'bg-[#23232C] border-white/5' : 'bg-gray-50 border-gray-200'}`}>
+                      <h4 className={`text-sm font-semibold mb-3 ${getTextColor()}`}>Activity Summary</h4>
                       {(() => {
                         const activityStats = studentDetails[selectedStudent.id].activity_stats || {};
                         return (
                           <div className="grid grid-cols-4 gap-2">
                             {[
-                              { label: 'Total', value: activityStats.total || 0, color: 'bg-gray-800 text-white' },
-                              { label: 'Submitted', value: activityStats.submitted || 0, color: 'bg-[#00A15D]/20 text-[#00A15D]' },
-                              { label: 'Missed', value: activityStats.missed || 0, color: 'bg-[#A15353]/20 text-[#A15353]' },
-                              { label: 'Assigned', value: activityStats.assigned || 0, color: 'bg-[#FFA600]/20 text-[#FFA600]' }
+                              { label: 'Total', value: activityStats.total || 0, color: isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-800' },
+                              { label: 'Submitted', value: activityStats.submitted || 0, color: isDarkMode ? 'bg-[#00A15D]/20 text-[#00A15D]' : 'bg-[#00A15D]/10 text-[#00A15D]' },
+                              { label: 'Missed', value: activityStats.missed || 0, color: isDarkMode ? 'bg-[#A15353]/20 text-[#A15353]' : 'bg-[#A15353]/10 text-[#A15353]' },
+                              { label: 'Assigned', value: activityStats.assigned || 0, color: isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600]' : 'bg-[#FFA600]/10 text-[#FFA600]' }
                             ].map((item, idx) => (
-                              <div key={idx} className={`text-center p-2 rounded-lg ${item.color} border border-white/10`}>
+                              <div key={idx} className={`text-center p-2 rounded-lg ${item.color} border ${isDarkMode ? 'border-white/10' : 'border-gray-200'}`}>
                                 <p className="text-xs font-medium mb-0.5">{item.label}</p>
                                 <p className="text-base font-bold">{item.value}</p>
                               </div>
@@ -450,45 +499,45 @@ const ClassRankingOverall = ({
                     </div>
 
                     {/* Performance Breakdown */}
-                    <div className="bg-[#23232C] rounded-lg border border-white/5 p-4">
-                      <h4 className="text-sm font-semibold text-[#FFFFFF] mb-3">Performance Breakdown</h4>
+                    <div className={`rounded-lg border p-4 ${isDarkMode ? 'bg-[#23232C] border-white/5' : 'bg-gray-50 border-gray-200'}`}>
+                      <h4 className={`text-sm font-semibold mb-3 ${getTextColor()}`}>Performance Breakdown</h4>
                       <div className="space-y-3">
                         <div>
                           <div className="flex justify-between text-xs mb-1">
-                            <span className="text-white/70">Academic Performance</span>
+                            <span className={getSecondaryTextColor()}>Academic Performance</span>
                             <span className="font-medium">{studentDetails[selectedStudent.id].academic_percentage}%</span>
                           </div>
-                          <div className="w-full bg-gray-800 rounded-full h-2">
+                          <div className={`w-full rounded-full h-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'}`}>
                             <div 
                               className="bg-[#767EE0] h-2 rounded-full" 
                               style={{ width: `${studentDetails[selectedStudent.id].academic_percentage}%` }}
                             ></div>
                           </div>
-                          <p className="text-xs text-white/60 mt-1">(75% weight)</p>
+                          <p className={`text-xs mt-1 ${getSecondaryTextColor()}`}>(75% weight)</p>
                         </div>
                         
                         <div>
                           <div className="flex justify-between text-xs mb-1">
-                            <span className="text-white/70">Attendance Performance</span>
+                            <span className={getSecondaryTextColor()}>Attendance Performance</span>
                             <span className="font-medium">{studentDetails[selectedStudent.id].attendance.rate}%</span>
                           </div>
-                          <div className="w-full bg-gray-800 rounded-full h-2">
+                          <div className={`w-full rounded-full h-2 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'}`}>
                             <div 
                               className="bg-[#00A15D] h-2 rounded-full" 
                               style={{ width: `${studentDetails[selectedStudent.id].attendance.rate}%` }}
                             ></div>
                           </div>
-                          <p className="text-xs text-white/60 mt-1">(25% weight)</p>
+                          <p className={`text-xs mt-1 ${getSecondaryTextColor()}`}>(25% weight)</p>
                         </div>
                       </div>
                     </div>
 
                     {/* System Recommendation */}
-                    <div className="bg-gradient-to-r from-[#23232C] to-[#15151C] rounded-lg border border-white/5 p-4">
+                    <div className={`rounded-lg border p-4 ${isDarkMode ? 'bg-gradient-to-r from-[#23232C] to-[#15151C]' : 'bg-gradient-to-r from-gray-50 to-white'} ${isDarkMode ? 'border-white/5' : 'border-gray-200'}`}>
                       <div className="flex items-start mb-3">
-                        <img src={TrackEdIcon} alt="TrackEd Recommendation" className="h-5 w-5 mr-2 opacity-80 flex-shrink-0" />
+                        <img src={TrackEdIcon} alt="TrackEd Recommendation" className="h-5 w-5 mr-2 opacity-80 flex-shrink-0" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                         <div className="flex-1">
-                          <h4 className="text-xs font-semibold text-[#FFFFFF] mb-2">System Recommendation</h4>
+                          <h4 className={`text-xs font-semibold mb-2 ${getTextColor()}`}>System Recommendation</h4>
                           <div className="space-y-2">
                             {(() => {
                               const { recommendations, actions } = getRecommendations(selectedStudent);
@@ -496,10 +545,10 @@ const ClassRankingOverall = ({
                                 <>
                                   {recommendations.length > 0 ? (
                                     recommendations.map((rec, index) => (
-                                      <p key={index} className="text-xs text-white/80 leading-relaxed">{rec}</p>
+                                      <p key={index} className={`text-xs leading-relaxed ${getSecondaryTextColor()}`}>{rec}</p>
                                     ))
                                   ) : (
-                                    <p className="text-xs text-white/80 leading-relaxed">Student is performing within expected parameters. No immediate action required.</p>
+                                    <p className={`text-xs leading-relaxed ${getSecondaryTextColor()}`}>Student is performing within expected parameters. No immediate action required.</p>
                                   )}
                                   
                                   {Object.values(actions).some(value => value) && (
@@ -557,10 +606,10 @@ const ClassRankingOverall = ({
                     {/* Activities Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-[#FFFFFF] truncate">
+                        <h3 className={`text-sm font-semibold truncate ${getTextColor()}`}>
                           {selectedStudent.name}'s Activities
                         </h3>
-                        <p className="text-xs text-white/60 mt-0.5 truncate">
+                        <p className={`text-xs mt-0.5 truncate ${getSecondaryTextColor()}`}>
                           {selectedStudent.email}
                         </p>
                       </div>
@@ -569,24 +618,29 @@ const ClassRankingOverall = ({
                         <div className="relative">
                           <button
                             onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                            className="flex items-center justify-between font-medium px-3 py-1.5 bg-gray-800 rounded-md border border-gray-700 hover:border-gray-600 transition-all duration-200 text-xs cursor-pointer text-[#FFFFFF] min-w-[80px]"
+                            className={`flex items-center justify-between font-medium px-3 py-1.5 rounded-md border transition-all duration-200 text-xs cursor-pointer min-w-[80px] ${
+                              isDarkMode ? 'bg-gray-800 border-gray-700 hover:border-gray-600 text-white' : 'bg-gray-100 border-gray-300 hover:border-gray-400 text-gray-700'
+                            }`}
                           >
                             <span>{activityFilter}</span>
                             <img
                               src={ArrowDownLight}
                               alt=""
                               className={`ml-1.5 h-3 w-3 transition-transform ${filterDropdownOpen ? 'rotate-180' : ''}`}
+                              style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                             />
                           </button>
 
                           {filterDropdownOpen && (
-                            <div className="absolute top-full mt-1 right-0 bg-[#15151C] rounded-md shadow-lg border border-gray-700 z-10 overflow-hidden min-w-[110px]">
+                            <div className={`absolute top-full mt-1 right-0 rounded-md shadow-lg border z-10 overflow-hidden min-w-[110px] ${
+                              isDarkMode ? 'bg-[#15151C] border-gray-700' : 'bg-white border-gray-200'
+                            }`}>
                               {["All", "Submitted", "Missed", "Assigned"].map((option) => (
                                 <button
                                   key={option}
-                                  className={`block w-full text-left px-3 py-2 text-xs hover:bg-gray-800 cursor-pointer transition-colors text-[#FFFFFF] ${
-                                    activityFilter === option ? 'bg-gray-800 font-semibold' : ''
-                                  }`}
+                                  className={`block w-full text-left px-3 py-2 text-xs hover:transition-colors cursor-pointer ${
+                                    activityFilter === option ? (isDarkMode ? 'bg-gray-800 font-semibold' : 'bg-gray-100 font-semibold') : ''
+                                  } ${isDarkMode ? 'text-white hover:bg-gray-800' : 'text-gray-900 hover:bg-gray-100'}`}
                                   onClick={() => {
                                     setActivityFilter(option);
                                     setFilterDropdownOpen(false);
@@ -601,9 +655,11 @@ const ClassRankingOverall = ({
 
                         <button
                           onClick={() => handleEmailClick(selectedStudent)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gray-800 border border-gray-700 hover:bg-gray-700 transition-colors cursor-pointer text-xs text-[#FFFFFF]"
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border transition-colors cursor-pointer text-xs ${
+                            isDarkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-white' : 'bg-gray-100 border-gray-300 hover:bg-gray-200 text-gray-700'
+                          }`}
                         >
-                          <img src={EmailIcon} alt="Email" className="w-3.5 h-3.5" />
+                          <img src={EmailIcon} alt="Email" className="w-3.5 h-3.5" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                           <span>Email</span>
                         </button>
                       </div>
@@ -611,7 +667,7 @@ const ClassRankingOverall = ({
 
                     {/* Activity Count */}
                     <div className="mb-3">
-                      <p className="text-xs text-white/60">
+                      <p className={`text-xs ${getSecondaryTextColor()}`}>
                         Showing {getFilteredActivities(studentDetails[selectedStudent.id].activities).length} of {studentDetails[selectedStudent.id].activities.length} activities
                       </p>
                     </div>
@@ -621,25 +677,27 @@ const ClassRankingOverall = ({
                       {getFilteredActivities(studentDetails[selectedStudent.id].activities).length > 0 ? (
                         <div className="space-y-3">
                           {getFilteredActivities(studentDetails[selectedStudent.id].activities).map((activity) => (
-                            <div key={activity.id} className="border border-gray-700 rounded-lg p-3 hover:bg-gray-800/50 transition-colors">
+                            <div key={activity.id} className={`border rounded-lg p-3 transition-colors ${
+                              isDarkMode ? 'border-gray-700 hover:bg-gray-800/50' : 'border-gray-200 hover:bg-gray-50'
+                            }`}>
                               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-[#FFFFFF] text-sm break-words">
+                                  <h4 className={`font-medium text-sm break-words ${getTextColor()}`}>
                                     {activity.title}
                                   </h4>
-                                  <div className="flex flex-wrap items-center gap-1.5 mt-1 text-xs text-white/60">
+                                  <div className={`flex flex-wrap items-center gap-1.5 mt-1 text-xs ${getSecondaryTextColor()}`}>
                                     <span>Due: {formatDate(activity.dueDate)}</span>
                                     <span>•</span>
                                     <span>{activity.type}</span>
                                     <span>•</span>
                                     <span className={`font-medium ${
-                                      activity.grade === 'Not graded' ? 'text-gray-400' : 'text-[#00A15D]'
+                                      activity.grade === 'Not graded' ? (isDarkMode ? 'text-gray-400' : 'text-gray-500') : 'text-[#00A15D]'
                                     }`}>
                                       {activity.grade}
                                     </span>
                                   </div>
                                   {activity.maxPoints > 0 && (
-                                    <div className="mt-1 text-xs text-gray-500">
+                                    <div className={`mt-1 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                                       Max points: {activity.maxPoints}
                                     </div>
                                   )}
@@ -652,8 +710,10 @@ const ClassRankingOverall = ({
                           ))}
                         </div>
                       ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-white/60 text-sm text-center px-3">
-                          <div className="mb-2 text-gray-500">
+                        <div className={`h-full flex flex-col items-center justify-center text-center px-3 text-sm ${
+                          isDarkMode ? 'text-white/60' : 'text-gray-500'
+                        }`}>
+                          <div className={`mb-2 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                             <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -676,7 +736,7 @@ const ClassRankingOverall = ({
               </div>
             )}
 
-            <div className="p-4 border-t border-white/10">
+            <div className={`p-4 border-t ${getModalBorderColor()}`}>
               <button onClick={closeModal} className="w-full px-3 py-2 text-sm bg-[#767EE0] text-white rounded-lg hover:bg-[#6670D0] transition-all duration-200 font-medium">
                 Close Details
               </button>

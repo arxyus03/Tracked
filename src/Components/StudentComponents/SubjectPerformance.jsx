@@ -1,24 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Import assets
 import PerformanceIcon from '../../assets/SubjectPerformance.svg';
 
-const SubjectPerformance = ({ subjectPerformance = [] }) => {
+const SubjectPerformance = ({ subjectPerformance = [], isDarkMode = false }) => {
+  const [localDarkMode, setLocalDarkMode] = useState(isDarkMode);
   const navigate = useNavigate();
-  
+
+  useEffect(() => {
+    setLocalDarkMode(isDarkMode);
+  }, [isDarkMode]);
+
   // Function to determine border color based on percentage
   const getBorderColor = (percentage) => {
-    if (percentage <= 70) return 'border-[#A15353] border-2'; // Red for 70% and below
-    if (percentage >= 71 && percentage <= 75) return 'border-[#FFA600] border-2'; // Yellow for 71-75%
-    return 'border-transparent border-2'; // No border for above 75%
+    if (percentage <= 70) return localDarkMode ? 'border-[#A15353] border-2' : 'border-red-500 border-2';
+    if (percentage >= 71 && percentage <= 75) return localDarkMode ? 'border-[#FFA600] border-2' : 'border-amber-500 border-2';
+    return 'border-transparent border-2';
   };
 
   // Function to determine text color based on percentage
   const getTextColor = (percentage) => {
     if (percentage <= 70) return 'text-[#A15353]';
     if (percentage >= 71 && percentage <= 75) return 'text-[#FFA600]';
-    return 'text-white';
+    return localDarkMode ? 'text-white' : 'text-gray-900';
   };
 
   // Function to get status label
@@ -42,19 +47,18 @@ const SubjectPerformance = ({ subjectPerformance = [] }) => {
     
     // Priority: red (≤70%) > yellow (71-75%) > green (>75%)
     const getPriority = (percentage) => {
-      if (percentage <= 70) return 3; // Highest priority (failing)
-      if (percentage <= 75) return 2; // Medium priority (warning)
-      return 1; // Low priority (good)
+      if (percentage <= 70) return 3;
+      if (percentage <= 75) return 2;
+      return 1;
     };
     
     const priorityA = getPriority(percentageA);
     const priorityB = getPriority(percentageB);
     
     if (priorityA !== priorityB) {
-      return priorityB - priorityA; // Higher priority first
+      return priorityB - priorityA;
     }
     
-    // Same status, sort by percentage (lowest first)
     return percentageA - percentageB;
   });
 
@@ -74,11 +78,41 @@ const SubjectPerformance = ({ subjectPerformance = [] }) => {
     navigate(`/SubjectSchoolWorksStudent?code=${subjectCode}`);
   };
 
+  // Theme-based colors
+  const getBackgroundColor = () => {
+    return localDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBackgroundColor = () => {
+    return localDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardHoverBackgroundColor = () => {
+    return localDarkMode ? "hover:bg-[#2A2A35]" : "hover:bg-gray-100";
+  };
+
+  const getTextColorGlobal = () => {
+    return localDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return localDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getTertiaryTextColor = () => {
+    return localDarkMode ? "text-white/50" : "text-gray-500";
+  };
+
+  const getDividerColor = () => {
+    return localDarkMode ? "border-white/10" : "border-gray-200";
+  };
+
   return (
-    <div className="bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]">
+    <div className={`${getBackgroundColor()} rounded-lg shadow p-3 border-2 ${localDarkMode ? 'border-[#15151C]' : 'border-gray-200'}`}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold flex items-center text-white">
-          <img src={PerformanceIcon} alt="Performance" className="h-4 w-4 mr-1" />
+        <h3 className={`text-sm font-semibold flex items-center ${getTextColorGlobal()}`}>
+          {/* FIXED: Changed from invert(0.2) to invert(0.5) for light mode */}
+          <img src={PerformanceIcon} alt="Performance" className="h-4 w-4 mr-1" style={{ filter: localDarkMode ? 'none' : 'invert(0.5)' }} />
           Subject Performance
         </h3>
       </div>
@@ -96,16 +130,16 @@ const SubjectPerformance = ({ subjectPerformance = [] }) => {
               <div
                 key={index}
                 onClick={() => handleSubjectClick(subject.subjectCode)}
-                className={`aspect-square rounded-lg p-2 flex flex-col items-center justify-center bg-[#23232C] hover:bg-[#2A2A35] transition-all cursor-pointer ${borderColor}`}
+                className={`aspect-square rounded-lg p-2 flex flex-col items-center justify-center ${getCardBackgroundColor()} ${getCardHoverBackgroundColor()} transition-all cursor-pointer ${borderColor}`}
                 title={`${subject.subject} - ${percentage}% (${subject.gradedActivities || 0} graded activities)`}
               >
                 {/* Subject Name - Truncated if too long */}
-                <p className="text-[10px] sm:text-xs text-center font-medium text-white/80 mb-1 truncate w-full">
+                <p className={`text-[10px] sm:text-xs text-center font-medium ${getSecondaryTextColor()} mb-1 truncate w-full`}>
                   {subject.subject}
                 </p>
                 
-                {/* Section Info */}
-                <p className="text-[8px] text-white/50 mb-1">
+                {/* Section Info - FIXED: Use tertiary text color for better visibility */}
+                <p className={`text-[8px] ${getTertiaryTextColor()} mb-1`}>
                   {subject.section || 'No Section'}
                 </p>
                 
@@ -114,8 +148,8 @@ const SubjectPerformance = ({ subjectPerformance = [] }) => {
                   {percentage}%
                 </p>
                 
-                {/* Grading Details */}
-                <p className="text-[8px] text-white/50 mt-1">
+                {/* Grading Details - FIXED: Use tertiary text color for better visibility */}
+                <p className={`text-[8px] ${getTertiaryTextColor()} mt-1`}>
                   {subject.gradedActivities || 0} graded
                 </p>
                 
@@ -139,15 +173,15 @@ const SubjectPerformance = ({ subjectPerformance = [] }) => {
           })
         ) : (
           <div className="col-span-full text-center py-6">
-            <p className="text-white/50 text-sm">No subject data available</p>
+            <p className={`${getSecondaryTextColor()} text-sm`}>No subject data available</p>
           </div>
         )}
       </div>
       
       {/* Legend */}
       {(hasFailingSubjects || hasWarningSubjects) && (
-        <div className="mt-3 pt-3 border-t border-white/10">
-          <div className="flex flex-wrap gap-3 text-[10px] text-white/60">
+        <div className={`mt-3 pt-3 border-t ${getDividerColor()}`}>
+          <div className={`flex flex-wrap gap-3 text-[10px] ${getSecondaryTextColor()}`}>
             {hasFailingSubjects && (
               <div className="flex items-center gap-1">
                 <div className="h-3 w-3 rounded border-2 border-[#A15353]"></div>
@@ -163,7 +197,7 @@ const SubjectPerformance = ({ subjectPerformance = [] }) => {
             )}
             
             <div className="flex items-center gap-1">
-              <div className="h-3 w-3 rounded border-2 border-transparent bg-[#23232C]"></div>
+              <div className={`h-3 w-3 rounded border-2 border-transparent ${getCardBackgroundColor()}`}></div>
               <span>Good (&gt;75%)</span>
             </div>
           </div>

@@ -30,6 +30,26 @@ export default function AnalyticsTab() {
     projects: [],
     laboratories: []
   });
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Fetch students and class info
   useEffect(() => {
@@ -94,16 +114,33 @@ export default function AnalyticsTab() {
     fetchClassAverages(type);
   };
 
+  // Theme-based styles
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#0A0A0F]" : "bg-gray-50";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/80" : "text-gray-600";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/20" : "border-gray-200";
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0F]">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
           <div className="p-4 sm:p-5 md:p-6 lg:p-8 flex items-center justify-center h-screen">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#767EE0] mx-auto mb-4"></div>
-              <p className="text-[#FFFFFF]">Loading analytics data...</p>
+              <p className={getTextColor()}>Loading analytics data...</p>
             </div>
           </div>
         </div>
@@ -112,7 +149,7 @@ export default function AnalyticsTab() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F]">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -126,18 +163,19 @@ export default function AnalyticsTab() {
                 src={AnalyticsIcon}
                 alt="Analytics"
                 className="h-7 w-7 sm:h-7 sm:w-7 mr-2 sm:mr-3"
+                style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
               />
-              <h1 className="font-bold text-sm sm:text-2xl text-[#FFFFFF]">
+              <h1 className={`font-bold text-sm sm:text-2xl ${getTextColor()}`}>
                 Student Progress Tracking System
               </h1>
             </div>
-            <p className="text-sm sm:text-base text-[#FFFFFF]/80">
+            <p className={`text-sm sm:text-base ${getSecondaryTextColor()}`}>
               Integrated Academic Data Analytics & Performance Insights
             </p>
           </div>
 
           {/* Subject Information */}
-          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
               <span>{subjectCode || 'N/A'}</span>
@@ -158,7 +196,7 @@ export default function AnalyticsTab() {
                   <img 
                     src={BackButton} 
                     alt="Back" 
-                    className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity brightness-0 invert" 
+                    className={`h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity ${isDarkMode ? 'brightness-0 invert' : 'brightness-0 opacity-60'}`}
                     title="Back to Class Management"
                   />
                 </Link>
@@ -166,7 +204,7 @@ export default function AnalyticsTab() {
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/20 mb-4" />
+          <hr className={`${getBorderColor()} mb-4`} />
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -177,7 +215,7 @@ export default function AnalyticsTab() {
                   <img 
                     src={SubjectOverview} 
                     alt="" 
-                    className="h-4 w-4 brightness-0 invert"
+                    className={`h-4 w-4 ${isDarkMode ? 'brightness-0 invert' : 'brightness-0 opacity-60'}`}
                   />
                   <span className="sm:inline">Subject Overview</span>
                 </button>
@@ -189,7 +227,7 @@ export default function AnalyticsTab() {
                   <img 
                     src={Announcement} 
                     alt="" 
-                    className="h-4 w-4 brightness-0 invert"
+                    className={`h-4 w-4 ${isDarkMode ? 'brightness-0 invert' : 'brightness-0 opacity-60'}`}
                   />
                   <span className="sm:inline">Announcements</span>
                 </button>
@@ -201,7 +239,7 @@ export default function AnalyticsTab() {
                   <img 
                     src={Classwork} 
                     alt="" 
-                    className="h-4 w-4 flex-shrink-0 brightness-0 invert"
+                    className={`h-4 w-4 flex-shrink-0 ${isDarkMode ? 'brightness-0 invert' : 'brightness-0 opacity-60'}`}
                   />
                   <span className="whitespace-nowrap truncate">Class Work</span>
                 </button>
@@ -213,7 +251,7 @@ export default function AnalyticsTab() {
                   <img 
                     src={AttendanceIcon}
                     alt="" 
-                    className="h-4 w-4 brightness-0 invert"
+                    className={`h-4 w-4 ${isDarkMode ? 'brightness-0 invert' : 'brightness-0 opacity-60'}`}
                   />
                   <span className="sm:inline">Attendance</span>
                 </button>
@@ -225,7 +263,7 @@ export default function AnalyticsTab() {
                   <img 
                     src={GradeIcon} 
                     alt="" 
-                    className="h-4 w-4 brightness-0 invert"
+                    className={`h-4 w-4 ${isDarkMode ? 'brightness-0 invert' : 'brightness-0 opacity-60'}`}
                   />
                   <span className="sm:inline">Grade</span>
                 </button>
@@ -237,7 +275,7 @@ export default function AnalyticsTab() {
                   <img 
                     src={AnalyticsIcon} 
                     alt="" 
-                    className="h-4 w-4 brightness-0 invert"
+                    className={`h-4 w-4 ${isDarkMode ? 'brightness-0 invert' : 'brightness-0 opacity-60'}`}
                   />
                   <span className="sm:inline">Analytics</span>
                 </button>
@@ -247,11 +285,11 @@ export default function AnalyticsTab() {
             {/* Icon Buttons */}
             <div className="flex items-center gap-2 justify-end sm:justify-start">
               <Link to={`/StudentList?code=${subjectCode}`}>
-                <button className="p-2 bg-[#2A2A35] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer" title="Student List">
+                <button className={`p-2 ${isDarkMode ? 'bg-[#2A2A35] hover:border-[#00A15D]' : 'bg-gray-100 hover:border-[#00A15D] border-gray-300'} rounded-md shadow-md border-2 border-transparent hover:transition-all duration-200 flex-shrink-0 cursor-pointer`} title="Student List">
                   <img 
                     src={ClassManagementIcon} 
                     alt="ClassManagement" 
-                    className="h-4 w-4 brightness-0 invert" 
+                    className={`h-4 w-4 ${isDarkMode ? 'brightness-0 invert' : 'brightness-0 opacity-60'}`}
                   />
                 </button>
               </Link>
@@ -264,6 +302,7 @@ export default function AnalyticsTab() {
               students={students}
               subjectCode={subjectCode}
               useMockData={students.length === 0}
+              isDarkMode={isDarkMode}
             />
           </div>
 
@@ -274,6 +313,7 @@ export default function AnalyticsTab() {
               selectedType={selectedActivityType}
               onTypeChange={handleActivityTypeChange}
               subjectCode={subjectCode}
+              isDarkMode={isDarkMode}
             />
           </div>
         </div>

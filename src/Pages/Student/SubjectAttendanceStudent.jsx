@@ -21,7 +21,7 @@ import ArrowRight from '../../assets/ArrowRight.svg';
 import SubjectOverview from "../../assets/SubjectOverview.svg";
 
 // ========== PAGINATION COMPONENT ==========
-const Pagination = ({ currentPage, totalPages, onPageChange, startIndex, endIndex, totalItems }) => {
+const Pagination = ({ currentPage, totalPages, onPageChange, startIndex, endIndex, totalItems, isDarkMode }) => {
   const maxVisiblePages = 5;
   
   let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
@@ -38,9 +38,29 @@ const Pagination = ({ currentPage, totalPages, onPageChange, startIndex, endInde
 
   if (totalPages <= 1) return null;
 
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/60" : "text-gray-600";
+  };
+
+  const getButtonBg = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getButtonBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-300";
+  };
+
+  const getButtonHover = () => {
+    return isDarkMode ? "hover:bg-[#23232C]" : "hover:bg-gray-50";
+  };
+
+  const getActiveButton = () => {
+    return "bg-[#00A15D] text-white border-[#00A15D]";
+  };
+
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-2">
-      <div className="text-xs sm:text-sm text-[#FFFFFF]/60">
+      <div className={`text-xs sm:text-sm ${getTextColor()}`}>
         Showing {startIndex} to {endIndex} of {totalItems} entries
       </div>
       
@@ -50,11 +70,16 @@ const Pagination = ({ currentPage, totalPages, onPageChange, startIndex, endInde
           disabled={currentPage === 1}
           className={`flex items-center justify-center w-8 h-8 rounded-md border ${
             currentPage === 1 
-              ? 'bg-[#15151C] text-[#FFFFFF]/40 cursor-not-allowed border-[#FFFFFF]/10' 
-              : 'bg-[#15151C] text-[#FFFFFF] border-[#FFFFFF]/20 hover:bg-[#23232C] cursor-pointer'
+              ? `${getButtonBg()} ${getTextColor()}/40 cursor-not-allowed ${getButtonBorder()}` 
+              : `${getButtonBg()} ${isDarkMode ? 'text-[#FFFFFF]' : 'text-gray-900'} ${getButtonBorder()} ${getButtonHover()} cursor-pointer`
           }`}
         >
-          <img src={ArrowLeft} alt="Previous" className="w-5 h-5" />
+          <img 
+            src={ArrowLeft} 
+            alt="Previous" 
+            className="w-5 h-5"
+            style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+          />
         </button>
 
         {pageNumbers.map(page => (
@@ -63,8 +88,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange, startIndex, endInde
             onClick={() => onPageChange(page)}
             className={`cursor-pointer flex items-center justify-center w-8 h-8 rounded-md border text-sm font-medium ${
               currentPage === page
-                ? 'bg-[#00A15D] text-[#FFFFFF] border-[#00A15D]'
-                : 'bg-[#15151C] text-[#FFFFFF] border-[#FFFFFF]/20 hover:bg-[#23232C]'
+                ? getActiveButton()
+                : `${getButtonBg()} ${isDarkMode ? 'text-[#FFFFFF]' : 'text-gray-900'} ${getButtonBorder()} ${getButtonHover()}`
             }`}
           >
             {page}
@@ -76,11 +101,16 @@ const Pagination = ({ currentPage, totalPages, onPageChange, startIndex, endInde
           disabled={currentPage === totalPages}
           className={`flex items-center justify-center w-8 h-8 rounded-md border ${
             currentPage === totalPages
-              ? 'bg-[#15151C] text-[#FFFFFF]/40 cursor-not-allowed border-[#FFFFFF]/10'
-              : 'bg-[#15151C] text-[#FFFFFF] border-[#FFFFFF]/20 hover:bg-[#23232C] cursor-pointer'
+              ? `${getButtonBg()} ${getTextColor()}/40 cursor-not-allowed ${getButtonBorder()}`
+              : `${getButtonBg()} ${isDarkMode ? 'text-[#FFFFFF]' : 'text-gray-900'} ${getButtonBorder()} ${getButtonHover()} cursor-pointer`
           }`}
         >
-          <img src={ArrowRight} alt="Next" className="w-5 h-5" />
+          <img 
+            src={ArrowRight} 
+            alt="Next" 
+            className="w-5 h-5"
+            style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+          />
         </button>
       </div>
     </div>
@@ -88,7 +118,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange, startIndex, endInde
 };
 
 // ========== DOWNLOAD BUTTON COMPONENT ==========
-const DownloadButton = ({ onClick, label, disabled = false, data = [] }) => {
+const DownloadButton = ({ onClick, label, disabled = false, data = [], isDarkMode }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   
   const handleClick = async () => {
@@ -108,16 +138,26 @@ const DownloadButton = ({ onClick, label, disabled = false, data = [] }) => {
     }
   };
   
+  const getDisabledBg = () => {
+    return isDarkMode 
+      ? 'bg-[#15151C] text-[#FFFFFF]/40 border-[#FFFFFF]/10' 
+      : 'bg-gray-100 text-gray-400 border-gray-300';
+  };
+
+  const getEnabledBg = () => {
+    return isDownloading
+      ? 'bg-[#00A15D]/70 text-[#FFFFFF] border-[#00A15D] cursor-wait'
+      : 'bg-[#00A15D] text-[#FFFFFF] border-[#00A15D] hover:bg-[#00A15D]/90';
+  };
+  
   return (
     <button
       onClick={handleClick}
       disabled={disabled || isDownloading || (!data || data.length === 0)}
       className={`flex items-center gap-2 px-4 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer ${
         disabled || !data || data.length === 0
-          ? 'bg-[#15151C] text-[#FFFFFF]/40 border-[#FFFFFF]/10 cursor-not-allowed'
-          : isDownloading
-          ? 'bg-[#00A15D]/70 text-[#FFFFFF] border-[#00A15D] cursor-wait'
-          : 'bg-[#00A15D] text-[#FFFFFF] border-[#00A15D] hover:bg-[#00A15D]/90'
+          ? getDisabledBg()
+          : getEnabledBg()
       }`}
     >
       {isDownloading ? (
@@ -188,7 +228,7 @@ const formatAttendanceDate = (record) => {
 };
 
 // ========== ATTENDANCE STATUS INDICATOR COMPONENT ==========
-const AttendanceStatusIndicator = ({ remainingLates, isCritical, isAtRisk }) => {
+const AttendanceStatusIndicator = ({ remainingLates, isCritical, isAtRisk, isDarkMode }) => {
   const getStatusColor = () => {
     if (isCritical) return 'bg-[#A15353] text-[#FFFFFF]';
     if (isAtRisk) return 'bg-[#FFA600] text-[#FFFFFF]';
@@ -201,12 +241,16 @@ const AttendanceStatusIndicator = ({ remainingLates, isCritical, isAtRisk }) => 
     return 'SAFE';
   };
 
+  const getTextColor = () => {
+    return isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-500';
+  };
+
   return (
     <div className="flex items-center gap-2">
       <div className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor()} flex items-center gap-1`}>
         <span>{getStatusText()}</span>
       </div>
-      <div className="text-xs text-[#FFFFFF]/60">
+      <div className={`text-xs ${getTextColor()}`}>
         {remainingLates > 0 && `(${remainingLates} lates not yet converted)`}
       </div>
     </div>
@@ -228,6 +272,7 @@ export default function SubjectAttendanceStudent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [attendanceSummaryData, setAttendanceSummaryData] = useState([]);
   const [attendanceCurrentPage, setAttendanceCurrentPage] = useState(1);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
   
   const itemsPerPage = 10;
 
@@ -244,6 +289,25 @@ export default function SubjectAttendanceStudent() {
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -899,15 +963,69 @@ export default function SubjectAttendanceStudent() {
     return `${classInfo?.subject || 'Unknown Subject'} (${classInfo?.section || 'N/A'})`;
   };
 
+  // ========== THEME HELPER FUNCTIONS ==========
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-white/30" : "border-gray-200";
+  };
+
+  const getTableHeaderBg = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-100";
+  };
+
+  const getTableBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getWarningBg = () => {
+    return isDarkMode ? "bg-[#23232C]/50" : "bg-gray-100/50";
+  };
+
+  const getWarningBorder = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getRowHover = () => {
+    return isDarkMode ? "hover:bg-[#23232C]" : "hover:bg-gray-50";
+  };
+
+  const getDebugBg = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-100";
+  };
+
+  const getDebugText = () => {
+    return isDarkMode ? "text-white/50" : "text-gray-500";
+  };
+
   // ========== RENDER HELPERS ==========
   const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
     <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
       <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
         active 
-          ? 'bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30' 
+          ? (isDarkMode ? 'bg-[#FFA600]/20 text-[#FFA600] border-[#FFA600]/30 hover:bg-[#FFA600]/30' : 'bg-[#FFA600]/10 text-[#FFA600] border-[#FFA600]/20 hover:bg-[#FFA600]/20')
           : colorClass
       }`}>
-        <img src={icon} alt="" className="h-4 w-4" />
+        <img 
+          src={icon} 
+          alt="" 
+          className="h-4 w-4"
+          style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+        />
         <span className="sm:inline truncate">{label}</span>
       </button>
     </Link>
@@ -916,7 +1034,7 @@ export default function SubjectAttendanceStudent() {
   const renderStatusBadge = (label, count, color) => (
     <div className={`p-2.5 rounded-md border ${color.bg} ${color.border}`}>
       <p className="font-semibold text-xs mb-1" style={{ color: color.text }}>{label}</p>
-      <span className="text-base sm:text-lg lg:text-xl font-bold text-[#FFFFFF]">
+      <span className="text-base sm:text-lg lg:text-xl font-bold" style={{ color: color.countColor || (isDarkMode ? '#FFFFFF' : '#000000') }}>
         {count}
       </span>
     </div>
@@ -927,7 +1045,7 @@ export default function SubjectAttendanceStudent() {
     if (record.status !== status) {
       return (
         <td className="p-2">
-          <span className="text-[#FFFFFF]/40">—</span>
+          <span className={isDarkMode ? "text-[#FFFFFF]/40" : "text-gray-400"}>—</span>
         </td>
       );
     }
@@ -937,12 +1055,14 @@ export default function SubjectAttendanceStudent() {
                      status === 'late' ? 'text-[#FFA600]' : 
                      'text-[#A15353]';
     
+    const timeColor = isDarkMode ? 'opacity-80' : 'opacity-90';
+    
     return (
       <td className="p-2">
         <div className={`${textColor}`}>
           <div className="font-medium">{date}</div>
           {time && (
-            <div className="text-xs opacity-80 mt-0.5">
+            <div className={`text-xs mt-0.5 ${timeColor}`}>
               {time}
             </div>
           )}
@@ -954,11 +1074,11 @@ export default function SubjectAttendanceStudent() {
   // ========== LOADING STATE ==========
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 text-center text-[#FFFFFF]">Loading attendance data...</div>
+          <div className={`p-8 text-center ${getTextColor()}`}>Loading attendance data...</div>
         </div>
       </div>
     );
@@ -966,7 +1086,7 @@ export default function SubjectAttendanceStudent() {
 
   // ========== MAIN RENDER ==========
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -977,17 +1097,22 @@ export default function SubjectAttendanceStudent() {
           {/* ========== PAGE HEADER ========== */}
           <div className="mb-4">
             <div className="flex items-center mb-2">
-              <img src={Attendance} alt="Attendance" className="h-6 w-6 sm:h-7 sm:w-7 mr-2" />
-              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">Attendance</h1>
+              <img 
+                src={Attendance} 
+                alt="Attendance" 
+                className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+              />
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>Attendance</h1>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">View your class attendance records</p>
-            <div className="text-xs text-[#FFFFFF]/60 mt-1">
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>View your class attendance records</p>
+            <div className={`text-xs mt-1 ${isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-500'}`}>
               Times shown are the exact times when attendance was marked
             </div>
           </div>
 
           {/* ========== CLASS INFORMATION ========== */}
-          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'Loading...'}</span>
@@ -1001,34 +1126,45 @@ export default function SubjectAttendanceStudent() {
                 <img 
                   src={BackButton} 
                   alt="Back" 
-                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
+                  className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity"
+                  style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
                 />
               </Link>
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getDividerColor()} mb-4`} />
 
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="flex flex-col sm:flex-row gap-2 flex-1">
               {/* Subject Overview Button */}
               <Link to={`/SubjectOverviewStudent?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
-                <button className="flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30">
-                  <img src={SubjectOverview} alt="" className="h-4 w-4" />
+                <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${isDarkMode ? 'bg-[#FF5252]/20 text-[#FF5252] border-[#FF5252]/30 hover:bg-[#FF5252]/30' : 'bg-[#FF5252]/10 text-[#FF5252] border-[#FF5252]/20 hover:bg-[#FF5252]/20'}`}>
+                  <img 
+                    src={SubjectOverview} 
+                    alt="" 
+                    className="h-4 w-4"
+                    style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+                  />
                   <span className="sm:inline truncate">{classInfo?.subject || 'Subject'} Overview</span>
                 </button>
               </Link>
               
               {/* Existing buttons */}
-              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30")}
-              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30")}
+              {renderActionButton("/SubjectAnnouncementStudent", Announcement, "Announcements", false, isDarkMode ? "bg-[#767EE0]/20 text-[#767EE0] border-[#767EE0]/30 hover:bg-[#767EE0]/30" : "bg-[#767EE0]/10 text-[#767EE0] border-[#767EE0]/20 hover:bg-[#767EE0]/20")}
+              {renderActionButton("/SubjectSchoolWorksStudent", Classwork, "School Works", false, isDarkMode ? "bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30 hover:bg-[#00A15D]/30" : "bg-[#00A15D]/10 text-[#00A15D] border-[#00A15D]/20 hover:bg-[#00A15D]/20")}
               {renderActionButton("/SubjectAttendanceStudent", Attendance, "Attendance", true)}
-              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30")}
+              {renderActionButton("/SubjectAnalyticsStudent", Analytics, "Reports", false, isDarkMode ? "bg-[#B39DDB]/20 text-[#B39DDB] border-[#B39DDB]/30 hover:bg-[#B39DDB]/30" : "bg-[#B39DDB]/10 text-[#B39DDB] border-[#B39DDB]/20 hover:bg-[#B39DDB]/20")}
             </div>
             <Link to={`/SubjectListStudent?code=${subjectCode}`} className="sm:self-start">
-              <button className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#FFA600] transition-all duration-200 cursor-pointer">
-                <img src={StudentsIcon} alt="Student List" className="h-4 w-4" />
+              <button className={`p-2 ${isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'} rounded-md shadow-md border-2 border-transparent hover:border-[#FFA600] transition-all duration-200 cursor-pointer`}>
+                <img 
+                  src={StudentsIcon} 
+                  alt="Student List" 
+                  className="h-4 w-4"
+                  style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+                />
               </button>
             </Link>
           </div>
@@ -1036,17 +1172,22 @@ export default function SubjectAttendanceStudent() {
           {/* ========== ATTENDANCE CONTENT ========== */}
           <div className="mt-4">
             {/* STUDENT INFO - Smaller */}
-            <div className="flex items-center bg-[#15151C] p-4 rounded-lg shadow-md mb-4 gap-3">
-              <img src={UserIcon} alt="User" className="w-6 h-6 flex-shrink-0" />
+            <div className={`flex items-center ${getCardBackgroundColor()} p-4 rounded-lg shadow-md mb-4 gap-3`}>
+              <img 
+                src={UserIcon} 
+                alt="User" 
+                className="w-6 h-6 flex-shrink-0"
+                style={!isDarkMode ? { filter: 'invert(0.5)' } : {}}
+              />
               <div>
-                <p className="text-xs text-[#FFFFFF]/80">
+                <p className={`text-xs ${getSecondaryTextColor()}`}>
                   Student No: {studentId}
                 </p>
-                <p className="font-bold text-base text-[#FFFFFF]">
+                <p className={`font-bold text-base ${getTextColor()}`}>
                   {attendanceData?.student?.name || "Student Name"}
                 </p>
                 {classInfo?.section && (
-                  <p className="text-xs text-[#FFFFFF]/60 mt-0.5">
+                  <p className={`text-xs mt-0.5 ${isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-500'}`}>
                     Section: {classInfo.section}
                   </p>
                 )}
@@ -1054,9 +1195,9 @@ export default function SubjectAttendanceStudent() {
             </div>
 
             {/* ATTENDANCE DATES - Smaller */}
-            <div className="bg-[#15151C] p-4 rounded-lg shadow-md mb-4">
+            <div className={`${getCardBackgroundColor()} p-4 rounded-lg shadow-md mb-4`}>
               <div className="flex justify-between items-center mb-3">
-                <p className="font-bold text-base text-[#FFFFFF]">
+                <p className={`font-bold text-base ${getTextColor()}`}>
                   Attendance History ({combinedAttendanceData.length} records)
                 </p>
                 <div className="flex items-center">
@@ -1064,18 +1205,19 @@ export default function SubjectAttendanceStudent() {
                     onClick={generateAttendanceHistoryPDF}
                     label="Download History"
                     data={combinedAttendanceData}
+                    isDarkMode={isDarkMode}
                   />
                 </div>
               </div>
-              <hr className="border-[#FFFFFF]/30 mb-3" />
+              <hr className={`${getDividerColor()} mb-3`} />
 
               {combinedAttendanceData.length > 0 ? (
                 <>
                   <div className="overflow-x-auto">
                     <div className="inline-block min-w-full align-middle">
-                      <div className="overflow-hidden rounded-md border border-[#FFFFFF]/10">
+                      <div className={`overflow-hidden rounded-md border ${getTableBorder()}`}>
                         <table className="min-w-full text-left border-collapse text-xs">
-                          <thead className="bg-[#23232C]">
+                          <thead className={getTableHeaderBg()}>
                             <tr>
                               <th className="p-2 font-bold text-[#00A15D]">Date Present</th>
                               <th className="p-2 font-bold text-[#FFA600]">Date Late</th>
@@ -1084,7 +1226,7 @@ export default function SubjectAttendanceStudent() {
                           </thead>
                           <tbody>
                             {currentAttendanceData.map((record, index) => (
-                              <tr key={index} className="hover:bg-[#23232C] border-b border-[#FFFFFF]/10 last:border-0">
+                              <tr key={index} className={`${getRowHover()} border-b ${getTableBorder()} last:border-0`}>
                                 {renderAttendanceCell(record, 'present')}
                                 {renderAttendanceCell(record, 'late')}
                                 {renderAttendanceCell(record, 'absent')}
@@ -1103,14 +1245,15 @@ export default function SubjectAttendanceStudent() {
                     startIndex={startIndex + 1}
                     endIndex={endIndex}
                     totalItems={combinedAttendanceData.length}
+                    isDarkMode={isDarkMode}
                   />
                 </>
               ) : (
-                <div className="text-center py-6 bg-[#23232C] rounded-lg">
-                  <p className="text-[#FFFFFF]/60 text-sm">
+                <div className={`text-center py-6 ${isDarkMode ? 'bg-[#23232C]' : 'bg-gray-100'} rounded-lg`}>
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>
                     No attendance records found
                   </p>
-                  <p className="text-[#FFFFFF]/40 text-xs mt-2">
+                  <p className={`text-xs mt-2 ${isDarkMode ? 'text-[#FFFFFF]/40' : 'text-gray-400'}`}>
                     Student ID: {studentId}, Subject Code: {subjectCode}
                   </p>
                 </div>
@@ -1118,9 +1261,9 @@ export default function SubjectAttendanceStudent() {
             </div>
 
             {/* TOTALS - Smaller */}
-            <div className="bg-[#15151C] p-4 rounded-lg shadow-md mb-6">
+            <div className={`${getCardBackgroundColor()} p-4 rounded-lg shadow-md mb-6`}>
               <div className="flex justify-between items-center mb-3">
-                <p className="font-bold text-base text-[#FFFFFF]">
+                <p className={`font-bold text-base ${getTextColor()}`}>
                   Attendance Summary
                 </p>
                 <div className="flex items-center">
@@ -1128,36 +1271,41 @@ export default function SubjectAttendanceStudent() {
                     onClick={generateAttendanceSummaryPDF}
                     label="Download Summary"
                     data={[attendanceData?.attendance_summary || {}]} // Pass the summary data
+                    isDarkMode={isDarkMode}
                   />
                 </div>
               </div>
-              <hr className="border-[#FFFFFF]/30 mb-3" />
+              <hr className={`${getDividerColor()} mb-3`} />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 {renderStatusBadge("Present", attendanceData?.attendance_summary?.present || 0, {
-                  bg: "bg-[#00A15D]/10",
-                  border: "border-[#00A15D]/20",
-                  text: "#00A15D"
+                  bg: isDarkMode ? "bg-[#00A15D]/10" : "bg-[#00A15D]/5",
+                  border: isDarkMode ? "border-[#00A15D]/20" : "border-[#00A15D]/20",
+                  text: "#00A15D",
+                  countColor: isDarkMode ? "#FFFFFF" : "#000000"
                 })}
                 {renderStatusBadge("Late", attendanceData?.attendance_summary?.late || 0, {
-                  bg: "bg-[#FFA600]/10",
-                  border: "border-[#FFA600]/20",
-                  text: "#FFA600"
+                  bg: isDarkMode ? "bg-[#FFA600]/10" : "bg-[#FFA600]/5",
+                  border: isDarkMode ? "border-[#FFA600]/20" : "border-[#FFA600]/20",
+                  text: "#FFA600",
+                  countColor: isDarkMode ? "#FFFFFF" : "#000000"
                 })}
                 {renderStatusBadge("Absent", attendanceData?.attendance_summary?.absent || 0, {
-                  bg: "bg-[#A15353]/10",
-                  border: "border-[#A15353]/20",
-                  text: "#A15353"
+                  bg: isDarkMode ? "bg-[#A15353]/10" : "bg-[#A15353]/5",
+                  border: isDarkMode ? "border-[#A15353]/20" : "border-[#A15353]/20",
+                  text: "#A15353",
+                  countColor: isDarkMode ? "#FFFFFF" : "#000000"
                 })}
                 {renderStatusBadge("Total Classes", attendanceData?.attendance_summary?.total || 0, {
-                  bg: "bg-[#B39DDB]/10",
-                  border: "border-[#B39DDB]/20",
-                  text: "#B39DDB"
+                  bg: isDarkMode ? "bg-[#B39DDB]/10" : "bg-[#B39DDB]/5",
+                  border: isDarkMode ? "border-[#B39DDB]/20" : "border-[#B39DDB]/20",
+                  text: "#B39DDB",
+                  countColor: isDarkMode ? "#FFFFFF" : "#000000"
                 })}
               </div>
             </div>
 
             {/* ENHANCED ATTENDANCE TRACKING CARD - Smaller */}
-            <div className="bg-[#15151C] rounded-lg shadow-md mt-4 p-4 text-[#FFFFFF]">
+            <div className={`${getCardBackgroundColor()} rounded-lg shadow-md mt-4 p-4 ${getTextColor()}`}>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-base font-bold">
                   Attendance Tracking
@@ -1169,7 +1317,7 @@ export default function SubjectAttendanceStudent() {
                   </div>
                 )}
                 {overallWarning && !hasDroppableSubject && (
-                  <div className="flex items-center bg-[#FFA600]/20 text-[#FFA600] px-2 py-1 rounded-full text-xs font-medium">
+                  <div className={`flex items-center ${isDarkMode ? 'bg-[#FFA600]/20' : 'bg-[#FFA600]/10'} text-[#FFA600] px-2 py-1 rounded-full text-xs font-medium`}>
                     <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
@@ -1179,7 +1327,7 @@ export default function SubjectAttendanceStudent() {
               </div>
               
               {/* Enhanced Warning Note */}
-              <div className="mb-4 p-3 rounded-lg bg-[#23232C]/50 border border-[#FFFFFF]/10">
+              <div className={`mb-4 p-3 rounded-lg ${getWarningBg()} border ${getWarningBorder()}`}>
                 <p className="text-sm font-semibold mb-2 text-[#FFA600]">⚠️ Attendance Policy:</p>
                 <div className="text-xs space-y-1">
                   <p className="flex items-start">
@@ -1197,18 +1345,18 @@ export default function SubjectAttendanceStudent() {
                 </div>
               </div>
               
-              <hr className="border-[#FFFFFF]/30 mb-3" />
+              <hr className={`${getDividerColor()} mb-3`} />
               
               {currentAttendanceCardData.length === 0 ? (
                 <div className="text-center py-6">
-                  <p className="text-[#FFFFFF]/80 text-sm">No attendance data available for {getCurrentSubjectName()}.</p>
-                  <p className="text-[#FFFFFF]/60 text-xs mt-2">
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>No attendance data available for {getCurrentSubjectName()}.</p>
+                  <p className={`text-xs mt-2 ${isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-400'}`}>
                     This could mean: <br/>
                     1. No attendance has been recorded yet for this subject<br/>
                     2. The student is not enrolled in this subject<br/>
                     3. There's no data in the attendance summary API
                   </p>
-                  <div className="mt-4 text-left text-xs text-[#FFFFFF]/50 bg-[#23232C] p-3 rounded">
+                  <div className={`mt-4 text-left text-xs ${getDebugBg()} p-3 rounded ${getDebugText()}`}>
                     <p><strong>Debug Info:</strong></p>
                     <p>Student ID: {studentId}</p>
                     <p>Subject Code: {subjectCode}</p>
@@ -1221,7 +1369,7 @@ export default function SubjectAttendanceStudent() {
                   <div className="overflow-x-auto">
                     <table className="min-w-full border-collapse text-xs">
                       <thead>
-                        <tr className="border-b border-[#FFFFFF]/20">
+                        <tr className={`border-b ${getTableBorder()}`}>
                           <th className="px-3 py-2 text-left font-bold">Subject</th>
                           <th className="px-3 py-2 text-left font-bold text-[#00A15D]">Present</th>
                           <th className="px-3 py-2 text-left font-bold text-[#FFA600]">Late</th>
@@ -1233,68 +1381,73 @@ export default function SubjectAttendanceStudent() {
                         </tr>
                       </thead>
                       <tbody>
-                        {currentAttendanceCardData.map((subject) => (
-                          <tr key={subject.subject_code} className={`border-b ${
-                            subject.isCritical ? 'bg-[#A15353]/10' : 
-                            subject.isAtRisk ? 'bg-[#FFA600]/10' : 
-                            subject.hasWarning ? 'bg-[#FFA600]/5' : 
-                            'hover:bg-[#23232C]'
-                          }`}>
-                            <td className="px-3 py-2">
-                              <div className="flex flex-col gap-1">
-                                <span className="font-medium">{subject.subject_name}</span>
-                                <span className="text-[10px] text-[#FFFFFF]/60">{subject.section}</span>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 text-[#00A15D] font-medium text-center">{subject.present}</td>
-                            <td className="px-3 py-2 text-[#FFA600] font-medium text-center">{subject.late}</td>
-                            <td className="px-3 py-2 text-[#A15353] font-medium text-center">{subject.absent}</td>
-                            <td className="px-3 py-2 font-bold text-center">
-                              <span className={
-                                subject.isCritical ? 'text-[#A15353]' : 
-                                subject.isAtRisk ? 'text-[#FFA600]' : 
-                                'text-[#FFFFFF]'
-                              }>
-                                {subject.totalEffectiveAbsences}
-                              </span>
-                              <div className="text-[10px] text-[#FFFFFF]/50">
-                                ({subject.absent} absents + {subject.equivalentAbsences} from lates)
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 text-center">
-                              <span className={
-                                subject.remainingLates > 0 ? 'text-[#FFA600] font-medium' : 'text-[#FFFFFF]/60'
-                              }>
-                                {subject.remainingLates}
-                              </span>
-                              <div className="text-[10px] text-[#FFFFFF]/50">
-                                (not converted)
-                              </div>
-                            </td>
-                            <td className="px-3 py-2">
-                              <AttendanceStatusIndicator
-                                remainingLates={subject.remainingLates}
-                                isCritical={subject.isCritical}
-                                isAtRisk={subject.isAtRisk}
-                              />
-                            </td>
-                            <td className="px-3 py-2 whitespace-nowrap text-[#B39DDB] text-center">{subject.total_classes}</td>
-                          </tr>
-                        ))}
+                        {currentAttendanceCardData.map((subject) => {
+                          const getRowBg = () => {
+                            if (subject.isCritical) return isDarkMode ? 'bg-[#A15353]/10' : 'bg-[#A15353]/5';
+                            if (subject.isAtRisk) return isDarkMode ? 'bg-[#FFA600]/10' : 'bg-[#FFA600]/5';
+                            if (subject.hasWarning) return isDarkMode ? 'bg-[#FFA600]/5' : 'bg-[#FFA600]/3';
+                            return getRowHover();
+                          };
+
+                          return (
+                            <tr key={subject.subject_code} className={`border-b ${getRowBg()} ${getTableBorder()}`}>
+                              <td className="px-3 py-2">
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-medium">{subject.subject_name}</span>
+                                  <span className={`text-[10px] ${isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-500'}`}>{subject.section}</span>
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 text-[#00A15D] font-medium text-center">{subject.present}</td>
+                              <td className="px-3 py-2 text-[#FFA600] font-medium text-center">{subject.late}</td>
+                              <td className="px-3 py-2 text-[#A15353] font-medium text-center">{subject.absent}</td>
+                              <td className="px-3 py-2 font-bold text-center">
+                                <span className={
+                                  subject.isCritical ? 'text-[#A15353]' : 
+                                  subject.isAtRisk ? 'text-[#FFA600]' : 
+                                  getTextColor()
+                                }>
+                                  {subject.totalEffectiveAbsences}
+                                </span>
+                                <div className={`text-[10px] ${isDarkMode ? 'text-[#FFFFFF]/50' : 'text-gray-500'}`}>
+                                  ({subject.absent} absents + {subject.equivalentAbsences} from lates)
+                                </div>
+                              </td>
+                              <td className="px-3 py-2 text-center">
+                                <span className={
+                                  subject.remainingLates > 0 ? 'text-[#FFA600] font-medium' : (isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-400')
+                                }>
+                                  {subject.remainingLates}
+                                </span>
+                                <div className={`text-[10px] ${isDarkMode ? 'text-[#FFFFFF]/50' : 'text-gray-500'}`}>
+                                  (not converted)
+                                </div>
+                              </td>
+                              <td className="px-3 py-2">
+                                <AttendanceStatusIndicator
+                                  remainingLates={subject.remainingLates}
+                                  isCritical={subject.isCritical}
+                                  isAtRisk={subject.isAtRisk}
+                                  isDarkMode={isDarkMode}
+                                />
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-[#B39DDB] text-center">{subject.total_classes}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
                   
                   {/* Progress Bar for Effective Absences */}
                   {currentAttendanceCardData.length > 0 && (
-                    <div className="mt-4 p-3 bg-[#23232C] rounded-lg">
+                    <div className={`mt-4 p-3 ${isDarkMode ? 'bg-[#23232C]' : 'bg-gray-100'} rounded-lg`}>
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-sm font-medium">Effective Absences Progress</span>
-                        <span className="text-xs text-[#FFFFFF]/60">
+                        <span className={`text-xs ${isDarkMode ? 'text-[#FFFFFF]/60' : 'text-gray-500'}`}>
                           {currentAttendanceCardData[0].totalEffectiveAbsences} / 3
                         </span>
                       </div>
-                      <div className="w-full bg-[#FFFFFF]/10 rounded-full h-2.5">
+                      <div className={`w-full ${isDarkMode ? 'bg-[#FFFFFF]/10' : 'bg-gray-300'} rounded-full h-2.5`}>
                         <div 
                           className={`h-2.5 rounded-full ${
                             currentAttendanceCardData[0].totalEffectiveAbsences >= 3 ? 'bg-[#A15353]' :
@@ -1321,6 +1474,7 @@ export default function SubjectAttendanceStudent() {
                     startIndex={attendanceStartIndex + 1}
                     endIndex={attendanceEndIndex}
                     totalItems={filteredAttendance().length}
+                    isDarkMode={isDarkMode}
                   />
                 </>
               )}

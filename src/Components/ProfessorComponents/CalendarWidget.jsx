@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CalendarIcon from '../../assets/Calendar.svg';
 
-const CalendarWidget = ({ professorId }) => {
+const CalendarWidget = ({ professorId, isDarkMode = false }) => {
   // Calendar states
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedDayAbsences, setSelectedDayAbsences] = useState([]);
@@ -351,7 +351,7 @@ const CalendarWidget = ({ professorId }) => {
   // Get status color for calendar day
   const getStatusColor = (status, isFuture) => {
     if (isFuture) {
-      return 'bg-transparent border-white/10 text-white/30';
+      return isDarkMode ? 'bg-transparent border-white/10 text-white/30' : 'bg-transparent border-gray-300 text-gray-300';
     }
     
     switch (status) {
@@ -361,14 +361,14 @@ const CalendarWidget = ({ professorId }) => {
         return 'bg-[#FFA600] border-[#FFA600] text-white';
       case 'normal': 
       default:
-        return 'bg-transparent border-white/20 text-white/70 hover:bg-white/5';
+        return isDarkMode ? 'bg-transparent border-white/20 text-white/70 hover:bg-white/5' : 'bg-transparent border-gray-300 text-gray-600 hover:bg-gray-100';
     }
   };
 
   // Get text color for day number
   const getTextColor = (status, isFuture) => {
     if (isFuture) {
-      return 'text-white/30';
+      return isDarkMode ? 'text-white/30' : 'text-gray-300';
     }
     
     switch (status) {
@@ -377,7 +377,7 @@ const CalendarWidget = ({ professorId }) => {
         return 'text-white';
       case 'normal': 
       default:
-        return 'text-white/70';
+        return isDarkMode ? 'text-white/70' : 'text-gray-600';
     }
   };
 
@@ -386,23 +386,23 @@ const CalendarWidget = ({ professorId }) => {
     switch (status) {
       case 'absent':
         return {
-          bgColor: 'bg-[#A15353]/20',
+          bgColor: isDarkMode ? 'bg-[#A15353]/20' : 'bg-[#A15353]/10',
           textColor: 'text-[#FF8A8A]',
           borderColor: 'border-[#A15353]',
           text: 'Absent'
         };
       case 'late':
         return {
-          bgColor: 'bg-[#FFA600]/20',
+          bgColor: isDarkMode ? 'bg-[#FFA600]/20' : 'bg-[#FFA600]/10',
           textColor: 'text-[#FFA600]',
           borderColor: 'border-[#FFA600]',
           text: 'Late'
         };
       default:
         return {
-          bgColor: 'bg-gray-500/20',
-          textColor: 'text-gray-400',
-          borderColor: 'border-gray-500',
+          bgColor: isDarkMode ? 'bg-gray-500/20' : 'bg-gray-500/10',
+          textColor: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+          borderColor: isDarkMode ? 'border-gray-500' : 'border-gray-400',
           text: 'Present'
         };
     }
@@ -483,24 +483,68 @@ const CalendarWidget = ({ professorId }) => {
     fetchAvailableSubjects();
   };
 
+  // Theme-based colors
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-[#15151C]" : "border-gray-200";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/50" : "text-gray-600";
+  };
+
+  const getModalBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-white";
+  };
+
+  const getModalBorderColor = () => {
+    return isDarkMode ? "border-white/10" : "border-gray-200";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-gray-50";
+  };
+
+  const getInputBorderColor = () => {
+    return isDarkMode ? "border-white/10" : "border-gray-300";
+  };
+
+  const getHoverBackgroundColor = () => {
+    return isDarkMode ? "hover:bg-white/10" : "hover:bg-gray-100";
+  };
+
+  const getSectionButtonColor = (isSelected) => {
+    if (isSelected) {
+      return 'bg-[#767EE0] text-white';
+    }
+    return isDarkMode ? 'bg-[#15151C] text-white/70 hover:bg-[#1E1E24]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+  };
+
+  const getCloseButtonColor = () => {
+    return isDarkMode ? 'bg-[#15151C] text-white hover:bg-[#1E1E24]' : 'bg-gray-100 text-gray-700 hover:bg-gray-200';
+  };
+
   return (
     <>
       {/* Attendance Calendar */}
-      <div className='lg:col-span-1 bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]'>
+      <div className={`rounded-lg shadow p-3 border-2 ${getCardBorderColor()} ${getCardBackgroundColor()}`}>
         <div className="flex flex-col h-full">
           {/* Header with month and navigation */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">
                 <div className="flex justify-center items-center h-6 w-6 rounded mr-1.5">
-                  <img src={CalendarIcon} alt="Calendar" className="h-4 w-4" />
+                  <img src={CalendarIcon} alt="Calendar" className="h-4 w-4" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                 </div>
                 <div>
-                  <h2 className="font-bold text-xs text-white mb-0.5">Attendance</h2>
+                  <h2 className={`font-bold text-xs mb-0.5 ${getTextColor()}`}>Attendance</h2>
                   <div className="flex items-center justify-between">
                     <button 
                       onClick={goToPreviousMonth}
-                      className="p-0.5 rounded hover:bg-white/10 transition-colors"
+                      className={`p-0.5 rounded ${getHoverBackgroundColor()} transition-colors`}
                       aria-label="Previous month"
                     >
                       <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -508,11 +552,11 @@ const CalendarWidget = ({ professorId }) => {
                       </svg>
                     </button>
                     <div className="text-center flex-1 mx-0.5">
-                      <p className="text-[10px] text-white/50">{getMonthName()} {currentYear}</p>
+                      <p className={`text-[10px] ${getSecondaryTextColor()}`}>{getMonthName()} {currentYear}</p>
                     </div>
                     <button 
                       onClick={goToNextMonth}
-                      className="p-0.5 rounded hover:bg-white/10 transition-colors"
+                      className={`p-0.5 rounded ${getHoverBackgroundColor()} transition-colors`}
                       aria-label="Next month"
                     >
                       <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -524,10 +568,10 @@ const CalendarWidget = ({ professorId }) => {
               </div>
               <button 
                 onClick={refreshCalendar}
-                className="p-1 rounded hover:bg-white/10"
+                className={`p-1 rounded ${getHoverBackgroundColor()}`}
                 title="Refresh calendar"
               >
-                <svg className="w-3 h-3 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
@@ -535,16 +579,16 @@ const CalendarWidget = ({ professorId }) => {
             
             {/* Absence rate */}
             <div className="text-center mb-2">
-              <p className="text-[10px] text-white/80 mb-0.5">Absence Rate</p>
+              <p className={`text-[10px] mb-0.5 ${getSecondaryTextColor()}`}>Absence Rate</p>
               <div className="flex items-baseline justify-center">
-                <p className="text-xl font-bold text-white">{monthlyAbsenceRate}</p>
-                <p className="text-base font-bold text-white ml-0.5">%</p>
+                <p className={`text-xl font-bold ${getTextColor()}`}>{monthlyAbsenceRate}</p>
+                <p className={`text-base font-bold ${getTextColor()} ml-0.5`}>%</p>
               </div>
             </div>
             
             {/* Progress bar */}
             <div className="mb-3">
-              <div className="w-full bg-[#767EE0]/20 rounded-full h-1">
+              <div className={`w-full rounded-full h-1 ${isDarkMode ? 'bg-[#767EE0]/20' : 'bg-[#767EE0]/10'}`}>
                 <div 
                   className="bg-[#767EE0] h-1 rounded-full"
                   style={{ width: `${monthlyAbsenceRate}%` }}
@@ -558,7 +602,7 @@ const CalendarWidget = ({ professorId }) => {
             <div className="grid grid-cols-7 gap-0.5 mb-1">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
                 <div key={index} className="text-center">
-                  <p className="text-[8px] text-white/50">{day}</p>
+                  <p className={`text-[8px] ${getSecondaryTextColor()}`}>{day}</p>
                 </div>
               ))}
             </div>
@@ -573,12 +617,12 @@ const CalendarWidget = ({ professorId }) => {
                       className={`
                         h-3 w-3 rounded-full border text-[7px] font-medium
                         ${getStatusColor(day.status, day.isFuture)}
-                        ${day.isToday ? 'ring-0.5 ring-white ring-offset-0.5 ring-offset-[#15151C]' : ''}
+                        ${day.isToday ? (isDarkMode ? 'ring-0.5 ring-white ring-offset-0.5 ring-offset-[#15151C]' : 'ring-0.5 ring-gray-300 ring-offset-0.5 ring-offset-white') : ''}
                         ${day.isFuture ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform cursor-pointer'}
                         flex items-center justify-center
                       `}
                       style={{
-                        borderColor: day.status === 'normal' && !day.isFuture ? 'rgba(255,255,255,0.2)' : undefined
+                        borderColor: day.status === 'normal' && !day.isFuture ? (isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)') : undefined
                       }}
                       title={`${day.date} - ${day.status === 'absent' ? 'Absent' : day.status === 'late' ? 'Late' : 'No issues'}`}
                     >
@@ -597,21 +641,21 @@ const CalendarWidget = ({ professorId }) => {
             <div className="flex justify-center items-center gap-2 mt-3 text-[6px]">
               <div className="flex items-center gap-0.5">
                 <div className="h-1.5 w-1.5 rounded-full bg-[#A15353]"></div>
-                <span className="text-white/60">Absent</span>
+                <span className={getSecondaryTextColor()}>Absent</span>
               </div>
               <div className="flex items-center gap-0.5">
                 <div className="h-1.5 w-1.5 rounded-full bg-[#FFA600]"></div>
-                <span className="text-white/60">Late</span>
+                <span className={getSecondaryTextColor()}>Late</span>
               </div>
               <div className="flex items-center gap-0.5">
                 <div className="h-1.5 w-1.5 rounded-full border border-white/20 bg-transparent"></div>
-                <span className="text-white/60">No Issues</span>
+                <span className={getSecondaryTextColor()}>No Issues</span>
               </div>
             </div>
             
             {/* Debug info (hidden in production) */}
             <div className="mt-2 text-center">
-              <p className="text-[6px] text-white/30 truncate" title={debugInfo}>
+              <p className={`text-[6px] truncate ${isDarkMode ? 'text-white/30' : 'text-gray-400'}`} title={debugInfo}>
                 {professorId ? `Prof ID: ${professorId}` : 'No professor ID'}
               </p>
             </div>
@@ -622,17 +666,17 @@ const CalendarWidget = ({ professorId }) => {
       {/* Absence Details Modal */}
       {isCalendarOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3">
-          <div className="bg-[#23232C] rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-hidden border-2 border-white/10">
+          <div className={`rounded-lg shadow-lg max-w-md w-full max-h-[80vh] overflow-hidden border-2 ${getModalBorderColor()} ${getModalBackgroundColor()}`}>
             {/* Modal header */}
-            <div className="p-3 border-b border-white/10">
+            <div className={`p-3 border-b ${getModalBorderColor()}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
-                  <img src={CalendarIcon} alt="Calendar" className="h-4 w-4 mr-2" />
+                  <img src={CalendarIcon} alt="Calendar" className="h-4 w-4 mr-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                   <div>
-                    <h3 className="font-bold text-sm text-white">
+                    <h3 className={`font-bold text-sm ${getTextColor()}`}>
                       Attendance on {formatDateDisplay(selectedDate?.date)}
                     </h3>
-                    <div className="flex items-center gap-1 text-[10px] text-white/60">
+                    <div className={`flex items-center gap-1 text-[10px] ${getSecondaryTextColor()}`}>
                       <span>{selectedDayAbsences.length} student(s) absent/late</span>
                       <span>•</span>
                       <span>Monthly Absence Rate: {monthlyAbsenceRate}%</span>
@@ -641,9 +685,9 @@ const CalendarWidget = ({ professorId }) => {
                 </div>
                 <button
                   onClick={() => setIsCalendarOpen(false)}
-                  className="p-1 rounded hover:bg-white/10"
+                  className={`p-1 rounded ${getHoverBackgroundColor()}`}
                 >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -653,24 +697,24 @@ const CalendarWidget = ({ professorId }) => {
               {loading && (
                 <div className="text-center py-2">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#767EE0] mx-auto"></div>
-                  <p className="text-sm text-white/60">Loading attendance data...</p>
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>Loading attendance data...</p>
                 </div>
               )}
               
               {/* Subject Filter Dropdown */}
               <div className="mb-3">
-                <label className="block text-xs text-white/70 mb-1.5">Select Subject:</label>
+                <label className={`block text-xs mb-1.5 ${getSecondaryTextColor()}`}>Select Subject:</label>
                 <select
                   value={selectedSubject}
                   onChange={(e) => handleSubjectChange(e.target.value)}
                   disabled={loading}
-                  className="w-full bg-[#15151C] border border-white/10 rounded px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-[#767EE0] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full border rounded px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#767EE0] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${getInputBackgroundColor()} ${getInputBorderColor()} ${getTextColor()}`}
                 >
-                  <option value="" className="bg-[#15151C] text-white">
+                  <option value="" className={isDarkMode ? 'bg-[#15151C] text-white' : 'bg-white text-gray-900'}>
                     -- Select a subject --
                   </option>
                   {availableSubjects.map((subject, index) => (
-                    <option key={index} value={subject.subject_name} className="bg-[#15151C] text-white">
+                    <option key={index} value={subject.subject_name} className={isDarkMode ? 'bg-[#15151C] text-white' : 'bg-white text-gray-900'}>
                       {getSubjectDisplayName(subject)}
                     </option>
                   ))}
@@ -680,7 +724,7 @@ const CalendarWidget = ({ professorId }) => {
               {/* Section Buttons - Only show when a subject is selected */}
               {selectedSubject && availableSections.length > 0 && !loading && (
                 <div className="mb-3">
-                  <label className="block text-xs text-white/70 mb-1.5">Select Section:</label>
+                  <label className={`block text-xs mb-1.5 ${getSecondaryTextColor()}`}>Select Section:</label>
                   <div className="flex flex-wrap gap-2">
                     {availableSections.map((section, index) => (
                       <button
@@ -688,9 +732,7 @@ const CalendarWidget = ({ professorId }) => {
                         onClick={() => handleSectionClick(section)}
                         disabled={loading}
                         className={`px-3 py-2 text-xs rounded transition-colors flex flex-col items-center ${
-                          selectedSection === section 
-                            ? 'bg-[#767EE0] text-white' 
-                            : 'bg-[#15151C] text-white/70 hover:bg-[#1E1E24]'
+                          getSectionButtonColor(selectedSection === section)
                         } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <span>Section {section}</span>
@@ -705,18 +747,18 @@ const CalendarWidget = ({ professorId }) => {
               
               {/* Status Summary - Only show when a section is selected */}
               {isSectionSelected && !loading && (
-                <div className="flex gap-4 text-[10px]">
+                <div className={`flex gap-4 text-[10px] ${getSecondaryTextColor()}`}>
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-[#A15353]"></div>
-                    <span className="text-white/60">Absent: {getStatusCounts().absent}</span>
+                    <span>Absent: {getStatusCounts().absent}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-[#FFA600]"></div>
-                    <span className="text-white/60">Late: {getStatusCounts().late}</span>
+                    <span>Late: {getStatusCounts().late}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-[#767EE0]"></div>
-                    <span className="text-white/60">Total: {getStatusCounts().total}</span>
+                    <span>Total: {getStatusCounts().total}</span>
                   </div>
                 </div>
               )}
@@ -727,28 +769,28 @@ const CalendarWidget = ({ professorId }) => {
               {loading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#767EE0] mx-auto mb-3"></div>
-                  <p className="text-sm text-white/60">Loading attendance data...</p>
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>Loading attendance data...</p>
                 </div>
               ) : !selectedSubject ? (
                 <div className="text-center py-4">
-                  <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <p className="text-sm text-white/60">Please select a subject to view sections</p>
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>Please select a subject to view sections</p>
                 </div>
               ) : !isSectionSelected ? (
                 <div className="text-center py-4">
-                  <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 5.197a6 6 0 00-9-5.197M12 4.354a4 4 0 110 5.292" />
                   </svg>
-                  <p className="text-sm text-white/60">Please select a section to view students</p>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>Please select a section to view students</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-white/40' : 'text-gray-400'} mt-1`}>
                     {availableSections.length} section(s) available for {selectedSubject}
                   </p>
                 </div>
               ) : studentData.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="text-xs text-white/60 mb-2">
+                  <div className={`text-xs mb-2 ${getSecondaryTextColor()}`}>
                     Showing absent/late students for <span className="text-[#767EE0]">{selectedSubject}</span> - <span className="text-[#767EE0]">Section {selectedSection}</span>
                   </div>
                   {studentData.map((student) => {
@@ -756,13 +798,13 @@ const CalendarWidget = ({ professorId }) => {
                     return (
                       <div 
                         key={`${student.id}-${student.student_ID}`} 
-                        className="bg-[#15151C] rounded border border-white/5 p-2 hover:border-white/10 transition-colors"
+                        className={`rounded border p-2 hover:border-white/10 transition-colors ${isDarkMode ? 'bg-[#15151C] border-white/5' : 'bg-gray-50 border-gray-200'}`}
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="text-xs font-semibold text-white">{formatStudentName(student)}</p>
-                            <p className="text-[10px] text-white/50 mt-0.5">ID: {student.student_ID}</p>
-                            <p className="text-[10px] text-white/40 mt-0.5">Class: {student.tracked_yearandsec}</p>
+                            <p className={`text-xs font-semibold ${getTextColor()}`}>{formatStudentName(student)}</p>
+                            <p className={`text-[10px] mt-0.5 ${getSecondaryTextColor()}`}>ID: {student.student_ID}</p>
+                            <p className={`text-[10px] mt-0.5 ${isDarkMode ? 'text-white/40' : 'text-gray-400'}`}>Class: {student.tracked_yearandsec}</p>
                           </div>
                           <div className={`px-2 py-0.5 rounded text-[9px] border ${statusBadge.bgColor} ${statusBadge.textColor} ${statusBadge.borderColor}`}>
                             {statusBadge.text}
@@ -774,11 +816,11 @@ const CalendarWidget = ({ professorId }) => {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <svg className="w-8 h-8 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-sm text-white/60">No absent or late students</p>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>No absent or late students</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-white/40' : 'text-gray-400'} mt-1`}>
                     All students are present in Section {selectedSection} for {selectedSubject}
                   </p>
                 </div>
@@ -786,11 +828,11 @@ const CalendarWidget = ({ professorId }) => {
             </div>
 
             {/* Modal footer */}
-            <div className="p-3 border-t border-white/10">
+            <div className={`p-3 border-t ${getModalBorderColor()}`}>
               <div className="flex justify-between">
                 <button
                   onClick={() => setIsCalendarOpen(false)}
-                  className="px-3 py-1 text-xs bg-[#15151C] text-white rounded hover:bg-[#1E1E24] transition-colors"
+                  className={`px-3 py-1 text-xs rounded transition-colors ${getCloseButtonColor()}`}
                 >
                   Close
                 </button>

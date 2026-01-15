@@ -6,7 +6,8 @@ const ActivityScoresBarChart = ({
   selectedType = 'all',
   onTypeChange,
   studentId,
-  subjectCode
+  subjectCode,
+  isDarkMode = true
 }) => {
   const [hoveredActivity, setHoveredActivity] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -738,6 +739,63 @@ const ActivityScoresBarChart = ({
   const barScoreFontSize = isMobile ? "10" : "11";
   const activityLabelFontSize = isMobile ? "9" : "11";
 
+  // Theme helper functions
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/60" : "text-gray-600";
+  };
+
+  const getTertiaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/40" : "text-gray-400";
+  };
+
+  const getGridColor = () => {
+    return isDarkMode ? "#2A2A35" : "#e5e7eb";
+  };
+
+  const getBackgroundColor = () => {
+    return isDarkMode ? "#23232C" : "#ffffff";
+  };
+
+  const getLegendBackgroundColor = () => {
+    return isDarkMode ? "#2A2A35" : "#f3f4f6";
+  };
+
+  const getButtonBackgroundColor = () => {
+    return isDarkMode ? "#2A2A35" : "#f3f4f6";
+  };
+
+  const getButtonBorderColor = () => {
+    return isDarkMode ? "#3A3A45" : "#d1d5db";
+  };
+
+  const getDropdownBackgroundColor = () => {
+    return isDarkMode ? "#2A2A35" : "#ffffff";
+  };
+
+  const getDropdownBorderColor = () => {
+    return isDarkMode ? "#3A3A45" : "#e5e7eb";
+  };
+
+  const getDropdownHoverBackgroundColor = () => {
+    return isDarkMode ? "#3A3A45" : "#f9fafb";
+  };
+
+  const getHoverBackgroundColor = () => {
+    return isDarkMode ? "rgba(0, 161, 93, 0.1)" : "rgba(5, 150, 105, 0.1)";
+  };
+
   // Render "All Activities" view
   const renderAllActivitiesView = () => {
     const categories = Object.keys(categoryStats).filter(key => categoryStats[key].count > 0);
@@ -751,10 +809,11 @@ const ActivityScoresBarChart = ({
                 src={Analytics} 
                 alt="Analytics" 
                 className="w-10 h-10 sm:w-12 sm:h-12 mx-auto opacity-40"
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
               />
             </div>
-            <p className="text-sm sm:text-base text-[#FFFFFF]/60">No activity data available</p>
-            <p className="text-xs text-[#FFFFFF]/40 mt-2">Activities will appear as they are graded</p>
+            <p className={`text-sm sm:text-base ${getSecondaryTextColor()}`}>No activity data available</p>
+            <p className={`text-xs ${getTertiaryTextColor()} mt-2`}>Activities will appear as they are graded</p>
           </div>
         </div>
       );
@@ -779,7 +838,7 @@ const ActivityScoresBarChart = ({
                   y1={yScale(score)}
                   x2={chartWidth - margin.right}
                   y2={yScale(score)}
-                  stroke="#2A2A35"
+                  stroke={getGridColor()}
                   strokeWidth={1}
                   strokeDasharray={isMobile ? "1,1" : "2,2"}
                   opacity={0.5}
@@ -789,7 +848,7 @@ const ActivityScoresBarChart = ({
                   y={yScale(score)}
                   textAnchor="end"
                   dominantBaseline="middle"
-                  fill="#FFFFFF"
+                  fill={isDarkMode ? "#FFFFFF" : "#374151"}
                   fontSize={scoreLabelFontSize}
                   opacity={0.7}
                 >
@@ -804,7 +863,7 @@ const ActivityScoresBarChart = ({
               y1={chartHeight - margin.bottom}
               x2={chartWidth - margin.right}
               y2={chartHeight - margin.bottom}
-              stroke="#2A2A35"
+              stroke={getGridColor()}
               strokeWidth={2}
             />
 
@@ -814,7 +873,7 @@ const ActivityScoresBarChart = ({
               y1={margin.top}
               x2={margin.left}
               y2={chartHeight - margin.bottom}
-              stroke="#2A2A35"
+              stroke={getGridColor()}
               strokeWidth={2}
             />
 
@@ -884,7 +943,7 @@ const ActivityScoresBarChart = ({
                     x={x + barWidth / 2}
                     y={chartHeight - margin.bottom + (isMobile ? 20 : 30)}
                     textAnchor="middle"
-                    fill="#FFFFFF"
+                    fill={isDarkMode ? "#FFFFFF" : "#374151"}
                     fontSize={activityLabelFontSize}
                     opacity={0.9}
                     className="select-none"
@@ -897,7 +956,7 @@ const ActivityScoresBarChart = ({
                     x={x + barWidth / 2}
                     y={chartHeight - margin.bottom + (isMobile ? 35 : 45)}
                     textAnchor="middle"
-                    fill="#FFFFFF"
+                    fill={isDarkMode ? "#FFFFFF" : "#374151"}
                     fontSize={isMobile ? "8" : "9"}
                     opacity={0.7}
                   >
@@ -927,10 +986,11 @@ const ActivityScoresBarChart = ({
                 src={Analytics} 
                 alt="Analytics" 
                 className="w-10 h-10 sm:w-12 sm:h-12 mx-auto opacity-40"
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
               />
             </div>
-            <p className="text-sm sm:text-base text-[#FFFFFF]/60">No {selectedTypeLabel} data available</p>
-            <p className="text-xs text-[#FFFFFF]/40 mt-2">Try selecting a different activity type</p>
+            <p className={`text-sm sm:text-base ${getSecondaryTextColor()}`}>No {selectedTypeLabel} data available</p>
+            <p className={`text-xs ${getTertiaryTextColor()} mt-2`}>Try selecting a different activity type</p>
           </div>
         </div>
       );
@@ -955,7 +1015,7 @@ const ActivityScoresBarChart = ({
                   y1={yScale(score)}
                   x2={chartWidth - margin.right}
                   y2={yScale(score)}
-                  stroke="#2A2A35"
+                  stroke={getGridColor()}
                   strokeWidth={1}
                   strokeDasharray={isMobile ? "1,1" : "2,2"}
                   opacity={0.5}
@@ -965,7 +1025,7 @@ const ActivityScoresBarChart = ({
                   y={yScale(score)}
                   textAnchor="end"
                   dominantBaseline="middle"
-                  fill="#FFFFFF"
+                  fill={isDarkMode ? "#FFFFFF" : "#374151"}
                   fontSize={scoreLabelFontSize}
                   opacity={0.7}
                 >
@@ -980,7 +1040,7 @@ const ActivityScoresBarChart = ({
               y1={chartHeight - margin.bottom}
               x2={chartWidth - margin.right}
               y2={chartHeight - margin.bottom}
-              stroke="#2A2A35"
+              stroke={getGridColor()}
               strokeWidth={2}
             />
 
@@ -990,7 +1050,7 @@ const ActivityScoresBarChart = ({
               y1={margin.top}
               x2={margin.left}
               y2={chartHeight - margin.bottom}
-              stroke="#2A2A35"
+              stroke={getGridColor()}
               strokeWidth={2}
             />
 
@@ -1064,7 +1124,7 @@ const ActivityScoresBarChart = ({
                     x={x + barWidth / 2}
                     y={chartHeight - margin.bottom + (isMobile ? 15 : 20)}
                     textAnchor="middle"
-                    fill="#FFFFFF"
+                    fill={isDarkMode ? "#FFFFFF" : "#374151"}
                     fontSize={activityLabelFontSize}
                     opacity={0.9}
                     className="select-none"
@@ -1081,9 +1141,9 @@ const ActivityScoresBarChart = ({
   };
 
   return (
-    <div className="bg-[#15151C] rounded-xl border border-[#FFFFFF]/10 relative">
+    <div className={`${getCardBackgroundColor()} rounded-xl border ${getCardBorderColor()} relative`}>
       {/* Header - Always visible */}
-      <div className="p-4 border-b border-[#FFFFFF]/10">
+      <div className={`p-4 border-b ${getCardBorderColor()}`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between">
           <div className="flex items-center gap-3 mb-3 md:mb-0">
             <div className="flex items-center justify-center">
@@ -1091,11 +1151,12 @@ const ActivityScoresBarChart = ({
                 src={Analytics} 
                 alt="Analytics" 
                 className="w-5 h-5"
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
               />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-[#FFFFFF]">Activity Scores</h3>
-              <p className="text-sm text-[#FFFFFF]/60">View your scores for different activities</p>
+              <h3 className={`font-bold text-lg ${getTextColor()}`}>Activity Scores</h3>
+              <p className={`text-sm ${getSecondaryTextColor()}`}>View your scores for different activities</p>
             </div>
           </div>
           
@@ -1105,12 +1166,12 @@ const ActivityScoresBarChart = ({
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center justify-between gap-2 px-3 py-2 bg-[#2A2A35] border border-[#3A3A45] rounded-lg text-sm text-[#FFFFFF] hover:bg-[#3A3A45] transition-all duration-200"
+                className={`flex items-center justify-between gap-2 px-3 py-2 ${getButtonBackgroundColor()} border ${getButtonBorderColor()} rounded-lg text-sm ${getTextColor()} hover:${getDropdownHoverBackgroundColor()} transition-all duration-200`}
               >
                 <span>{getSelectedLabel()}</span>
                 <svg 
                   className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
-                  fill="currentColor" 
+                  fill={isDarkMode ? "#FFFFFF" : "#374151"} 
                   viewBox="0 0 20 20"
                 >
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -1118,16 +1179,34 @@ const ActivityScoresBarChart = ({
               </button>
               
               {isDropdownOpen && (
-                <div className="absolute z-10 mt-1 w-48 bg-[#2A2A35] border border-[#3A3A45] rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                <div className="absolute z-10 mt-1 w-48 shadow-lg max-h-60 overflow-y-auto rounded-lg"
+                     style={{ 
+                       backgroundColor: getDropdownBackgroundColor(),
+                       borderColor: getDropdownBorderColor(),
+                       borderWidth: '1px'
+                     }}>
                   {activityTypes.map(type => (
                     <button
                       key={type.value}
                       onClick={() => handleTypeChange(type.value)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[#3A3A45] transition-colors ${
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:transition-colors ${
                         selectedType === type.value 
-                          ? 'text-[#767EE0] bg-[#3A3A45]' 
-                          : 'text-[#FFFFFF]/80'
+                          ? 'text-[#767EE0]' 
+                          : getTextColor()
                       }`}
+                      style={{ 
+                        backgroundColor: selectedType === type.value 
+                          ? getHoverBackgroundColor()
+                          : 'transparent'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = getHoverBackgroundColor();
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = selectedType === type.value 
+                          ? getHoverBackgroundColor()
+                          : 'transparent';
+                      }}
                     >
                       <span>{type.label}</span>
                     </button>
@@ -1139,16 +1218,16 @@ const ActivityScoresBarChart = ({
             {/* Collapse/Expand button */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 rounded-lg bg-[#2A2A35] hover:bg-[#3A3A45] transition-all duration-200 cursor-pointer"
+              className={`p-2 rounded-lg ${getButtonBackgroundColor()} hover:${getDropdownHoverBackgroundColor()} transition-all duration-200 cursor-pointer`}
               aria-label={isExpanded ? "Collapse chart" : "Expand chart"}
             >
               <div className="w-5 h-5 flex items-center justify-center">
                 {isExpanded ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF" className="w-4 h-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isDarkMode ? "#FFFFFF" : "#374151"} className="w-4 h-4">
                     <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
                   </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF" className="w-4 h-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isDarkMode ? "#FFFFFF" : "#374151"} className="w-4 h-4">
                     <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
                   </svg>
                 )}
@@ -1165,14 +1244,14 @@ const ActivityScoresBarChart = ({
         <div className="p-5 pt-0">
           {/* Improvement Summary Section (only for individual activity types) */}
           {selectedType !== 'all' && improvementData?.has_improvement_data && (
-            <div className="mb-4 p-3 bg-[#23232C]/50 rounded-lg border border-[#FFFFFF]/10">
+            <div className={`mb-4 p-3 ${isDarkMode ? 'bg-[#23232C]/50' : 'bg-gray-50'} rounded-lg border ${getCardBorderColor()}`}>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="text-left">
-                    <div className="text-xs text-[#FFFFFF]/60">Trend</div>
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Trend</div>
                     <div className="flex items-center gap-2">
                       {getTrendIcon()}
-                      <span className="text-sm text-[#FFFFFF]/80">
+                      <span className={`text-sm ${getSecondaryTextColor()}`}>
                         Avg: {improvementData.average_improvement >= 0 ? '+' : ''}
                         {improvementData.average_improvement?.toFixed(1) || '0.0'}%
                       </span>
@@ -1181,7 +1260,7 @@ const ActivityScoresBarChart = ({
                   
                   {improvementData.overall_improvement !== undefined && (
                     <div className="text-left">
-                      <div className="text-xs text-[#FFFFFF]/60">Overall Change</div>
+                      <div className={`text-xs ${getSecondaryTextColor()}`}>Overall Change</div>
                       <div className={`text-sm font-medium ${
                         improvementData.overall_improvement >= 0 ? 'text-[#00A15D]' : 'text-[#FF5555]'
                       }`}>
@@ -1193,8 +1272,8 @@ const ActivityScoresBarChart = ({
                   
                   {improvementData.first_score !== undefined && improvementData.last_score !== undefined && (
                     <div className="text-left">
-                      <div className="text-xs text-[#FFFFFF]/60">Progress</div>
-                      <div className="text-sm text-[#FFFFFF]">
+                      <div className={`text-xs ${getSecondaryTextColor()}`}>Progress</div>
+                      <div className={`text-sm ${getTextColor()}`}>
                         {improvementData.first_score?.toFixed(1) || '0.0'}% → {improvementData.last_score?.toFixed(1) || '0.0'}%
                       </div>
                     </div>
@@ -1203,8 +1282,8 @@ const ActivityScoresBarChart = ({
                 
                 {improvementData.improvement_rates && improvementData.improvement_rates.length > 0 && (
                   <div className="text-left md:text-right">
-                    <div className="text-xs text-[#FFFFFF]/60">Improvement Rate</div>
-                    <div className="text-sm text-[#FFFFFF]">
+                    <div className={`text-xs ${getSecondaryTextColor()}`}>Improvement Rate</div>
+                    <div className={`text-sm ${getTextColor()}`}>
                       {improvementData.improvement_rates.filter(rate => rate > 0).length}/
                       {improvementData.improvement_rates.length} activities improved
                     </div>
@@ -1220,13 +1299,16 @@ const ActivityScoresBarChart = ({
           {/* Tooltip */}
           {hoveredActivity && (
             <div 
-              className="absolute bg-[#23232C] border border-[#FFFFFF]/20 rounded-lg p-3 shadow-2xl z-10 pointer-events-none transition-all duration-150"
+              className="absolute rounded-lg p-3 shadow-2xl z-10 pointer-events-none transition-all duration-150"
               style={{
                 left: `clamp(20px, ${tooltipPosition.x + 20}px, calc(100% - 250px))`,
                 top: `${tooltipPosition.y - 100}px`,
                 transform: 'translateX(-50%)',
                 minWidth: isMobile ? '160px' : '220px',
-                maxWidth: isMobile ? '180px' : '250px'
+                maxWidth: isMobile ? '180px' : '250px',
+                backgroundColor: getBackgroundColor(),
+                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                borderWidth: '1px'
               }}
             >
               <div className="flex flex-col gap-1">
@@ -1235,16 +1317,16 @@ const ActivityScoresBarChart = ({
                   <>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: hoveredActivity.color }} />
-                      <span className="text-xs text-[#FFFFFF]/60">Category</span>
+                      <span className={`text-xs ${getSecondaryTextColor()}`}>Category</span>
                     </div>
                     
-                    <div className="text-[#FFFFFF] font-semibold text-sm mb-2 truncate">
+                    <div className={`${getTextColor()} font-semibold text-sm mb-2 truncate`}>
                       {hoveredActivity.label}
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3 mb-2">
                       <div className="text-left">
-                        <div className="text-xs text-[#FFFFFF]/60">Average Score</div>
+                        <div className={`text-xs ${getSecondaryTextColor()}`}>Average Score</div>
                         <div 
                           className="text-base font-bold"
                           style={{ color: hoveredActivity.color }}
@@ -1254,7 +1336,7 @@ const ActivityScoresBarChart = ({
                       </div>
                       
                       <div className="text-right">
-                        <div className="text-xs text-[#FFFFFF]/60">Activities</div>
+                        <div className={`text-xs ${getSecondaryTextColor()}`}>Activities</div>
                         <div className="text-base font-bold text-[#FFFFFF]">
                           {hoveredActivity.completed}/{hoveredActivity.count}
                         </div>
@@ -1263,14 +1345,14 @@ const ActivityScoresBarChart = ({
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div className="text-left">
-                        <div className="text-xs text-[#FFFFFF]/60">Highest</div>
+                        <div className={`text-xs ${getSecondaryTextColor()}`}>Highest</div>
                         <div className="text-sm text-[#00A15D] font-medium">
                           {hoveredActivity.highest}%
                         </div>
                       </div>
                       
                       <div className="text-right">
-                        <div className="text-xs text-[#FFFFFF]/60">Lowest</div>
+                        <div className={`text-xs ${getSecondaryTextColor()}`}>Lowest</div>
                         <div className="text-sm text-[#FF5555] font-medium">
                           {hoveredActivity.lowest || 0}%
                         </div>
@@ -1278,8 +1360,8 @@ const ActivityScoresBarChart = ({
                     </div>
                     
                     <div className="mt-2 pt-2 border-t border-[#FFFFFF]/10">
-                      <div className="text-xs text-[#FFFFFF]/60 mb-1">Performance</div>
-                      <div className="text-xs text-[#FFFFFF]">
+                      <div className={`text-xs ${getSecondaryTextColor()} mb-1`}>Performance</div>
+                      <div className={`text-xs ${getTextColor()}`}>
                         {hoveredActivity.average >= 80 ? 'Excellent' : 
                          hoveredActivity.average >= 71 ? 'Good' : 
                          'Needs Improvement'}
@@ -1291,22 +1373,22 @@ const ActivityScoresBarChart = ({
                   <>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: getScoreColor(hoveredActivity.score) }} />
-                      <span className="text-xs text-[#FFFFFF]/60 capitalize">{selectedType}</span>
+                      <span className={`text-xs ${getSecondaryTextColor()} capitalize`}>{selectedType}</span>
                     </div>
                     
-                    <div className="text-[#FFFFFF] font-semibold text-sm mb-1 truncate">
+                    <div className={`${getTextColor()} font-semibold text-sm mb-1 truncate`}>
                       {getActivityDisplayName(hoveredActivity)}
                     </div>
                     
                     {hoveredActivity.title && hoveredActivity.title !== hoveredActivity.task && (
-                      <div className="text-xs text-[#FFFFFF]/80 mb-2 truncate">
+                      <div className={`text-xs ${getSecondaryTextColor()} mb-2 truncate`}>
                         {hoveredActivity.title}
                       </div>
                     )}
                     
                     <div className="flex items-center justify-between gap-3 sm:gap-4">
                       <div className="text-left">
-                        <div className="text-xs text-[#FFFFFF]/60">Your Score</div>
+                        <div className={`text-xs ${getSecondaryTextColor()}`}>Your Score</div>
                         <div 
                           className="text-base sm:text-lg font-bold"
                           style={{ color: getScoreColor(hoveredActivity.score) }}
@@ -1316,7 +1398,7 @@ const ActivityScoresBarChart = ({
                       </div>
                       
                       <div className="text-right">
-                        <div className="text-xs text-[#FFFFFF]/60">Max Score</div>
+                        <div className={`text-xs ${getSecondaryTextColor()}`}>Max Score</div>
                         <div className="text-base sm:text-lg font-bold text-[#FFFFFF]">
                           100
                         </div>
@@ -1328,7 +1410,7 @@ const ActivityScoresBarChart = ({
                      improvementData.activities && improvementData.activities[getFilteredActivities.indexOf(hoveredActivity)] && (
                       <div className="mt-2 pt-2 border-t border-[#FFFFFF]/10">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-[#FFFFFF]/60">Improvement</span>
+                          <span className={`text-xs ${getSecondaryTextColor()}`}>Improvement</span>
                           <span className={`text-xs font-medium ${
                             improvementData.activities[getFilteredActivities.indexOf(hoveredActivity)].improvement_rate > 0 
                               ? 'text-[#00A15D]' 
@@ -1347,7 +1429,7 @@ const ActivityScoresBarChart = ({
                     
                     <div className="mt-2 pt-2 border-t border-[#FFFFFF]/10">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-[#FFFFFF]/60">Status</span>
+                        <span className={`text-xs ${getSecondaryTextColor()}`}>Status</span>
                         <span className={`text-xs font-medium ${
                           hoveredActivity.submitted 
                             ? hoveredActivity.late 
@@ -1366,8 +1448,8 @@ const ActivityScoresBarChart = ({
                       
                       {hoveredActivity.deadline && hoveredActivity.deadline !== 'No deadline' && (
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-xs text-[#FFFFFF]/60">Deadline</span>
-                          <span className="text-xs text-[#FFFFFF] truncate">{hoveredActivity.deadline}</span>
+                          <span className={`text-xs ${getSecondaryTextColor()}`}>Deadline</span>
+                          <span className={`text-xs ${getTextColor()} truncate`}>{hoveredActivity.deadline}</span>
                         </div>
                       )}
                     </div>
@@ -1375,14 +1457,18 @@ const ActivityScoresBarChart = ({
                 )}
               </div>
               
-              <div className="absolute w-2 h-2 bg-[#23232C] border-r border-b border-[#FFFFFF]/20 
-                transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2" />
+              <div className="absolute w-2 h-2 transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2" 
+                   style={{ 
+                     backgroundColor: getBackgroundColor(),
+                     borderRight: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
+                     borderBottom: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`
+                   }} />
             </div>
           )}
 
           {/* Info section */}
           <div className="mt-4 sm:mt-6">
-            <div className="text-xs text-[#FFFFFF]/60">
+            <div className={`text-xs ${getSecondaryTextColor()}`}>
               <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                 {selectedType === 'all' ? (
                   <>
@@ -1407,15 +1493,15 @@ const ActivityScoresBarChart = ({
               <div className="flex flex-wrap items-center gap-3 mt-2">
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-sm bg-[#00A15D]"></div>
-                  <span className="text-xs text-[#FFFFFF]/80">80%+ (Good)</span>
+                  <span className={`text-xs ${getTextColor()}`}>80%+ (Good)</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-sm bg-[#FFA600]"></div>
-                  <span className="text-xs text-[#FFFFFF]/80">71-79% (Average)</span>
+                  <span className={`text-xs ${getTextColor()}`}>71-79% (Average)</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-3 h-3 rounded-sm bg-[#FF5555]"></div>
-                  <span className="text-xs text-[#FFFFFF]/80">70%↓ (Needs Improvement)</span>
+                  <span className={`text-xs ${getTextColor()}`}>70%↓ (Needs Improvement)</span>
                 </div>
               </div>
             </div>
@@ -1425,23 +1511,23 @@ const ActivityScoresBarChart = ({
 
       {/* Collapsed State Summary - Simplified */}
       {!isExpanded && (
-        <div className="p-4 border-t border-[#FFFFFF]/10">
+        <div className={`p-4 border-t ${getCardBorderColor()}`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Left side - Stats summary */}
             <div className="flex flex-wrap items-center gap-4">
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Average Score</div>
-                <div className="font-bold text-base text-[#FFFFFF]">{summary.average}%</div>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Average Score</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>{summary.average}%</div>
               </div>
               
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Highest Score</div>
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Highest Score</div>
                 <div className="font-bold text-base text-[#00A15D]">{summary.highest}%</div>
               </div>
               
               <div className="text-left">
-                <div className="text-xs text-[#FFFFFF]/60">Completion</div>
-                <div className="font-bold text-base text-[#FFFFFF]">
+                <div className={`text-xs ${getSecondaryTextColor()}`}>Completion</div>
+                <div className={`font-bold text-base ${getTextColor()}`}>
                   {summary.completed}/{summary.total}
                 </div>
               </div>
@@ -1449,7 +1535,7 @@ const ActivityScoresBarChart = ({
               {/* Improvement summary in collapsed state (only for individual activities) */}
               {selectedType !== 'all' && improvementData?.has_improvement_data && (
                 <div className="text-left">
-                  <div className="text-xs text-[#FFFFFF]/60">Trend</div>
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Trend</div>
                   <div className="flex items-center gap-1">
                     {improvementData.trend === 'improving' ? (
                       <span className="font-bold text-base text-[#00A15D]">↑</span>
@@ -1458,7 +1544,7 @@ const ActivityScoresBarChart = ({
                     ) : (
                       <span className="font-bold text-base text-[#FFA600]">→</span>
                     )}
-                    <span className="text-xs text-[#FFFFFF]/80">
+                    <span className={`text-xs ${getSecondaryTextColor()}`}>
                       {improvementData.average_improvement >= 0 ? '+' : ''}
                       {improvementData.average_improvement?.toFixed(1) || '0.0'}%
                     </span>
@@ -1469,8 +1555,8 @@ const ActivityScoresBarChart = ({
               {/* Category count for "All Activities" view */}
               {selectedType === 'all' && (
                 <div className="text-left">
-                  <div className="text-xs text-[#FFFFFF]/60">Categories</div>
-                  <div className="font-bold text-base text-[#FFFFFF]">
+                  <div className={`text-xs ${getSecondaryTextColor()}`}>Categories</div>
+                  <div className={`font-bold text-base ${getTextColor()}`}>
                     {Object.keys(categoryStats).filter(key => categoryStats[key].count > 0).length}
                   </div>
                 </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import Settings from '../../assets/Settings.svg'; // Changed to dark theme
+import Settings from '../../assets/Settings.svg';
 import SuccessIcon from '../../assets/Success(Green).svg';
 import ErrorIcon from '../../assets/Error(Red).svg';
 
@@ -10,6 +10,7 @@ export default function AccountSettingProf() {
   const [isOpen, setIsOpen] = useState(true);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   // Form states
   const [email, setEmail] = useState('');
@@ -26,6 +27,25 @@ export default function AccountSettingProf() {
   const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Theme detection
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -240,15 +260,68 @@ export default function AccountSettingProf() {
     }
   };
 
+  // Theme-based colors
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getModalBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getInputBorderColor = () => {
+    return isDarkMode ? "border-[#23232C]" : "border-gray-300";
+  };
+
+  const getInputFocusBorderColor = () => {
+    return "focus:border-[#00A15D]";
+  };
+
+  const getInputTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getPlaceholderColor = () => {
+    return isDarkMode ? "placeholder:text-white/50" : "placeholder:text-gray-500";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-white/30" : "border-gray-200";
+  };
+
+  const getButtonHoverColor = () => {
+    return isDarkMode ? "hover:bg-[#00874E]" : "hover:bg-[#00874E]";
+  };
+
+  const getErrorButtonHoverColor = () => {
+    return isDarkMode ? "hover:bg-[#8A4545]" : "hover:bg-[#8A4545]";
+  };
+
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} userName="Loading..." />
           <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-            <div className="bg-[#15151C] p-4 rounded-lg shadow-md text-center">
-              <p className="text-[#FFFFFF]/70">Loading account settings...</p>
+            <div className={`p-4 rounded-lg shadow-md text-center ${getCardBackgroundColor()}`}>
+              <p className={getSecondaryTextColor()}>Loading account settings...</p>
             </div>
           </div>
         </div>
@@ -257,17 +330,17 @@ export default function AccountSettingProf() {
   }
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? "lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]" : "ml-0"}`}>
         <Header 
           setIsOpen={setIsOpen} 
           isOpen={isOpen} 
-          userName={userData ? `${userData.tracked_fname} ${userData.tracked_lname}` : "Loading..."} 
+          userName={userData ? `${userData.tracked_firstname} ${userData.tracked_lastname}` : "Loading..."} 
         />
 
         {/* content of ACCOUNT SETTINGS*/}
-        <div className="p-4 sm:p-5 md:p-6 lg:p-8 text-[#FFFFFF]">
+        <div className={`p-4 sm:p-5 md:p-6 lg:p-8 ${getTextColor()}`}>
           {/* "Header" */}
           <div className="mb-4">
             <div className="flex items-center mb-2">
@@ -275,59 +348,60 @@ export default function AccountSettingProf() {
                 src={Settings}
                 alt="Settings"
                 className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
               />
-              <h1 className="font-bold text-xl lg:text-2xl">
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>
                 Account Settings
               </h1>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>
               Update your Information
             </p>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getDividerColor()} mb-4`} />
 
           {/* Content */}
           <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5'>
             
             {/* UPDATE ACCOUNT INFORMATION CARD */}
-            <div className="bg-[#15151C] rounded-lg shadow-md p-4 space-y-4">
-              <p className="text-lg font-bold">Update Account Information</p>
+            <div className={`rounded-lg shadow-md p-4 space-y-4 ${getCardBackgroundColor()}`}>
+              <p className={`text-lg font-bold ${getTextColor()}`}>Update Account Information</p>
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Email Address:</label>
+                  <label className={`block text-sm font-medium mb-1.5 ${getSecondaryTextColor()}`}>Email Address:</label>
                   <input 
                     type="email" 
                     value={email}
                     onChange={handleEmailChange}
                     placeholder="your.email@cvsu.edu.ph" 
-                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50" 
+                    className={`w-full p-2.5 text-sm border-2 rounded-md focus:outline-none ${getInputBackgroundColor()} ${getInputBorderColor()} ${getInputFocusBorderColor()} ${getInputTextColor()} ${getPlaceholderColor()}`} 
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Phone Number:</label>
+                  <label className={`block text-sm font-medium mb-1.5 ${getSecondaryTextColor()}`}>Phone Number:</label>
                   <input 
                     type="text" 
                     value={phone}
                     onChange={handlePhoneChange}
                     placeholder="09XXXXXXXXX" 
-                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
+                    className={`w-full p-2.5 text-sm border-2 rounded-md focus:outline-none ${getInputBackgroundColor()} ${getInputBorderColor()} ${getInputFocusBorderColor()} ${getInputTextColor()} ${getPlaceholderColor()}`}
                     maxLength="11"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Password (to confirm):</label>
+                  <label className={`block text-sm font-medium mb-1.5 ${getSecondaryTextColor()}`}>Password (to confirm):</label>
                   <input 
                     type="password" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password" 
-                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
+                    className={`w-full p-2.5 text-sm border-2 rounded-md focus:outline-none ${getInputBackgroundColor()} ${getInputBorderColor()} ${getInputFocusBorderColor()} ${getInputTextColor()} ${getPlaceholderColor()}`}
                     required
                   />
                 </div>
@@ -335,7 +409,7 @@ export default function AccountSettingProf() {
                 <button 
                   onClick={handleUpdateAccountInfo}
                   disabled={isSubmitting}
-                  className={`w-full bg-[#00A15D] text-white font-bold py-2.5 rounded-md hover:bg-[#00874E] transition-all duration-200 text-sm cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-[#00A15D] text-white font-bold py-2.5 rounded-md ${getButtonHoverColor()} transition-all duration-200 text-sm cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSubmitting ? 'Updating...' : 'Submit'}
                 </button>
@@ -343,42 +417,42 @@ export default function AccountSettingProf() {
             </div>
 
             {/* CHANGE PASSWORD CARD */}
-            <div className="bg-[#15151C] rounded-lg shadow-md p-4 space-y-4">
-              <p className="text-lg font-bold">Change Password</p>
+            <div className={`rounded-lg shadow-md p-4 space-y-4 ${getCardBackgroundColor()}`}>
+              <p className={`text-lg font-bold ${getTextColor()}`}>Change Password</p>
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Current Password:</label>
+                  <label className={`block text-sm font-medium mb-1.5 ${getSecondaryTextColor()}`}>Current Password:</label>
                   <input 
                     type="password" 
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password" 
-                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
+                    className={`w-full p-2.5 text-sm border-2 rounded-md focus:outline-none ${getInputBackgroundColor()} ${getInputBorderColor()} ${getInputFocusBorderColor()} ${getInputTextColor()} ${getPlaceholderColor()}`}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">New Password:</label>
+                  <label className={`block text-sm font-medium mb-1.5 ${getSecondaryTextColor()}`}>New Password:</label>
                   <input 
                     type="password" 
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Enter new password" 
-                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
+                    className={`w-full p-2.5 text-sm border-2 rounded-md focus:outline-none ${getInputBackgroundColor()} ${getInputBorderColor()} ${getInputFocusBorderColor()} ${getInputTextColor()} ${getPlaceholderColor()}`}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-[#FFFFFF]/70">Re-Enter New Password:</label>
+                  <label className={`block text-sm font-medium mb-1.5 ${getSecondaryTextColor()}`}>Re-Enter New Password:</label>
                   <input 
                     type="password" 
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm new password" 
-                    className="w-full p-2.5 text-sm border-2 border-[#23232C] bg-[#23232C] rounded-md focus:outline-none focus:border-[#00A15D] text-[#FFFFFF] placeholder:text-[#FFFFFF]/50"
+                    className={`w-full p-2.5 text-sm border-2 rounded-md focus:outline-none ${getInputBackgroundColor()} ${getInputBorderColor()} ${getInputFocusBorderColor()} ${getInputTextColor()} ${getPlaceholderColor()}`}
                     required
                   />
                 </div>
@@ -386,14 +460,13 @@ export default function AccountSettingProf() {
                 <button 
                   onClick={handleChangePassword}
                   disabled={isSubmitting}
-                  className={`w-full bg-[#00A15D] text-white font-bold py-2.5 rounded-md hover:bg-[#00874E] transition-all duration-200 text-sm cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-[#00A15D] text-white font-bold py-2.5 rounded-md ${getButtonHoverColor()} transition-all duration-200 text-sm cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSubmitting ? 'Changing...' : 'Submit'}
                 </button>
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -409,20 +482,21 @@ export default function AccountSettingProf() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-[#FFFFFF] rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 relative">
+          <div className={`rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 relative ${getModalBackgroundColor()} ${getTextColor()}`}>
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-[#00A15D]/20 mb-3">
+              <div className={`mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-3 ${isDarkMode ? 'bg-[#00A15D]/20' : 'bg-[#00A15D]/10'}`}>
                 <img 
                   src={SuccessIcon} 
                   alt="Success" 
                   className="h-6 w-6"
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
               </div>
               <h3 className="text-lg font-bold mb-2">Success!</h3>
-              <p className="text-sm text-[#FFFFFF]/70 mb-4">{popupMessage}</p>
+              <p className={`text-sm mb-4 ${getSecondaryTextColor()}`}>{popupMessage}</p>
               <button
                 onClick={() => setShowSuccessPopup(false)}
-                className="w-full bg-[#00A15D] hover:bg-[#00874E] text-white font-bold py-2.5 rounded transition-all duration-200 cursor-pointer text-sm"
+                className={`w-full bg-[#00A15D] ${getButtonHoverColor()} text-white font-bold py-2.5 rounded transition-all duration-200 cursor-pointer text-sm`}
               >
                 OK
               </button>
@@ -443,19 +517,20 @@ export default function AccountSettingProf() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-[#FFFFFF] rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 relative">
+          <div className={`rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 relative ${getModalBackgroundColor()} ${getTextColor()}`}>
             <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-[#A15353]/20 mb-3">
+              <div className={`mx-auto flex items-center justify-center h-14 w-14 rounded-full mb-3 ${isDarkMode ? 'bg-[#A15353]/20' : 'bg-[#A15353]/10'}`}>
                 <img 
                   src={ErrorIcon} 
                   alt="Error" 
                   className="h-6 w-6"
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
               </div>
-              <p className="text-sm text-[#FFFFFF]/70 mb-4">{popupMessage}</p>
+              <p className={`text-sm mb-4 ${getSecondaryTextColor()}`}>{popupMessage}</p>
               <button
                 onClick={() => setShowErrorPopup(false)}
-                className="w-full bg-[#A15353] hover:bg-[#8A4545] text-white font-bold py-2.5 rounded transition-all duration-200 cursor-pointer text-sm"
+                className={`w-full bg-[#A15353] ${getErrorButtonHoverColor()} text-white font-bold py-2.5 rounded transition-all duration-200 cursor-pointer text-sm`}
               >
                 OK
               </button>

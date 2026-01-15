@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 import Sidebar from "../../Components/Sidebar";
 import Header from "../../Components/Header";
 
-import ArchiveIcon from "../../assets/Archive.svg"; // Changed to dark theme
-import BackButton from "../../assets/BackButton.svg"; // Changed to dark theme
+import ArchiveIcon from "../../assets/Archive.svg";
+import BackButton from "../../assets/BackButton.svg";
 import Book from "../../assets/ClassManagementSubject(Light).svg";
 import DeleteIcon from "../../assets/Delete.svg";
 import UnarchiveIcon from "../../assets/Unarchive.svg";
@@ -18,6 +18,7 @@ export default function ArchiveClass() {
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
   const [classToDelete, setClassToDelete] = useState(null);
   const [classToUnarchive, setClassToUnarchive] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
 
   // Updated background colors to match student page
   const bgOptions = [
@@ -32,6 +33,58 @@ export default function ArchiveClass() {
     "#831843", // Pink
     "#3730A3", // Indigo
   ];
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Theme-based colors
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getModalBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/20" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getLightTextColor = () => {
+    return isDarkMode ? "text-white/40" : "text-gray-400";
+  };
 
   // GET LOGGED-IN USER ID
   const getProfessorId = () => {
@@ -196,7 +249,7 @@ export default function ArchiveClass() {
       return (
         <div className="col-span-full text-center py-12">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
-          <p className="mt-3 text-[#FFFFFF]/70">Loading archived classes...</p>
+          <p className={`mt-3 ${getSecondaryTextColor()}`}>Loading archived classes...</p>
         </div>
       );
     }
@@ -204,17 +257,18 @@ export default function ArchiveClass() {
     if (archivedClasses.length === 0) {
       return (
         <div className="col-span-full text-center py-12">
-          <div className="mx-auto w-16 h-16 mb-4 rounded-full bg-[#15151C] flex items-center justify-center">
+          <div className={`mx-auto w-16 h-16 mb-4 rounded-full ${getCardBackgroundColor()} flex items-center justify-center`}>
             <img 
               src={ArchiveIcon} 
-                alt="No archived classes" 
-                  className="h-8 w-8 opacity-50"
+              alt="No archived classes" 
+              className="h-8 w-8 opacity-50"
+              style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
             />
           </div>
-          <p className="text-[#FFFFFF]/50 text-sm sm:text-base">
+          <p className={`${getSecondaryTextColor()} text-sm sm:text-base`}>
             No archived classes found.
           </p>
-          <p className="text-[#FFFFFF]/40 text-xs sm:text-sm mt-2">
+          <p className={`${getLightTextColor()} text-xs sm:text-sm mt-2`}>
             Classes you archive will appear here.
           </p>
         </div>
@@ -234,6 +288,7 @@ export default function ArchiveClass() {
               src={Book}
               alt="Subject"
               className="h-5 w-5 flex-shrink-0 mr-2"
+              style={{ filter: 'brightness(0) invert(1)' }}
             />
             <div className="min-w-0">
               <p className="text-xs opacity-70">Section:</p>
@@ -247,32 +302,34 @@ export default function ArchiveClass() {
           <div className="flex gap-1.5 flex-shrink-0">
             <button
               onClick={(e) => handleDelete(classItem, e)}
-              className="bg-[#23232C] rounded-md w-8 h-8 shadow-sm flex items-center justify-center border-2 border-transparent hover:border-[#A15353] hover:scale-105 transition-all duration-200 cursor-pointer"
+              className={`${isDarkMode ? 'bg-[#23232C]' : 'bg-white/20'} rounded-md w-8 h-8 shadow-sm flex items-center justify-center border-2 border-transparent hover:border-[#A15353] hover:scale-105 transition-all duration-200 cursor-pointer`}
               title="Delete permanently"
             >
               <img 
                 src={DeleteIcon} 
                 alt="Delete class" 
-                className="h-4 w-4" 
+                className="h-4 w-4"
+                style={{ filter: 'brightness(0) invert(1)' }}
               />
             </button>
 
             <button
               onClick={(e) => handleUnarchive(classItem, e)}
-              className="bg-[#23232C] rounded-md w-8 h-8 shadow-sm flex items-center justify-center border-2 border-transparent hover:border-[#00A15D] hover:scale-105 transition-all duration-200 cursor-pointer"
+              className={`${isDarkMode ? 'bg-[#23232C]' : 'bg-white/20'} rounded-md w-8 h-8 shadow-sm flex items-center justify-center border-2 border-transparent hover:border-[#00A15D] hover:scale-105 transition-all duration-200 cursor-pointer`}
               title="Restore class"
             >
               <img 
                 src={UnarchiveIcon} 
                 alt="Unarchive class" 
-                className="h-4 w-4" 
+                className="h-4 w-4"
+                style={{ filter: 'brightness(0) invert(1)' }}
               />
             </button>
           </div>
         </div>
 
         {/* Subject Details */}
-        <div className="space-y-1.5 pt-2.5 border-t border-[#FFFFFF]/20">
+        <div className="space-y-1.5 pt-2.5 border-t border-white/20">
           <div>
             <p className="text-xs opacity-70 mb-0.5">Subject:</p>
             <p className="text-sm font-semibold break-words line-clamp-2">
@@ -295,7 +352,7 @@ export default function ArchiveClass() {
   };
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`${getBackgroundColor()} min-h-screen`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`
         transition-all duration-300
@@ -314,8 +371,9 @@ export default function ArchiveClass() {
                   src={ArchiveIcon}
                   alt="Archive"
                   className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                  style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                 />
-                <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">
+                <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>
                   Archives
                 </h1>
               </div>
@@ -330,16 +388,17 @@ export default function ArchiveClass() {
                     src={BackButton}
                     alt="Back"
                     className="h-5 w-5"
+                    style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                   />
                 </button>
               </Link>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>
               Classes you've archived
             </p>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getBorderColor()} mb-4`} />
 
           {/* Archived Classes Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
@@ -361,7 +420,7 @@ export default function ArchiveClass() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-[#FFFFFF] rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+          <div className={`${getModalBackgroundColor()} ${getTextColor()} rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop`}>
             <div className="text-center">
               {/* Info Icon */}
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[#00A15D]/20 mb-4">
@@ -377,17 +436,17 @@ export default function ArchiveClass() {
               </h3>
               
               <div className="mt-4 mb-6">
-                <p className="text-sm text-[#FFFFFF]/70 mb-3">
+                <p className={`text-sm ${getSecondaryTextColor()} mb-3`}>
                   Are you sure you want to restore this class?
                 </p>
-                <div className="bg-[#23232C] rounded-lg p-4 text-left">
-                  <p className="text-base sm:text-lg font-semibold break-words">
+                <div className={`${getInputBackgroundColor()} rounded-lg p-4 text-left`}>
+                  <p className={`text-base sm:text-lg font-semibold break-words ${getTextColor()}`}>
                     {classToUnarchive.subject}
                   </p>
-                  <p className="text-sm text-[#FFFFFF]/70 mt-1">
+                  <p className={`text-sm ${getSecondaryTextColor()} mt-1`}>
                     Section: {classToUnarchive.section}
                   </p>
-                  <p className="text-sm text-[#FFFFFF]/70">
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>
                     Code: {classToUnarchive.subject_code}
                   </p>
                 </div>
@@ -399,7 +458,7 @@ export default function ArchiveClass() {
                     setShowUnarchiveModal(false);
                     setClassToUnarchive(null);
                   }}
-                  className="flex-1 bg-[#23232C] hover:bg-[#2A2A35] font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                  className={`flex-1 ${getInputBackgroundColor()} hover:${isDarkMode ? 'bg-[#2A2A35]' : 'bg-gray-100'} font-bold py-3 rounded-md transition-all duration-200 cursor-pointer ${getTextColor()}`}
                 >
                   Cancel
                 </button>
@@ -428,7 +487,7 @@ export default function ArchiveClass() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[#15151C] text-[#FFFFFF] rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop">
+          <div className={`${getModalBackgroundColor()} ${getTextColor()} rounded-lg shadow-2xl w-full max-w-sm sm:max-w-md p-6 sm:p-8 relative modal-pop`}>
             <div className="text-center">
               {/* Warning Icon */}
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-[#A15353]/20 mb-4">
@@ -444,20 +503,20 @@ export default function ArchiveClass() {
               </h3>
               
               <div className="mt-4 mb-6">
-                <p className="text-sm text-[#FFFFFF]/70 mb-1">
+                <p className={`text-sm ${getSecondaryTextColor()} mb-1`}>
                   Are you sure you want to permanently delete this class?
                 </p>
                 <p className="text-sm font-semibold text-[#A15353] mb-3">
                   This action cannot be undone.
                 </p>
-                <div className="bg-[#23232C] rounded-lg p-4 text-left">
-                  <p className="text-base sm:text-lg font-semibold break-words">
+                <div className={`${getInputBackgroundColor()} rounded-lg p-4 text-left`}>
+                  <p className={`text-base sm:text-lg font-semibold break-words ${getTextColor()}`}>
                     {classToDelete.subject}
                   </p>
-                  <p className="text-sm text-[#FFFFFF]/70 mt-1">
+                  <p className={`text-sm ${getSecondaryTextColor()} mt-1`}>
                     Section: {classToDelete.section}
                   </p>
-                  <p className="text-sm text-[#FFFFFF]/70">
+                  <p className={`text-sm ${getSecondaryTextColor()}`}>
                     Code: {classToDelete.subject_code}
                   </p>
                 </div>
@@ -469,7 +528,7 @@ export default function ArchiveClass() {
                     setShowDeleteModal(false);
                     setClassToDelete(null);
                   }}
-                  className="flex-1 bg-[#23232C] hover:bg-[#2A2A35] font-bold py-3 rounded-md transition-all duration-200 cursor-pointer"
+                  className={`flex-1 ${getInputBackgroundColor()} hover:${isDarkMode ? 'bg-[#2A2A35]' : 'bg-gray-100'} font-bold py-3 rounded-md transition-all duration-200 cursor-pointer ${getTextColor()}`}
                 >
                   Cancel
                 </button>

@@ -31,6 +31,7 @@ export default function AnnouncementTab() {
   const subjectCode = searchParams.get('code');
   
   const [isOpen, setIsOpen] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
   
   // ANNOUNCEMENT STATES
   const [showModal, setShowModal] = useState(false);
@@ -63,10 +64,77 @@ export default function AnnouncementTab() {
 
   // Class info state
   const [classInfo, setClassInfo] = useState(null);
-  const [loadingClassInfo, setLoadingClassInfo] = useState(true);
+  const [, setLoadingClassInfo] = useState(true);
 
   // Posting state
   const [postingAnnouncement, setPostingAnnouncement] = useState(false);
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Theme-based colors
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-gray-50";
+  };
+
+  const getDropdownBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getDropdownHoverColor = () => {
+    return isDarkMode ? "hover:bg-[#23232C]" : "hover:bg-gray-100";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/20" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getLightTextColor = () => {
+    return isDarkMode ? "text-white/40" : "text-gray-400";
+  };
+
+  const getHoverBorderColor = () => {
+    return isDarkMode ? "hover:border-[#00A15D]" : "hover:border-green-600";
+  };
+
+  const getFilterActiveColor = (isActive) => {
+    if (isActive) {
+      return isDarkMode ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' : 'border-blue-500 bg-blue-50 text-blue-600';
+    }
+    return isDarkMode ? 'border-[#FFFFFF]/10 hover:border-[#767EE0] text-[#FFFFFF]' : 'border-gray-300 hover:border-blue-500 text-gray-700';
+  };
 
   // Get professor ID from localStorage
   const getProfessorId = () => {
@@ -671,39 +739,36 @@ export default function AnnouncementTab() {
     };
   }, [filterDropdownOpen]);
 
-  // Debug: Log current state
-  useEffect(() => {
-    console.log('Current state:', {
-      professorId: getProfessorId(),
-      subjectCode,
-      classInfo,
-      announcementsCount: announcements.length,
-      classesCount: classes.length,
-      sortedCount: sortedAnnouncements.length,
-      loading: {
-        overall: loading,
-        announcements: loadingAnnouncements,
-        classes: loadingClasses,
-        classInfo: loadingClassInfo
-      },
-      error,
-      filterOption,
-      searchQuery
-    });
-  }, [loading, loadingAnnouncements, loadingClasses, loadingClassInfo, announcements, classes, classInfo, subjectCode, error, filterOption, searchQuery]);
-
-  // Show loading only if announcements are still loading
-  const isLoading = loadingAnnouncements || loading;
-
-  if (isLoading && announcements.length === 0) {
+  // ========== RENDER ACTION BUTTON HELPER ==========
+  const renderActionButton = (to, icon, label, active = false, colorClass = "") => {
+    const activeStyle = active 
+      ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
+      : colorClass;
+    
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
+        <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${activeStyle}`}>
+          <img 
+            src={icon} 
+            alt="" 
+            className="h-4 w-4" 
+            style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
+          />
+          <span className="sm:inline truncate">{label}</span>
+        </button>
+      </Link>
+    );
+  };
+
+  if (loading && announcements.length === 0) {
+    return (
+      <div className={`${getBackgroundColor()} min-h-screen`}>
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-8 text-center text-[#FFFFFF]">
+          <div className="p-8 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
-            <p className="mt-3 text-[#FFFFFF]/80">Loading announcements...</p>
+            <p className={`mt-3 ${getSecondaryTextColor()}`}>Loading announcements...</p>
             {error && <p className="mt-2 text-[#FF5252] text-sm">{error}</p>}
           </div>
         </div>
@@ -711,22 +776,8 @@ export default function AnnouncementTab() {
     );
   }
 
-  // ========== RENDER ACTION BUTTON HELPER ==========
-  const renderActionButton = (to, icon, label, active = false, colorClass = "") => (
-    <Link to={`${to}?code=${subjectCode}`} className="flex-1 sm:flex-initial min-w-0">
-      <button className={`flex items-center justify-center gap-2 px-3 py-2 font-semibold text-sm rounded-md shadow-md border-2 transition-all duration-300 cursor-pointer w-full sm:w-auto ${
-        active 
-          ? 'bg-[#00A15D]/20 text-[#00A15D] border-[#00A15D]/30' 
-          : colorClass
-      }`}>
-        <img src={icon} alt="" className="h-4 w-4" />
-        <span className="sm:inline truncate">{label}</span>
-      </button>
-    </Link>
-  );
-
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`${getBackgroundColor()} min-h-screen`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -741,18 +792,19 @@ export default function AnnouncementTab() {
                 src={AnnouncementIcon}
                 alt="Announcement"
                 className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
               />
-              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>
                 Announcement
               </h1>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>
               Post a class Announcement
             </p>
           </div>
 
           {/* ========== SUBJECT INFORMATION ========== */}
-          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
               <div className="flex items-center gap-2">
@@ -760,13 +812,14 @@ export default function AnnouncementTab() {
                 {(classInfo?.subject_code || subjectCode) && (classInfo?.subject_code !== 'N/A' && subjectCode !== 'N/A') && (
                   <button
                     onClick={copySubjectCode}
-                    className="p-1 text-[#FFFFFF]/60 hover:text-[#FFFFFF] hover:bg-[#15151C] rounded transition-colors cursor-pointer flex items-center gap-1"
+                    className={`p-1 ${getLightTextColor()} hover:${getTextColor()} hover:${isDarkMode ? 'bg-[#15151C]' : 'bg-gray-100'} rounded transition-colors cursor-pointer flex items-center gap-1`}
                     title="Copy subject code"
                   >
                     <img 
                       src={Copy} 
                       alt="Copy" 
                       className="w-4 h-4" 
+                      style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                     />
                   </button>
                 )}
@@ -789,13 +842,14 @@ export default function AnnouncementTab() {
                     src={BackButton} 
                     alt="Back to Class Management" 
                     className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity"
+                    style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                   />
                 </Link>
               </div>
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getBorderColor()} mb-4`} />
 
           {/* ========== ACTION BUTTONS ========== */}
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -824,13 +878,14 @@ export default function AnnouncementTab() {
               {/* Class Management Button */}
               <Link to={`/StudentList?code=${subjectCode}`}>
                 <button 
-                  className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer"
+                  className={`p-2 ${getCardBackgroundColor()} rounded-md shadow-md border-2 border-transparent ${getHoverBorderColor()} transition-all duration-200 flex-shrink-0 cursor-pointer`}
                   title="View and manage class list"
                 >
                   <img 
                     src={ClassManagementIcon} 
                     alt="Class Management" 
                     className="h-4 w-4" 
+                    style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                   />
                 </button>
               </Link>
@@ -838,13 +893,14 @@ export default function AnnouncementTab() {
               {/* Add Announcement Button */}
               <button 
                 onClick={() => setShowModal(true)}
-                className="p-2 bg-[#15151C] rounded-md shadow-md border-2 border-transparent hover:border-[#00A15D] transition-all duration-200 flex-shrink-0 cursor-pointer"
+                className={`p-2 ${getCardBackgroundColor()} rounded-md shadow-md border-2 border-transparent ${getHoverBorderColor()} transition-all duration-200 flex-shrink-0 cursor-pointer`}
                 title="Create new announcement"
               >
                 <img 
                   src={Add} 
                   alt="Add Announcement" 
                   className="h-4 w-4" 
+                  style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                 />
               </button>
             </div>
@@ -856,10 +912,8 @@ export default function AnnouncementTab() {
             <div className="relative filter-dropdown sm:w-36">
               <button
                 onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                className={`flex items-center justify-between w-full px-2.5 py-1.5 bg-[#15151C] rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
-                  filterOption !== "All" 
-                    ? 'border-[#767EE0] bg-[#767EE0]/10 text-[#767EE0]' 
-                    : 'border-[#FFFFFF]/10 hover:border-[#767EE0] text-[#FFFFFF]'
+                className={`flex items-center justify-between w-full px-2.5 py-1.5 ${getCardBackgroundColor()} rounded border transition-all duration-200 text-xs font-medium cursor-pointer ${
+                  getFilterActiveColor(filterOption !== "All")
                 }`}
                 title="Filter announcements by status"
               >
@@ -869,22 +923,21 @@ export default function AnnouncementTab() {
                   alt="Filter options"
                   className={`ml-1.5 h-2.5 w-2.5 transition-transform duration-200 ${
                     filterDropdownOpen ? 'rotate-180' : ''
-                  } ${
-                    filterOption !== "All" ? 'invert-[0.5] sepia-[1] saturate-[5] hue-rotate-[200deg]' : ''
                   }`}
+                  style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                 />
               </button>
 
               {/* Dropdown options */}
               {filterDropdownOpen && (
-                <div className="absolute top-full mt-1 bg-[#15151C] rounded w-full shadow-xl border border-[#FFFFFF]/10 z-20 overflow-hidden">
+                <div className={`absolute top-full mt-1 ${getDropdownBackgroundColor()} rounded w-full shadow-xl border ${getBorderColor()} z-20 overflow-hidden`}>
                   {["All", "Unread", "Read", "Newest"].map((option) => (
                     <button
                       key={option}
-                      className={`block px-2.5 py-1.5 w-full text-left hover:bg-[#23232C] text-xs transition-colors cursor-pointer ${
+                      className={`block px-2.5 py-1.5 w-full text-left ${getDropdownHoverColor()} text-xs transition-colors cursor-pointer ${
                         filterOption === option 
-                          ? 'bg-[#767EE0]/10 text-[#767EE0] border-l-2 border-[#767EE0] font-semibold' 
-                          : 'text-[#FFFFFF]/80'
+                          ? `${isDarkMode ? 'bg-[#767EE0]/10 text-[#767EE0]' : 'bg-blue-50 text-blue-600'} border-l-2 ${isDarkMode ? 'border-[#767EE0]' : 'border-blue-500'} font-semibold` 
+                          : getTextColor()
                       }`}
                       onClick={() => {
                         setFilterOption(option);
@@ -907,17 +960,18 @@ export default function AnnouncementTab() {
                   placeholder="Search announcements..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors placeholder:text-[#FFFFFF]/40"
+                  className={`w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none ${getInputBackgroundColor()} text-xs ${getTextColor()} border ${getBorderColor()} focus:border-[#767EE0] transition-colors placeholder:${getLightTextColor()}`}
                   title="Search announcements by title, subject, or content"
                 />
                 <button 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60"
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 ${getLightTextColor()}`}
                   title="Search announcements"
                 >
                   <img
                     src={Search}
                     alt="Search"
                     className="h-3.5 w-3.5"
+                    style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                   />
                 </button>
               </div>
@@ -926,8 +980,8 @@ export default function AnnouncementTab() {
 
           {/* Error message display */}
           {error && (
-            <div className="mb-4 p-3 bg-[#FF5252]/10 border border-[#FF5252] rounded">
-              <p className="text-[#FFFFFF] text-sm">{error}</p>
+            <div className={`mb-4 p-3 ${isDarkMode ? 'bg-[#FF5252]/10' : 'bg-red-50'} border border-[#FF5252] rounded`}>
+              <p className={`${getTextColor()} text-sm`}>{error}</p>
               <button 
                 onClick={() => {
                   setError(null);
@@ -945,7 +999,7 @@ export default function AnnouncementTab() {
             {loadingAnnouncements ? (
               <div className="text-center py-12">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#00A15D] border-r-transparent"></div>
-                <p className="mt-3 text-[#FFFFFF]/80">Loading announcements...</p>
+                <p className={`mt-3 ${getSecondaryTextColor()}`}>Loading announcements...</p>
               </div>
             ) : sortedAnnouncements.length > 0 ? (
               sortedAnnouncements.map((announcement) => (
@@ -968,24 +1022,26 @@ export default function AnnouncementTab() {
                   announcementId={announcement.id}
                   professorId={getProfessorId()}
                   updatedAt={announcement.updated_at}
+                  isDarkMode={isDarkMode}
                 />
               ))
             ) : (
               <div className="text-center py-12">
-                <div className="mx-auto w-20 h-20 mb-6 rounded-full bg-[#15151C] flex items-center justify-center">
+                <div className={`mx-auto w-20 h-20 mb-6 rounded-full ${getCardBackgroundColor()} flex items-center justify-center`}>
                   <img 
                     src={AnnouncementIcon} 
                     alt="No announcements" 
                     className="h-10 w-10 opacity-50"
+                    style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'invert(0.5)' }}
                   />
                 </div>
-                <p className="text-[#FFFFFF]/60 text-base mb-2">
+                <p className={`${getSecondaryTextColor()} text-base mb-2`}>
                   {searchQuery || filterOption !== "All" 
                     ? "No announcements match your search criteria" 
                     : "No announcements found for this class"
                   }
                 </p>
-                <p className="text-[#FFFFFF]/40 text-sm">
+                <p className={`${getLightTextColor()} text-sm`}>
                   {searchQuery || filterOption !== "All" 
                     ? "Try adjusting your search or filter options." 
                     : "Start by creating your first announcement."
@@ -1020,6 +1076,7 @@ export default function AnnouncementTab() {
         restrictToCurrentSubject={true}
         postingAnnouncement={postingAnnouncement}
         originalDeadline={originalDeadline}
+        isDarkMode={isDarkMode}
       />
     </div>
   );

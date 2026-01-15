@@ -25,6 +25,9 @@ export default function AttendanceHistory() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [downloading, setDownloading] = useState(false);
 
+  // ========== ADDED: Theme State ==========
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
   // Get professor ID from localStorage
   const getProfessorId = () => {
     try {
@@ -119,6 +122,25 @@ export default function AttendanceHistory() {
       return { formatted: rawDate, time: '', raw: rawDate, rawTime: rawTime };
     }
   };
+
+  // ========== ADDED: Theme Listener ==========
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Fetch class details and attendance history
   useEffect(() => {
@@ -408,20 +430,41 @@ export default function AttendanceHistory() {
     }
   };
 
+  // ========== THEME HELPER FUNCTIONS ==========
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/30" : "border-gray-200";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-gray-50";
+  };
+
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="teacher" isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
         <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen}/>
-          <div className="p-5 text-center text-[#FFFFFF]">Loading...</div>
+          <div className={`p-5 text-center ${getTextColor()}`}>Loading...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="teacher" isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsSidebarOpen} isOpen={isSidebarOpen} />
@@ -436,18 +479,19 @@ export default function AttendanceHistory() {
                 src={AttendanceHistoryIcon}
                 alt="AttendanceHistoryIcon"
                 className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
               />
-              <h1 className="font-bold text-lg sm:text-xl lg:text-2xl text-[#FFFFFF]">
+              <h1 className={`font-bold text-lg sm:text-xl lg:text-2xl ${getTextColor()}`}>
                 Attendance History
               </h1>
             </div>
-            <p className="text-xs sm:text-sm lg:text-base text-[#FFFFFF]/80">
+            <p className={`text-xs sm:text-sm lg:text-base ${getSecondaryTextColor()}`}>
               Academic Management
             </p>
           </div>
 
           {/* Subject Information - Smaller */}
-          <div className="flex flex-col gap-1 text-xs sm:text-sm lg:text-base text-[#FFFFFF]/80 mb-3">
+          <div className={`flex flex-col gap-1 text-xs sm:text-sm lg:text-base ${getSecondaryTextColor()} mb-3`}>
             <div className="flex flex-wrap items-center gap-1 sm:gap-2">
               <span className="font-semibold">SUBJECT CODE:</span>
               <span>{classInfo?.subject_code || 'Loading...'}</span>
@@ -468,7 +512,8 @@ export default function AttendanceHistory() {
                   <img 
                     src={BackButton} 
                     alt="Back" 
-                    className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
+                    className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity"
+                    style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                     title="Back to Attendance"
                   />
                 </Link>
@@ -476,7 +521,7 @@ export default function AttendanceHistory() {
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-3" />
+          <hr className={`${getBorderColor()} mb-3`} />
 
           {/* Search and Download All Button - Smaller */}
           <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center mt-3 gap-2">
@@ -486,16 +531,17 @@ export default function AttendanceHistory() {
                 placeholder="Search by date, time, or student..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-8 sm:h-9 rounded-md pl-3 pr-9 shadow-md outline-none text-[#FFFFFF] bg-[#15151C] text-xs sm:text-sm border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors"
+                className={`w-full h-8 sm:h-9 rounded-md pl-3 pr-9 shadow-md outline-none ${getTextColor()} ${getInputBackgroundColor()} text-xs sm:text-sm border ${getBorderColor()} focus:border-[#767EE0] transition-colors placeholder:${isDarkMode ? 'text-[#FFFFFF]/40' : 'text-gray-400'}`}
               />
               <button
                 type="button"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[#FFFFFF]/60 hover:text-[#FFFFFF]"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2"
               >
                 <img 
                   src={Search} 
                   alt="Search"
                   className="h-3 w-3 sm:h-4 sm:w-4"
+                  style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }}
                 />
               </button>
             </div>
@@ -504,7 +550,7 @@ export default function AttendanceHistory() {
             <button
               onClick={downloadAllAttendanceRecords}
               disabled={downloading || !attendanceHistory.length}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#00A15D] text-[#FFFFFF] font-semibold text-xs rounded-md hover:bg-[#00A15D]/90 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap cursor-pointer mt-2 sm:mt-0"
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#00A15D] text-white font-semibold text-xs rounded-md hover:bg-[#00A15D]/90 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg whitespace-nowrap cursor-pointer mt-2 sm:mt-0"
             >
               {downloading ? (
                 <>
@@ -532,10 +578,11 @@ export default function AttendanceHistory() {
                   rawTime={record.rawTime}
                   subjectCode={subjectCode}
                   onRemoveStudent={handleOpenRemoveStudent}
+                  isDarkMode={isDarkMode}
                 />
               ))
             ) : (
-              <div className="text-center py-6 text-[#FFFFFF]/60">
+              <div className={`text-center py-6 ${getSecondaryTextColor()}`}>
                 <p className="text-sm">No attendance records found.</p>
               </div>
             )}
@@ -549,6 +596,7 @@ export default function AttendanceHistory() {
         onClose={handleCloseRemoveStudent}
         onConfirm={handleRemoveStudent}
         student={selectedStudent}
+        isDarkMode={isDarkMode}
       />
     </div>
   );

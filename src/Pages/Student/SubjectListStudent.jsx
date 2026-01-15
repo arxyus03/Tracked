@@ -20,6 +20,7 @@ export default function StudentListStudent() {
   const [isOpen, setIsOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [setActiveDropdown] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Added theme state
 
   // State for backend data
   const [classInfo, setClassInfo] = useState(null);
@@ -28,6 +29,25 @@ export default function StudentListStudent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [setStudentId] = useState('');
+
+  // Listen for theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Get student ID from localStorage
   useEffect(() => {
@@ -198,16 +218,70 @@ export default function StudentListStudent() {
     };
   }, []);
 
+  // Theme helper functions
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/80" : "text-gray-600";
+  };
+
+  const getTertiaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/60" : "text-gray-500";
+  };
+
+  const getQuaternaryTextColor = () => {
+    return isDarkMode ? "text-[#FFFFFF]/40" : "text-gray-400";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/30" : "border-gray-300";
+  };
+
+  const getInputBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-gray-100";
+  };
+
+  const getInputBorderColor = () => {
+    return isDarkMode ? "border-[#FFFFFF]/10" : "border-gray-300";
+  };
+
+  const getInputPlaceholderColor = () => {
+    return isDarkMode ? "placeholder:text-[#FFFFFF]/40" : "placeholder:text-gray-400";
+  };
+
+  const getHoverBorderColor = (type = 'teacher') => {
+    if (type === 'teacher') {
+      return isDarkMode ? "hover:border-[#767EE0]" : "hover:border-[#767EE0]";
+    } else if (type === 'student') {
+      return isDarkMode ? "hover:border-[#00A15D]" : "hover:border-[#00A15D]";
+    }
+    return isDarkMode ? "hover:border-[#FFFFFF]/20" : "hover:border-gray-300";
+  };
+
   // Loading state
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`${getBackgroundColor()} min-h-screen`}>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
-          <div className="p-5 text-center text-[#FFFFFF]">
+          <div className={`p-5 text-center ${getTextColor()}`}>
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#767EE0] border-r-transparent"></div>
-            <p className="mt-3 text-[#FFFFFF]/80">Loading class data...</p>
+            <p className={`mt-3 ${getSecondaryTextColor()}`}>Loading class data...</p>
           </div>
         </div>
       </div>
@@ -217,14 +291,14 @@ export default function StudentListStudent() {
   // Error state
   if (error) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`${getBackgroundColor()} min-h-screen`}>
         <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} />
           <div className="p-5 text-center">
             <div className="text-[#A15353] mb-4">
               <p className="text-lg font-semibold">Error Loading Data</p>
-              <p className="text-sm text-[#FFFFFF]/80">{error}</p>
+              <p className={`text-sm ${getSecondaryTextColor()}`}>{error}</p>
             </div>
             <Link to="/Subjects">
               <button className="bg-[#767EE0] hover:bg-[#5a62c4] text-white font-bold py-2 px-4 rounded transition-colors">
@@ -238,7 +312,7 @@ export default function StudentListStudent() {
   }
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`${getBackgroundColor()} min-h-screen`}>
       <Sidebar role="student" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`transition-all duration-300 ${isOpen ? 'lg:ml-[250px] xl:ml-[280px] 2xl:ml-[300px]' : 'ml-0'}`}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} />
@@ -253,18 +327,19 @@ export default function StudentListStudent() {
                 src={ClassManagementIcon}
                 alt="Class"
                 className="h-6 w-6 sm:h-7 sm:w-7 mr-2"
+                style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
               />
-              <h1 className="font-bold text-xl lg:text-2xl text-[#FFFFFF]">
+              <h1 className={`font-bold text-xl lg:text-2xl ${getTextColor()}`}>
                 Class List
               </h1>
             </div>
-            <p className="text-sm lg:text-base text-[#FFFFFF]/80">
+            <p className={`text-sm lg:text-base ${getSecondaryTextColor()}`}>
               View your classmates and teachers
             </p>
           </div>
 
           {/* Subject Information - Compact Version */}
-          <div className="flex flex-col gap-1 text-sm text-[#FFFFFF]/80 mb-4">
+          <div className={`flex flex-col gap-1 text-sm ${getSecondaryTextColor()} mb-4`}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">SUBJECT:</span>
               <span>{classInfo?.subject || 'Loading...'}</span>
@@ -279,47 +354,63 @@ export default function StudentListStudent() {
                   src={BackButton} 
                   alt="Back" 
                   className="h-5 w-5 cursor-pointer hover:opacity-70 transition-opacity" 
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </Link>
             </div>
           </div>
 
-          <hr className="border-[#FFFFFF]/30 mb-4" />
+          <hr className={`${getDividerColor()} mb-4`} />
 
           {/* Summary Stats - Compact Version with Vibrant Colors */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-4">
-            <div className="bg-[#15151C] p-3 rounded-md border border-[#FFFFFF]/10">
+            <div className={`${getCardBackgroundColor()} p-3 rounded-md border ${getCardBorderColor()}`}>
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-[#767EE0] rounded-md flex items-center justify-center">
-                  <img src={TeacherIcon} alt="Teachers" className="h-4 w-4" />
+                  <img 
+                    src={TeacherIcon} 
+                    alt="Teachers" 
+                    className="h-4 w-4" 
+                    style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
+                  />
                 </div>
                 <div>
-                  <p className="text-[#FFFFFF]/60 text-xs font-medium">Teachers</p>
-                  <p className="text-lg font-bold text-[#FFFFFF]">{teachers.length}</p>
+                  <p className={`${getTertiaryTextColor()} text-xs font-medium`}>Teachers</p>
+                  <p className={`text-lg font-bold ${getTextColor()}`}>{teachers.length}</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-[#15151C] p-3 rounded-md border border-[#FFFFFF]/10">
+            <div className={`${getCardBackgroundColor()} p-3 rounded-md border ${getCardBorderColor()}`}>
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-[#00A15D] rounded-md flex items-center justify-center">
-                  <img src={StudentIcon} alt="Students" className="h-4 w-4" />
+                  <img 
+                    src={StudentIcon} 
+                    alt="Students" 
+                    className="h-4 w-4" 
+                    style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
+                  />
                 </div>
                 <div>
-                  <p className="text-[#FFFFFF]/60 text-xs font-medium">Students</p>
-                  <p className="text-lg font-bold text-[#FFFFFF]">{students.length}</p>
+                  <p className={`${getTertiaryTextColor()} text-xs font-medium`}>Students</p>
+                  <p className={`text-lg font-bold ${getTextColor()}`}>{students.length}</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-[#15151C] p-3 rounded-md border border-[#FFFFFF]/10 sm:col-span-1">
+            <div className={`${getCardBackgroundColor()} p-3 rounded-md border ${getCardBorderColor()} sm:col-span-1`}>
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-[#B39DDB] rounded-md flex items-center justify-center">
-                  <img src={PersonIcon} alt="Active" className="h-4 w-4" />
+                  <img 
+                    src={PersonIcon} 
+                    alt="Active" 
+                    className="h-4 w-4" 
+                    style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
+                  />
                 </div>
                 <div>
-                  <p className="text-[#FFFFFF]/60 text-xs font-medium">Class Members</p>
-                  <p className="text-lg font-bold text-[#FFFFFF]">
+                  <p className={`${getTertiaryTextColor()} text-xs font-medium`}>Class Members</p>
+                  <p className={`text-lg font-bold ${getTextColor()}`}>
                     {teachers.length + students.length}
                   </p>
                 </div>
@@ -335,13 +426,14 @@ export default function StudentListStudent() {
                 placeholder="Search people by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none bg-[#15151C] text-xs text-[#FFFFFF] border border-[#FFFFFF]/10 focus:border-[#767EE0] transition-colors placeholder:text-[#FFFFFF]/40"
+                className={`w-full h-9 rounded px-2.5 py-1.5 pr-9 outline-none ${getInputBackgroundColor()} ${getTextColor()} text-xs border ${getInputBorderColor()} focus:border-[#767EE0] transition-colors ${getInputPlaceholderColor()}`}
               />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 text-[#FFFFFF]/60">
+              <button className={`absolute right-2 top-1/2 -translate-y-1/2 ${getQuaternaryTextColor()}`}>
                 <img
                   src={Search}
                   alt="Search"
                   className="h-3.5 w-3.5"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </button>
             </div>
@@ -355,35 +447,41 @@ export default function StudentListStudent() {
                   src={TeacherIcon}
                   alt="Teachers"
                   className="h-4 w-4"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </div>
-              <h2 className="font-bold text-lg text-[#FFFFFF]">
+              <h2 className={`font-bold text-lg ${getTextColor()}`}>
                 Teachers
               </h2>
             </div>
 
             <div className="space-y-2.5">
               {filteredTeachers.length === 0 ? (
-                <div className="text-center py-6 text-[#FFFFFF]/60 bg-[#15151C] rounded-md shadow-md border border-[#FFFFFF]/10">
+                <div className={`text-center py-6 ${getTertiaryTextColor()} ${getCardBackgroundColor()} rounded-md shadow-md border ${getCardBorderColor()}`}>
                   No teachers found matching your search
                 </div>
               ) : (
                 filteredTeachers.map((teacher) => (
-                  <div key={teacher.id} className="bg-[#15151C] p-3 rounded-md shadow-md border border-[#FFFFFF]/10 hover:border-[#767EE0] transition-all min-h-[70px] flex items-center">
+                  <div key={teacher.id} className={`${getCardBackgroundColor()} p-3 rounded-md shadow-md border ${getCardBorderColor()} ${getHoverBorderColor('teacher')} transition-all min-h-[70px] flex items-center`}>
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="flex-shrink-0 h-8 w-8 rounded-full bg-[#767EE0] flex items-center justify-center">
-                          <img src={PersonIcon} alt="Person" className="h-4 w-4" />
+                          <img 
+                            src={PersonIcon} 
+                            alt="Person" 
+                            className="h-4 w-4" 
+                            style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
+                          />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-[#FFFFFF] text-sm truncate">
+                          <h3 className={`font-semibold ${getTextColor()} text-sm truncate`}>
                             {teacher.name}
                           </h3>
                           <p className="text-[#767EE0] text-xs font-medium mt-0.5">
                             {teacher.role}
                           </p>
                           {teacher.email && (
-                            <p className="text-[#FFFFFF]/60 text-xs mt-0.5 truncate">
+                            <p className={`${getTertiaryTextColor()} text-xs mt-0.5 truncate`}>
                               {teacher.email}
                             </p>
                           )}
@@ -404,35 +502,41 @@ export default function StudentListStudent() {
                   src={StudentIcon}
                   alt="Students"
                   className="h-4 w-4"
+                  style={isDarkMode ? {} : { filter: 'invert(0.5)' }}
                 />
               </div>
-              <h2 className="font-bold text-lg text-[#FFFFFF]">
+              <h2 className={`font-bold text-lg ${getTextColor()}`}>
                 Students
               </h2>
             </div>
 
             <div className="space-y-2.5">
               {filteredStudents.length === 0 ? (
-                <div className="text-center py-6 text-[#FFFFFF]/60 bg-[#15151C] rounded-md shadow-md border border-[#FFFFFF]/10">
+                <div className={`text-center py-6 ${getTertiaryTextColor()} ${getCardBackgroundColor()} rounded-md shadow-md border ${getCardBorderColor()}`}>
                   {searchQuery ? "No students found matching your search" : "No students enrolled in this class"}
                 </div>
               ) : (
                 filteredStudents.map((student) => (
-                  <div key={student.id} className="bg-[#15151C] p-3 rounded-md shadow-md border border-[#FFFFFF]/10 hover:border-[#00A15D] transition-all min-h-[70px] flex items-center">
+                  <div key={student.id} className={`${getCardBackgroundColor()} p-3 rounded-md shadow-md border ${getCardBorderColor()} ${getHoverBorderColor('student')} transition-all min-h-[70px] flex items-center`}>
                     <div className="flex items-center justify-between gap-2 w-full">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="flex-shrink-0 h-8 w-8 rounded-full bg-[#00A15D] flex items-center justify-center">
-                          <img src={PersonIcon} alt="Person" className="h-4 w-4" />
+                          <img 
+                            src={PersonIcon} 
+                            alt="Person" 
+                            className="h-4 w-4" 
+                            style={isDarkMode ? {} : { filter: 'invert(1) brightness(2)' }}
+                          />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-[#FFFFFF] text-sm truncate">
+                          <h3 className={`font-semibold ${getTextColor()} text-sm truncate`}>
                             {student.name}
                           </h3>
-                          <p className="text-[#FFFFFF]/60 text-xs mt-0.5">
+                          <p className={`${getTertiaryTextColor()} text-xs mt-0.5`}>
                             Student • {student.yearSection || 'N/A'}
                           </p>
                           {student.email && (
-                            <p className="text-[#FFFFFF]/60 text-xs mt-0.5 truncate">
+                            <p className={`${getTertiaryTextColor()} text-xs mt-0.5 truncate`}>
                               {student.email}
                             </p>
                           )}

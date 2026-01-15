@@ -29,12 +29,32 @@ export default function DashboardProf() {
   const [activitiesCount, setActivitiesCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   // Alert states
   const [showAttendanceAlert, setShowAttendanceAlert] = useState(false);
   const [subjectsNeedingAttendance, setSubjectsNeedingAttendance] = useState([]);
   const [todayDate, setTodayDate] = useState("");
   const [currentSubjectIndex, setCurrentSubjectIndex] = useState(0);
+
+  // Theme detection
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    // Check initial theme
+    handleThemeChange();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -300,15 +320,9 @@ export default function DashboardProf() {
   };
 
   const getBorderColor = (percentage) => {
-    if (percentage < 70) return 'border-[#A15353] border-2'; // Red for < 70%
-    if (percentage >= 71 && percentage <= 79) return 'border-[#FFA600] border-2'; // Yellow for 71-79%
-    return 'border-transparent border-2'; // Green for ≥ 80%
-  };
-
-  const getTextColor = (percentage) => {
-    if (percentage < 70) return 'text-[#A15353]';
-    if (percentage >= 71 && percentage <= 79) return 'text-[#FFA600]';
-    return 'text-white';
+    if (percentage < 70) return isDarkMode ? 'border-[#A15353] border-2' : 'border-[#A15353] border-2';
+    if (percentage >= 71 && percentage <= 79) return isDarkMode ? 'border-[#FFA600] border-2' : 'border-[#FFA600] border-2';
+    return 'border-transparent border-2';
   };
 
   const sortedSubjects = [...handledSubjects].sort((a, b) => {
@@ -323,9 +337,50 @@ export default function DashboardProf() {
   const hasCriticalSubjects = handledSubjects.some(subject => subject.completionRate < 70);
   const hasWarningSubjects = handledSubjects.some(subject => subject.completionRate >= 71 && subject.completionRate <= 79);
 
+  // Theme-based colors
+  const getBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getCardBackgroundColor = () => {
+    return isDarkMode ? "bg-[#15151C]" : "bg-white";
+  };
+
+  const getCardBorderColor = () => {
+    return isDarkMode ? "border-[#15151C]" : "border-gray-200";
+  };
+
+  const getTextColor = () => {
+    return isDarkMode ? "text-white" : "text-gray-900";
+  };
+
+  const getSecondaryTextColor = () => {
+    return isDarkMode ? "text-white/80" : "text-gray-600";
+  };
+
+  const getDividerColor = () => {
+    return isDarkMode ? "border-white/30" : "border-gray-200";
+  };
+
+  const getAlertBackgroundColor = () => {
+    return isDarkMode ? "bg-[#00A15D]/20" : "bg-[#00A15D]/10";
+  };
+
+  const getAlertBorderColor = () => {
+    return isDarkMode ? "border-[#00A15D]/50" : "border-[#00A15D]/30";
+  };
+
+  const getNoAlertBackgroundColor = () => {
+    return isDarkMode ? "bg-[#23232C]" : "bg-gray-50";
+  };
+
+  const getNoAlertBorderColor = () => {
+    return isDarkMode ? "border-[#00A15D]/30" : "border-[#00A15D]/20";
+  };
+
   if (loading) {
     return (
-      <div className="bg-[#23232C] min-h-screen">
+      <div className={`min-h-screen ${getBackgroundColor()}`}>
         <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
         <div className={`
           transition-all duration-300
@@ -333,7 +388,7 @@ export default function DashboardProf() {
         `}>
           <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
           <div className="p-8 flex justify-center items-center h-64">
-            <div className="text-white text-sm">Loading...</div>
+            <div className={`text-sm ${getTextColor()}`}>Loading...</div>
           </div>
         </div>
       </div>
@@ -341,7 +396,7 @@ export default function DashboardProf() {
   }
 
   return (
-    <div className="bg-[#23232C] min-h-screen">
+    <div className={`min-h-screen ${getBackgroundColor()}`}>
       <Sidebar role="teacher" isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className={`
         transition-all duration-300
@@ -349,34 +404,34 @@ export default function DashboardProf() {
       `}>
         <Header setIsOpen={setIsOpen} isOpen={isOpen} userName={userName} />
 
-        <div className="p-3 sm:p-4 md:p-5 text-white">
+        <div className="p-3 sm:p-4 md:p-5">
           <div className="mb-3">
             <div className="flex items-center mb-1">
-              <img src={Dashboard} alt="Dashboard" className="h-5 w-5 mr-2" />
-              <h1 className="font-bold text-lg text-white">Dashboard</h1>
+              <img src={Dashboard} alt="Dashboard" className="h-5 w-5 mr-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
+              <h1 className={`font-bold text-lg ${getTextColor()}`}>Dashboard</h1>
             </div>
-            <div className="text-sm text-white/80">
+            <div className={`text-sm ${getSecondaryTextColor()}`}>
               <span>Welcome back,</span>
-              <span className="font-bold ml-1 mr-1 text-white">{userName}!</span>
+              <span className={`font-bold ml-1 mr-1 ${getTextColor()}`}>{userName}!</span>
               <span>Let's see how your students are doing.</span>
             </div>
           </div>
 
-          <hr className="border-white/30 mb-4 border-1" />
+          <hr className={`${getDividerColor()} mb-4 border-1`} />
 
           {/* Compact Attendance Alert Notification - Shows only for subjects needing attendance */}
           {showAttendanceAlert && subjectsNeedingAttendance.length > 0 && (
-            <div className="mb-3 bg-[#00A15D]/20 rounded-lg p-2 relative border border-[#00A15D]/50">
+            <div className={`mb-3 ${getAlertBackgroundColor()} rounded-lg p-2 relative border ${getAlertBorderColor()}`}>
               <div className="flex items-start">
                 <div className="mr-1.5 mt-0.5">
-                  <img src={AlertIcon} alt="Alert" className="h-3.5 w-3.5" />
+                  <img src={AlertIcon} alt="Alert" className="h-3.5 w-3.5" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                 </div>
                 
                 <div className="flex-1">
                   {/* Header with date text on the right */}
                   <div className="flex justify-between items-start mb-0.5">
                     <div className="flex items-center">
-                      <h3 className="font-bold text-white text-xs mr-1.5">
+                      <h3 className={`font-bold text-xs mr-1.5 ${getTextColor()}`}>
                         Attendance Reminder
                       </h3>
                       <span className="text-[9px] bg-[#00A15D] text-white px-1 py-0.5 rounded-full">
@@ -385,26 +440,26 @@ export default function DashboardProf() {
                     </div>
                     
                     <div className="flex items-center">
-                      <p className="text-[10px] text-white/80 mr-2 leading-tight">
+                      <p className={`text-[10px] mr-2 leading-tight ${getSecondaryTextColor()}`}>
                         Record attendance for {todayDate}
                       </p>
                       <button 
                         onClick={dismissAlert}
-                        className="text-white/60 hover:text-white transition-colors p-0.5"
+                        className={`${getSecondaryTextColor()} hover:${getTextColor()} transition-colors p-0.5`}
                       >
-                        <img src={CrossIcon} alt="Close" className="h-2.5 w-2.5" />
+                        <img src={CrossIcon} alt="Close" className="h-2.5 w-2.5" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                       </button>
                     </div>
                   </div>
                   
                   {/* Compact subject display */}
-                  <div className="bg-[#23232C]/60 rounded p-1 mb-1 mt-1.5">
+                  <div className={`${isDarkMode ? 'bg-[#23232C]/60' : 'bg-gray-100/60'} rounded p-1 mb-1 mt-1.5`}>
                     <div className="flex justify-between items-center">
                       <div className="flex-1 min-w-0 pr-1">
-                        <p className="font-medium text-white text-xs truncate leading-tight mb-0.5">
+                        <p className={`font-medium text-xs truncate leading-tight mb-0.5 ${getTextColor()}`}>
                           {subjectsNeedingAttendance[currentSubjectIndex]?.subject}
                         </p>
-                        <p className="text-[10px] text-white/60 truncate leading-tight">
+                        <p className={`text-[10px] truncate leading-tight ${getSecondaryTextColor()}`}>
                           Sec: {subjectsNeedingAttendance[currentSubjectIndex]?.section} • {subjectsNeedingAttendance[currentSubjectIndex]?.subjectCode}
                         </p>
                       </div>
@@ -428,7 +483,7 @@ export default function DashboardProf() {
                     <div className="mb-0.5">
                       <button 
                         onClick={showNextSubject}
-                        className="text-[10px] text-white/60 hover:text-white/80 transition-colors underline"
+                        className={`text-[10px] ${getSecondaryTextColor()} hover:${getTextColor()} transition-colors underline`}
                       >
                         + {subjectsNeedingAttendance.length - 1} more
                       </button>
@@ -441,11 +496,11 @@ export default function DashboardProf() {
 
           {/* No attendance reminder message when all attendance is recorded */}
           {!showAttendanceAlert && handledSubjects.length > 0 && (
-            <div className="mb-3 bg-[#23232C] rounded-lg p-2 border border-[#00A15D]/30">
+            <div className={`mb-3 ${getNoAlertBackgroundColor()} rounded-lg p-2 border ${getNoAlertBorderColor()}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="mr-2 h-2 w-2 rounded-full bg-[#00A15D]"></div>
-                  <p className="text-xs text-white/70">All attendance for today has been recorded.</p>
+                  <p className={`text-xs ${getSecondaryTextColor()}`}>All attendance for today has been recorded.</p>
                 </div>
                 <button 
                   onClick={checkAttendanceAlert}
@@ -459,10 +514,10 @@ export default function DashboardProf() {
 
           <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 mb-6">
             {/* Handled Subjects Section */}
-            <div className="lg:col-span-3 bg-[#15151C] rounded-lg shadow p-3 border-2 border-[#15151C]">
+            <div className={`lg:col-span-3 ${getCardBackgroundColor()} rounded-lg shadow p-3 border-2 ${getCardBorderColor()}`}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold flex items-center text-white">
-                  <img src={ClassHandled} alt="Subjects" className="h-4 w-4 mr-1" />
+                <h3 className={`text-sm font-semibold flex items-center ${getTextColor()}`}>
+                  <img src={ClassHandled} alt="Subjects" className="h-4 w-4 mr-1" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                   Handled Subjects
                 </h3>
               </div>
@@ -475,11 +530,12 @@ export default function DashboardProf() {
                       subject={subject}
                       getBorderColor={getBorderColor}
                       getTextColor={getTextColor}
+                      isDarkMode={isDarkMode}
                     />
                   ))
                 ) : (
                   <div className="col-span-full text-center py-6">
-                    <p className="text-white/50 text-sm">No subjects assigned</p>
+                    <p className={`${getSecondaryTextColor()} text-sm`}>No subjects assigned</p>
                   </div>
                 )}
               </div>
@@ -487,7 +543,7 @@ export default function DashboardProf() {
               {/* Legend */}
               {(hasCriticalSubjects || hasWarningSubjects) && (
                 <div className="mt-3 pt-3 border-t border-white/10">
-                  <div className="flex flex-wrap gap-3 text-[10px] text-white/60">
+                  <div className={`flex flex-wrap gap-3 text-[10px] ${getSecondaryTextColor()}`}>
                     {hasCriticalSubjects && (
                       <div className="flex items-center gap-1">
                         <div className="h-3 w-3 rounded border-2 border-[#A15353]"></div>
@@ -503,7 +559,7 @@ export default function DashboardProf() {
                     )}
                     
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded border-2 border-transparent bg-[#23232C]"></div>
+                      <div className={`h-3 w-3 rounded border-2 border-transparent ${isDarkMode ? 'bg-[#23232C]' : 'bg-gray-100'}`}></div>
                       <span>Good (≥80%)</span>
                     </div>
                   </div>
@@ -514,24 +570,24 @@ export default function DashboardProf() {
 
             {/* Widgets Section */}
             <div className="lg:col-span-2 space-y-4">
-              <div className='bg-[#15151C] rounded-lg p-3 text-white shadow-md border-2 border-[#15151C] h-32'> 
-                <div className='font-bold text-sm h-full flex flex-col'>
+              <div className={`${getCardBackgroundColor()} rounded-lg p-3 shadow-md border-2 ${getCardBorderColor()} h-32`}> 
+                <div className={`font-bold text-sm h-full flex flex-col ${getTextColor()}`}>
                   <h1 className='mb-1'> Class Handled </h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#767EE0]/50 h-10 w-10 rounded-lg'>
-                      <img src={ClassHandled} alt="ClassHandled" className="h-5 w-5" />
+                    <div className={`flex justify-center items-center h-10 w-10 rounded-lg ${isDarkMode ? 'bg-[#767EE0]/50' : 'bg-[#767EE0]/30'}`}>
+                      <img src={ClassHandled} alt="ClassHandled" className="h-5 w-5" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                     </div>
                     <p className='pt-2 text-xl'>{classesCount}</p>
                   </div>
                 </div>
               </div>
 
-              <div className='bg-[#15151C] rounded-lg p-3 text-white shadow-md border-2 border-[#15151C] h-32'> 
-                <div className='font-bold text-sm h-full flex flex-col'>
+              <div className={`${getCardBackgroundColor()} rounded-lg p-3 shadow-md border-2 ${getCardBorderColor()} h-32`}> 
+                <div className={`font-bold text-sm h-full flex flex-col ${getTextColor()}`}>
                   <h1 className='mb-1'> Activities to Grade </h1>
                   <div className='flex justify-between items-end mt-auto'>
-                    <div className='flex justify-center items-center bg-[#A15353]/50 h-10 w-10 rounded-lg'>
-                      <img src={ActivitiesToGrade} alt="ActivitiesToGrade" className="h-5 w-5" />
+                    <div className={`flex justify-center items-center h-10 w-10 rounded-lg ${isDarkMode ? 'bg-[#A15353]/50' : 'bg-[#A15353]/30'}`}>
+                      <img src={ActivitiesToGrade} alt="ActivitiesToGrade" className="h-5 w-5" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
                     </div>
                     <p className='pt-2 text-xl'>{activitiesCount}</p>
                   </div>
@@ -541,62 +597,62 @@ export default function DashboardProf() {
 
             {/* Calendar Widget */}
             <div className="lg:col-span-1">
-              <CalendarWidget professorId={userId} />
+              <CalendarWidget professorId={userId} isDarkMode={isDarkMode} />
             </div>
           </div>
 
           {/* Class Ranking */}
           <div className="mb-4">
-            <ClassRanking />
+            <ClassRanking isDarkMode={isDarkMode} />
           </div>
 
           {/* Prof Information Card */}
-          <div className="bg-[#15151C] text-white text-sm rounded-lg shadow-md mt-4 p-3 border-2 border-[#15151C]">
+          <div className={`${getCardBackgroundColor()} text-sm rounded-lg shadow-md mt-4 p-3 border-2 ${getCardBorderColor()}`}>
             <div className="flex items-center">
-              <img src={ID} alt="ID" className="h-4 w-4 mr-2" />
-              <p className="font-bold text-sm">{userName}</p>
+              <img src={ID} alt="ID" className="h-4 w-4 mr-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
+              <p className={`font-bold text-sm ${getTextColor()}`}>{userName}</p>
             </div>
 
-            <hr className="opacity-60 border-white/30 rounded border-1 my-2" />
+            <hr className={`${getDividerColor()} rounded border-1 my-2`} />
 
             <div className="pl-4 space-y-1">
               <div className="flex flex-col">
-                <span className="font-bold text-xs w-full mb-1 text-white/70">Faculty Number:</span>
-                <span className="text-xs">{userId || "N/A"}</span>
+                <span className={`font-bold text-xs w-full mb-1 ${getSecondaryTextColor()}`}>Faculty Number:</span>
+                <span className={`text-xs ${getTextColor()}`}>{userId || "N/A"}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-xs w-full mb-1 text-white/70">CvSU Email:</span>
-                <span className="text-xs break-all">{userEmail || "N/A"}</span>
+                <span className={`font-bold text-xs w-full mb-1 ${getSecondaryTextColor()}`}>CvSU Email:</span>
+                <span className={`text-xs break-all ${getTextColor()}`}>{userEmail || "N/A"}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-xs w-full mb-1 text-white/70">Handled Subjects:</span>
-                <span className="text-xs">{handledSubjectsCount || 0} subjects</span>
+                <span className={`font-bold text-xs w-full mb-1 ${getSecondaryTextColor()}`}>Handled Subjects:</span>
+                <span className={`text-xs ${getTextColor()}`}>{handledSubjectsCount || 0} subjects</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-xs w-full mb-1 text-white/70">Department:</span>
-                <span className="text-xs">{userData?.tracked_program || "N/A"}</span>
+                <span className={`font-bold text-xs w-full mb-1 ${getSecondaryTextColor()}`}>Department:</span>
+                <span className={`text-xs ${getTextColor()}`}>{userData?.tracked_program || "N/A"}</span>
               </div>
             </div>
           </div>
 
           {/* Student Attendance Details Card */}
           <Link to={"/AnalyticsProf"}>
-            <div className="bg-[#15151C] text-white text-sm rounded-lg shadow-md mt-3 p-2 border-2 border-transparent hover:border-[#00A15D] transition-all duration-200">
+            <div className={`${getCardBackgroundColor()} text-sm rounded-lg shadow-md mt-3 p-2 border-2 border-transparent hover:border-[#00A15D] transition-all duration-200`}>
               <div className="flex items-center">
-                <img src={Pie} alt="Pie" className="h-5 w-5 mr-2" />
-                <p className="font-bold text-sm flex-1">Student Attendance Details</p>
-                <img src={Details} alt="Details" className="h-5 w-5 ml-2" />
+                <img src={Pie} alt="Pie" className="h-5 w-5 mr-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
+                <p className={`font-bold text-sm flex-1 ${getTextColor()}`}>Section Comparison Report</p>
+                <img src={Details} alt="Details" className="h-5 w-5 ml-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
               </div>
             </div>
           </Link>
 
           {/* Archive Subjects Card */}
           <Link to={"/ArchiveClass"}>
-            <div className="bg-[#15151C] text-white text-sm rounded-lg shadow-md mt-3 p-2 border-2 border-transparent hover:border-[#00A15D] transition-all duration-200">
+            <div className={`${getCardBackgroundColor()} text-sm rounded-lg shadow-md mt-3 p-2 border-2 border-transparent hover:border-[#00A15D] transition-all duration-200`}>
               <div className="flex items-center">
-                <img src={Archive} alt="Archive" className="h-5 w-5 mr-2" />
-                <p className="font-bold text-sm flex-1">Archive Subjects</p>
-                <img src={Details} alt="Details" className="h-5 w-5 ml-2" />
+                <img src={Archive} alt="Archive" className="h-4 w-4 mr-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
+                <p className={`font-bold text-sm flex-1 ${getTextColor()}`}>Archive Subjects</p>
+                <img src={Details} alt="Details" className="h-5 w-5 ml-2" style={{ filter: isDarkMode ? 'none' : 'invert(0.5)' }} />
               </div>
             </div>
           </Link>
